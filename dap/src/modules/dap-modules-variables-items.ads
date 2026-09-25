@@ -20,10 +20,10 @@ with Ada.Finalization;
 
 with GNATCOLL.JSON;
 
-with VSS.Strings;                 use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 
-with DAP.Types;                   use DAP.Types;
-with DAP.Tools;                   use DAP.Tools;
+with DAP.Types; use DAP.Types;
+with DAP.Tools; use DAP.Tools;
 
 package DAP.Modules.Variables.Items is
 
@@ -50,23 +50,18 @@ package DAP.Modules.Variables.Items is
    function Get_Name (Self : Item_Info'Class) return String;
    --  Return the display name for this item
 
-   function Get_Full_Name
-     (Self : Item_Info)
-      return Virtual_String is abstract;
+   function Get_Full_Name (Self : Item_Info) return Virtual_String is abstract;
    --  Returns DAP full name that used in the variables view as variable's name
 
-   procedure Set_Full_Name
-     (Self  : in out Item_Info;
-      Value : Virtual_String) is null;
+   procedure Set_Full_Name (Self : in out Item_Info; Value : Virtual_String)
+   is null;
    --  Set the DAP full name
 
    function Get_Format (Self : Item_Info) return String;
    --  Returns the format name
 
    function Is_Same_Name
-     (Info : Item_Info'Class;
-      Name : Virtual_String)
-      return Boolean;
+     (Info : Item_Info'Class; Name : Virtual_String) return Boolean;
    --  Returns True when the Item's name equal the Name
 
    function Is_Command (Info : Item_Info) return Boolean;
@@ -83,14 +78,14 @@ package DAP.Modules.Variables.Items is
    procedure Find_DAP_Item
      (Info  : Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
-      Found : out Boolean) is abstract;
+      Found : out Boolean)
+   is abstract;
    --  Find the corresponding DAP item and returns a cursor to it.
    --  Returns No_Element if Item or parent are not found. Found is set to
    --  True if exact element is found and to False if parent element is found.
 
-   procedure Store
-     (Info  : Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value) is abstract;
+   procedure Store (Info : Item_Info; Value : in out GNATCOLL.JSON.JSON_Value)
+   is abstract;
    --  Store internal values
 
    function Restore (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class;
@@ -115,8 +110,10 @@ package DAP.Modules.Variables.Items is
    end record;
    --  To store Item_Info'Class instance in the context
 
-   overriding procedure Adjust (Object : in out Item_Holder);
-   overriding procedure Finalize (Object : in out Item_Holder);
+   overriding
+   procedure Adjust (Object : in out Item_Holder);
+   overriding
+   procedure Finalize (Object : in out Item_Holder);
 
    procedure Set (Self : in out Item_Holder; Item : Item_Info'Class);
    --  Set Item to the Holder
@@ -125,8 +122,8 @@ package DAP.Modules.Variables.Items is
    -- Item_Info_Vectors --
    -----------------------
 
-   package Item_Info_Vectors is
-     new Ada.Containers.Indefinite_Vectors (Positive, Item_Info'Class);
+   package Item_Info_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Positive, Item_Info'Class);
 
    ------------------
    -- No_Item_Info --
@@ -134,28 +131,32 @@ package DAP.Modules.Variables.Items is
 
    type No_Item_Info is new Item_Info with null record;
 
-   overriding function Get_Name
-     (Self : No_Item_Info) return Virtual_String is ("");
+   overriding
+   function Get_Name (Self : No_Item_Info) return Virtual_String
+   is ("");
 
-   overriding function Get_Full_Name
-     (Self : No_Item_Info) return Virtual_String is ("");
+   overriding
+   function Get_Full_Name (Self : No_Item_Info) return Virtual_String
+   is ("");
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : No_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean);
 
-   overriding function Get_Format (Self : No_Item_Info) return String;
+   overriding
+   function Get_Format (Self : No_Item_Info) return String;
 
-   overriding function Is_No_Item (Info : No_Item_Info) return Boolean;
+   overriding
+   function Is_No_Item (Info : No_Item_Info) return Boolean;
 
-   overriding procedure Store
-     (Info  : No_Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value) is null;
+   overriding
+   procedure Store
+     (Info : No_Item_Info; Value : in out GNATCOLL.JSON.JSON_Value)
+   is null;
 
    No_Item : constant No_Item_Info :=
-     No_Item_Info'(Id           => Unknown_Id,
-                   Auto_Refresh => False,
-                   Format       => <>);
+     No_Item_Info'(Id => Unknown_Id, Auto_Refresh => False, Format => <>);
 
 end DAP.Modules.Variables.Items;

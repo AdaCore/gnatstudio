@@ -23,8 +23,7 @@ with DAP.Tools;
 private package DAP.Clients.Variables.Variables is
 
    type Variables_Request (<>) is
-     new DAP.Requests.Variables.Variables_DAP_Request
-   with private;
+     new DAP.Requests.Variables.Variables_DAP_Request with private;
    type Variables_Request_Access is access all Variables_Request;
 
    procedure Send_Variables_Request
@@ -37,24 +36,26 @@ private
 
    type Variables_Request
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Kind   : Request_Params_Kind) is
-     new DAP.Requests.Variables.Variables_DAP_Request (Kernel)
-   with record
+      Kind   : Request_Params_Kind)
+   is new DAP.Requests.Variables.Variables_DAP_Request (Kernel) with record
       Params : Request_Parameters (Kind);
    end record;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Variables_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Variables_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Variables_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 

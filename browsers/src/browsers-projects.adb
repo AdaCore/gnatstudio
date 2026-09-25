@@ -15,30 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
-with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Style;              use Gtkada.Style;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Style;             use Gtkada.Style;
 
-with Generic_Views;          use Generic_Views;
-with GNATCOLL.Projects;      use GNATCOLL.Projects;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Search;             use GPS.Search;
-with GPS.Intl;               use GPS.Intl;
-with Browsers.Canvas;        use Browsers.Canvas;
-with Commands.Interactive;   use Commands, Commands.Interactive;
-with Filter_Panels;          use Filter_Panels;
+with Generic_Views;         use Generic_Views;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Project;    use GPS.Kernel.Project;
+with GPS.Search;            use GPS.Search;
+with GPS.Intl;              use GPS.Intl;
+with Browsers.Canvas;       use Browsers.Canvas;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Filter_Panels;         use Filter_Panels;
 
 package body Browsers.Projects is
 
@@ -51,36 +52,40 @@ package body Browsers.Projects is
    type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with null record;
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Project_Browser_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Project_Browser_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
-   overriding function Load_From_XML
-     (Self : not null access Project_Browser_Record;
-      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class;
-   overriding procedure Load_From_XML
+   overriding
+   function Load_From_XML
+     (Self : not null access Project_Browser_Record; Node : XML_Utils.Node_Ptr)
+      return access GPS_Item_Record'Class;
+   overriding
+   procedure Load_From_XML
      (Self     : not null access Project_Browser_Record;
       Node     : XML_Utils.Node_Ptr;
       From, To : not null access GPS_Item_Record'Class);
 
    function Initialize
-     (View   : access Project_Browser_Record'Class)
-      return Gtk_Widget;
+     (View : access Project_Browser_Record'Class) return Gtk_Widget;
    --  Initialize the browser, and return the focus widget
 
-   package Project_Views is new Generic_Views.Simple_Views
-     (Module_Name            => "Project_Browser",
-      View_Name              => -"Project Browser",
-      Formal_View_Record     => Project_Browser_Record,
-      Formal_MDI_Child       => Browser_Child_Record,
-      Reuse_If_Exist         => True,
-      Initialize             => Initialize,
-      Local_Toolbar          => True,
-      Local_Config           => True,
-      Position               => Position_Automatic,
-      Group                  => Group_Default);
+   package Project_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Project_Browser",
+        View_Name          => -"Project Browser",
+        Formal_View_Record => Project_Browser_Record,
+        Formal_MDI_Child   => Browser_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Position           => Position_Automatic,
+        Group              => Group_Default);
    subtype Project_Browser is Project_Views.View_Access;
 
    procedure Examine_Project_Hierarchy
@@ -104,7 +109,8 @@ package body Browsers.Projects is
       Recursive      : Boolean := False;
       Show_Ancestors : Boolean := False;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Imported_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -113,7 +119,7 @@ package body Browsers.Projects is
    ------------------
 
    type Project_Item_Record is new GPS_Item_Record with record
-      Path  : Virtual_File;
+      Path : Virtual_File;
       --  Store the name, and not the project, in case the latter becomes
       --  invalid after we reload a project
 
@@ -142,10 +148,11 @@ package body Browsers.Projects is
       Path    : Virtual_File) return Project_Item;
    --  Return the first item representing Project_Name
 
-   overriding function Save_To_XML
-     (Self : not null access Project_Item_Record)
-      return XML_Utils.Node_Ptr;
-   overriding procedure Set_Context
+   overriding
+   function Save_To_XML
+     (Self : not null access Project_Item_Record) return XML_Utils.Node_Ptr;
+   overriding
+   procedure Set_Context
      (Item    : not null access Project_Item_Record;
       Context : in out Selection_Context);
    --  Set the GNAT Studio context from a selected item.
@@ -155,20 +162,23 @@ package body Browsers.Projects is
    end record;
    type Project_Link is access all Project_Link_Record'Class;
 
-   overriding procedure Save_To_XML
+   overriding
+   procedure Save_To_XML
      (Self : not null access Project_Link_Record;
       Node : not null XML_Utils.Node_Ptr);
 
    type Show_Importing_Projects_Button is new Left_Arrow_Record
    with null record;
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Importing_Projects_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access);
 
    type Show_Imported_Projects_Button is new Right_Arrow_Record
    with null record;
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Imported_Projects_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access);
@@ -195,9 +205,9 @@ package body Browsers.Projects is
    -- Save_To_XML --
    -----------------
 
-   overriding function Save_To_XML
-     (Self : not null access Project_Item_Record)
-      return XML_Utils.Node_Ptr
+   overriding
+   function Save_To_XML
+     (Self : not null access Project_Item_Record) return XML_Utils.Node_Ptr
    is
       N : constant XML_Utils.Node_Ptr := new XML_Utils.Node;
 
@@ -212,7 +222,8 @@ package body Browsers.Projects is
    -- Save_To_XML --
    -----------------
 
-   overriding procedure Save_To_XML
+   overriding
+   procedure Save_To_XML
      (Self : not null access Project_Link_Record;
       Node : not null XML_Utils.Node_Ptr) is
    begin
@@ -225,14 +236,14 @@ package body Browsers.Projects is
    -- Load_From_XML --
    -------------------
 
-   overriding function Load_From_XML
-     (Self : not null access Project_Browser_Record;
-      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class
+   overriding
+   function Load_From_XML
+     (Self : not null access Project_Browser_Record; Node : XML_Utils.Node_Ptr)
+      return access GPS_Item_Record'Class
    is
       P : constant Project_Type :=
-            Lookup_Project
-              (Self.Kernel,
-               Create (+XML_Utils.Get_Attribute_S (Node, "path")));
+        Lookup_Project
+          (Self.Kernel, Create (+XML_Utils.Get_Attribute_S (Node, "path")));
 
    begin
       return Self.Add_Project_If_Not_Present (P);
@@ -242,13 +253,15 @@ package body Browsers.Projects is
    -- Load_From_XML --
    -------------------
 
-   overriding procedure Load_From_XML
+   overriding
+   procedure Load_From_XML
      (Self     : not null access Project_Browser_Record;
       Node     : XML_Utils.Node_Ptr;
       From, To : not null access GPS_Item_Record'Class) is
    begin
       Self.Add_Link_If_Not_Present
-        (Project_Item (From), Project_Item (To),
+        (Project_Item (From),
+         Project_Item (To),
          Limited_With =>
            XML_Utils.Get_Attribute_S (Node, "limited_with") = "1");
    end Load_From_XML;
@@ -257,10 +270,10 @@ package body Browsers.Projects is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Project_Browser_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       General_Browser_Record (View.all).Create_Toolbar (Toolbar); --  inherited
       View.Build_Filter
@@ -268,15 +281,16 @@ package body Browsers.Projects is
          Hist_Prefix => "project_browser",
          Tooltip     => -"Filter the contents of the project browser",
          Placeholder => -"filter",
-         Options   => Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
    end Create_Toolbar;
 
    ----------------
    -- Project_Of --
    ----------------
 
-   function Project_Of (Self : not null access Project_Item_Record'Class)
-      return Project_Type is
+   function Project_Of
+     (Self : not null access Project_Item_Record'Class) return Project_Type is
    begin
       return Lookup_Project (Self.Browser.Kernel, Self.Path);
    end Project_Of;
@@ -337,7 +351,7 @@ package body Browsers.Projects is
       Is_Limited_With : Boolean := False;
       Extending       : Boolean := False)
    is
-      S  : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+      S : constant access Browser_Styles := Browser.Get_View.Get_Styles;
    begin
       L := new Project_Link_Record;
       L.Limited_With := Is_Limited_With;
@@ -399,7 +413,10 @@ package body Browsers.Projects is
          S2 := (if Dest.Circle = null then Dest else Dest);
 
          Gtk_New_Link
-           (L, Browser, S1, S2,
+           (L,
+            Browser,
+            S1,
+            S2,
             Is_Limited_With => Limited_With,
             Extending       => Extended_Project (P1) = P2);
          Browser_Model (Browser.Get_View.Model).Add (L);
@@ -416,7 +433,7 @@ package body Browsers.Projects is
       Project : Project_Type)
    is
       Contents : access Container_Item_Record'Class;
-      S     : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+      S        : constant access Browser_Styles := Browser.Get_View.Get_Styles;
    begin
       V := new Project_Item_Record;
       V.Browser := General_Browser (Browser);
@@ -426,11 +443,11 @@ package body Browsers.Projects is
          V.Initialize_Rect (Style => S.Invisible);
          V.Set_Child_Layout (Horizontal_Stack);
 
-         V.Circle := Gtk_New_Ellipse
-           (Style => S.Circle, Width => 8.0, Height => 8.0);
+         V.Circle :=
+           Gtk_New_Ellipse (Style => S.Circle, Width => 8.0, Height => 8.0);
          V.Add_Child (V.Circle);
 
-         Contents := Gtk_New_Text (Style => S.Label, Text  => Project.Name);
+         Contents := Gtk_New_Text (Style => S.Label, Text => Project.Name);
          V.Add_Child (Contents, Margin => (0.0, 0.0, 0.0, 3.0));
       else
          V.Initialize_Rect (Style => S.Item, Radius => 5.0);
@@ -495,8 +512,12 @@ package body Browsers.Projects is
       Iter : Project_Iterator;
 
    begin
-      Trace (Me, "Examine_Project_Hierarchy for " & Project.Name
-             & " Recursive=" & Recursive'Img);
+      Trace
+        (Me,
+         "Examine_Project_Hierarchy for "
+         & Project.Name
+         & " Recursive="
+         & Recursive'Img);
 
       Src := Add_Project_If_Not_Present (Browser, Project);
 
@@ -520,9 +541,10 @@ package body Browsers.Projects is
       else
          Insert_And_Layout_Items
            (Browser.Get_View,
-            Ref         => Src,
-            Items       => Items,
-            Direction   => (if Browser.Horizontal_Layout then Right else Down),
+            Ref                  => Src,
+            Items                => Items,
+            Direction            =>
+              (if Browser.Horizontal_Layout then Right else Down),
             Space_Between_Items  => Default_Space_Between_Items,
             Space_Between_Layers => Default_Space_Between_Layers,
             Duration             => 0.3);
@@ -545,17 +567,15 @@ package body Browsers.Projects is
 
       Dest := Add_Project_If_Not_Present (Browser, Project);
 
-      Iter := Find_All_Projects_Importing
-        (Project      => Project,
-         Include_Self => False,
-         Direct_Only  => True);
+      Iter :=
+        Find_All_Projects_Importing
+          (Project => Project, Include_Self => False, Direct_Only => True);
 
       while Current (Iter) /= No_Project loop
          Src := Add_Project_If_Not_Present (Browser, Current (Iter));
          Items.Append (Abstract_Item (Src));
          Add_Link_If_Not_Present
-           (Browser, Src, Dest,
-            Limited_With => Is_Limited_With (Iter));
+           (Browser, Src, Dest, Limited_With => Is_Limited_With (Iter));
          Next (Iter);
       end loop;
 
@@ -564,9 +584,10 @@ package body Browsers.Projects is
 
       Insert_And_Layout_Items
         (Browser.Get_View,
-         Ref               => Dest,
-         Items             => Items,
-         Direction         => (if Browser.Horizontal_Layout then Left else Up),
+         Ref                  => Dest,
+         Items                => Items,
+         Direction            =>
+           (if Browser.Horizontal_Layout then Left else Up),
          Space_Between_Items  => Default_Space_Between_Items,
          Space_Between_Layers => Default_Space_Between_Layers,
          Duration             => 0.3);
@@ -576,7 +597,8 @@ package body Browsers.Projects is
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Imported_Projects_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access)
@@ -592,7 +614,8 @@ package body Browsers.Projects is
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Importing_Projects_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access)
@@ -609,10 +632,10 @@ package body Browsers.Projects is
    -- Set_Context --
    -----------------
 
-   overriding procedure Set_Context
+   overriding
+   procedure Set_Context
      (Item    : not null access Project_Item_Record;
-      Context : in out Selection_Context)
-   is
+      Context : in out Selection_Context) is
    begin
       Set_File_Information (Context, Project => Item.Project_Of);
    end Set_Context;
@@ -622,14 +645,10 @@ package body Browsers.Projects is
    ----------------
 
    function Initialize
-     (View   : access Project_Browser_Record'Class)
-      return Gtk_Widget
-   is
+     (View : access Project_Browser_Record'Class) return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (View);
-      Setup_Contextual_Menu
-        (Kernel          => View.Kernel,
-         Event_On_Widget => View);
+      Setup_Contextual_Menu (Kernel => View.Kernel, Event_On_Widget => View);
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -637,7 +656,8 @@ package body Browsers.Projects is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Project_Browser_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access)
    is
@@ -653,8 +673,7 @@ package body Browsers.Projects is
       procedure On_Item (Item : not null access Abstract_Item_Record'Class) is
          It : constant Project_Item := Project_Item (Item);
       begin
-         if Pattern.Start (It.Path.Display_Base_Name)
-           = GPS.Search.No_Match
+         if Pattern.Start (It.Path.Display_Base_Name) = GPS.Search.No_Match
          then
             Self.Get_View.Model.Include_Related_Items (Item, To_Hide);
          end if;
@@ -662,8 +681,7 @@ package body Browsers.Projects is
 
       procedure Set_Visible
         (Item : not null access Abstract_Item_Record'Class);
-      procedure Set_Visible
-        (Item : not null access Abstract_Item_Record'Class)
+      procedure Set_Visible (Item : not null access Abstract_Item_Record'Class)
       is
       begin
          if To_Hide.Contains (Abstract_Item (Item)) then
@@ -701,7 +719,8 @@ package body Browsers.Projects is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Imported_By_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -710,8 +729,7 @@ package body Browsers.Projects is
    begin
       if Command.Show_Ancestors then
          Examine_Ancestor_Project_Hierarchy
-           (Browser,
-            Project_Information (Context.Context));
+           (Browser, Project_Information (Context.Context));
       else
          Examine_Project_Hierarchy
            (Browser,
@@ -733,47 +751,50 @@ package body Browsers.Projects is
       Project_Views.Register_Module (Kernel);
 
       Register_Action
-        (Kernel, "Browser: show projects imported",
+        (Kernel,
+         "Browser: show projects imported",
          Command     => new Imported_By_Command,
          Description =>
            "Open the Project Browser to show all projects imported by the"
            & " selected project",
          Filter      => Lookup_Filter (Kernel, "Project only"),
-         Category  => -"Views");
+         Category    => -"Views");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Browsers/Show projects imported by %p",
-         Action      => "Browser: show projects imported");
+         Label  => -"Browsers/Show projects imported by %p",
+         Action => "Browser: show projects imported");
 
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Recursive := True;
       Register_Action
-        (Kernel, "Browser: show projects imported (recursive)",
+        (Kernel,
+         "Browser: show projects imported (recursive)",
          Command     => Command,
          Description =>
            "Open the Project Browser to show all projects imported by the"
-         & " selected project, recursively",
+           & " selected project, recursively",
          Filter      => Lookup_Filter (Kernel, "Project only"),
-         Category  => -"Views");
+         Category    => -"Views");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Browsers/Show projects imported by %p (recursively)",
-         Action      => "Browser: show projects imported (recursive)");
+         Label  => -"Browsers/Show projects imported by %p (recursively)",
+         Action => "Browser: show projects imported (recursive)");
 
       Command := new Imported_By_Command;
       Imported_By_Command (Command.all).Show_Ancestors := True;
       Register_Action
-        (Kernel, "Browser: show projects importing",
+        (Kernel,
+         "Browser: show projects importing",
          Command     => Command,
          Description =>
            "Open the Project Browser to show all projects importing the"
-         & " selected project",
+           & " selected project",
          Filter      => Lookup_Filter (Kernel, "Project only"),
-         Category  => -"Views");
+         Category    => -"Views");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Browsers/Show projects depending on %p",
-         Action      => "Browser: show projects importing");
+         Label  => -"Browsers/Show projects depending on %p",
+         Action => "Browser: show projects importing");
    end Register_Module;
 
 end Browsers.Projects;

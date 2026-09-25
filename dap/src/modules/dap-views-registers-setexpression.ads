@@ -26,7 +26,8 @@ private package DAP.Views.Registers.SetExpression is
 
    type Set_Expression_Request_Access is access all Set_Expression_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Set_Expression_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetExpressionResponse;

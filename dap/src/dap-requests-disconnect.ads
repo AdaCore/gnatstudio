@@ -33,14 +33,15 @@ package DAP.Requests.Disconnect is
                  suspendDebuggee   => False)));
    end record;
 
-   type Disconnect_DAP_Request_Access is
-     access all Disconnect_DAP_Request;
+   type Disconnect_DAP_Request_Access is access all Disconnect_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Disconnect_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Disconnect_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -51,14 +52,14 @@ package DAP.Requests.Disconnect is
      (Self        : in out Disconnect_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.DisconnectResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Disconnect_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Disconnect_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Disconnect_DAP_Request)
-      return String is ("disconnect");
+   overriding
+   function Method (Self : in out Disconnect_DAP_Request) return String
+   is ("disconnect");
 
 end DAP.Requests.Disconnect;

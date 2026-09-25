@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Regpat;       use GNAT.Regpat;
-with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNAT.Regpat;    use GNAT.Regpat;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
-with Gtk.Text_Mark;     use Gtk.Text_Mark;
+with Gtk.Text_Mark; use Gtk.Text_Mark;
 
 with GUI_Utils;         use GUI_Utils;
 with String_Utils;      use String_Utils;
@@ -32,18 +32,17 @@ package body Src_Editor_Buffer.Hyper_Mode is
    -----------------------------
 
    procedure Hyper_Mode_Highlight_On
-     (Buffer  : Source_Buffer;
-      Iter    : Gtk_Text_Iter)
+     (Buffer : Source_Buffer; Iter : Gtk_Text_Iter)
    is
       Entity_Start, Entity_End : Gtk_Text_Iter;
       Line_Start, Line_End     : Gtk_Text_Iter;
       use List_Of_Highlighters;
 
-      Found_Highlighter  : Boolean := False;
-      Result             : Boolean;
-      In_Comment         : Boolean := False;
-      L                  : List_Of_Highlighters.List;
-      Maybe_File         : Boolean := False;
+      Found_Highlighter : Boolean := False;
+      Result            : Boolean;
+      In_Comment        : Boolean := False;
+      L                 : List_Of_Highlighters.List;
+      Maybe_File        : Boolean := False;
 
    begin
       --  Remove the previous highlight
@@ -68,11 +67,11 @@ package body Src_Editor_Buffer.Hyper_Mode is
             declare
                C           : List_Of_Highlighters.Cursor;
                Highlighter : Highlighter_Record;
-               Line        : constant String := Get_Slice
-                 (Line_Start, Line_End);
+               Line        : constant String :=
+                 Get_Slice (Line_Start, Line_End);
                First       : Integer := Line'First;
-               Iter_Is_At  : constant Integer := Integer
-                 (Get_Offset (Iter) - Get_Offset (Line_Start)) + First;
+               Iter_Is_At  : constant Integer :=
+                 Integer (Get_Offset (Iter) - Get_Offset (Line_Start)) + First;
                Index       : Natural := Line'First;
                Entity      : Language_Entity;
                Ignore      : Natural;
@@ -82,22 +81,15 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
                C := L.First;
 
-               while Has_Element (C)
-                 and then not Found_Highlighter
-               loop
+               while Has_Element (C) and then not Found_Highlighter loop
                   Highlighter := List_Of_Highlighters.Element (C);
 
-                  Subloop :
-                  while First < Line'Last loop
+                  Subloop : while First < Line'Last loop
                      --  Attempt to match this highlighter against the line
                      declare
                         Matches : Match_Array (0 .. Highlighter.Paren_Count);
                      begin
-                        Match
-                          (Highlighter.Pattern.all,
-                           Line,
-                           Matches,
-                           First);
+                        Match (Highlighter.Pattern.all, Line, Matches, First);
 
                         exit Subloop when Matches (0) = No_Match;
 
@@ -121,15 +113,18 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
                            Set_Offset
                              (Entity_Start,
-                              Get_Offset (Iter) -
-                                Gint (Iter_Is_At -
-                                    Matches (Highlighter.Index).First));
+                              Get_Offset (Iter)
+                              - Gint
+                                  (Iter_Is_At
+                                   - Matches (Highlighter.Index).First));
 
                            Set_Offset
                              (Entity_End,
-                              Get_Offset (Iter) +
-                                Gint (Matches (Highlighter.Index).Last -
-                                    Iter_Is_At + 1));
+                              Get_Offset (Iter)
+                              + Gint
+                                  (Matches (Highlighter.Index).Last
+                                   - Iter_Is_At
+                                   + 1));
                         end if;
                      end;
                   end loop Subloop;
@@ -146,11 +141,12 @@ package body Src_Editor_Buffer.Hyper_Mode is
                      Index := Line'Last;
                   end if;
 
-                  Looking_At (Lang      => Buffer.Lang,
-                              Buffer    => Line,
-                              First     => Index,
-                              Entity    => Entity,
-                              Next_Char => Ignore);
+                  Looking_At
+                    (Lang      => Buffer.Lang,
+                     Buffer    => Line,
+                     First     => Index,
+                     Entity    => Entity,
+                     Next_Char => Ignore);
                   In_Comment := Entity in Comment_Text | Aspect_Comment_Text;
                end if;
             end;
@@ -200,8 +196,9 @@ package body Src_Editor_Buffer.Hyper_Mode is
                      | Block_Text
                      | Type_Text
                      | Partial_Identifier_Text
-                     | Operator_Text
-                     => Highlight := True;
+                     | Operator_Text =>
+                     Highlight := True;
+
                   when Keyword_Text
                      | Annotated_Keyword_Text
                      | Aspect_Keyword_Text
@@ -211,8 +208,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
                      | Aspect_Text
                      | Character_Text
                      | String_Text
-                     | Number_Text
-                     => Highlight := False;
+                     | Number_Text   =>
+                     Highlight := False;
                end case;
                return True;
             end Callback;
@@ -240,9 +237,10 @@ package body Src_Editor_Buffer.Hyper_Mode is
                return;
             end if;
 
-            Parse_Entities (Lang     => Buffer.Lang,
-                            Buffer   => Slice,
-                            Callback => Callback'Unrestricted_Access);
+            Parse_Entities
+              (Lang     => Buffer.Lang,
+               Buffer   => Slice,
+               Callback => Callback'Unrestricted_Access);
 
             if not Highlight then
                return;
@@ -294,15 +292,14 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
       Get_Iter_At_Mark
         (Buffer, Entity_Start, Buffer.Hyper_Mode_Highlight_Begin);
-      Get_Iter_At_Mark
-        (Buffer, Entity_End, Buffer.Hyper_Mode_Highlight_End);
+      Get_Iter_At_Mark (Buffer, Entity_End, Buffer.Hyper_Mode_Highlight_End);
 
       --  First, check whether we are reacting to a custom highlighter
       if Buffer.Hyper_Mode_Current_Action /= null then
          declare
             The_Action : Subprogram_Type;
-            Text       : constant String := Get_Slice
-              (Entity_Start, Entity_End);
+            Text       : constant String :=
+              Get_Slice (Entity_Start, Entity_End);
          begin
             if Alternate then
                The_Action := Buffer.Hyper_Mode_Current_Alternate;
@@ -315,9 +312,8 @@ package body Src_Editor_Buffer.Hyper_Mode is
             end if;
 
             declare
-               C   : Callback_Data'Class :=
-                       Create (Get_Script (The_Action.all),
-                               Arguments_Count => 1);
+               C     : Callback_Data'Class :=
+                 Create (Get_Script (The_Action.all), Arguments_Count => 1);
                Dummy : Boolean;
                pragma Unreferenced (Dummy);
             begin
@@ -345,7 +341,7 @@ package body Src_Editor_Buffer.Hyper_Mode is
 
       declare
          Hyper_Mode_Click_Cb : constant Hyper_Mode_Click_Callback_Type :=
-                                 Get_Hyper_Mode_Click_Callback;
+           Get_Hyper_Mode_Click_Callback;
       begin
          Hyper_Mode_Click_Cb
            (Kernel      => Buffer.Kernel,

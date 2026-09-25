@@ -17,31 +17,31 @@
 
 with VSS.Strings.Conversions;
 
-with String_Utils;            use String_Utils;
+with String_Utils; use String_Utils;
 
-with Glib.Convert;            use Glib.Convert;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Search;              use GPS.Search;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
-with Gtk.Text_Iter;           use Gtk.Text_Iter;
-with Gtk.Text_Tag;            use Gtk.Text_Tag;
-with Gtk.Text_View;           use Gtk.Text_View;
-with Pango.Enums;             use Pango.Enums;
+with Glib.Convert;       use Glib.Convert;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
+with GPS.Search;         use GPS.Search;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Gtk.Text_Tag;       use Gtk.Text_Tag;
+with Gtk.Text_View;      use Gtk.Text_View;
+with Pango.Enums;        use Pango.Enums;
 
 package body GPS.Kernel.Search.Preferences is
 
    procedure Search_Match_In_Label
-     (Self     : not null access Preferences_Search_Provider;
-      Pref     : not null Preference;
-      Result   : out GPS.Search.Search_Result_Access);
+     (Self   : not null access Preferences_Search_Provider;
+      Pref   : not null Preference;
+      Result : out GPS.Search.Search_Result_Access);
    --  Search if the current pattern matches with the given preference's label.
    --  Return null if no match was found and a non-null result otherwise.
 
    procedure Search_Match_In_Doc
-     (Self     : not null access Preferences_Search_Provider;
-      Pref     : not null Preference;
-      Result   : out GPS.Search.Search_Result_Access);
+     (Self   : not null access Preferences_Search_Provider;
+      Pref   : not null Preference;
+      Result : out GPS.Search.Search_Result_Access);
    --  Search if the current pattern matches with the given preference's
    --  documentation.
    --  Return null if no match was found and a non-null result otherwise.
@@ -51,14 +51,14 @@ package body GPS.Kernel.Search.Preferences is
    ---------------------------
 
    procedure Search_Match_In_Label
-     (Self     : not null access Preferences_Search_Provider;
-      Pref     : not null Preference;
-      Result   : out GPS.Search.Search_Result_Access)
+     (Self   : not null access Preferences_Search_Provider;
+      Pref   : not null Preference;
+      Result : out GPS.Search.Search_Result_Access)
    is
-      Label             : constant String := Get_Label (Pref);
-      Label_Context     : Search_Context;
-      Short             : GNAT.Strings.String_Access;
-      Long              : GNAT.Strings.String_Access;
+      Label         : constant String := Get_Label (Pref);
+      Label_Context : Search_Context;
+      Short         : GNAT.Strings.String_Access;
+      Long          : GNAT.Strings.String_Access;
    begin
       Result := null;
       Label_Context := Self.Pattern.Search_Best_Match (Label);
@@ -68,17 +68,18 @@ package body GPS.Kernel.Search.Preferences is
          declare
             Doc : constant String := Get_Doc (Pref);
          begin
-            Short := new String'
-              (Escape_Text (Get_Page_Name (Pref)) &
-                 Self.Pattern.Highlight_Match
-                 (Buffer  => Pref.Get_Label,
-                  Context => Label_Context));
-            Long := new String'
-              (Get_Surrounding_Line (Doc, Doc'First, Doc'First));
+            Short :=
+              new String'
+                (Escape_Text (Get_Page_Name (Pref))
+                 & Self.Pattern.Highlight_Match
+                     (Buffer => Pref.Get_Label, Context => Label_Context));
+            Long :=
+              new String'(Get_Surrounding_Line (Doc, Doc'First, Doc'First));
 
-            Result := Preferences_Search_Provider'Class
-              (Self.all).Create_Preferences_Search_Result
-              (Pref, Short, Long, Label_Context.Score);
+            Result :=
+              Preferences_Search_Provider'Class (Self.all)
+                .Create_Preferences_Search_Result
+                   (Pref, Short, Long, Label_Context.Score);
 
             Self.Adjust_Score (Result);
          end;
@@ -90,14 +91,14 @@ package body GPS.Kernel.Search.Preferences is
    -------------------------
 
    procedure Search_Match_In_Doc
-     (Self     : not null access Preferences_Search_Provider;
-      Pref     : not null Preference;
-      Result   : out GPS.Search.Search_Result_Access)
+     (Self   : not null access Preferences_Search_Provider;
+      Pref   : not null Preference;
+      Result : out GPS.Search.Search_Result_Access)
    is
-      Doc               : constant String := Get_Doc (Pref);
-      Short             : GNAT.Strings.String_Access;
-      Long              : GNAT.Strings.String_Access;
-      Doc_Context       : Search_Context;
+      Doc         : constant String := Get_Doc (Pref);
+      Short       : GNAT.Strings.String_Access;
+      Long        : GNAT.Strings.String_Access;
+      Doc_Context : Search_Context;
    begin
       Result := null;
 
@@ -105,23 +106,26 @@ package body GPS.Kernel.Search.Preferences is
 
       --  If a match was found
       if Doc_Context /= GPS.Search.No_Match then
-         Short := new String'
-           (Escape_Text (Get_Page_Name (Pref)) & Pref.Get_Label);
-         Long := new String'
-           (Self.Pattern.Highlight_Match
-              (Buffer  => Get_Surrounding_Line
-                   (Doc,
-                    Byte_Index (Doc_Context.Start),
-                    --  An empty match has no end of its own: it ends
-                    --  where it starts.
-                    (if Is_Empty_Match (Doc_Context)
-                     then Byte_Index (Doc_Context.Start)
-                     else Byte_Index (Doc_Context.Finish))),
-               Context => Doc_Context));
+         Short :=
+           new String'(Escape_Text (Get_Page_Name (Pref)) & Pref.Get_Label);
+         Long :=
+           new String'
+             (Self.Pattern.Highlight_Match
+                (Buffer  =>
+                   Get_Surrounding_Line
+                     (Doc,
+                      Byte_Index (Doc_Context.Start),
+                      --  An empty match has no end of its own: it ends
+                      --  where it starts.
+                      (if Is_Empty_Match (Doc_Context)
+                       then Byte_Index (Doc_Context.Start)
+                       else Byte_Index (Doc_Context.Finish))),
+                 Context => Doc_Context));
 
-         Result := Preferences_Search_Provider'Class
-           (Self.all).Create_Preferences_Search_Result
-           (Pref, Short, Long, Doc_Context.Score);
+         Result :=
+           Preferences_Search_Provider'Class (Self.all)
+             .Create_Preferences_Search_Result
+                (Pref, Short, Long, Doc_Context.Score);
 
          Self.Adjust_Score (Result);
       end if;
@@ -131,11 +135,14 @@ package body GPS.Kernel.Search.Preferences is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
-     (Self    : not null access Preferences_Search_Provider) return String is
+   overriding
+   function Documentation
+     (Self : not null access Preferences_Search_Provider) return String
+   is
       pragma Unreferenced (Self);
    begin
-      return "Search amongst the GNAT Studio preferences, and display"
+      return
+        "Search amongst the GNAT Studio preferences, and display"
         & " the page containing it.";
    end Documentation;
 
@@ -144,8 +151,7 @@ package body GPS.Kernel.Search.Preferences is
    -----------------------------
 
    procedure Set_Search_Among_Hidden
-     (Self  : not null access Preferences_Search_Provider;
-      Value : Boolean) is
+     (Self : not null access Preferences_Search_Provider; Value : Boolean) is
    begin
       Self.Search_Among_Hidden := Value;
    end Set_Search_Among_Hidden;
@@ -154,7 +160,8 @@ package body GPS.Kernel.Search.Preferences is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Preferences_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Preferences_Search_Provider) is
    begin
       if Self.Pattern_Needs_Free then
          Free (Self.Pattern);
@@ -167,7 +174,8 @@ package body GPS.Kernel.Search.Preferences is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Preferences_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -181,48 +189,46 @@ package body GPS.Kernel.Search.Preferences is
       end if;
 
       --  Set Self.Pattern to Approximate if Pattern.Kind = Fuzzy
-      Self.Pattern := Pattern.Build_If_Needed
-        (Kind     => Fuzzy,
-         New_Kind => Approximate,
-         Built    => Self.Pattern_Needs_Free);
+      Self.Pattern :=
+        Pattern.Build_If_Needed
+          (Kind     => Fuzzy,
+           New_Kind => Approximate,
+           Built    => Self.Pattern_Needs_Free);
 
-      Self.Iter :=  Get_First_Reference (Self.Kernel.Get_Preferences);
+      Self.Iter := Get_First_Reference (Self.Kernel.Get_Preferences);
    end Set_Pattern;
 
    ----------
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Preferences_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
       Manager                : constant Preferences_Manager :=
-                                 Self.Kernel.Get_Preferences;
+        Self.Kernel.Get_Preferences;
       Pref                   : constant Preference :=
-                                 Get_Pref (Self.Iter, Manager => Manager);
+        Get_Pref (Self.Iter, Manager => Manager);
       Page_Name              : constant String := Pref.Get_Page_Name;
       Page                   : constant Preferences_Page :=
-                                 Manager.Get_Registered_Page (Page_Name);
-      Displayed_In_Assistant : constant Boolean := (Page /= null
-        and then Page.Get_Page_Type = Assistant_Page);
+        Manager.Get_Registered_Page (Page_Name);
+      Displayed_In_Assistant : constant Boolean :=
+        (Page /= null and then Page.Get_Page_Type = Assistant_Page);
    begin
       Result := null;
 
-      if not Displayed_In_Assistant and then
-        (Self.Search_Among_Hidden or else Page_Name /= "")
+      if not Displayed_In_Assistant
+        and then (Self.Search_Among_Hidden or else Page_Name /= "")
       then
          --  Try to match the preference's label first
-         Search_Match_In_Label (Self   => Self,
-                                Pref   => Pref,
-                                Result => Result);
+         Search_Match_In_Label (Self => Self, Pref => Pref, Result => Result);
 
          --  If no match was found for the label, try with the documentation
          if Result = null then
-            Search_Match_In_Doc (Self   => Self,
-                                 Pref   => Pref,
-                                 Result => Result);
+            Search_Match_In_Doc (Self => Self, Pref => Pref, Result => Result);
          end if;
       end if;
 
@@ -241,45 +247,50 @@ package body GPS.Kernel.Search.Preferences is
       Long  : GNAT.Strings.String_Access;
       Score : Natural) return GPS.Search.Search_Result_Access is
    begin
-      return new Preferences_Search_Result'
-        (Kernel   => Self.Kernel,
-         Provider => Self,
-         Score    => Score,
-         Short    => Short,
-         Long     => Long,
-         Id       =>
-           VSS.Strings.Conversions.To_Virtual_String (Get_Name (Pref)),
-         Pref     => Pref);
+      return
+        new Preferences_Search_Result'
+          (Kernel   => Self.Kernel,
+           Provider => Self,
+           Score    => Score,
+           Short    => Short,
+           Long     => Long,
+           Id       =>
+             VSS.Strings.Conversions.To_Virtual_String (Get_Name (Pref)),
+           Pref     => Pref);
    end Create_Preferences_Search_Result;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self       : not null access Preferences_Search_Result;
-      Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Preferences_Search_Result; Give_Focus : Boolean)
    is
       Success : Boolean;
       pragma Unreferenced (Give_Focus, Success);
    begin
-      Success := Execute_Action
-         (Self.Kernel, "open Preferences", Synchronous => True,
-          Error_Msg_In_Console => True);
+      Success :=
+        Execute_Action
+          (Self.Kernel,
+           "open Preferences",
+           Synchronous          => True,
+           Error_Msg_In_Console => True);
 
       --  Display the preference in the preferences editor dialog
       Self.Kernel.Get_Preferences.Get_Editor.Display_Pref
-        (Pref      => Self.Pref,
-         Highlight => False);
+        (Pref => Self.Pref, Highlight => False);
    end Execute;
 
    ----------
    -- Full --
    ----------
 
-   overriding function Full
-     (Self       : not null access Preferences_Search_Result)
-      return Gtk.Widget.Gtk_Widget is
+   overriding
+   function Full
+     (Self : not null access Preferences_Search_Result)
+      return Gtk.Widget.Gtk_Widget
+   is
       View      : Gtk_Text_View;
       Buffer    : Gtk_Text_Buffer;
       Underline : Gtk_Text_Tag;
@@ -300,7 +311,8 @@ package body GPS.Kernel.Search.Preferences is
          Set_Property
            (Underline, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
          Set_Property
-           (Underline, Gtk.Text_Tag.Underline_Property,
+           (Underline,
+            Gtk.Text_Tag.Underline_Property,
             Pango_Underline_Single);
 
          Buffer.Get_End_Iter (Iter);

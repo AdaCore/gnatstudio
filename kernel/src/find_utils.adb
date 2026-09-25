@@ -19,11 +19,11 @@ with Ada.Unchecked_Deallocation;
 
 with VSS.Strings.Conversions;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GPS.Kernel;          use GPS.Kernel;
+with GNATCOLL.Utils;      use GNATCOLL.Utils;
 with Glib.Convert;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
+with GPS.Intl;            use GPS.Intl;
 
 package body Find_Utils is
 
@@ -35,14 +35,13 @@ package body Find_Utils is
      (Context     : access Root_Search_Context;
       Buffer      : String;
       Start_Index : Natural;
-      End_Index   : Natural)
-      return GPS.Search.Search_Context
-   is
+      End_Index   : Natural) return GPS.Search.Search_Context is
    begin
-      return Context.Pattern.Start
-        (Buffer      => Buffer,
-         Start_Index => Start_Index,
-         End_Index   => End_Index);
+      return
+        Context.Pattern.Start
+          (Buffer      => Buffer,
+           Start_Index => Start_Index,
+           End_Index   => End_Index);
    end Match;
 
    ---------------------------
@@ -50,8 +49,8 @@ package body Find_Utils is
    ---------------------------
 
    function Get_Terminate_Message
-     (Context : access Root_Search_Context;
-      Kind    : Operation_Kind) return String
+     (Context : access Root_Search_Context; Kind : Operation_Kind)
+      return String
    is
       pragma Unreferenced (Context, Kind);
    begin
@@ -73,9 +72,9 @@ package body Find_Utils is
       Was_Partial          : out Boolean;
       Display_Matched_Only : Boolean := False)
    is
-      Result : GPS.Search.Search_Context;
-      BOL, EOL : Integer;
-      After : Positive;
+      Result       : GPS.Search.Search_Context;
+      BOL, EOL     : Integer;
+      After        : Positive;
       Matched_Text : Unbounded_String;
    begin
       Was_Partial := False;
@@ -96,15 +95,16 @@ package body Find_Utils is
          return;
       end if;
 
-      Result := Context.Pattern.Start
-        (Buffer      => Buffer,
-         Start_Index => Start_Index,
-         End_Index   => End_Index,
-         Ref         => Ref,
-         Tab_Width   => Tab_Width);
+      Result :=
+        Context.Pattern.Start
+          (Buffer      => Buffer,
+           Start_Index => Start_Index,
+           End_Index   => End_Index,
+           Ref         => Ref,
+           Tab_Width   => Tab_Width);
 
       while Result /= GPS.Search.No_Match loop
-         Ref  := Result.Ref;
+         Ref := Result.Ref;
 
          After := Index_After_Match (Result);
          BOL := Line_Start (Buffer, Byte_Index (Result.Start));
@@ -115,12 +115,11 @@ package body Find_Utils is
          --  line (including comments if we were only searching in code for
          --  instance)
          Matched_Text :=
-           To_Unbounded_String ("<b>"
-                                & Glib.Convert.Escape_Text
-                                  (Buffer
-                                     (Byte_Index (Result.Start)
-                                      .. After - 1))
-                                & "</b>");
+           To_Unbounded_String
+             ("<b>"
+              & Glib.Convert.Escape_Text
+                  (Buffer (Byte_Index (Result.Start) .. After - 1))
+              & "</b>");
          if not Display_Matched_Only then
             Matched_Text :=
               Glib.Convert.Escape_Text
@@ -165,8 +164,8 @@ package body Find_Utils is
    -- Get_End_Notif_Done --
    ------------------------
 
-   function Get_End_Notif_Done
-     (Context : Root_Search_Context) return Boolean is
+   function Get_End_Notif_Done (Context : Root_Search_Context) return Boolean
+   is
    begin
       return Context.End_Notif_Done;
    end Get_End_Notif_Done;
@@ -180,16 +179,16 @@ package body Find_Utils is
       Pattern        : String;
       Whole_Word     : Boolean;
       Case_Sensitive : Boolean;
-      Kind           : GPS.Search.Search_Kind)
-   is
+      Kind           : GPS.Search.Search_Kind) is
    begin
       Free (Context.Pattern);
-      Context.Pattern := Build
-        (Pattern,
-         Whole_Word      => Whole_Word,
-         Case_Sensitive  => Case_Sensitive,
-         Kind            => Kind,
-         Allow_Highlight => True);
+      Context.Pattern :=
+        Build
+          (Pattern,
+           Whole_Word      => Whole_Word,
+           Case_Sensitive  => Case_Sensitive,
+           Kind            => Kind,
+           Allow_Highlight => True);
    end Set_Pattern;
 
    ----------
@@ -202,8 +201,10 @@ package body Find_Utils is
    end Free;
 
    procedure Free (Context : in out Root_Search_Context_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Root_Search_Context'Class, Root_Search_Context_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Root_Search_Context'Class,
+           Root_Search_Context_Access);
    begin
       if Context /= null then
          Free (Context.all);
@@ -228,17 +229,18 @@ package body Find_Utils is
 
    function Get_Pattern
      (Occurrence : not null access Search_Occurrence_Record'Class)
-     return String
-   is
-      (To_String (Occurrence.Pattern));
+      return String
+   is (To_String (Occurrence.Pattern));
 
    ----------
    -- Free --
    ----------
 
    procedure Free (Occurrence : in out Search_Occurrence) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Search_Occurrence_Record'Class, Search_Occurrence);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Search_Occurrence_Record'Class,
+           Search_Occurrence);
    begin
       if Occurrence /= null then
          Unchecked_Free (Occurrence);
@@ -261,14 +263,15 @@ package body Find_Utils is
    is
       Occurrence : Search_Occurrence;
    begin
-      Occurrence := Context.Search
-        (Kernel               => Kernel,
-         Search_Backward      => Search_Backward,
-         From_Selection_Start => From_Selection_Start,
-         Give_Focus           => Give_Focus,
-         Found                => Found,
-         Continue             => Continue,
-         Display_Matched_Only => Display_Matched_Only);
+      Occurrence :=
+        Context.Search
+          (Kernel               => Kernel,
+           Search_Backward      => Search_Backward,
+           From_Selection_Start => From_Selection_Start,
+           Give_Focus           => Give_Focus,
+           Found                => Found,
+           Continue             => Continue,
+           Display_Matched_Only => Display_Matched_Only);
       Free (Occurrence);
    end Search;
 
@@ -284,9 +287,14 @@ package body Find_Utils is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
-      pragma Unreferenced
-        (Context, Kernel, Replace_String, Search_Backward, Give_Focus,
-         Case_Preserving);
+      pragma
+        Unreferenced
+          (Context,
+           Kernel,
+           Replace_String,
+           Search_Backward,
+           Give_Focus,
+           Case_Preserving);
    begin
       return False;
    end Replace;
@@ -297,7 +305,8 @@ package body Find_Utils is
 
    function Is_Regexp (Context : access Root_Search_Context) return Boolean is
    begin
-      return Context.Pattern /= null
+      return
+        Context.Pattern /= null
         and then Context.Pattern.Get_Kind = GPS.Search.Regexp;
    end Is_Regexp;
 
@@ -314,36 +323,38 @@ package body Find_Utils is
       Case_Sensitive : Boolean;
       Tab_Width      : Natural)
    is
-      Best_Line   : Integer := 0;
-      Best_Column : Character_Offset_Type := 0;
-      Pattern     : Search_Pattern_Access;
-      Result      : GPS.Search.Search_Context;
+      Best_Line           : Integer := 0;
+      Best_Column         : Character_Offset_Type := 0;
+      Pattern             : Search_Pattern_Access;
+      Result              : GPS.Search.Search_Context;
       Line_Diff, Col_Diff : Integer;
-      Ref         : constant Buffer_Position := At_Index (Buffer'First);
+      Ref                 : constant Buffer_Position :=
+        At_Index (Buffer'First);
 
    begin
-      Pattern := Build
-        (Pattern       => Str,
-         Case_Sensitive => Case_Sensitive,
-         Whole_Word     => True,
-         Kind           => GPS.Search.Full_Text);
-      Result := Pattern.Start
-        (Buffer      => Buffer,
-         Start_Index => Buffer'First,
-         End_Index   => Buffer'Last,
-         Ref         => Ref,
-         Tab_Width   => Tab_Width);
+      Pattern :=
+        Build
+          (Pattern        => Str,
+           Case_Sensitive => Case_Sensitive,
+           Whole_Word     => True,
+           Kind           => GPS.Search.Full_Text);
+      Result :=
+        Pattern.Start
+          (Buffer      => Buffer,
+           Start_Index => Buffer'First,
+           End_Index   => Buffer'Last,
+           Ref         => Ref,
+           Tab_Width   => Tab_Width);
 
       while Result /= GPS.Search.No_Match loop
 
-         Line_Diff := Integer
-           (abs (Result.Start.Line - Line) - abs (Best_Line - Line));
-         Col_Diff := Integer
-           (abs (Result.Start.Column - Column) - abs (Best_Column - Column));
+         Line_Diff :=
+           Integer (abs (Result.Start.Line - Line) - abs (Best_Line - Line));
+         Col_Diff :=
+           Integer
+             (abs (Result.Start.Column - Column) - abs (Best_Column - Column));
 
-         if Line_Diff < 0
-           or else (Line_Diff = 0 and then Col_Diff < 0)
-         then
+         if Line_Diff < 0 or else (Line_Diff = 0 and then Col_Diff < 0) then
             Best_Line := Result.Start.Line;
             Best_Column := Result.Start.Column;
          end if;
@@ -353,9 +364,9 @@ package body Find_Utils is
 
       Free (Pattern);
 
-      Line   := Best_Line;
+      Line := Best_Line;
       Column := Best_Column;
-      Found  := Best_Line /= 0;
+      Found := Best_Line /= 0;
    end Find_Closest_Match;
 
    -----------
@@ -364,8 +375,7 @@ package body Find_Utils is
 
    procedure Reset
      (Context : access Root_Search_Context;
-      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+      Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
         (Get_Search_Category_Name
@@ -378,9 +388,7 @@ package body Find_Utils is
    -- Context_Look_In --
    ---------------------
 
-   function Context_Look_In
-     (Self : Root_Search_Context) return String
-   is
+   function Context_Look_In (Self : Root_Search_Context) return String is
       pragma Unreferenced (Self);
    begin
       --  Only used in Find_Closest_Match
@@ -422,8 +430,7 @@ package body Find_Utils is
    --------------------
 
    function Pop_Occurrence
-     (Module : not null access Search_Module_Type)
-      return Search_Occurrence
+     (Module : not null access Search_Module_Type) return Search_Occurrence
    is
       Occurrence : Search_Occurrence;
    begin
@@ -440,13 +447,10 @@ package body Find_Utils is
    -------------------------
 
    function Get_Last_Occurrence
-     (Module : not null access Search_Module_Type)
-      return Search_Occurrence
-   is
-     (if Module.Search_Occurrences_Stack.Is_Empty then
-         null
-      else
-         Module.Search_Occurrences_Stack.First_Element);
+     (Module : not null access Search_Module_Type) return Search_Occurrence
+   is (if Module.Search_Occurrences_Stack.Is_Empty
+       then null
+       else Module.Search_Occurrences_Stack.First_Element);
 
    -----------------------
    -- Clear_Occurrences --
@@ -467,8 +471,7 @@ package body Find_Utils is
 
    function Get_Label
      (Module : not null access Search_Module_Type) return String
-   is
-      (To_String (Module.Label));
+   is (To_String (Module.Label));
 
    ------------------------
    -- Get_Scope_Selector --
@@ -476,8 +479,7 @@ package body Find_Utils is
 
    function Get_Scope_Selector
      (Module : not null access Search_Module_Type) return Scope_Selector
-   is
-     (Module.Selector);
+   is (Module.Selector);
 
    ------------
    -- Get_Id --
@@ -485,8 +487,7 @@ package body Find_Utils is
 
    function Get_Id
      (Module : not null access Search_Module_Type) return Module_ID
-   is
-      (Module.Id);
+   is (Module.Id);
 
    ----------------------
    -- Get_In_Selection --
@@ -494,8 +495,7 @@ package body Find_Utils is
 
    function Get_In_Selection
      (Module : not null access Search_Module_Type) return Boolean
-   is
-     (Module.In_Selection);
+   is (Module.In_Selection);
 
    -------------------------
    -- Is_Option_Supported --
@@ -504,21 +504,20 @@ package body Find_Utils is
    function Is_Option_Supported
      (Module : not null access Search_Module_Type;
       Option : Search_Options_Mask) return Boolean
-   is
-     ((Module.Mask and Option) /= 0);
+   is ((Module.Mask and Option) /= 0);
 
    ------------------------------
    -- Get_Search_Category_Name --
    ------------------------------
 
    function Get_Search_Category_Name
-     (Look_For    : String;
-      Interactive : Boolean) return VSS.Strings.Virtual_String is
+     (Look_For : String; Interactive : Boolean)
+      return VSS.Strings.Virtual_String is
    begin
       return
         VSS.Strings.Conversions.To_Virtual_String
           ((if Interactive then -"interactive search" else -"Search for: ")
-             & Glib.Convert.Escape_Text (Look_For));
+           & Glib.Convert.Escape_Text (Look_For));
    end Get_Search_Category_Name;
 
 end Find_Utils;

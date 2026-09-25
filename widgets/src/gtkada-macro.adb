@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with System;
-with Glib.Object;       use Glib.Object;
+with Glib.Object; use Glib.Object;
 with Gdk.Window;
 
 with Gdk;               use Gdk;
@@ -24,16 +24,16 @@ with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
-with Gtk.Bin;           use Gtk.Bin;
-with Gtk.Container;     use Gtk.Container;
-with Gtk.Label;         use Gtk.Label;
-with Gtk.Main;          use Gtk.Main;
-with Gtk.Menu;          use Gtk.Menu;
-with Gtk.Menu_Item;     use Gtk.Menu_Item;
-with Gtk.Window;        use Gtk.Window;
+with Gtk.Bin;       use Gtk.Bin;
+with Gtk.Container; use Gtk.Container;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Main;      use Gtk.Main;
+with Gtk.Menu;      use Gtk.Menu;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Window;    use Gtk.Window;
 
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with Ada.Text_IO;       use Ada.Text_IO;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -83,9 +83,8 @@ package body Gtkada.Macro is
    Invalid_Line : exception;
 
    function Load_Line
-     (File     : access File_Buffer;
-      Name     : String;
-      Optional : Boolean := False) return String;
+     (File : access File_Buffer; Name : String; Optional : Boolean := False)
+      return String;
    --  Read the next line in the file, check that the item name is Name,
    --  and return the value (i.e after ":=" ).
    --  Raise Invalid_Line if the item is incorrect.
@@ -97,8 +96,8 @@ package body Gtkada.Macro is
    ----------
 
    procedure Free (Item : in out Macro_Item_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Macro_Item'Class, Macro_Item_Access);
+      procedure Internal is new
+        Ada.Unchecked_Deallocation (Macro_Item'Class, Macro_Item_Access);
    begin
       Internal (Item);
    end Free;
@@ -208,7 +207,7 @@ package body Gtkada.Macro is
 
    begin
       List := List_Toplevels;
-      W    := Get_Widget_From_Id (Item.Id, List);
+      W := Get_Widget_From_Id (Item.Id, List);
       Widget_List.Free (List);
 
       if W = null or else Get_Window (W) = null then
@@ -222,8 +221,7 @@ package body Gtkada.Macro is
    -- Get_Id --
    ------------
 
-   function Get_Id
-     (Widget : access Gtk_Widget_Record'Class) return Identifier
+   function Get_Id (Widget : access Gtk_Widget_Record'Class) return Identifier
    is
       Widget_Name : constant UTF8_String := Get_Name (Widget);
       Class_Name  : constant UTF8_String := Type_Name (Get_Type (Widget));
@@ -291,16 +289,14 @@ package body Gtkada.Macro is
    ---------------
 
    function Load_Line
-     (File     : access File_Buffer;
-      Name     : String;
-      Optional : Boolean := False) return String
+     (File : access File_Buffer; Name : String; Optional : Boolean := False)
+      return String
    is
       Last  : Natural;
       First : Natural;
    begin
       Last := File.Index;
-      while Last <= File.Buffer'Last
-        and then File.Buffer (Last) /= ASCII.LF
+      while Last <= File.Buffer'Last and then File.Buffer (Last) /= ASCII.LF
       loop
          Last := Last + 1;
       end loop;
@@ -326,8 +322,7 @@ package body Gtkada.Macro is
    -- Save_List --
    ---------------
 
-   function Save_List
-     (Name : String; Item : Macro_Item_Access) return Boolean
+   function Save_List (Name : String; Item : Macro_Item_Access) return Boolean
    is
       File  : File_Type;
       Event : Macro_Item_Access := Item;
@@ -354,9 +349,7 @@ package body Gtkada.Macro is
    ---------------
 
    procedure Load_List
-     (Buffer  : String;
-      Item    : out Macro_Item_Access;
-      Success : out Boolean)
+     (Buffer : String; Item : out Macro_Item_Access; Success : out Boolean)
    is
       File : aliased File_Buffer;
       Prev : Macro_Item_Access;
@@ -364,10 +357,10 @@ package body Gtkada.Macro is
       Typ  : Gdk_Event_Type;
 
    begin
-      Item        := null;
-      Success     := True;
+      Item := null;
+      Success := True;
       File.Buffer := Buffer'Unrestricted_Access;
-      File.Index  := Buffer'First;
+      File.Index := Buffer'First;
 
       while File.Index <= File.Buffer'Last loop
          begin
@@ -380,23 +373,23 @@ package body Gtkada.Macro is
                      when Enter_Notify | Leave_Notify =>
                         Next := new Macro_Item_Crossing;
 
-                     when Button_Press | Button_Release
-                       | Gdk_2button_Press
-                       | Gdk_3button_Press
-                       =>
+                     when Button_Press
+                        | Button_Release
+                        | Gdk_2button_Press
+                        | Gdk_3button_Press           =>
                         Next := new Macro_Item_Mouse;
 
-                     when Key_Press | Key_Release =>
+                     when Key_Press | Key_Release     =>
                         Next := new Macro_Item_Key;
 
-                     when Motion_Notify =>
+                     when Motion_Notify               =>
                         Next := new Macro_Item_Motion;
 
-                     when others =>
+                     when others                      =>
                         --  Ignore unknown events. Do nothing else so that we
                         --  are forward compatible.
 
-                        Next    := null;
+                        Next := null;
                         Success := False;
                   end case;
 
@@ -427,9 +420,7 @@ package body Gtkada.Macro is
    -- Save_To_Disk --
    ------------------
 
-   procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item) is
+   procedure Save_To_Disk (File : Ada.Text_IO.File_Type; Item : Macro_Item) is
    begin
       Put_Line (File, "Type:=" & Gdk_Event_Type'Image (Item.Event_Type));
       Put_Line (File, "Id:=" & Item.Id.Id_Type'Img);
@@ -443,9 +434,9 @@ package body Gtkada.Macro is
       Put_Line (File, "Time:=" & Guint32'Image (Item.Time));
    end Save_To_Disk;
 
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Mouse) is
+   overriding
+   procedure Save_To_Disk
+     (File : Ada.Text_IO.File_Type; Item : Macro_Item_Mouse) is
    begin
       Save_To_Disk (File, Macro_Item (Item));
       Put_Line (File, "X:=" & Gint'Image (Item.X));
@@ -458,9 +449,9 @@ package body Gtkada.Macro is
         (File, "Window:=" & Address_Integer'Image (To_Integer (Item.Window)));
    end Save_To_Disk;
 
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Key) is
+   overriding
+   procedure Save_To_Disk (File : Ada.Text_IO.File_Type; Item : Macro_Item_Key)
+   is
    begin
       Save_To_Disk (File, Macro_Item (Item));
       Put_Line (File, "State:=" & Gdk_Modifier_Type'Image (Item.State));
@@ -469,9 +460,9 @@ package body Gtkada.Macro is
       Put_Line (File, "Group:=" & Guint8'Image (Item.Group));
    end Save_To_Disk;
 
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Motion) is
+   overriding
+   procedure Save_To_Disk
+     (File : Ada.Text_IO.File_Type; Item : Macro_Item_Motion) is
    begin
       Save_To_Disk (File, Macro_Item (Item));
       Put_Line (File, "X:=" & Gint'Image (Item.X));
@@ -479,9 +470,9 @@ package body Gtkada.Macro is
       Put_Line (File, "State:=" & Gdk_Modifier_Type'Image (Item.State));
    end Save_To_Disk;
 
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Crossing) is
+   overriding
+   procedure Save_To_Disk
+     (File : Ada.Text_IO.File_Type; Item : Macro_Item_Crossing) is
    begin
       Save_To_Disk (File, Macro_Item (Item));
       Put_Line (File, "X:=" & Gint'Image (Item.X));
@@ -491,49 +482,47 @@ package body Gtkada.Macro is
       Put_Line (File, "State:=" & Gdk_Modifier_Type'Image (Item.State));
    end Save_To_Disk;
 
-   overriding procedure Save_To_Disk
-     (File : Ada.Text_IO.File_Type;
-      Item : Macro_Item_Scroll) is
+   overriding
+   procedure Save_To_Disk
+     (File : Ada.Text_IO.File_Type; Item : Macro_Item_Scroll) is
    begin
       Save_To_Disk (File, Macro_Item (Item));
       Put_Line (File, "X:=" & Gint'Image (Item.X));
       Put_Line (File, "Y:=" & Gint'Image (Item.Y));
       Put_Line (File, "State:=" & Gdk_Modifier_Type'Image (Item.State));
-      Put_Line (File,
-                "Direction:=" & Gdk_Scroll_Direction'Image (Item.Direction));
+      Put_Line
+        (File, "Direction:=" & Gdk_Scroll_Direction'Image (Item.Direction));
    end Save_To_Disk;
 
    ----------------
    -- Load_Macro --
    ----------------
 
-   procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item)  is
+   procedure Load_Macro (File : access File_Buffer; Item : out Macro_Item) is
    begin
       Item.Id.Id_Type := Identifier_Type'Value (Load_Line (File, "Id"));
       Item.Id.Id := new String'(Load_Line (File, "Name"));
       Item.Time := Guint32'Value (Load_Line (File, "Time"));
    end Load_Macro;
 
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Mouse) is
+   overriding
+   procedure Load_Macro
+     (File : access File_Buffer; Item : out Macro_Item_Mouse) is
    begin
       Load_Macro (File, Macro_Item (Item));
       Item.X := Gint'Value (Load_Line (File, "X"));
       Item.Y := Gint'Value (Load_Line (File, "Y"));
       Item.Button := Guint'Value (Load_Line (File, "Button"));
-      Item.State  := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
+      Item.State := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
       Item.X_Root := Gint'Value (Load_Line (File, "X_Root"));
       Item.Y_Root := Gint'Value (Load_Line (File, "Y_Root"));
       Item.Window :=
         To_Window (Address_Integer'Value (Load_Line (File, "Window")));
    end Load_Macro;
 
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Key) is
+   overriding
+   procedure Load_Macro (File : access File_Buffer; Item : out Macro_Item_Key)
+   is
    begin
       Load_Macro (File, Macro_Item (Item));
       Item.X := 0;
@@ -544,9 +533,9 @@ package body Gtkada.Macro is
       Item.Group := Guint8'Value (Load_Line (File, "Group"));
    end Load_Macro;
 
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Motion) is
+   overriding
+   procedure Load_Macro
+     (File : access File_Buffer; Item : out Macro_Item_Motion) is
    begin
       Load_Macro (File, Macro_Item (Item));
       Item.X := Gint'Value (Load_Line (File, "X"));
@@ -554,26 +543,26 @@ package body Gtkada.Macro is
       Item.State := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
    end Load_Macro;
 
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Crossing) is
+   overriding
+   procedure Load_Macro
+     (File : access File_Buffer; Item : out Macro_Item_Crossing) is
    begin
       Load_Macro (File, Macro_Item (Item));
-      Item.X      := Gint'Value (Load_Line (File, "X"));
-      Item.Y      := Gint'Value (Load_Line (File, "Y"));
-      Item.Mode   := Gdk_Crossing_Mode'Value (Load_Line (File, "Mode"));
+      Item.X := Gint'Value (Load_Line (File, "X"));
+      Item.Y := Gint'Value (Load_Line (File, "Y"));
+      Item.Mode := Gdk_Crossing_Mode'Value (Load_Line (File, "Mode"));
       Item.Detail := Gdk_Notify_Type'Value (Load_Line (File, "Detail"));
-      Item.State  := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
+      Item.State := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
    end Load_Macro;
 
-   overriding procedure Load_Macro
-     (File : access File_Buffer;
-      Item : out Macro_Item_Scroll) is
+   overriding
+   procedure Load_Macro
+     (File : access File_Buffer; Item : out Macro_Item_Scroll) is
    begin
       Load_Macro (File, Macro_Item (Item));
-      Item.X         := Gint'Value (Load_Line (File, "X"));
-      Item.Y         := Gint'Value (Load_Line (File, "Y"));
-      Item.State     := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
+      Item.X := Gint'Value (Load_Line (File, "X"));
+      Item.Y := Gint'Value (Load_Line (File, "Y"));
+      Item.State := Gdk_Modifier_Type'Value (Load_Line (File, "State"));
       Item.Direction :=
         Gdk_Scroll_Direction'Value (Load_Line (File, "Direction"));
    end Load_Macro;
@@ -582,7 +571,8 @@ package body Gtkada.Macro is
    -- Play_Event --
    ----------------
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Mouse;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
@@ -721,13 +711,14 @@ package body Gtkada.Macro is
    -- Play_Event --
    ----------------
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Key;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
    is
-      E       : Gdk_Event;
-      Widget  : Gtk_Widget := Grab_Get_Current;
+      E      : Gdk_Event;
+      Widget : Gtk_Widget := Grab_Get_Current;
    begin
       if Widget = null then
          Widget := Find_Widget (Item);
@@ -762,7 +753,8 @@ package body Gtkada.Macro is
    -- Play_Event --
    ----------------
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Motion;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
@@ -793,7 +785,8 @@ package body Gtkada.Macro is
    -- Play_Event --
    ----------------
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Crossing;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
@@ -816,7 +809,7 @@ package body Gtkada.Macro is
          E.Crossing.Y := Gdouble (Item.Y - Y);
          E.Crossing.X_Root := Gdouble (Item.X);
          E.Crossing.Y_Root := Gdouble (Item.Y);
-         E.Crossing.Mode  := Item.Mode;
+         E.Crossing.Mode := Item.Mode;
          E.Crossing.Detail := Item.Detail;
          E.Crossing.State := Item.State;
          Set_Device (E, Device);
@@ -831,7 +824,8 @@ package body Gtkada.Macro is
    -- Play_Event --
    ----------------
 
-   overriding function Play_Event
+   overriding
+   function Play_Event
      (Item           : Macro_Item_Scroll;
       Device         : not null access Gdk.Device.Gdk_Device_Record'Class;
       Default_Widget : Gtk_Widget := null) return Boolean
@@ -867,24 +861,25 @@ package body Gtkada.Macro is
    -----------------
 
    function Create_Item
-     (Event     : Gdk_Event_Button;
-      Prev_Time : Guint32 := 0) return Macro_Item_Mouse_Access
+     (Event : Gdk_Event_Button; Prev_Time : Guint32 := 0)
+      return Macro_Item_Mouse_Access
    is
       Parent : Gtk_Widget;
       Item   : Macro_Item_Mouse_Access;
    begin
-      Item            := new Macro_Item_Mouse;
+      Item := new Macro_Item_Mouse;
       Find_Named_Parent
         (Get_Event_Widget (To_Event (Event'Unrestricted_Access)),
-         Parent, Item.Id);
+         Parent,
+         Item.Id);
 
       Item.Event_Type := Event.The_Type;
-      Item.X          := Gint (Event.X);
-      Item.Y          := Gint (Event.Y);
-      Item.X_Root     := Gint (Event.X_Root);
-      Item.Y_Root     := Gint (Event.Y_Root);
-      Item.Button     := Event.Button;
-      Item.State      := Event.State;
+      Item.X := Gint (Event.X);
+      Item.Y := Gint (Event.Y);
+      Item.X_Root := Gint (Event.X_Root);
+      Item.Y_Root := Gint (Event.Y_Root);
+      Item.Button := Event.Button;
+      Item.State := Event.State;
 
       if Prev_Time = 0 then
          Item.Time := 0;
@@ -892,24 +887,25 @@ package body Gtkada.Macro is
          Item.Time := Event.Time - Prev_Time;
       end if;
 
-      Item.Window     := Event.Window;
+      Item.Window := Event.Window;
       return Item;
    end Create_Item;
 
    function Create_Item
-     (Event     : Gdk_Event_Key;
-      Prev_Time : Guint32 := 0) return Macro_Item_Key_Access
+     (Event : Gdk_Event_Key; Prev_Time : Guint32 := 0)
+      return Macro_Item_Key_Access
    is
       Parent : Gtk_Widget;
       Item   : Macro_Item_Key_Access;
    begin
-      Item                  := new Macro_Item_Key;
+      Item := new Macro_Item_Key;
       Find_Named_Parent
         (Get_Event_Widget (To_Event (Event'Unrestricted_Access)),
-         Parent, Item.Id);
+         Parent,
+         Item.Id);
 
-      Item.Event_Type       := Event.The_Type;
-      Item.State            := Event.State;
+      Item.Event_Type := Event.The_Type;
+      Item.State := Event.State;
 
       if Prev_Time = 0 then
          Item.Time := 0;
@@ -917,23 +913,23 @@ package body Gtkada.Macro is
          Item.Time := Event.Time - Prev_Time;
       end if;
 
-      Item.Keyval           := Event.Keyval;
-      Item.Group            := Event.Group;
+      Item.Keyval := Event.Keyval;
+      Item.Group := Event.Group;
       Item.Hardware_Keycode := Event.Hardware_Keycode;
       return Item;
    end Create_Item;
 
    function Create_Item
-     (Event     : Gdk_Event_Motion;
-      Prev_Time : Guint32 := 0) return Macro_Item_Motion_Access
+     (Event : Gdk_Event_Motion; Prev_Time : Guint32 := 0)
+      return Macro_Item_Motion_Access
    is
       Item : Macro_Item_Motion_Access;
    begin
-      Item            := new Macro_Item_Motion;
+      Item := new Macro_Item_Motion;
       Item.Event_Type := Event.The_Type;
-      Item.X          := Gint (Event.X_Root);
-      Item.Y          := Gint (Event.Y_Root);
-      Item.State      := Event.State;
+      Item.X := Gint (Event.X_Root);
+      Item.Y := Gint (Event.Y_Root);
+      Item.State := Event.State;
 
       if Prev_Time = 0 then
          Item.Time := 0;
@@ -945,17 +941,17 @@ package body Gtkada.Macro is
    end Create_Item;
 
    function Create_Item
-     (Event     : Gdk_Event_Crossing;
-      Prev_Time : Guint32 := 0) return Macro_Item_Crossing_Access
+     (Event : Gdk_Event_Crossing; Prev_Time : Guint32 := 0)
+      return Macro_Item_Crossing_Access
    is
       Item : Macro_Item_Crossing_Access;
    begin
-      Item            := new Macro_Item_Crossing;
+      Item := new Macro_Item_Crossing;
       Item.Event_Type := Event.The_Type;
-      Item.X          := Gint (Event.X_Root);
-      Item.Y          := Gint (Event.Y_Root);
-      Item.Mode       := Event.Mode;
-      Item.Detail     := Event.Detail;
+      Item.X := Gint (Event.X_Root);
+      Item.Y := Gint (Event.Y_Root);
+      Item.Mode := Event.Mode;
+      Item.Detail := Event.Detail;
 
       if Prev_Time = 0 then
          Item.Time := 0;
@@ -967,17 +963,17 @@ package body Gtkada.Macro is
    end Create_Item;
 
    function Create_Item
-     (Event     : Gdk_Event_Scroll;
-      Prev_Time : Guint32 := 0) return Macro_Item_Scroll_Access
+     (Event : Gdk_Event_Scroll; Prev_Time : Guint32 := 0)
+      return Macro_Item_Scroll_Access
    is
       Item : Macro_Item_Scroll_Access;
    begin
-      Item            := new Macro_Item_Scroll;
+      Item := new Macro_Item_Scroll;
       Item.Event_Type := Event.The_Type;
-      Item.X          := Gint (Event.X_Root);
-      Item.Y          := Gint (Event.Y_Root);
-      Item.State      := Event.State;
-      Item.Direction  := Event.Direction;
+      Item.X := Gint (Event.X_Root);
+      Item.Y := Gint (Event.Y_Root);
+      Item.State := Event.State;
+      Item.Direction := Event.Direction;
 
       if Prev_Time = 0 then
          Item.Time := 0;

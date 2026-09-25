@@ -17,10 +17,10 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Basic_Types;             use Basic_Types;
-with GPS.Editors;             use GPS.Editors;
+with Basic_Types;      use Basic_Types;
+with GPS.Editors;      use GPS.Editors;
 with GPS.Kernel.Charsets;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Xref;
 with LAL.Highlighters;
@@ -31,7 +31,8 @@ with Langkit_Support.Slocs;
 package body LAL.Module is
 
    type Highlight_Hook is new Highlight_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self      : Highlight_Hook;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File      : GNATCOLL.VFS.Virtual_File;
@@ -41,30 +42,35 @@ package body LAL.Module is
    --  corresponding to given File.
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
    --  Callback for the "file_edited" hook
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
    type Highlightable_Editor_Buffer_Type is
-     new LAL.Highlighters.Highlightable_Interface with record
+     new LAL.Highlighters.Highlightable_Interface
+   with record
       Buffer : GPS.Editors.Editor_Buffer_Holders.Holder;
    end record;
    --  Wrapper aroung a source editor buffer allowing it to be highlighted
    --  using Libadalang.
 
-   overriding procedure Highlight_Token
+   overriding
+   procedure Highlight_Token
      (Self  : in out Highlightable_Editor_Buffer_Type;
       Token : Libadalang.Common.Token_Reference;
       Style : String);
 
-   overriding procedure Remove_Highlighting
+   overriding
+   procedure Remove_Highlighting
      (Self  : in out Highlightable_Editor_Buffer_Type;
       Style : String;
       From  : Integer;
@@ -76,8 +82,8 @@ package body LAL.Module is
       To_Line   : Integer);
    --  Highlight the given editor
 
-   type LAL_UI_Module_Id_Record is new GPS.Kernel.Modules.Module_ID_Record with
-   record
+   type LAL_UI_Module_Id_Record is new GPS.Kernel.Modules.Module_ID_Record
+   with record
       Hook : aliased Highlight_Hook;
       Core : LAL.Core_Module.LAL_Module_Id;
    end record;
@@ -90,7 +96,8 @@ package body LAL.Module is
    -- Highlight_Token --
    ---------------------
 
-   overriding procedure Highlight_Token
+   overriding
+   procedure Highlight_Token
      (Self  : in out Highlightable_Editor_Buffer_Type;
       Token : Libadalang.Common.Token_Reference;
       Style : String)
@@ -98,13 +105,13 @@ package body LAL.Module is
       use Libadalang.Common;
       use Langkit_Support.Slocs;
 
-      Loc   : constant Source_Location_Range := Sloc_Range (Data (Token));
-      From  : constant Positive := Positive (Loc.Start_Line);
-      To    : constant Positive := Positive (Loc.End_Line);
-      Start : constant Visible_Column_Type :=
-                Visible_Column_Type (Loc.Start_Column);
-      Stop  : constant Visible_Column_Type :=
-                Visible_Column_Type (Loc.End_Column);
+      Loc    : constant Source_Location_Range := Sloc_Range (Data (Token));
+      From   : constant Positive := Positive (Loc.Start_Line);
+      To     : constant Positive := Positive (Loc.End_Line);
+      Start  : constant Visible_Column_Type :=
+        Visible_Column_Type (Loc.Start_Column);
+      Stop   : constant Visible_Column_Type :=
+        Visible_Column_Type (Loc.End_Column);
       Buffer : constant GPS.Editors.Editor_Buffer'Class := Self.Buffer.Element;
    begin
       if Style = "" then
@@ -126,16 +133,15 @@ package body LAL.Module is
    -- Remove_Highlighting --
    -------------------------
 
-   overriding procedure Remove_Highlighting
+   overriding
+   procedure Remove_Highlighting
      (Self  : in out Highlightable_Editor_Buffer_Type;
       Style : String;
       From  : Integer;
       To    : Integer) is
    begin
       Self.Buffer.Element.Remove_Style_On_Lines
-        (Style,
-         Editable_Line_Type (From),
-         Editable_Line_Type (To));
+        (Style, Editable_Line_Type (From), Editable_Line_Type (To));
    end Remove_Highlighting;
 
    ----------------------
@@ -145,8 +151,7 @@ package body LAL.Module is
    procedure Highlight_Buffer
      (Buffer    : GPS.Editors.Editor_Buffer'Class;
       From_Line : Integer;
-      To_Line   : Integer)
-   is
+      To_Line   : Integer) is
    begin
       if Buffer = GPS.Editors.Nil_Editor_Buffer
         or else To_Lower (Buffer.Get_Language.Get_Name) /= "ada"
@@ -156,20 +161,18 @@ package body LAL.Module is
 
       declare
          Highlightable_Buffer : Highlightable_Editor_Buffer_Type :=
-                                  Highlightable_Editor_Buffer_Type'
-                                    (Buffer => Editor_Buffer_Holders.To_Holder
-                                       (Buffer));
+           Highlightable_Editor_Buffer_Type'
+             (Buffer => Editor_Buffer_Holders.To_Holder (Buffer));
          Unit                 : constant Libadalang.Analysis.Analysis_Unit :=
-                                  Libadalang.Analysis.Get_From_Buffer
-                                    (Context  => Module.Core.Context,
-                                     Filename => Buffer.File.Display_Full_Name,
-                                     Buffer   => Buffer.Get_Chars_S);
-         Dummy              : Boolean;
+           Libadalang.Analysis.Get_From_Buffer
+             (Context  => Module.Core.Context,
+              Filename => Buffer.File.Display_Full_Name,
+              Buffer   => Buffer.Get_Chars_S);
+         Dummy                : Boolean;
       begin
-         Dummy := Highlightable_Buffer.Highlight_Using_Tree
-           (Unit => Unit,
-            From => From_Line,
-            To   => To_Line);
+         Dummy :=
+           Highlightable_Buffer.Highlight_Using_Tree
+             (Unit => Unit, From => From_Line, To => To_Line);
       end;
    end Highlight_Buffer;
 
@@ -177,7 +180,8 @@ package body LAL.Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self      : Highlight_Hook;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File      : GNATCOLL.VFS.Virtual_File;
@@ -196,7 +200,8 @@ package body LAL.Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File)
@@ -207,22 +212,21 @@ package body LAL.Module is
           (File, Open_Buffer => False, Open_View => False);
    begin
       Highlight_Buffer
-        (Buffer,
-         From_Line => 1,
-         To_Line => Buffer.End_Of_Buffer.Line);
+        (Buffer, From_Line => 1, To_Line => Buffer.End_Of_Buffer.Line);
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self, Kernel);
-      Default_Charset : constant String := GPS.Kernel.Charsets.Get_File_Charset
-        (GNATCOLL.VFS.No_File);
+      Default_Charset : constant String :=
+        GPS.Kernel.Charsets.Get_File_Charset (GNATCOLL.VFS.No_File);
    begin
       Module.Core.Reset_Context (Default_Charset);
    end Execute;
@@ -234,8 +238,8 @@ package body LAL.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Default_Charset : constant String := GPS.Kernel.Charsets.Get_File_Charset
-        (GNATCOLL.VFS.No_File);
+      Default_Charset : constant String :=
+        GPS.Kernel.Charsets.Get_File_Charset (GNATCOLL.VFS.No_File);
    begin
       Module := new LAL_UI_Module_Id_Record;
 

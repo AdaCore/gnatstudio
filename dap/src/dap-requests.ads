@@ -27,8 +27,7 @@ limited with DAP.Clients;
 
 package DAP.Requests is
 
-   type DAP_Request
-     (Kernel : GPS.Kernel.Kernel_Handle) is
+   type DAP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
      abstract tagged limited private;
 
    type DAP_Request_Access is access all DAP_Request'Class;
@@ -47,7 +46,8 @@ package DAP.Requests is
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
    --  Called when a "result" response is received from the server.
    --  Fill New_Request is new request should be sent after this one.
    --  Sets Success to False when the response can't be parsed.
@@ -68,17 +68,14 @@ package DAP.Requests is
    procedure Destroy (Item : in out DAP_Request_Access);
    --  Call Finalize and deallocate memory. All references are reset to null.
 
-   procedure Set_Seq
-     (Self : in out DAP_Request;
-      Seq  : Integer) is abstract;
+   procedure Set_Seq (Self : in out DAP_Request; Seq : Integer) is abstract;
    --  Set unique ID for the request
 
    function Method (Self : in out DAP_Request) return String is abstract;
 
 private
 
-   type DAP_Request
-     (Kernel : GPS.Kernel.Kernel_Handle) is abstract
-     tagged limited null record;
+   type DAP_Request (Kernel : GPS.Kernel.Kernel_Handle) is
+   abstract tagged limited null record;
 
 end DAP.Requests;

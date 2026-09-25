@@ -31,7 +31,8 @@ package body Defaults is
          --  Windows
 
          return
-           "Segoe WP 10,"               --  Windows 8.1 Pro
+           "Segoe WP 10,"
+           --  Windows 8.1 Pro
            & "Segoe UI 10,"             --  Windows 8.1 Home and 7
            & "Tahoma 10,"               --  Windows XP
            & "Arial 10,"                --  NT/Classic
@@ -41,7 +42,8 @@ package body Defaults is
          --  Mac OS
 
          return
-           "Helvetica Neue Medium 12,"  --  Yosemite
+           "Helvetica Neue Medium 12,"
+           --  Yosemite
            & "Lucida Grande Medium 12";        --  all other versions
 
       else
@@ -50,7 +52,9 @@ package body Defaults is
          --  The "DejaVu Sans"/"DejaVu Sans Mono" combo exists on
          --  Ubuntu 12/Debian 7, Suse 10: try it first
 
-         return "DejaVu Sans 9,"   --  a lot of systems, see above
+         return
+           "DejaVu Sans 9,"
+           --  a lot of systems, see above
            & "DejaVu LGC Sans 9,"  --  default on RedHat 5
            & "Sans 9";             --  reliable fallback for a variable width
       end if;
@@ -66,14 +70,16 @@ package body Defaults is
          --  Windows
 
          return
-           "Consolas 9,"               --  Windows 8, Windows 7
+           "Consolas 9,"
+           --  Windows 8, Windows 7
            & "Lucida Console 9";       --  all versions
 
       elsif Darwin_Target then
          --  Mac OS
 
          return
-           "Menlo 11,"     --  Xcode 6 default, available since Mavericks
+           "Menlo 11,"
+           --  Xcode 6 default, available since Mavericks
            & "Monaco 11";  --  all previous versions
 
       else
@@ -82,7 +88,9 @@ package body Defaults is
          --  Note: On RedHat 5, "Monospace" is *not* a valid alias for a
          --  monospaced font!
 
-         return "DejaVu Sans Mono 8,"   --  a lot of systems, see above
+         return
+           "DejaVu Sans Mono 8,"
+           --  a lot of systems, see above
            & "DejaVu LGC Sans Mono 8,"  --  default on RedHat 5
            & "MiscFixed 10,"            --  fallback on some versions
            & "Courier 10";              --  last resort

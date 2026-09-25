@@ -17,10 +17,10 @@
 
 with Ada.Containers.Ordered_Sets;
 with Ada.Unchecked_Conversion;
-with Ada.Exceptions;          use Ada.Exceptions;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with GNAT.Regpat;             use GNAT.Regpat;
-with System;                  use System;
+with Ada.Exceptions; use Ada.Exceptions;
+with GNAT.OS_Lib;    use GNAT.OS_Lib;
+with GNAT.Regpat;    use GNAT.Regpat;
+with System;         use System;
 
 with VSS.String_Vectors;
 
@@ -36,68 +36,71 @@ with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
 
-with Gdk.Types;               use Gdk.Types;
-with Glib.Object;             use Glib.Object;
-with Glib.Values;             use Glib.Values;
+with Gdk.Types;     use Gdk.Types;
+with Glib.Object;   use Glib.Object;
+with Glib.Values;   use Glib.Values;
 with Gtkada.Handlers;
 with Gtk.Accel_Group;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Gtk.Arguments;           use Gtk.Arguments;
-with Gtk.Label;               use Gtk.Label;
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Menu_Item;           use Gtk.Menu_Item;
-with Gtk.Text_View;           use Gtk.Text_View;
-with Gtk.Widget;              use Gtk.Widget;
-with Pango.Font;              use Pango.Font;
-with Pango.Layout;            use Pango.Layout;
+with Gtkada.MDI;    use Gtkada.MDI;
+with Gtk.Arguments; use Gtk.Arguments;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Menu;      use Gtk.Menu;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Text_View; use Gtk.Text_View;
+with Gtk.Widget;    use Gtk.Widget;
+with Pango.Font;    use Pango.Font;
+with Pango.Layout;  use Pango.Layout;
 
-with Basic_Types;             use Basic_Types;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Interactive;  use GPS.Kernel.Interactive;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Custom;       use GPS.Kernel.Custom;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with Basic_Types;            use Basic_Types;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Interactive; use GPS.Kernel.Interactive;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Shell;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
-with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Properties;  use GPS.Kernel.Properties;
+with GPS.Kernel.Command_API; use GPS.Kernel.Command_API;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Scripts.Commands;
-with Histories;               use Histories;
-with Interactive_Consoles;    use Interactive_Consoles;
-with Language_Handlers;       use Language_Handlers;
-with Projects;                use Projects;
+with Histories;              use Histories;
+with Interactive_Consoles;   use Interactive_Consoles;
+with Language_Handlers;      use Language_Handlers;
+with Projects;               use Projects;
 with String_List_Utils;
-with Xref;                    use Xref;
+with Xref;                   use Xref;
 
 package body GPS.Kernel.Scripts is
 
-   Me     : constant Trace_Handle := Create
-     ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle :=
+     Create ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
 
-   type GPS_Properties_Type is
-     (Files, Entities, Projects, File_Locations);
+   type GPS_Properties_Type is (Files, Entities, Projects, File_Locations);
 
-   type GPS_Properties_Record (Typ : GPS_Properties_Type)
-     is new Instance_Property_Record
+   type GPS_Properties_Record (Typ : GPS_Properties_Type) is
+     new Instance_Property_Record
    with record
       case Typ is
          when Files =>
             File : Virtual_File;
+
          when Entities =>
-            Entity  : Root_Entity_Ref;
+            Entity : Root_Entity_Ref;
+
          when Projects =>
             Project : Project_Type;
+
          when File_Locations =>
             Location : File_Location_Info;
       end case;
    end record;
 
-   overriding procedure Destroy (Prop : in out GPS_Properties_Record);
+   overriding
+   procedure Destroy (Prop : in out GPS_Properties_Record);
    --  See inherited documentation
 
    type Language_Info_Property is new Instance_Property_Record with record
@@ -105,8 +108,7 @@ package body GPS.Kernel.Scripts is
    end record;
 
    procedure On_Console_Destroy
-     (Console : access Gtk_Widget_Record'Class;
-      Subprogram : Subprogram_Type);
+     (Console : access Gtk_Widget_Record'Class; Subprogram : Subprogram_Type);
    --  Called when an interactive console is destroyed
 
    procedure On_Console_Resize
@@ -118,8 +120,7 @@ package body GPS.Kernel.Scripts is
    function On_Console_Completion
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
-      User_Data : System.Address)
-      return String_List_Utils.String_List.Vector;
+      User_Data : System.Address) return String_List_Utils.String_List.Vector;
    --  Called when the user has pressed <tab>
 
    procedure Default_Command_Handler
@@ -155,8 +156,9 @@ package body GPS.Kernel.Scripts is
    --  Handler for all GUI class commands
 
    function On_Console_Input
-     (Console : access Interactive_Console_Record'Class;
-      Input   : String; User_Data : System.Address) return String;
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String;
    --  Called when input is available on a console
 
    function On_Console_Key
@@ -168,8 +170,8 @@ package body GPS.Kernel.Scripts is
    --  Called when a key was pressed by the user in the console
 
    function On_Console_Interrupt
-     (Console : access Interactive_Console_Record'Class;
-      Data    : System.Address) return Boolean;
+     (Console : access Interactive_Console_Record'Class; Data : System.Address)
+      return Boolean;
    --  Called when the user has pressed control-c in the console and a custom
    --  callback was set from GPS.Console()
 
@@ -186,17 +188,17 @@ package body GPS.Kernel.Scripts is
    --  Handles commands related to GPS.History
 
    procedure References_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Implements References_Command API
 
    type Hyper_Link_Subprogram is new Hyper_Link_Callback_Record with record
       Subprogram : Subprogram_Type;
    end record;
-   overriding procedure On_Click
-     (Link : access Hyper_Link_Subprogram; Text : String);
+   overriding
+   procedure On_Click (Link : access Hyper_Link_Subprogram; Text : String);
    --  Called when a user clicks on a hyper link in a console
-   overriding procedure On_Destroy (Link : in out Hyper_Link_Subprogram);
+   overriding
+   procedure On_Destroy (Link : in out Hyper_Link_Subprogram);
 
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
@@ -209,23 +211,20 @@ package body GPS.Kernel.Scripts is
    Value_Cst      : aliased constant String := "value";
    Text_Cst       : aliased constant String := "text";
 
-   Write_With_Link_Args         : constant Cst_Argument_List :=
+   Write_With_Link_Args     : constant Cst_Argument_List :=
      (1 => Text_Cst'Access);
    Insmod_Cmd_Parameters    : constant Cst_Argument_List :=
-                                (1 => Shared_Lib_Cst'Access,
-                                 2 => Module_Cst'Access);
+     (1 => Shared_Lib_Cst'Access, 2 => Module_Cst'Access);
    Open_Cmd_Parameters      : constant Cst_Argument_List :=
-                                (1 => Filename_Cst'Access,
-                                 2 => Force_Cst'Access);
+     (1 => Filename_Cst'Access, 2 => Force_Cst'Access);
    Xml_Custom_Parameters    : constant Cst_Argument_List :=
-                                (1 => Xml_Cst'Access);
+     (1 => Xml_Cst'Access);
    Exec_Action_Parameters   : constant Cst_Argument_List :=
-                                (1 => Action_Cst'Access);
+     (1 => Action_Cst'Access);
    Set_Sensitive_Parameters : constant Cst_Argument_List :=
-                                (1 => Sensitive_Cst'Access);
+     (1 => Sensitive_Cst'Access);
    Set_Scenario_Parameters  : constant Cst_Argument_List :=
-                                (1 => Name_Cst'Access,
-                                 2 => Value_Cst'Access);
+     (1 => Name_Cst'Access, 2 => Value_Cst'Access);
 
    Accept_Input_Cst         : aliased constant String := "accept_input";
    On_Input_Cst             : aliased constant String := "on_input";
@@ -238,21 +237,28 @@ package body GPS.Kernel.Scripts is
    ANSI_Cst                 : aliased constant String := "ansi";
    Toolbar_Name_Cst         : aliased constant String := "toolbar_name";
    Give_Focus_On_Create_Cst : aliased constant String :=
-                                "give_focus_on_create";
-   Save_Desktop_Cb_Cst      : aliased constant String :=
-                                "save_desktop";
+     "give_focus_on_create";
+   Save_Desktop_Cb_Cst      : aliased constant String := "save_desktop";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
-     (Name_Cst'Access, Force_Cst'Access,
-      On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access,
-      On_Resize_Cst'Access, On_Interrupt_Cst'Access,
-      On_Completion_Cst'Access, On_Key_Cst'Access,
-      Manage_Prompt_Cst'Access, ANSI_Cst'Access, Toolbar_Name_Cst'Access,
-      Give_Focus_On_Create_Cst'Access, Save_Desktop_Cb_Cst'Access);
+     (Name_Cst'Access,
+      Force_Cst'Access,
+      On_Input_Cst'Access,
+      On_Destroy_Cst'Access,
+      Accept_Input_Cst'Access,
+      On_Resize_Cst'Access,
+      On_Interrupt_Cst'Access,
+      On_Completion_Cst'Access,
+      On_Key_Cst'Access,
+      Manage_Prompt_Cst'Access,
+      ANSI_Cst'Access,
+      Toolbar_Name_Cst'Access,
+      Give_Focus_On_Create_Cst'Access,
+      Save_Desktop_Cb_Cst'Access);
 
-   Enable_Cst         : aliased constant String := "enable";
+   Enable_Cst : aliased constant String := "enable";
 
-   Enable_Input_Args  : constant Cst_Argument_List := (1 => Enable_Cst'Access);
+   Enable_Input_Args : constant Cst_Argument_List := (1 => Enable_Cst'Access);
 
    Language_Info_Class_Name : constant String := "LanguageInfo";
 
@@ -261,8 +267,7 @@ package body GPS.Kernel.Scripts is
    -----------------------------
 
    procedure Default_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
@@ -276,8 +281,7 @@ package body GPS.Kernel.Scripts is
          Set_Return_Value (Data, +Get_Home_Dir (Kernel).Full_Name);
 
       elsif Command = "get_log_file" then
-         Set_Return_Value
-           (Data, +Me.Get_Stream_File.Full_Name);
+         Set_Return_Value (Data, +Me.Get_Stream_File.Full_Name);
 
       elsif Command = "debug_memory_usage" then
          GNATCOLL.Memory.Dump
@@ -319,16 +323,15 @@ package body GPS.Kernel.Scripts is
 
             while Has_Element (Current) loop
                Set_Return_Value
-                 (Data,
-                  Module_Name (Module_ID (Element (Current))));
+                 (Data, Module_Name (Module_ID (Element (Current))));
                Current := Module_List.Next (Current);
             end loop;
          end;
 
       elsif Command = "supported_languages" then
          declare
-            Langs : Argument_List := Known_Languages
-              (Get_Language_Handler (Kernel), Sorted => True);
+            Langs : Argument_List :=
+              Known_Languages (Get_Language_Handler (Kernel), Sorted => True);
          begin
             Set_Return_Value_As_List (Data);
 
@@ -343,10 +346,11 @@ package body GPS.Kernel.Scripts is
          Name_Parameters (Data, Xml_Custom_Parameters);
          declare
             Err : constant String :=
-                    GPS.Kernel.Custom.Add_Customization_String
-                      (Kernel, Nth_Arg (Data, 1),
-                       From_File  => +Current_Script (Get_Script (Data)),
-                       Start_Line => 1);
+              GPS.Kernel.Custom.Add_Customization_String
+                (Kernel,
+                 Nth_Arg (Data, 1),
+                 From_File  => +Current_Script (Get_Script (Data)),
+                 Start_Line => 1);
          begin
             if Err /= "" then
                Set_Error_Msg (Data, Err);
@@ -369,13 +373,14 @@ package body GPS.Kernel.Scripts is
                Args (Index - 1) := new String'(Nth_Arg (Data, Index));
             end loop;
 
-            Success := Execute_Action
-               (Kernel      => Kernel,
-                Action      => Action_Name,
-                Synchronous => Synchronous,
-                Show_Bar    => True,
-                Error_Msg_In_Console => False,
-                Args        => Args);
+            Success :=
+              Execute_Action
+                (Kernel               => Kernel,
+                 Action               => Action_Name,
+                 Synchronous          => Synchronous,
+                 Show_Bar             => True,
+                 Error_Msg_In_Console => False,
+                 Args                 => Args);
 
             if not Success then
                Data.Set_Error_Msg ("Could not execute """ & Action_Name & '"');
@@ -413,11 +418,12 @@ package body GPS.Kernel.Scripts is
    begin
       if Command = "load" then
          Name_Parameters (Data, Open_Cmd_Parameters);
-         Load_Project (Kernel,
-                       Create (Normalize_Pathname (Nth_Arg (Data, 1))),
-                       No_Save      => Nth_Arg (Data, 2, False),
-                       Keep_Desktop => Nth_Arg (Data, 3, False),
-                       Clear        => not Nth_Arg (Data, 3, False));
+         Load_Project
+           (Kernel,
+            Create (Normalize_Pathname (Nth_Arg (Data, 1))),
+            No_Save      => Nth_Arg (Data, 2, False),
+            Keep_Desktop => Nth_Arg (Data, 3, False),
+            Clear        => not Nth_Arg (Data, 3, False));
 
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
@@ -486,15 +492,18 @@ package body GPS.Kernel.Scripts is
    procedure Entity_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Ctxt : constant Selection_Context := Get_Context (Data.Nth_Arg (1));
+      Ctxt          : constant Selection_Context :=
+        Get_Context (Data.Nth_Arg (1));
       Approx_Search : Boolean;
    begin
       if Command = "entity" then
          Approx_Search := Data.Nth_Arg (2, True);
          Set_Return_Value
-           (Data, Create_Entity
-              (Get_Script (Data), Get_Entity
-               (Ctxt, Approximate_Search_Fallback => Approx_Search)));
+           (Data,
+            Create_Entity
+              (Get_Script (Data),
+               Get_Entity
+                 (Ctxt, Approximate_Search_Fallback => Approx_Search)));
       elsif Command = "entity_name" then
          if Has_Entity_Name_Information (Ctxt) then
             Data.Set_Return_Value (Entity_Name_Information (Ctxt));
@@ -511,9 +520,7 @@ package body GPS.Kernel.Scripts is
    is
       Ctxt : constant Selection_Context := Get_Context (Data.Nth_Arg (1));
    begin
-      if Command = "message"
-        and then Has_Message_Information (Ctxt)
-      then
+      if Command = "message" and then Has_Message_Information (Ctxt) then
          declare
             Messages : constant GPS.Kernel.Messages.Message_Array :=
               Messages_Information (Ctxt);
@@ -555,9 +562,7 @@ package body GPS.Kernel.Scripts is
       Inst    : Class_Instance;
       Project : Project_Type;
 
-      procedure Recursive_Analyze_Menu
-        (Depth : Natural;
-         Menu  : Gtk_Menu);
+      procedure Recursive_Analyze_Menu (Depth : Natural; Menu : Gtk_Menu);
       --  Recursively set the menu content as command result.
       --  Depth is the current depth of the analyzed menu
       --  Menu is the menu that will be analyzed
@@ -566,10 +571,7 @@ package body GPS.Kernel.Scripts is
       -- Recursive_Analyze_Menu --
       ----------------------------
 
-      procedure Recursive_Analyze_Menu
-        (Depth : Natural;
-         Menu  : Gtk_Menu)
-      is
+      procedure Recursive_Analyze_Menu (Depth : Natural; Menu : Gtk_Menu) is
          List      : Gtk.Widget.Widget_List.Glist;
          Menu_Item : Gtk_Menu_Item;
          Label     : Gtk.Label.Gtk_Label;
@@ -621,9 +623,7 @@ package body GPS.Kernel.Scripts is
          if Has_File_Information (Context) then
             Set_Return_Value
               (Data,
-               Create_File
-                 (Get_Script (Data),
-                  File_Information (Context)));
+               Create_File (Get_Script (Data), File_Information (Context)));
          end if;
 
       elsif Command = "set_file" then
@@ -674,11 +674,12 @@ package body GPS.Kernel.Scripts is
          Project := Project_Information (Context);  --  will compute if needed
 
          if Project = No_Project
-           and then not Get_Registry
-             (Kernel).Tree.Root_Project.Is_Aggregate_Project
+           and then
+             not Get_Registry (Kernel).Tree.Root_Project.Is_Aggregate_Project
          then
-            Project := Get_Registry (Kernel).Tree.Info
-              (File_Information (Context)).Project;
+            Project :=
+              Get_Registry (Kernel).Tree.Info (File_Information (Context))
+                .Project;
          end if;
 
          if Project /= No_Project then
@@ -702,9 +703,8 @@ package body GPS.Kernel.Scripts is
                   return P1.Project_Path < P2.Project_Path;
                end "<";
 
-               package Projects_Sets is
-                 new Ada.Containers.Ordered_Sets
-                   (Project_Type, "<" => "<");
+               package Projects_Sets is new
+                 Ada.Containers.Ordered_Sets (Project_Type, "<" => "<");
 
                Set   : Projects_Sets.Set;
                Files : constant File_Array := File_Information (Context);
@@ -713,8 +713,9 @@ package body GPS.Kernel.Scripts is
                   declare
                      F_Info : constant File_Info'Class :=
                        File_Info'Class
-                         (Get_Registry (Get_Kernel (Context)).Tree
-                          .Info_Set (Files (J)).First_Element);
+                         (Get_Registry (Get_Kernel (Context)).Tree.Info_Set
+                            (Files (J))
+                            .First_Element);
                   begin
                      Project := F_Info.Project;
                      if Project /= No_Project
@@ -722,8 +723,7 @@ package body GPS.Kernel.Scripts is
                      then
                         Set.Include (Project);
                         Set_Return_Value
-                          (Data,
-                           Create_Project (Get_Script (Data), Project));
+                          (Data, Create_Project (Get_Script (Data), Project));
                      end if;
                   end;
                end loop;
@@ -739,12 +739,10 @@ package body GPS.Kernel.Scripts is
             --     Create_File
             --       (Get_Script (Data),
             --        Directory_Information (Context)));
-            Set_Return_Value
-              (Data, Directory_Information (Context).Full_Name);
+            Set_Return_Value (Data, Directory_Information (Context).Full_Name);
          end if;
 
-      elsif Command = "current_context"
-        or else Command = "contextual_context"
+      elsif Command = "current_context" or else Command = "contextual_context"
       then
          if Command = "current_context" then
             declare
@@ -788,8 +786,8 @@ package body GPS.Kernel.Scripts is
       end if;
    end Context_Command_Handler;
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Subprogram_Type);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Subprogram_Type);
 
    ---------------------------
    -- On_Console_Completion --
@@ -798,15 +796,17 @@ package body GPS.Kernel.Scripts is
    function On_Console_Completion
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
-      User_Data : System.Address)
-      return String_List_Utils.String_List.Vector
+      User_Data : System.Address) return String_List_Utils.String_List.Vector
    is
       On_Completion : constant Subprogram_Type := Convert (User_Data);
-      Console  : constant Interactive_Console := From_View (View);
-      Script   : constant Scripting_Language := Get_Script (On_Completion.all);
-      Instance : constant Class_Instance := Get_Instance (Script, Console);
-      C        : Callback_Data'Class := Create (Script, 2);
-      Tmp      : Boolean with Unreferenced;
+      Console       : constant Interactive_Console := From_View (View);
+      Script        : constant Scripting_Language :=
+        Get_Script (On_Completion.all);
+      Instance      : constant Class_Instance :=
+        Get_Instance (Script, Console);
+      C             : Callback_Data'Class := Create (Script, 2);
+      Tmp           : Boolean
+      with Unreferenced;
    begin
       Set_Nth_Arg (C, 1, Instance);
       Set_Nth_Arg (C, 2, Input);
@@ -820,14 +820,16 @@ package body GPS.Kernel.Scripts is
    ----------------------
 
    function On_Console_Input
-     (Console : access Interactive_Console_Record'Class;
-      Input   : String; User_Data : System.Address) return String
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : String;
+      User_Data : System.Address) return String
    is
-      On_Input : constant Subprogram_Type    := Convert (User_Data);
+      On_Input : constant Subprogram_Type := Convert (User_Data);
       Script   : constant Scripting_Language := Get_Script (On_Input.all);
-      Instance : constant Class_Instance     := Get_Instance (Script, Console);
-      C        : Callback_Data'Class         := Create (Script, 2);
-      Tmp      : Boolean with Unreferenced;
+      Instance : constant Class_Instance := Get_Instance (Script, Console);
+      C        : Callback_Data'Class := Create (Script, 2);
+      Tmp      : Boolean
+      with Unreferenced;
    begin
       Set_Nth_Arg (C, 1, Instance);
       Set_Nth_Arg (C, 2, Input);
@@ -847,14 +849,14 @@ package body GPS.Kernel.Scripts is
       Uni       : Glib.Gunichar := 0;
       User_Data : System.Address) return Boolean
    is
-      On_Key   : constant Subprogram_Type    := Convert (User_Data);
+      On_Key   : constant Subprogram_Type := Convert (User_Data);
       Script   : constant Scripting_Language := Get_Script (On_Key.all);
-      Instance : constant Class_Instance     := Get_Instance (Script, Console);
-      C        : Callback_Data'Class         := Create (Script, 4);
+      Instance : constant Class_Instance := Get_Instance (Script, Console);
+      C        : Callback_Data'Class := Create (Script, 4);
       Tmp      : Boolean;
 
       --  Remove any num-lock and caps-lock modifiers
-      M        : constant Gdk_Modifier_Type :=
+      M : constant Gdk_Modifier_Type :=
         Modifier and Gtk.Accel_Group.Get_Default_Mod_Mask;
 
    begin
@@ -872,16 +874,16 @@ package body GPS.Kernel.Scripts is
    ------------------------
 
    procedure On_Console_Destroy
-     (Console    : access Gtk_Widget_Record'Class;
-      Subprogram : Subprogram_Type)
+     (Console : access Gtk_Widget_Record'Class; Subprogram : Subprogram_Type)
    is
       Script : constant Scripting_Language := Get_Script (Subprogram.all);
-      Inst   : constant Class_Instance     := Get_Instance (Script, Console);
+      Inst   : constant Class_Instance := Get_Instance (Script, Console);
    begin
       if Script /= null then
          declare
             C   : Callback_Data'Class := Create (Script, 1);
-            Tmp : Boolean with Unreferenced;
+            Tmp : Boolean
+            with Unreferenced;
          begin
             Set_Nth_Arg (C, 1, Inst);
             Tmp := Execute (Subprogram, C);
@@ -900,21 +902,22 @@ package body GPS.Kernel.Scripts is
       Subprogram : Subprogram_Type)
    is
       Script : constant Scripting_Language := Get_Script (Subprogram.all);
-      Inst   : constant Class_Instance     := Get_Instance (Script, Console);
+      Inst   : constant Class_Instance := Get_Instance (Script, Console);
       Alloc  : constant Gtk_Allocation_Access := To_Allocation (Args, 1);
    begin
       if Script /= null then
          declare
-            Font : constant Pango_Font_Description :=
+            Font         : constant Pango_Font_Description :=
               GPS.Kernel.Preferences.Default_Style.Get_Pref_Font;
             W2, H2, Tmp2 : Gint;
-            Layout : Pango_Layout;
+            Layout       : Pango_Layout;
 
             C   : Callback_Data'Class := Create (Script, 3);
-            Tmp : Boolean with Unreferenced;
+            Tmp : Boolean
+            with Unreferenced;
          begin
-            Layout := Create_Pango_Layout
-              (Get_View (Interactive_Console (Console)));
+            Layout :=
+              Create_Pango_Layout (Get_View (Interactive_Console (Console)));
             Set_Font_Description (Layout, Font);
             Set_Text (Layout, "mmmmmmmmmmm");
             Get_Pixel_Size (Layout, W2, Tmp2);
@@ -936,14 +939,15 @@ package body GPS.Kernel.Scripts is
    --------------------------
 
    function On_Console_Interrupt
-     (Console : access Interactive_Console_Record'Class;
-      Data    : System.Address) return Boolean
+     (Console : access Interactive_Console_Record'Class; Data : System.Address)
+      return Boolean
    is
-      Sub    : constant Subprogram_Type    := Convert (Data);
+      Sub    : constant Subprogram_Type := Convert (Data);
       Script : constant Scripting_Language := Get_Script (Sub.all);
-      Inst   : constant Class_Instance     := Get_Instance (Script, Console);
-      C      : Callback_Data'Class         := Create (Script, 1);
-      Tmp    : Boolean with Unreferenced;
+      Inst   : constant Class_Instance := Get_Instance (Script, Console);
+      C      : Callback_Data'Class := Create (Script, 1);
+      Tmp    : Boolean
+      with Unreferenced;
    begin
       Set_Nth_Arg (C, 1, Inst);
       Tmp := Execute (Sub, C);
@@ -959,51 +963,52 @@ package body GPS.Kernel.Scripts is
    procedure Console_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst          : constant Class_Instance := Nth_Arg (Data, 1);
-      Console       : Interactive_Console;
+      Inst    : constant Class_Instance := Nth_Arg (Data, 1);
+      Console : Interactive_Console;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Console_Constructor_Args);
          declare
             Title                 : constant String := Nth_Arg (Data, 2, "");
             Force                 : constant Boolean :=
-                                      Nth_Arg (Data, 3, False);
+              Nth_Arg (Data, 3, False);
             On_Input              : constant Subprogram_Type :=
-                                      Nth_Arg (Data, 4, null);
+              Nth_Arg (Data, 4, null);
             On_Destroy            : constant Subprogram_Type :=
-                                      Nth_Arg (Data, 5, null);
-            Accept_Input          : constant Boolean := Nth_Arg
-              (Data, 6, True);
+              Nth_Arg (Data, 5, null);
+            Accept_Input          : constant Boolean :=
+              Nth_Arg (Data, 6, True);
             On_Resize             : constant Subprogram_Type :=
-                                      Nth_Arg (Data, 7, null);
+              Nth_Arg (Data, 7, null);
             On_Interrupt          : constant Subprogram_Type :=
-                                      Nth_Arg (Data, 8, null);
+              Nth_Arg (Data, 8, null);
             On_Completion         : constant Subprogram_Type :=
-                                      Nth_Arg (Data, 9, null);
+              Nth_Arg (Data, 9, null);
             On_Key                : constant Subprogram_Type :=
-                                      Nth_Arg (Data, 10, null);
+              Nth_Arg (Data, 10, null);
             Manage_Prompt         : constant Boolean :=
-                                      Nth_Arg (Data, 11, True);
+              Nth_Arg (Data, 11, True);
             ANSI_Support          : constant Boolean :=
-                                      Nth_Arg (Data, 12, False);
+              Nth_Arg (Data, 12, False);
             Toolbar_Name          : constant String := Nth_Arg (Data, 13, "");
             Give_Focus_On_Create  : constant Boolean :=
-                                      Nth_Arg (Data, 14, True);
+              Nth_Arg (Data, 14, True);
             Save_Desktop_Callback : constant Subprogram_Type :=
-                                      (Nth_Arg (Data, 15, Default => null));
+              (Nth_Arg (Data, 15, Default => null));
          begin
-            Console := Create_Interactive_Console
-              (Kernel               => Get_Kernel (Data),
-               Title                => Title,
-               History              => History_Key ("console_" & Title),
-               Create_If_Not_Exist  => Title /= "Python"
-               and then Title /= "Shell",
-               Force_Create         => Force,
-               Manage_Prompt        => Manage_Prompt,
-               ANSI_Support         => ANSI_Support,
-               Accept_Input         => Accept_Input,
-               Toolbar_Name         => Toolbar_Name,
-               Give_Focus_On_Create => Give_Focus_On_Create);
+            Console :=
+              Create_Interactive_Console
+                (Kernel               => Get_Kernel (Data),
+                 Title                => Title,
+                 History              => History_Key ("console_" & Title),
+                 Create_If_Not_Exist  =>
+                   Title /= "Python" and then Title /= "Shell",
+                 Force_Create         => Force,
+                 Manage_Prompt        => Manage_Prompt,
+                 ANSI_Support         => ANSI_Support,
+                 Accept_Input         => Accept_Input,
+                 Toolbar_Name         => Toolbar_Name,
+                 Give_Focus_On_Create => Give_Focus_On_Create);
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.
@@ -1011,7 +1016,8 @@ package body GPS.Kernel.Scripts is
             if Console = null then
                if Title = "Python" or else Title = "Shell" then
                   Set_Error_Msg
-                    (Data, "To create the python or shell console, please use"
+                    (Data,
+                     "To create the python or shell console, please use"
                      & " the menus /Tools/Consoles/... through "
                      & " GPS.execute_action");
                else
@@ -1024,49 +1030,54 @@ package body GPS.Kernel.Scripts is
             GNATCOLL.Scripts.Set_Data
               (Inst, Get_Or_Create_Virtual_Console (Console));
 
-            if Title /= ""
-              and then On_Input /= null
-            then
+            if Title /= "" and then On_Input /= null then
                Set_Command_Handler
                  (Console, On_Console_Input'Access, On_Input.all'Address);
             end if;
 
             if On_Destroy /= null then
                Subprogram_Callback.Connect
-                 (Console, Signal_Destroy, On_Console_Destroy'Access,
+                 (Console,
+                  Signal_Destroy,
+                  On_Console_Destroy'Access,
                   User_Data => On_Destroy);
             end if;
 
             if On_Resize /= null then
                Subprogram_Callback.Connect
-                 (Console, Signal_Size_Allocate,
+                 (Console,
+                  Signal_Size_Allocate,
                   On_Console_Resize'Access,
                   User_Data => On_Resize);
             end if;
 
             if On_Interrupt /= null then
                Set_Interrupt_Handler
-                 (Console, On_Console_Interrupt'Access,
+                 (Console,
+                  On_Console_Interrupt'Access,
                   User_Data => On_Interrupt.all'Address);
             end if;
 
             if On_Completion /= null then
                Set_Completion_Handler
-                 (Console, On_Console_Completion'Access,
+                 (Console,
+                  On_Console_Completion'Access,
                   User_Data => On_Completion.all'Address);
             end if;
 
             if On_Key /= null then
                Set_Key_Handler
-                 (Console, On_Console_Key'Access,
+                 (Console,
+                  On_Console_Key'Access,
                   User_Data => On_Key.all'Address);
             end if;
 
             if Save_Desktop_Callback /= null then
                declare
-                  Child : constant GPS_MDI_Child := GPS_MDI_Child
-                            (Find_MDI_Child_By_Name
-                            (Get_MDI (Get_Kernel (Data)), Title));
+                  Child : constant GPS_MDI_Child :=
+                    GPS_MDI_Child
+                      (Find_MDI_Child_By_Name
+                         (Get_MDI (Get_Kernel (Data)), Title));
                begin
                   Set_Save_Desktop_Callback (Child, Save_Desktop_Callback);
                end;
@@ -1107,9 +1118,10 @@ package body GPS.Kernel.Scripts is
       elsif Command = "create_link" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          declare
-            Cb : constant Hyper_Link_Callback := new Hyper_Link_Subprogram'
-              (Hyper_Link_Callback_Record with
-               Subprogram => Nth_Arg (Data, 3));
+            Cb : constant Hyper_Link_Callback :=
+              new Hyper_Link_Subprogram'
+                (Hyper_Link_Callback_Record
+                 with Subprogram => Nth_Arg (Data, 3));
          begin
             Create_Hyper_Link
               (Console,
@@ -1131,9 +1143,13 @@ package body GPS.Kernel.Scripts is
       elsif Command = "add_input" then
          Name_Parameters (Data, (1 => Text_Cst'Access));
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
-         Insert (Console, Nth_Arg (Data, 2), Add_LF => False,
-                 Add_To_History => False, Text_Is_Input => True,
-                 Show_Prompt => False);
+         Insert
+           (Console,
+            Nth_Arg (Data, 2),
+            Add_LF         => False,
+            Add_To_History => False,
+            Text_Is_Input  => True,
+            Show_Prompt    => False);
 
       elsif Command = "set_automatic_scroll" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
@@ -1144,21 +1160,18 @@ package body GPS.Kernel.Scripts is
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
             Insert_With_Links
-              (Console,
-               Text      => Nth_Arg (Data, 2),
-               Add_LF    => False);
+              (Console, Text => Nth_Arg (Data, 2), Add_LF => False);
          end if;
       elsif Command = "insert_link" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          declare
-            Cb : constant Hyper_Link_Callback := new Hyper_Link_Subprogram'
-              (Hyper_Link_Callback_Record with
-               Subprogram => Nth_Arg (Data, 3));
+            Cb : constant Hyper_Link_Callback :=
+              new Hyper_Link_Subprogram'
+                (Hyper_Link_Callback_Record
+                 with Subprogram => Nth_Arg (Data, 3));
          begin
             Insert_Hyper_Link
-              (Console,
-               Text     => Nth_Arg (Data, 2),
-               Callback => Cb);
+              (Console, Text => Nth_Arg (Data, 2), Callback => Cb);
          end;
       elsif Command = "select_all" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
@@ -1209,17 +1222,14 @@ package body GPS.Kernel.Scripts is
                Result  => Item,
                Success => Success);
 
-            if Success
-              and then PyString_Check (Item)
-            then
+            if Success and then PyString_Check (Item) then
                Add_To_History
                  (Get_Kernel (Data).Get_History.all,
                   Key,
                   GNATCOLL.Scripts.VSS_Utils.Nth_Arg (Data, 2));
             else
                Set_History
-                 (Get_Kernel (Data).Get_History.all, Key,
-                  Nth_Arg (Data, 2));
+                 (Get_Kernel (Data).Get_History.all, Key, Nth_Arg (Data, 2));
             end if;
          exception
             when E : Invalid_Key_Type =>
@@ -1228,16 +1238,16 @@ package body GPS.Kernel.Scripts is
 
       elsif Command = "get" then
          declare
-            History : constant Histories.History :=
+            History     : constant Histories.History :=
               Get_Kernel (Data).Get_History;
-            Key : constant History_Key :=
+            Key         : constant History_Key :=
               History_Key (String'(Nth_Arg (Data, 1)));
             Most_Recent : constant Boolean := Nth_Arg (Data, 2, True);
             Values      : VSS.String_Vectors.Virtual_String_Vector;
 
          begin
             case Get_Type (History, Key) is
-               when Strings =>
+               when Strings  =>
                   if Most_Recent then
                      GNATCOLL.Scripts.VSS_Utils.Set_Return_Value
                        (Data, Histories.Most_Recent (History, Key));
@@ -1272,8 +1282,8 @@ package body GPS.Kernel.Scripts is
    procedure Register_Command
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
       Command       : String;
-      Minimum_Args  : Natural    := 0;
-      Maximum_Args  : Natural    := 0;
+      Minimum_Args  : Natural := 0;
+      Maximum_Args  : Natural := 0;
       Handler       : Module_Command_Function;
       Class         : Class_Type := No_Class;
       Static_Method : Boolean := False) is
@@ -1335,18 +1345,15 @@ package body GPS.Kernel.Scripts is
    --------------------------------
 
    procedure References_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       use GPS.Scripts.Commands;
 
-      Cmd : constant References_Command_Access := References_Command_Access
-        (Get_Command (Get_Command (Data, 1)));
+      Cmd : constant References_Command_Access :=
+        References_Command_Access (Get_Command (Get_Command (Data, 1)));
 
    begin
-      if Cmd /= null
-        and then Command = "get_result"
-      then
+      if Cmd /= null and then Command = "get_result" then
          Cmd.Get_Result (Data);
       end if;
    end References_Command_Handler;
@@ -1358,17 +1365,19 @@ package body GPS.Kernel.Scripts is
    procedure Register_Default_Script_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Console_Class      : constant Class_Type := New_Class
-        (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
+      Console_Class : constant Class_Type :=
+        New_Class
+          (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
       History_Class : constant Class_Type :=
         New_Class (Kernel.Scripts, "History");
-      Language_Info      : constant Class_Type :=
+      Language_Info : constant Class_Type :=
         Kernel.Scripts.New_Class ("LanguageInfo");
-      Context_Class : constant Class_Type := Kernel.Scripts.New_Class
-        ("Context");
-      Filter  : constant Class_Type := Kernel.Scripts.New_Class ("Filter");
+      Context_Class : constant Class_Type :=
+        Kernel.Scripts.New_Class ("Context");
+      Filter        : constant Class_Type :=
+        Kernel.Scripts.New_Class ("Filter");
 
-      Command_Class : constant Class_Type :=
+      Command_Class            : constant Class_Type :=
         Kernel.Scripts.New_Class ("Command");
       References_Command_Class : constant Class_Type :=
         Kernel.Scripts.New_Class
@@ -1387,16 +1396,15 @@ package body GPS.Kernel.Scripts is
          Handler => History_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add",
-         Class   => History_Class,
-         Params  => (1 => Param ("key"),
-                     2 => Param ("value")),
+         Class         => History_Class,
+         Params        => (1 => Param ("key"), 2 => Param ("value")),
          Static_Method => True,
          Handler       => History_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get",
-         Class   => History_Class,
-         Params  => (1 => Param ("key"),
-                     2 => Param ("most_recent", Optional => True)),
+         Class         => History_Class,
+         Params        =>
+           (1 => Param ("key"), 2 => Param ("most_recent", Optional => True)),
          Static_Method => True,
          Handler       => History_Command_Handler'Access);
 
@@ -1426,30 +1434,31 @@ package body GPS.Kernel.Scripts is
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("accept_input",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("clear_input",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_text",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("create_link",
-         Class        => Console_Class,
-         Params       => (1 => Param ("regexp"),
-                          2 => Param ("on_click"),
-                          3 => Param ("foreground",   Optional => True),
-                          4 => Param ("background",   Optional => True),
-                          5 => Param ("underline",    Optional => True),
-                          6 => Param ("font_variant", Optional => True)),
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Params  =>
+           (1 => Param ("regexp"),
+            2 => Param ("on_click"),
+            3 => Param ("foreground", Optional => True),
+            4 => Param ("background", Optional => True),
+            5 => Param ("underline", Optional => True),
+            6 => Param ("font_variant", Optional => True)),
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("delete_links",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("write_with_links",
          Minimum_Args => 1,
@@ -1458,22 +1467,21 @@ package body GPS.Kernel.Scripts is
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("insert_link",
-         Class        => Console_Class,
-         Params       => (1 => Param ("text"),
-                          2 => Param ("on_click")),
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Params  => (1 => Param ("text"), 2 => Param ("on_click")),
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("select_all",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("copy_clipboard",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("paste_clipboard",
-         Class        => Console_Class,
-         Handler      => Console_Command_Handler'Access);
+         Class   => Console_Class,
+         Handler => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_automatic_scroll",
          Class   => Console_Class,
@@ -1481,28 +1489,22 @@ package body GPS.Kernel.Scripts is
          Handler => Console_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        ("get_system_dir",
-         Handler => Default_Command_Handler'Access);
+        ("get_system_dir", Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("get_tmp_dir",
-         Handler => Default_Command_Handler'Access);
+        ("get_tmp_dir", Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("get_home_dir",
-         Handler => Default_Command_Handler'Access);
+        ("get_home_dir", Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("get_log_file",
-         Handler => Default_Command_Handler'Access);
+        ("get_log_file", Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("insmod",
          Minimum_Args => 2,
          Maximum_Args => 2,
          Handler      => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("lsmod",
-         Handler => Default_Command_Handler'Access);
+        ("lsmod", Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("supported_languages",
-         Handler => Default_Command_Handler'Access);
+        ("supported_languages", Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("execute_action",
          Minimum_Args => 1,
@@ -1537,11 +1539,9 @@ package body GPS.Kernel.Scripts is
          Handler      => Default_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        ("freeze_prefs",
-         Handler      => Default_Command_Handler'Access);
+        ("freeze_prefs", Handler => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("thaw_prefs",
-         Handler      => Default_Command_Handler'Access);
+        ("thaw_prefs", Handler => Default_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("set_scenario_variable",
@@ -1595,69 +1595,69 @@ package body GPS.Kernel.Scripts is
       if Active (Testsuite_Handle) then
          Kernel.Scripts.Register_Command
            ("contextual_menu",
-            Class        => Context_Class,
-            Handler      => Context_Command_Handler'Access);
+            Class   => Context_Class,
+            Handler => Context_Command_Handler'Access);
       end if;
 
       Kernel.Scripts.Register_Property
-         (Name   => "module_name",
-          Class  => Context_Class,
-          Setter => null,
-          Getter => Context_Getters'Access);
+        (Name   => "module_name",
+         Class  => Context_Class,
+         Setter => null,
+         Getter => Context_Getters'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("file",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_file",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access,
-         Params       => (1 => Param ("file")));
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access,
+         Params  => (1 => Param ("file")));
       Kernel.Scripts.Register_Command
         ("files",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("project",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("projects",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("directory",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("location",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("start_line",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("end_line",
-         Class        => Context_Class,
-         Handler      => Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("entity_name",
-         Class        => Context_Class,
-         Handler      => Entity_Context_Command_Handler'Access);
+         Class   => Context_Class,
+         Handler => Entity_Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("entity",
-         Params => (1 => Param ("approximate_search_fallback",
-                                Optional => True)),
-         Class        => Context_Class,
-         Handler      => Entity_Context_Command_Handler'Access);
+         Params  =>
+           (1 => Param ("approximate_search_fallback", Optional => True)),
+         Class   => Context_Class,
+         Handler => Entity_Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("message",
@@ -1667,11 +1667,11 @@ package body GPS.Kernel.Scripts is
       Kernel.Scripts.Register_Command
         ("current_context",
          Handler => Context_Command_Handler'Access,
-         Params  => (1 => Param ("refresh", Optional => True),
-                     2 => Param ("focus_check", Optional => True)));
+         Params  =>
+           (1 => Param ("refresh", Optional => True),
+            2 => Param ("focus_check", Optional => True)));
       Kernel.Scripts.Register_Command
-        ("contextual_context",
-         Handler      => Context_Command_Handler'Access);
+        ("contextual_context", Handler => Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
@@ -1689,29 +1689,29 @@ package body GPS.Kernel.Scripts is
          Handler      => GUI_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("destroy",
-         Class        => Get_GUI_Class (Kernel),
-         Handler      => GUI_Command_Handler'Access);
+         Class   => Get_GUI_Class (Kernel),
+         Handler => GUI_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("hide",
-         Class        => Get_GUI_Class (Kernel),
-         Handler      => GUI_Command_Handler'Access);
+         Class   => Get_GUI_Class (Kernel),
+         Handler => GUI_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("show",
-         Class        => Get_GUI_Class (Kernel),
-         Handler      => GUI_Command_Handler'Access);
+         Class   => Get_GUI_Class (Kernel),
+         Handler => GUI_Command_Handler'Access);
 
       Kernel.Scripts.Register_Property
         ("name",
-         Class        => Language_Info,
-         Getter       => Language_Info_Handler'Access);
+         Class  => Language_Info,
+         Getter => Language_Info_Handler'Access);
       Kernel.Scripts.Register_Property
         ("keywords",
-         Class        => Language_Info,
-         Getter       => Language_Info_Handler'Access);
+         Class  => Language_Info,
+         Getter => Language_Info_Handler'Access);
       Kernel.Scripts.Register_Property
         ("tab_width",
-         Class        => Language_Info,
-         Getter       => Language_Info_Handler'Access);
+         Class  => Language_Info,
+         Getter => Language_Info_Handler'Access);
 
       GPS.Kernel.Properties.Register_Script_Commands (Kernel);
       GPS.Scripts.Commands.Register_Commands (Kernel);
@@ -1730,12 +1730,12 @@ package body GPS.Kernel.Scripts is
    --------------------------
 
    function Create_Language_Info
-     (Script  : not null access Scripting_Language_Record'Class;
-      Lang    : access Language_Root'Class) return Class_Instance
+     (Script : not null access Scripting_Language_Record'Class;
+      Lang   : access Language_Root'Class) return Class_Instance
    is
       Language_Info : constant Class_Type :=
         Script.Get_Repository.New_Class ("LanguageInfo");
-      Inst  : Class_Instance;
+      Inst          : Class_Instance;
    begin
       Inst := Script.New_Instance (Language_Info);
       Set_Data
@@ -1753,7 +1753,7 @@ package body GPS.Kernel.Scripts is
      (Instance : Class_Instance) return Language_Access
    is
       Prop : constant Instance_Property :=
-               Get_Data (Instance, Language_Info_Class_Name);
+        Get_Data (Instance, Language_Info_Class_Name);
 
    begin
       if Prop = null or else Language_Info_Property (Prop.all).Lang = null then
@@ -1805,17 +1805,19 @@ package body GPS.Kernel.Scripts is
       Script : constant Scripting_Language :=
         Kernel.Scripts.Lookup_Scripting_Language ("Python");
    begin
-      return GNATCOLL.Scripts.Execute_Command
-        (Script       => Script,
-         Command      => ("highlighter.engine.markup_for_text("""
-                          & Language
-                          & """, """
-                          & Text
-                          & """)"),
-         Console      => null,
-         Hide_Output  => True,
-         Show_Command => True,
-         Errors       => Errors'Unchecked_Access);
+      return
+        GNATCOLL.Scripts.Execute_Command
+          (Script       => Script,
+           Command      =>
+             ("highlighter.engine.markup_for_text("""
+              & Language
+              & """, """
+              & Text
+              & """)"),
+           Console      => null,
+           Hide_Output  => True,
+           Show_Command => True,
+           Errors       => Errors'Unchecked_Access);
    end Get_Markup_For_Language;
 
    --------------------
@@ -1849,15 +1851,20 @@ package body GPS.Kernel.Scripts is
    -------------------------------
 
    function Execute_GPS_Shell_Command
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      CL      : Arg_List) return String
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; CL : Arg_List)
+      return String
    is
       Errors : aliased Boolean;
    begin
       Trace (Me, "Executing " & To_Debug_String (CL));
-      return Execute_Command
-        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
-         CL, null, True, True, Errors'Unchecked_Access);
+      return
+        Execute_Command
+          (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
+           CL,
+           null,
+           True,
+           True,
+           Errors'Unchecked_Access);
    end Execute_GPS_Shell_Command;
 
    -------------------------------
@@ -1865,12 +1872,12 @@ package body GPS.Kernel.Scripts is
    -------------------------------
 
    procedure Execute_GPS_Shell_Command
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      CL     : Arg_List)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; CL : Arg_List)
    is
-      Output : constant String := Execute_Command_With_Args
-        (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name),
-         CL) with Unreferenced;
+      Output : constant String :=
+        Execute_Command_With_Args
+          (Lookup_Scripting_Language (Kernel.Scripts, GPS_Shell_Name), CL)
+      with Unreferenced;
    begin
       if Active (Me) then
          Trace (Me, "Executing " & To_Display_String (CL));
@@ -1881,8 +1888,8 @@ package body GPS.Kernel.Scripts is
    -- Get_Kernel --
    ----------------
 
-   function Get_Kernel (Data : Callback_Data'Class)
-      return GPS.Kernel.Kernel_Handle is
+   function Get_Kernel
+     (Data : Callback_Data'Class) return GPS.Kernel.Kernel_Handle is
    begin
       return Kernel_Handle (GPS.Scripts.Get_Kernel (Data));
    end Get_Kernel;
@@ -1909,8 +1916,9 @@ package body GPS.Kernel.Scripts is
       if Context = No_Context then
          return No_Class_Instance;
       else
-         return Context_Proxies.Get_Or_Create_Instance
-            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script);
+         return
+           Context_Proxies.Get_Or_Create_Instance
+             (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script);
       end if;
    end Create_Context;
 
@@ -1920,7 +1928,7 @@ package body GPS.Kernel.Scripts is
 
    function Get_Context (Inst : Class_Instance) return Selection_Context is
       Weak : constant Weak_Selection_Context :=
-         Context_Proxies.From_Instance (Inst);
+        Context_Proxies.From_Instance (Inst);
    begin
       if Weak.Weak.Was_Freed then
          return No_Context;
@@ -1954,8 +1962,9 @@ package body GPS.Kernel.Scripts is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
-           (Data, -("Cannot build instances of GPS.GUI, these are returned"
-            & " by other functions"));
+           (Data,
+            -("Cannot build instances of GPS.GUI, these are returned"
+              & " by other functions"));
 
       elsif Command = "set_sensitive" then
          Name_Parameters (Data, Set_Sensitive_Parameters);
@@ -2008,15 +2017,16 @@ package body GPS.Kernel.Scripts is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Prop : in out GPS_Properties_Record) is
+   overriding
+   procedure Destroy (Prop : in out GPS_Properties_Record) is
    begin
       case Prop.Typ is
          when Files | Projects | Entities =>
             null;
 
-         when File_Locations =>
+         when File_Locations              =>
             Prop.Location := No_File_Location;
-            --  This might also destroy the class instance Data.Location.File
+         --  This might also destroy the class instance Data.Location.File
       end case;
    end Destroy;
 
@@ -2024,7 +2034,8 @@ package body GPS.Kernel.Scripts is
    -- On_Destroy --
    ----------------
 
-   overriding procedure On_Destroy (Link : in out Hyper_Link_Subprogram) is
+   overriding
+   procedure On_Destroy (Link : in out Hyper_Link_Subprogram) is
    begin
       Free (Link.Subprogram);
       Hyper_Link_Callback_Record (Link).On_Destroy;
@@ -2034,11 +2045,10 @@ package body GPS.Kernel.Scripts is
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
-     (Link : access Hyper_Link_Subprogram; Text : String)
-   is
+   overriding
+   procedure On_Click (Link : access Hyper_Link_Subprogram; Text : String) is
       Data   : Callback_Data'Class :=
-                 Create (Get_Script (Link.Subprogram.all), 1);
+        Create (Get_Script (Link.Subprogram.all), 1);
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
    begin
@@ -2063,8 +2073,8 @@ package body GPS.Kernel.Scripts is
 
       Inst := Get_Instance (Script, Process);
       if Inst = No_Class_Instance then
-         Inst := New_Instance
-           (Script, New_Class (Get_Kernel (Script), "Debugger"));
+         Inst :=
+           New_Instance (Script, New_Class (Get_Kernel (Script), "Debugger"));
          Set_Data (Inst, GObject (Process));
       end if;
       return Inst;

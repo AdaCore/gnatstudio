@@ -101,77 +101,76 @@ package body GPS.Main_Window is
    Store_Window_Positions : constant Trace_Handle :=
      Create ("STORE_WINDOW_POSITIONS", On);
 
-   Force_Cst      : aliased constant String := "force";
-   Msg_Cst        : aliased constant String := "msg";
-   Title_Cst      : aliased constant String := "title";
-   Param1_Cst     : aliased constant String := "param1";
-   Exit_Status_Cst : aliased constant String := "status";
-   File_Filter_Cst : aliased constant String := "file_filter";
-   Base_Dir_Cst    : aliased constant String := "base_dir";
-   Except_Filter_Cst   : aliased constant String := "except_filter";
-   Exit_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Force_Cst'Access,
-      2 => Exit_Status_Cst'Access);
-   Save_Windows_Parameters : constant Cst_Argument_List :=
+   Force_Cst                    : aliased constant String := "force";
+   Msg_Cst                      : aliased constant String := "msg";
+   Title_Cst                    : aliased constant String := "title";
+   Param1_Cst                   : aliased constant String := "param1";
+   Exit_Status_Cst              : aliased constant String := "status";
+   File_Filter_Cst              : aliased constant String := "file_filter";
+   Base_Dir_Cst                 : aliased constant String := "base_dir";
+   Except_Filter_Cst            : aliased constant String := "except_filter";
+   Exit_Cmd_Parameters          : constant Cst_Argument_List :=
+     (1 => Force_Cst'Access, 2 => Exit_Status_Cst'Access);
+   Save_Windows_Parameters      : constant Cst_Argument_List :=
      (1 => Force_Cst'Access);
-   Dialog_Cmd_Parameters   : constant Cst_Argument_List :=
-                               (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
-   Warning_Cmd_Parameters   : constant Cst_Argument_List :=
-                                (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
+   Dialog_Cmd_Parameters        : constant Cst_Argument_List :=
+     (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
+   Warning_Cmd_Parameters       : constant Cst_Argument_List :=
+     (1 => Msg_Cst'Access, 2 => Title_Cst'Access);
    File_Selector_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => File_Filter_Cst'Access,
       2 => Base_Dir_Cst'Access,
       3 => Except_Filter_Cst'Access);
-   Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Msg_Cst'Access,
-      2 => Param1_Cst'Access);
+   Input_Dialog_Cmd_Parameters  : constant Cst_Argument_List :=
+     (1 => Msg_Cst'Access, 2 => Param1_Cst'Access);
 
-   Name_Cst           : aliased constant String := "name";
-   Child_Cst          : aliased constant String := "child";
-   Float_Cst          : aliased constant String := "float";
-   Visible_Only_Cst   : aliased constant String := "visible_only";
-   Visible_Cst        : aliased constant String := "visible";
-   Short_Cst          : aliased constant String := "short";
+   Name_Cst         : aliased constant String := "name";
+   Child_Cst        : aliased constant String := "child";
+   Float_Cst        : aliased constant String := "float";
+   Visible_Only_Cst : aliased constant String := "visible_only";
+   Visible_Cst      : aliased constant String := "visible";
+   Short_Cst        : aliased constant String := "short";
 
    Get_Cmd_Parameters          : constant Cst_Argument_List :=
-                                   (1 => Name_Cst'Access);
+     (1 => Name_Cst'Access);
    Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
-                                   (1 => Child_Cst'Access);
+     (1 => Child_Cst'Access);
    Float_Cmd_Parameters        : constant Cst_Argument_List :=
-                                   (1 => Float_Cst'Access);
+     (1 => Float_Cst'Access);
    Next_Cmd_Parameters         : constant Cst_Argument_List :=
-                                   (1 => Visible_Only_Cst'Access);
+     (1 => Visible_Only_Cst'Access);
    Name_Cmd_Parameters         : constant Cst_Argument_List :=
-                                   (1 => Short_Cst'Access);
+     (1 => Short_Cst'Access);
    Visible_Parameter           : constant Cst_Argument_List :=
-                                   (1 => Visible_Cst'Access);
+     (1 => Visible_Cst'Access);
    Rename_Cmd_Parameter        : constant Cst_Argument_List :=
-                                   (1 => Name_Cst'Access,
-                                    2 => Short_Cst'Access);
+     (1 => Name_Cst'Access, 2 => Short_Cst'Access);
 
    type Window_Size_Property is new Property_Record with record
       Width, Height : Gint;
    end record;
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Window_Size_Property;
       Value : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
-      (Self : in out Window_Size_Property;
-      Value : GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Load
+     (Self : in out Window_Size_Property; Value : GNATCOLL.JSON.JSON_Value);
    --  Save the preferred size of a window in the persistent properties
 
-   Window_Title_Pref   : String_Preference;
+   Window_Title_Pref : String_Preference;
 
    Theme_Specific_Css_Provider : Gtk_Css_Provider;
    --  Provider for the gps-<theme>.css file
 
    function Delete_Callback
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
+      return Boolean;
    --  Callback for the delete event
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -184,40 +183,46 @@ package body GPS.Main_Window is
       Move_To_Next : Boolean;
       Group        : Child_Group;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access MDI_Child_Selection_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
 
    type Window_Mode is
-     (Split_H, Split_V, Clone, Reorder_Tab_Left, Reorder_Tab_Right,
-      Move_To_Next_Tab, Move_To_Previous_Tab);
+     (Split_H,
+      Split_V,
+      Clone,
+      Reorder_Tab_Left,
+      Reorder_Tab_Right,
+      Move_To_Next_Tab,
+      Move_To_Previous_Tab);
    type MDI_Window_Actions_Command is new Interactive_Command with record
-      Mode   : Window_Mode;
+      Mode : Window_Mode;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access MDI_Window_Actions_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Act on the layout of windows
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_Project_View_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class);
+   overriding
+   procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project is changed
 
    procedure On_Float_Child (Win : access Gtk_Widget_Record'Class);
    --  Called when a child window is floated
 
    procedure Default_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands defined in this package
 
    procedure Default_Window_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for MDIWindow class
 
    type User_Interface is new User_Interface_Tools.User_Interface with record
@@ -233,20 +238,19 @@ package body GPS.Main_Window is
    --  Change the style for all toolbars in the application
 
    function On_Draw_Toolbar_Box
-     (Self : access Gtk_Widget_Record'Class;
-      Cr   : Cairo_Context) return Boolean;
+     (Self : access Gtk_Widget_Record'Class; Cr : Cairo_Context)
+      return Boolean;
    --  Drawing the background of the toolbar box, so that the main progress
    --  bar and omni-search have a proper background.
 
-   overriding function Query_User
-     (UI            : User_Interface;
-      Prompt        : String;
-      Password_Mode : Boolean) return String;
+   overriding
+   function Query_User
+     (UI : User_Interface; Prompt : String; Password_Mode : Boolean)
+      return String;
    --  See inherited for documentation
 
    function Prepare_Quit
-     (Main_Window : access GPS_Window_Record'Class)
-      return Boolean;
+     (Main_Window : access GPS_Window_Record'Class) return Boolean;
    --  Prepare GNAT Studio for quitting the main window.
    --  It will save all current windows, and run the hooks.
    --  Returns False if quitting should be prevented at this time.
@@ -259,23 +263,24 @@ package body GPS.Main_Window is
       Name   : Unbounded_String;
    end record;
 
-   package Delete_Events is new Gtk.Handlers.User_Return_Callback
-      (Widget_Type => Gtk_Window_Record,
-       Return_Type => Boolean,
-       User_Type   => Delete_Event_Data);
+   package Delete_Events is new
+     Gtk.Handlers.User_Return_Callback
+       (Widget_Type => Gtk_Window_Record,
+        Return_Type => Boolean,
+        User_Type   => Delete_Event_Data);
    function On_Delete
-      (Win   : access Gtk_Window_Record'Class;
-       Event : Gdk_Event;
-       Data  : Delete_Event_Data) return Boolean;
+     (Win   : access Gtk_Window_Record'Class;
+      Event : Gdk_Event;
+      Data  : Delete_Event_Data) return Boolean;
    --  Called when a window is deleted, to store its size in the properties
    --  and be able to restore it later on.
 
-   package Hide_Events is new Gtk.Handlers.User_Callback
-      (Widget_Type => Gtk_Window_Record,
-       User_Type   => Delete_Event_Data);
+   package Hide_Events is new
+     Gtk.Handlers.User_Callback
+       (Widget_Type => Gtk_Window_Record,
+        User_Type   => Delete_Event_Data);
    procedure On_Hide
-      (Win   : access Gtk_Window_Record'Class;
-       Data  : Delete_Event_Data);
+     (Win : access Gtk_Window_Record'Class; Data : Delete_Event_Data);
    --  Called when a window is hidden, to store its size in the properties
    --  and be able to restore ir later on.
 
@@ -288,7 +293,8 @@ package body GPS.Main_Window is
 
    type No_Popup_Menu_Filter is new GPS.Kernel.Action_Filter_Record
    with null record;
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Context : access No_Popup_Menu_Filter;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
@@ -298,8 +304,9 @@ package body GPS.Main_Window is
 
    procedure For_All_Open_Windows
      (App      : not null access Gtk_Application_Record'Class;
-      Callback : not null access procedure
-        (Win : not null access GPS_Application_Window_Record'Class))
+      Callback :
+        not null access procedure
+          (Win : not null access GPS_Application_Window_Record'Class))
    is
       use Widget_List;
       List : Widget_List.Glist := App.Get_Windows;  --  Do not free
@@ -314,10 +321,10 @@ package body GPS.Main_Window is
    -- Query_User --
    ----------------
 
-   overriding function Query_User
-     (UI            : User_Interface;
-      Prompt        : String;
-      Password_Mode : Boolean) return String is
+   overriding
+   function Query_User
+     (UI : User_Interface; Prompt : String; Password_Mode : Boolean)
+      return String is
    begin
       return GUI_Utils.Query_User (UI.Main_Window, Prompt, Password_Mode);
    end Query_User;
@@ -326,36 +333,37 @@ package body GPS.Main_Window is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access MDI_Window_Actions_Command;
-      Context : Interactive_Command_Context)
-      return Command_Return_Type
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Child : MDI_Child;
-      Iter  : Child_Iterator;
-      Note  : Gtk_Notebook;
-      Pos   : Gint;
+      Child  : MDI_Child;
+      Iter   : Child_Iterator;
+      Note   : Gtk_Notebook;
+      Pos    : Gint;
    begin
       case Command.Mode is
-         when Split_H =>
-            Split (Get_MDI (Kernel), Orientation_Horizontal,
-                   Mode => After);
-         when Split_V =>
-            Split (Get_MDI (Kernel), Orientation_Vertical,
-                   Mode  => After);
-         when Clone =>
+         when Split_H              =>
+            Split (Get_MDI (Kernel), Orientation_Horizontal, Mode => After);
+
+         when Split_V              =>
+            Split (Get_MDI (Kernel), Orientation_Vertical, Mode => After);
+
+         when Clone                =>
             declare
                Focus : constant MDI_Child :=
                  Get_Focus_Child (Get_MDI (Kernel));
-               N : MDI_Child;
+               N     : MDI_Child;
                pragma Unreferenced (N);
             begin
                if Focus /= null then
-                  N  := Dnd_Data (Focus, Copy => True);
+                  N := Dnd_Data (Focus, Copy => True);
                end if;
             end;
-         when Reorder_Tab_Left =>
+
+         when Reorder_Tab_Left     =>
             Iter := First_Child (Get_MDI (Kernel));
             Child := Get (Iter);
             if Child /= null then
@@ -363,7 +371,7 @@ package body GPS.Main_Window is
                Reorder_Child (Note, Child, Page_Num (Note, Child) - 1);
             end if;
 
-         when Reorder_Tab_Right =>
+         when Reorder_Tab_Right    =>
             Iter := First_Child (Get_MDI (Kernel));
             Child := Get (Iter);
             if Child /= null then
@@ -375,7 +383,7 @@ package body GPS.Main_Window is
                Reorder_Child (Note, Child, Pos);
             end if;
 
-         when Move_To_Next_Tab =>
+         when Move_To_Next_Tab     =>
             Iter := First_Child (Get_MDI (Kernel));
             Child := Get (Iter);
             if Child /= null then
@@ -409,8 +417,7 @@ package body GPS.Main_Window is
    ------------------
 
    function Prepare_Quit
-     (Main_Window : access GPS_Window_Record'Class)
-      return Boolean is
+     (Main_Window : access GPS_Window_Record'Class) return Boolean is
    begin
       --  Need to save the desktop here, while the MDI still belongs to a
       --  toplevel window, since otherwise we can't save the size or status
@@ -420,7 +427,7 @@ package body GPS.Main_Window is
       end if;
 
       if Save_MDI_Children (Main_Window.Kernel)
-         and then Before_Exit_Action_Hook.Run (Main_Window.Kernel)
+        and then Before_Exit_Action_Hook.Run (Main_Window.Kernel)
       then
          --  We are about to tell the main window to destroy itself: set the
          --  destruction flag in the kernel to avoid, for instance, computing
@@ -476,8 +483,8 @@ package body GPS.Main_Window is
    ---------------------
 
    function Delete_Callback
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
+      return Boolean
    is
       pragma Unreferenced (Params);
       Main_Window : constant GPS_Window := GPS_Window (Widget);
@@ -494,9 +501,10 @@ package body GPS.Main_Window is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_Project_View_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class)
+   overriding
+   procedure Execute
+     (Self   : On_Project_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
    begin
@@ -548,30 +556,33 @@ package body GPS.Main_Window is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
-      Dead   : Boolean;
+      Dead      : Boolean;
       pragma Unreferenced (Dead, Self);
-      Theme : Theme_Descr;
-      Err   : aliased GError;
+      Theme     : Theme_Descr;
+      Err       : aliased GError;
       Theme_Css : Virtual_File;
 
    begin
-      if Pref = null
-        or else Pref = Preference (Gtk_Theme)
-      then
+      if Pref = null or else Pref = Preference (Gtk_Theme) then
          Theme := Gtk_Theme.Get_Pref;
 
          declare
             Theme_Name      : constant String := To_String (Theme.Name);
             Theme_Directory : constant String := To_String (Theme.Directory);
          begin
-            Trace (Me, "Setting gtk+ theme to '"
-                   & Theme_Name & "', directory='"
-                   & Theme_Directory & "'");
+            Trace
+              (Me,
+               "Setting gtk+ theme to '"
+               & Theme_Name
+               & "', directory='"
+               & Theme_Directory
+               & "'");
             Glib.Properties.Set_Property
               (Gtk.Settings.Get_Default,
                Gtk.Settings.Gtk_Theme_Name_Property,
@@ -590,98 +601,100 @@ package body GPS.Main_Window is
                   Priority => Gtk.Style_Provider.Priority_Theme);
             end if;
 
-            Theme_Css := Kernel.Get_Home_Dir.Create_From_Dir
-              ("gps-" & (+Theme_Name) & ".css");
+            Theme_Css :=
+              Kernel.Get_Home_Dir.Create_From_Dir
+                ("gps-" & (+Theme_Name) & ".css");
 
             if not Theme_Css.Is_Regular_File then
                Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
-               Theme_Css := Kernel.Get_Share_Dir.Create_From_Dir
-                 ("gps-" & (+Theme_Name) & ".css");
+               Theme_Css :=
+                 Kernel.Get_Share_Dir.Create_From_Dir
+                   ("gps-" & (+Theme_Name) & ".css");
             end if;
 
             if not Theme_Css.Is_Regular_File then
                Trace (Me, "No " & Theme_Css.Display_Full_Name & " found");
             elsif not Theme_Specific_Css_Provider.Load_From_Path
-              (+Theme_Css.Full_Name.all, Err'Access)
+                        (+Theme_Css.Full_Name.all, Err'Access)
             then
-               Trace (Me, "Error loading " & Theme_Css.Display_Full_Name & ": "
-                      & Get_Message (Err));
+               Trace
+                 (Me,
+                  "Error loading "
+                  & Theme_Css.Display_Full_Name
+                  & ": "
+                  & Get_Message (Err));
             else
                Trace (Me, "Loaded " & Theme_Css.Display_Full_Name);
             end if;
          end;
       end if;
 
-      if Pref = null
-        or else Pref = Preference (Default_Font)
-      then
+      if Pref = null or else Pref = Preference (Default_Font) then
          declare
             Default_Font_Val    : constant Pango_Font_Description :=
-                                    Default_Font.Get_Pref;
+              Default_Font.Get_Pref;
             Default_Font_Family : constant String :=
-                                    Get_Family (Default_Font_Val);
+              Get_Family (Default_Font_Val);
             Default_Font_Size   : constant String :=
-                                    Gint'Image
-                                      (Pango.Enums.To_Pixels
-                                         (Get_Size (Default_Font_Val)));
+              Gint'Image (Pango.Enums.To_Pixels (Get_Size (Default_Font_Val)));
             Default_Font_Style  : constant String :=
-                                    Get_Style_As_String (Default_Font_Val);
+              Get_Style_As_String (Default_Font_Val);
          begin
             --  ??? This creates a new css_provider every time prefs are
             --  changed.
             Gtkada.Style.Load_Css_String
-              ("* { font-family: " & Default_Font_Family & ";"
+              ("* { font-family: "
+               & Default_Font_Family
+               & ";"
                & ASCII.LF
-               & " font-size: " & Default_Font_Size & "pt;"
+               & " font-size: "
+               & Default_Font_Size
+               & "pt;"
                & ASCII.LF
-               & " font-style: " & Default_Font_Style & ";}",
+               & " font-style: "
+               & Default_Font_Style
+               & ";}",
                Priority => Gtk.Style_Provider.Priority_Theme);
          end;
       end if;
 
-      if Pref = null
-        or else Pref = Preference (Window_Title_Pref)
-      then
+      if Pref = null or else Pref = Preference (Window_Title_Pref) then
          Reset_Title (Kernel);
       end if;
 
-      if Pref = null
-        or else Pref = Preference (Pref_Toolbar_Style)
-      then
+      if Pref = null or else Pref = Preference (Pref_Toolbar_Style) then
          case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
-         when Text_Only =>
-            Set_Toolbar_Style
-              (GPS_Application (Kernel.Get_Application),
-               Main_Icon_Size  => Icon_Size_Menu,
-               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
-               Style           => Toolbar_Text);
+            when Text_Only      =>
+               Set_Toolbar_Style
+                 (GPS_Application (Kernel.Get_Application),
+                  Main_Icon_Size  => Icon_Size_Menu,
+                  Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+                  Style           => Toolbar_Text);
 
-         when Text_And_Icons =>
-            Set_Toolbar_Style
-              (GPS_Application (Kernel.Get_Application),
-               Main_Icon_Size  => Icon_Size_Menu,
-               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
-               Style           => Toolbar_Both);
+            when Text_And_Icons =>
+               Set_Toolbar_Style
+                 (GPS_Application (Kernel.Get_Application),
+                  Main_Icon_Size  => Icon_Size_Menu,
+                  Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+                  Style           => Toolbar_Both);
 
-         when Small_Icons =>
-            Set_Toolbar_Style
-              (GPS_Application (Kernel.Get_Application),
-               Main_Icon_Size  => Icon_Size_Menu,
-               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
-               Style           => Toolbar_Icons);
+            when Small_Icons    =>
+               Set_Toolbar_Style
+                 (GPS_Application (Kernel.Get_Application),
+                  Main_Icon_Size  => Icon_Size_Menu,
+                  Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+                  Style           => Toolbar_Icons);
 
-         when Large_Icons =>
-            Set_Toolbar_Style
-              (GPS_Application (Kernel.Get_Application),
-               Main_Icon_Size  => Icon_Size_Large_Toolbar,
-               Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
-               Style           => Toolbar_Icons);
+            when Large_Icons    =>
+               Set_Toolbar_Style
+                 (GPS_Application (Kernel.Get_Application),
+                  Main_Icon_Size  => Icon_Size_Large_Toolbar,
+                  Local_Icon_Size => Get_Icon_Size_For_Local_Toolbars,
+                  Style           => Toolbar_Icons);
          end case;
       end if;
 
-      if Pref = null
-        or else Pref = Preference (Animations)
-      then
+      if Pref = null or else Pref = Preference (Animations) then
          Glib.Properties.Set_Property
            (Gtk.Settings.Get_Default,
             Gtk.Settings.Gtk_Enable_Animations_Property,
@@ -696,12 +709,14 @@ package body GPS.Main_Window is
    -------------------------
 
    function On_Draw_Toolbar_Box
-     (Self : access Gtk_Widget_Record'Class;
-      Cr   : Cairo_Context) return Boolean is
+     (Self : access Gtk_Widget_Record'Class; Cr : Cairo_Context) return Boolean
+   is
    begin
       Render_Background
         (Get_Style_Context (Self),
-         Cr, 0.0, 0.0,
+         Cr,
+         0.0,
+         0.0,
          Gdouble (Get_Allocated_Width (Self)),
          Gdouble (Get_Allocated_Height (Self)));
       return False;
@@ -726,8 +741,8 @@ package body GPS.Main_Window is
    -- Quit --
    ----------
 
-   overriding procedure Quit (Self : not null access GPS_Application_Record)
-   is
+   overriding
+   procedure Quit (Self : not null access GPS_Application_Record) is
       Log_Files : File_Array_Access;
 
       procedure Remove_Old_Log_files (Prefix : String);
@@ -784,8 +799,7 @@ package body GPS.Main_Window is
 
    procedure Initialize
      (Self        : not null access GPS_Application_Window_Record'Class;
-      Application : not null access GPS_Application_Record'Class)
-   is
+      Application : not null access GPS_Application_Record'Class) is
    begin
       Gtk.Application_Window.Initialize (Self, Application);
 
@@ -803,10 +817,12 @@ package body GPS.Main_Window is
    procedure Update_Perspectives_In_Selector
      (Self : access Gtk_Widget_Record'Class)
    is
-      Main : constant GPS_Window := GPS_Window (Self);
+      Main    : constant GPS_Window := GPS_Window (Self);
       Current : constant String := Main.MDI.Current_Perspective;
-      List : constant String_List_Access :=  --  do not free
-        Main.MDI.List_Of_Perspectives;
+      List    : constant String_List_Access :=  --  do not free
+        Main
+          .MDI
+          .List_Of_Perspectives;
    begin
       Main.Perspective_Selector.Clear_Items;
 
@@ -860,14 +876,18 @@ package body GPS.Main_Window is
       --  Useful on Mac OS X, to present the application to the user
       Glib.Main.Activate_Application;
 
-      Window_Title_Pref := Application.Kernel.Get_Preferences.Create
-        (Path  => -"Windows:Main Window",
-         Name  => "window-title",
-         Label => "Window title",
-         Doc   => "Title to use for the GNAT Studio window." & ASCII.LF
-           & "The following macros are expanded dynamically:" & ASCII.LF
-           & GPS.Kernel.Macros.Doc,
-         Default => "GNAT Studio - %ts - %fd - %P project");
+      Window_Title_Pref :=
+        Application.Kernel.Get_Preferences.Create
+          (Path    => -"Windows:Main Window",
+           Name    => "window-title",
+           Label   => "Window title",
+           Doc     =>
+             "Title to use for the GNAT Studio window."
+             & ASCII.LF
+             & "The following macros are expanded dynamically:"
+             & ASCII.LF
+             & GPS.Kernel.Macros.Doc,
+           Default => "GNAT Studio - %ts - %fd - %P project");
 
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
       --  window managers as "top-left" corner, which may cause issues with
@@ -876,10 +896,8 @@ package body GPS.Main_Window is
       Set_Geometry_Hints
         (Window          => Main_Window,
          Geometry_Widget => null,
-         Geometry        => Gdk_Geometry'
-           (Min_Width  => 1280,
-            Min_Height => 720,
-            others     => <>),
+         Geometry        =>
+           Gdk_Geometry'(Min_Width => 1280, Min_Height => 720, others => <>),
          Geom_Mask       => Hint_Base_Size);
 
       Gtk_New (Main_Window.Main_Accel_Group);
@@ -892,8 +910,10 @@ package body GPS.Main_Window is
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
       Widget_Callback.Object_Connect
-         (Main_Window.MDI, Signal_Float_Child, On_Float_Child'Access,
-          Slot_Object => Main_Window);
+        (Main_Window.MDI,
+         Signal_Float_Child,
+         On_Float_Child'Access,
+         Slot_Object => Main_Window);
 
       Main_Window.Setup_Menu_Bar;
       Main_Window.Main_Box.Add (Main_Window.MDI);
@@ -903,7 +923,8 @@ package body GPS.Main_Window is
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
       Return_Callback.Object_Connect
-        (Main_Window, Gtk.Widget.Signal_Delete_Event,
+        (Main_Window,
+         Gtk.Widget.Signal_Delete_Event,
          Delete_Callback'Access,
          Gtk_Widget (Main_Window),
          After => False);
@@ -916,8 +937,10 @@ package body GPS.Main_Window is
       Gtk.Dnd.Dest_Set
         (Main_Window, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Main_Window, Signal_Drag_Data_Received,
-         Drag_Data_Received'Access, Application.Kernel);
+        (Main_Window,
+         Signal_Drag_Data_Received,
+         Drag_Data_Received'Access,
+         Application.Kernel);
 
       --  Set the generic user interface
       User_Interface_Tools.Set_User_Interface
@@ -933,13 +956,14 @@ package body GPS.Main_Window is
    ---------------------------
 
    procedure On_Switch_Perspective (Self : access Gtk_Widget_Record'Class) is
-      B : constant GPS_Window := GPS_Window (Self);
+      B        : constant GPS_Window := GPS_Window (Self);
       Selected : constant String := B.Perspective_Selector.Get_Selected_Item;
    begin
       Load_Perspective (B.Kernel, Selected);
    end On_Switch_Perspective;
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Context : access No_Popup_Menu_Filter;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean is
    begin
@@ -960,15 +984,20 @@ package body GPS.Main_Window is
 
       P.Set_Tooltip_Text (-"Change the current perspective (layout of views)");
       Widget_Callback.Object_Connect
-        (Self.MDI, Signal_Perspective_Changed,
-         Update_Perspectives_In_Selector'Access, Self);
+        (Self.MDI,
+         Signal_Perspective_Changed,
+         Update_Perspectives_In_Selector'Access,
+         Self);
       Widget_Callback.Object_Connect
-        (Self.MDI, Signal_Perspectives_Added,
-         Update_Perspectives_In_Selector'Access, Self);
+        (Self.MDI,
+         Signal_Perspectives_Added,
+         Update_Perspectives_In_Selector'Access,
+         Self);
       Widget_Callback.Object_Connect
         (Self.Perspective_Selector,
          Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
-         On_Switch_Perspective'Access, Self);
+         On_Switch_Perspective'Access,
+         Self);
 
       Self.Toolbar_Box.Pack_End (P, Expand => False, Fill => False);
    end Setup_Perspective_Selector;
@@ -1009,14 +1038,15 @@ package body GPS.Main_Window is
    -------------------
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class) is
-      MDI_Class                         : constant Class_Type := New_Class
-        (Main_Window.Kernel, "MDI");
-      MDI_Window_Class                  : constant Class_Type := New_Class
-        (Main_Window.Kernel, "MDIWindow", Get_GUI_Class (Main_Window.Kernel));
-      Kernel                            : constant Kernel_Handle :=
-        Main_Window.Kernel;
-      No_Popup_Menu_Filt                : constant Action_Filter :=
-        new No_Popup_Menu_Filter;
+      MDI_Class          : constant Class_Type :=
+        New_Class (Main_Window.Kernel, "MDI");
+      MDI_Window_Class   : constant Class_Type :=
+        New_Class
+          (Main_Window.Kernel,
+           "MDIWindow",
+           Get_GUI_Class (Main_Window.Kernel));
+      Kernel             : constant Kernel_Handle := Main_Window.Kernel;
+      No_Popup_Menu_Filt : constant Action_Filter := new No_Popup_Menu_Filter;
    begin
       Register_Filter
         (Kernel => Kernel,
@@ -1028,9 +1058,9 @@ package body GPS.Main_Window is
          Name        => "Move to next window",
          --           Command     => Interactive_Command_Access (Command),
          Command     =>
-            new MDI_Child_Selection_Command'(Interactive_Command with
-               Move_To_Next => True,
-               Group        => Group_Any),
+           new MDI_Child_Selection_Command'
+             (Interactive_Command
+              with Move_To_Next => True, Group => Group_Any),
          Category    => "MDI",
          Filter      => No_Popup_Menu_Filt,
          Description =>
@@ -1042,9 +1072,9 @@ package body GPS.Main_Window is
         (Kernel      => Kernel,
          Name        => "Move to previous window",
          Command     =>
-            new MDI_Child_Selection_Command'(Interactive_Command with
-               Move_To_Next => False,
-               Group        => Group_Any),
+           new MDI_Child_Selection_Command'
+             (Interactive_Command
+              with Move_To_Next => False, Group => Group_Any),
          Category    => "MDI",
          Filter      => No_Popup_Menu_Filt,
          Description =>
@@ -1056,9 +1086,9 @@ package body GPS.Main_Window is
         (Kernel      => Kernel,
          Name        => "Select other window",
          Command     =>
-            new MDI_Child_Selection_Command'(Interactive_Command with
-               Group        => Group_Default,
-               Move_To_Next => True),
+           new MDI_Child_Selection_Command'
+             (Interactive_Command
+              with Group => Group_Default, Move_To_Next => True),
          Category    => "MDI",
          Filter      => No_Popup_Menu_Filt,
          Description =>
@@ -1069,8 +1099,8 @@ package body GPS.Main_Window is
         (Kernel      => Kernel,
          Name        => "Split horizontally",
          Command     =>
-            new MDI_Window_Actions_Command'
-              (Interactive_Command with Mode => Split_H),
+           new MDI_Window_Actions_Command'
+             (Interactive_Command with Mode => Split_H),
          Category    => "MDI",
          Description => -("Split the current window in two horizontally"));
 
@@ -1078,8 +1108,8 @@ package body GPS.Main_Window is
         (Kernel      => Kernel,
          Name        => "Split vertically",
          Command     =>
-            new MDI_Window_Actions_Command'
-              (Interactive_Command with Mode => Split_V),
+           new MDI_Window_Actions_Command'
+             (Interactive_Command with Mode => Split_V),
          Category    => "MDI",
          Description => -("Split the current window in two vertically"));
 
@@ -1087,44 +1117,44 @@ package body GPS.Main_Window is
         (Kernel,
          Name        => "Clone window",
          Command     =>
-            new MDI_Window_Actions_Command'
-              (Interactive_Command with Mode => Clone),
+           new MDI_Window_Actions_Command'
+             (Interactive_Command with Mode => Clone),
          Category    => "MDI",
          Description =>
-         -("Create a duplicate of the current window if possible. Not all"
-           & " windows support this operation."));
+           -("Create a duplicate of the current window if possible. Not all"
+             & " windows support this operation."));
 
       Register_Action
         (Kernel,
          Name         => "Move tab to left",
          Command      =>
-            new MDI_Window_Actions_Command'
-              (Interactive_Command with Mode => Reorder_Tab_Left),
+           new MDI_Window_Actions_Command'
+             (Interactive_Command with Mode => Reorder_Tab_Left),
          Category     => "MDI",
          Description  =>
            -("Move the current notebook tab one position to the left, within"
-           & " the notebook (cyclic)"),
+             & " the notebook (cyclic)"),
          For_Learning => True);
 
       Register_Action
         (Kernel,
          Name         => "Move tab to right",
          Command      =>
-            new MDI_Window_Actions_Command'
-              (Interactive_Command with Mode => Reorder_Tab_Right),
+           new MDI_Window_Actions_Command'
+             (Interactive_Command with Mode => Reorder_Tab_Right),
          Category     => "MDI",
          Filter       => No_Popup_Menu_Filt,
          Description  =>
-         -("Move the current notebook tab one position to the right, within"
-           & " the notebook (cyclic)"),
+           -("Move the current notebook tab one position to the right, within"
+             & " the notebook (cyclic)"),
          For_Learning => True);
 
       Register_Action
         (Kernel,
          Name         => "Move to next tab",
          Command      =>
-            new MDI_Window_Actions_Command'
-              (Interactive_Command with Mode => Move_To_Next_Tab),
+           new MDI_Window_Actions_Command'
+             (Interactive_Command with Mode => Move_To_Next_Tab),
          Category     => "MDI",
          Filter       => No_Popup_Menu_Filt,
          Description  => -("Move to the next tab in the current notebook"),
@@ -1134,8 +1164,8 @@ package body GPS.Main_Window is
         (Kernel,
          Name         => "Move to previous tab",
          Command      =>
-            new MDI_Window_Actions_Command'
-              (Interactive_Command with Mode => Move_To_Previous_Tab),
+           new MDI_Window_Actions_Command'
+             (Interactive_Command with Mode => Move_To_Previous_Tab),
          Category     => "MDI",
          Filter       => No_Popup_Menu_Filt,
          Description  => -("Move to the previous tab in the current notebook"),
@@ -1185,8 +1215,9 @@ package body GPS.Main_Window is
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("information_popup",
-         Params        => (1  => Param ("text", Optional => True),
-                           2  => Param ("icon", Optional => True)),
+         Params        =>
+           (1 => Param ("text", Optional => True),
+            2 => Param ("icon", Optional => True)),
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1199,8 +1230,9 @@ package body GPS.Main_Window is
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("directory_selector",
-         Params        => (1  => Param ("base_dir", Optional => True),
-                           2  => Param ("title", Optional => True)),
+         Params        =>
+           (1 => Param ("base_dir", Optional => True),
+            2 => Param ("title", Optional => True)),
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
@@ -1213,11 +1245,12 @@ package body GPS.Main_Window is
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("combo_selection_dialog",
-         Class        => MDI_Class,
-         Params       => (1 => Param ("title"),
-                          2 => Param ("message"),
-                          3 => Param ("choices"),
-                          4 => Param ("combo_label", Optional => True)),
+         Class         => MDI_Class,
+         Params        =>
+           (1 => Param ("title"),
+            2 => Param ("message"),
+            3 => Param ("choices"),
+            4 => Param ("combo_label", Optional => True)),
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
@@ -1249,15 +1282,16 @@ package body GPS.Main_Window is
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class         => MDI_Window_Class,
-         Handler       => Default_Window_Command_Handler'Access);
+         Class   => MDI_Window_Class,
+         Handler => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("split",
-         Class        => MDI_Window_Class,
-         Params       => (2 => Param ("vertically", Optional => True),
-                          3 => Param ("reuse",      Optional => True),
-                          4 => Param ("new_view",   Optional => True)),
-         Handler      => Default_Window_Command_Handler'Access);
+         Class   => MDI_Window_Class,
+         Params  =>
+           (2 => Param ("vertically", Optional => True),
+            3 => Param ("reuse", Optional => True),
+            4 => Param ("new_view", Optional => True)),
+         Handler => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("float",
          Maximum_Args => 1,
@@ -1265,21 +1299,21 @@ package body GPS.Main_Window is
          Handler      => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("is_floating",
-         Class       => MDI_Window_Class,
-         Handler     => Default_Window_Command_Handler'Access);
+         Class   => MDI_Window_Class,
+         Handler => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("raise_window",
-         Class       => MDI_Window_Class,
-         Handler     => Default_Window_Command_Handler'Access);
+         Class   => MDI_Window_Class,
+         Handler => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("close",
-         Params      => (1 => Param ("force", Optional => True)),
-         Class       => MDI_Window_Class,
-         Handler     => Default_Window_Command_Handler'Access);
+         Params  => (1 => Param ("force", Optional => True)),
+         Class   => MDI_Window_Class,
+         Handler => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_child",
-         Class        => MDI_Window_Class,
-         Handler      => Default_Window_Command_Handler'Access);
+         Class   => MDI_Window_Class,
+         Handler => Default_Window_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("next",
          Class        => MDI_Window_Class,
@@ -1344,9 +1378,9 @@ package body GPS.Main_Window is
          Handler       => Default_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("current_perspective",
-         Class          => MDI_Class,
-         Static_Method  => True,
-         Handler        => Default_Command_Handler'Access);
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
    end Register_Keys;
 
    ------------------------------------
@@ -1354,19 +1388,20 @@ package body GPS.Main_Window is
    ------------------------------------
 
    procedure Default_Window_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       use Glib.Object;
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel           : constant Kernel_Handle := Get_Kernel (Data);
       MDI_Window_Class : constant Class_Type :=
         New_Class (Kernel, "MDIWindow");
-      Inst   : constant Class_Instance := Nth_Arg (Data, 1, MDI_Window_Class);
-      Child  : constant MDI_Child := MDI_Child (GObject'(Get_Data (Inst)));
-      Child2 : MDI_Child;
-      Klass  : Class_Type;
-      Widget : Gtk_Widget;
-      Result : Class_Instance;
+      Inst             : constant Class_Instance :=
+        Nth_Arg (Data, 1, MDI_Window_Class);
+      Child            : constant MDI_Child :=
+        MDI_Child (GObject'(Get_Data (Inst)));
+      Child2           : MDI_Child;
+      Klass            : Class_Type;
+      Widget           : Gtk_Widget;
+      Result           : Class_Instance;
    begin
       if Child = null then
          Set_Error_Msg (Data, "MDIWindow no longer exists");
@@ -1381,13 +1416,13 @@ package body GPS.Main_Window is
             Set_Focus_Child (Child2);
 
             Get_MDI (Kernel).Split
-               (Child       => Child2,
-                Orientation =>
-                   (if Data.Nth_Arg (2, True)
-                    then Orientation_Vertical else Orientation_Horizontal),
-                Mode        =>
-                   (if Data.Nth_Arg (3, False)
-                    then Any_Side_Reuse else Before));
+              (Child       => Child2,
+               Orientation =>
+                 (if Data.Nth_Arg (2, True)
+                  then Orientation_Vertical
+                  else Orientation_Horizontal),
+               Mode        =>
+                 (if Data.Nth_Arg (3, False) then Any_Side_Reuse else Before));
          end if;
 
       elsif Command = "float" then
@@ -1418,9 +1453,9 @@ package body GPS.Main_Window is
       elsif Command = "next" then
          Name_Parameters (Data, Next_Cmd_Parameters);
          declare
-            Child2 : MDI_Child;
-            Iter   : Child_Iterator := First_Child (Get_MDI (Kernel));
-            Return_Next : Boolean := False;
+            Child2       : MDI_Child;
+            Iter         : Child_Iterator := First_Child (Get_MDI (Kernel));
+            Return_Next  : Boolean := False;
             Visible_Only : constant Boolean := Nth_Arg (Data, 2, True);
          begin
             loop
@@ -1432,7 +1467,8 @@ package body GPS.Main_Window is
                   Child2 := Get (Iter);
                end if;
 
-               exit when Return_Next
+               exit when
+                 Return_Next
                  and then (not Visible_Only or else Is_Raised (Child2));
 
                if Child2 = Child then
@@ -1443,8 +1479,7 @@ package body GPS.Main_Window is
                Next (Iter);
             end loop;
 
-            Result := Create_MDI_Window_Instance
-              (Get_Script (Data), Child2);
+            Result := Create_MDI_Window_Instance (Get_Script (Data), Child2);
             Set_Return_Value (Data, Result);
          end;
 
@@ -1482,15 +1517,14 @@ package body GPS.Main_Window is
 
          if Widget = null then
             Data.Set_Error_Msg
-              ("no available widget for this MDIWindow: "
-               & Child.Get_Title);
+              ("no available widget for this MDIWindow: " & Child.Get_Title);
             return;
          end if;
 
          if Widget.all in Generic_Views.View_Record'Class then
             declare
                View    : constant Generic_Views.Abstract_View_Access :=
-                           Generic_Views.Abstract_View_Access (Widget);
+                 Generic_Views.Abstract_View_Access (Widget);
                Visible : constant Boolean := Nth_Arg (Data, 2, True);
             begin
                View.Set_Activity_Progress_Bar_Visibility (Visible);
@@ -1512,7 +1546,7 @@ package body GPS.Main_Window is
       Child  : access MDI_Child_Record'Class) return Class_Instance
    is
       MDI_Window_Class : Class_Type;
-      Inst : Class_Instance;
+      Inst             : Class_Instance;
    begin
       if Child = null then
          return No_Class_Instance;
@@ -1541,8 +1575,7 @@ package body GPS.Main_Window is
    -----------------------------
 
    procedure Default_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       use Glib.Object;
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
@@ -1565,8 +1598,8 @@ package body GPS.Main_Window is
 
       elsif Command = "getenv" then
          declare
-            Str : GNAT.OS_Lib.String_Access := GNAT.OS_Lib.Getenv
-               (Nth_Arg (Data, 1));
+            Str : GNAT.OS_Lib.String_Access :=
+              GNAT.OS_Lib.Getenv (Nth_Arg (Data, 1));
          begin
             if Str = null then
                Set_Return_Value (Data, String'(""));
@@ -1590,9 +1623,10 @@ package body GPS.Main_Window is
 
       elsif Command = "exit" then
          Name_Parameters (Data, Exit_Cmd_Parameters);
-         Quit (GPS_Window (Get_Main_Window (Kernel)),
-               Force => Nth_Arg (Data, 1, False),
-               Status => Nth_Arg (Data, 2, 0));
+         Quit
+           (GPS_Window (Get_Main_Window (Kernel)),
+            Force  => Nth_Arg (Data, 1, False),
+            Status => Nth_Arg (Data, 2, 0));
 
       elsif Command = "version" then
          Set_Return_Value (Data, Config.Version);
@@ -1601,7 +1635,7 @@ package body GPS.Main_Window is
          Name_Parameters (Data, Save_Windows_Parameters);
 
          if not Save_MDI_Children
-           (Kernel, No_Children, Nth_Arg (Data, 1, False))
+                  (Kernel, No_Children, Nth_Arg (Data, 1, False))
          then
             Set_Error_Msg (Data, -"Cancelled by user");
          end if;
@@ -1612,14 +1646,15 @@ package body GPS.Main_Window is
       then
          if Command = "get" then
             Name_Parameters (Data, Get_Cmd_Parameters);
-            Child := Find_MDI_Child_By_Name
-              (Get_MDI (Kernel), Nth_Arg (Data, 1));
+            Child :=
+              Find_MDI_Child_By_Name (Get_MDI (Kernel), Nth_Arg (Data, 1));
          elsif Command = "get_by_child" then
             Name_Parameters (Data, Get_By_Child_Cmd_Parameters);
-            Child := Find_MDI_Child_From_Widget
-              (Gtk_Widget
-                 (GObject'
-                    (Get_Data (Nth_Arg (Data, 1, Get_GUI_Class (Kernel))))));
+            Child :=
+              Find_MDI_Child_From_Widget
+                (Gtk_Widget
+                   (GObject'
+                      (Get_Data (Nth_Arg (Data, 1, Get_GUI_Class (Kernel))))));
          else
             Child := Get_Focus_Child (Get_MDI (Kernel));
          end if;
@@ -1630,8 +1665,8 @@ package body GPS.Main_Window is
       elsif Command = "set_focus_widget" then
          declare
             Inst   : constant Class_Instance := Nth_Arg (Data, 1);
-            Widget : constant Gtk_Widget := Gtk_Widget
-              (GNATCOLL.Scripts.Gtkada.Get_Data (Inst));
+            Widget : constant Gtk_Widget :=
+              Gtk_Widget (GNATCOLL.Scripts.Gtkada.Get_Data (Inst));
          begin
             Gtkada.MDI.Set_Focus_Child (Get_MDI (Kernel), Widget);
          exception
@@ -1647,8 +1682,7 @@ package body GPS.Main_Window is
             Set_Return_Value_As_List (Data);
             while Get (Iter) /= null loop
                Child := Get (Iter);
-               Inst := Create_MDI_Window_Instance
-                 (Get_Script (Data), Child);
+               Inst := Create_MDI_Window_Instance (Get_Script (Data), Child);
                Set_Return_Value (Data, Inst);
                Next (Iter);
             end loop;
@@ -1661,12 +1695,13 @@ package body GPS.Main_Window is
             Result : Message_Dialog_Buttons;
             pragma Unreferenced (Result);
          begin
-            Result := GPS_Message_Dialog
-              (Msg     => Nth_Arg (Data, 1),
-               Title   => Nth_Arg (Data, 2, ""),
-               Buttons => Button_OK,
-               Justification => Justify_Left,
-               Parent  => Get_Current_Window (Kernel));
+            Result :=
+              GPS_Message_Dialog
+                (Msg           => Nth_Arg (Data, 1),
+                 Title         => Nth_Arg (Data, 2, ""),
+                 Buttons       => Button_OK,
+                 Justification => Justify_Left,
+                 Parent        => Get_Current_Window (Kernel));
          end;
 
       elsif Command = "warning_dialog" then
@@ -1676,24 +1711,27 @@ package body GPS.Main_Window is
             Result : Message_Dialog_Buttons;
             pragma Unreferenced (Result);
          begin
-            Result := GPS_Message_Dialog
-              (Msg           => Nth_Arg (Data, 1),
-               Title         => Nth_Arg (Data, 2, ""),
-               Dialog_Type   => Warning,
-               Buttons       => Button_OK,
-               Justification => Justify_Left,
-               Parent        => Get_Current_Window (Kernel));
+            Result :=
+              GPS_Message_Dialog
+                (Msg           => Nth_Arg (Data, 1),
+                 Title         => Nth_Arg (Data, 2, ""),
+                 Dialog_Type   => Warning,
+                 Buttons       => Button_OK,
+                 Justification => Justify_Left,
+                 Parent        => Get_Current_Window (Kernel));
          end;
 
       elsif Command = "yes_no_dialog" then
          Name_Parameters (Data, Dialog_Cmd_Parameters);
          Set_Return_Value
-           (Data, GPS_Message_Dialog
-            (Msg           => Nth_Arg (Data, 1),
-             Buttons       => Button_Yes + Button_No,
-             Justification => Justify_Left,
-             Dialog_Type   => Confirmation,
-             Parent        => Get_Current_Window (Kernel)) = Button_Yes);
+           (Data,
+            GPS_Message_Dialog
+              (Msg           => Nth_Arg (Data, 1),
+               Buttons       => Button_Yes + Button_No,
+               Justification => Justify_Left,
+               Dialog_Type   => Confirmation,
+               Parent        => Get_Current_Window (Kernel))
+            = Button_Yes);
 
       elsif Command = "information_popup" then
          Display_Informational_Popup
@@ -1706,7 +1744,7 @@ package body GPS.Main_Window is
          Name_Parameters (Data, File_Selector_Cmd_Parameters);
 
          declare
-            Result : GNATCOLL.VFS.Virtual_File;
+            Result         : GNATCOLL.VFS.Virtual_File;
             File_Pattern   : constant Filesystem_String :=
               Nth_Arg (Data, 1, "empty");
             Base_Dir       : constant Virtual_File :=
@@ -1715,16 +1753,18 @@ package body GPS.Main_Window is
               Nth_Arg (Data, 3, "");
          begin
             if File_Pattern = "empty" then
-               Result := Select_File
-                 (Base_Directory => Base_Dir,
-                  Parent         => Get_Current_Window (Kernel),
-                  Except_Pattern => Except_Pattern);
+               Result :=
+                 Select_File
+                   (Base_Directory => Base_Dir,
+                    Parent         => Get_Current_Window (Kernel),
+                    Except_Pattern => Except_Pattern);
             else
-               Result := Select_File
-                 (Base_Directory => Base_Dir,
-                  File_Pattern   => File_Pattern,
-                  Except_Pattern => Except_Pattern,
-                  Parent         => Get_Current_Window (Kernel));
+               Result :=
+                 Select_File
+                   (Base_Directory => Base_Dir,
+                    File_Pattern   => File_Pattern,
+                    Except_Pattern => Except_Pattern,
+                    Parent         => Get_Current_Window (Kernel));
             end if;
 
             Set_Return_Value (Data, Create_File (Get_Script (Data), Result));
@@ -1732,13 +1772,14 @@ package body GPS.Main_Window is
 
       elsif Command = "directory_selector" then
          declare
-            Result   : GNATCOLL.VFS.Virtual_File;
+            Result : GNATCOLL.VFS.Virtual_File;
          begin
-            Result := Select_Directory
-              (Title             => Data.Nth_Arg (2, "Select a directory"),
-               Base_Directory    => Create (Data.Nth_Arg (1, "")),
-               Parent            => Get_Current_Window (Kernel),
-               Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
+            Result :=
+              Select_Directory
+                (Title             => Data.Nth_Arg (2, "Select a directory"),
+                 Base_Directory    => Create (Data.Nth_Arg (1, "")),
+                 Parent            => Get_Current_Window (Kernel),
+                 Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
 
             Set_Return_Value (Data, Create_File (Get_Script (Data), Result));
          end;
@@ -1751,19 +1792,18 @@ package body GPS.Main_Window is
             Button       : Gtk_Widget;
             Message      : constant String := Data.Nth_Arg (1);
 
-            type Ent_Array
-               is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
+            type Ent_Array is
+              array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
             Ent : Ent_Array;
 
-            type Text_View_Array
-            is array (2 .. Number_Of_Arguments (Data))
+            type Text_View_Array is
+              array (2 .. Number_Of_Arguments (Data))
               of Gtkada_Multiline_Entry;
 
             Text : Text_View_Array;
 
-            type Check_Button_Array
-            is array (2 .. Number_Of_Arguments (Data))
-              of Gtk_Check_Button;
+            type Check_Button_Array is
+              array (2 .. Number_Of_Arguments (Data)) of Gtk_Check_Button;
 
             Checkboxes : Check_Button_Array;
 
@@ -1780,7 +1820,7 @@ package body GPS.Main_Window is
                Is_Multiline     : Boolean := False;
 
                Checkbox_Prefix : constant String := "checkbox:";
-               Is_Checkbox        : Boolean := False;
+               Is_Checkbox     : Boolean := False;
 
                Arg   : constant String := Nth_Arg (Data, N);
                Index : Natural := Arg'First;
@@ -1793,12 +1833,12 @@ package body GPS.Main_Window is
                end loop;
 
                if GNATCOLL.Utils.Starts_With
-                 (Arg (Arg'First .. Index - 1), Multiline_Prefix)
+                    (Arg (Arg'First .. Index - 1), Multiline_Prefix)
                then
                   First := First + Multiline_Prefix'Length;
                   Is_Multiline := True;
                elsif GNATCOLL.Utils.Starts_With
-                 (Arg (Arg'First .. Index - 1), Checkbox_Prefix)
+                       (Arg (Arg'First .. Index - 1), Checkbox_Prefix)
                then
                   First := First + Checkbox_Prefix'Length;
                   Is_Checkbox := True;
@@ -1827,8 +1867,7 @@ package body GPS.Main_Window is
                   Checkboxes (N).Set_Active
                     (Boolean'Value (Arg (Index + 1 .. Arg'Last)));
 
-                  Group_Widget.Create_Child
-                    (Checkboxes (N));
+                  Group_Widget.Create_Child (Checkboxes (N));
 
                   if Focus then
                      Dialog.Set_Focus (Checkboxes (N));
@@ -1840,8 +1879,7 @@ package body GPS.Main_Window is
                   Ent (N).Set_Activates_Default (True);
 
                   Group_Widget.Create_Child
-                    (Ent (N),
-                     Label => Arg (First .. Index - 1));
+                    (Ent (N), Label => Arg (First .. Index - 1));
 
                   if Focus then
                      Dialog.Set_Focus (Ent (N));
@@ -1906,11 +1944,9 @@ package body GPS.Main_Window is
                   if Ent (Num) /= null then
                      Set_Return_Value (Data, Get_Text (Ent (Num)));
                   elsif Text (Num) /= null then
-                     Set_Return_Value
-                       (Data, Text (Num).Get_Text);
+                     Set_Return_Value (Data, Text (Num).Get_Text);
                   else
-                     Set_Return_Value
-                       (Data, Checkboxes (Num).Get_Active);
+                     Set_Return_Value (Data, Checkboxes (Num).Get_Active);
                   end if;
                end loop;
             end if;
@@ -1929,8 +1965,8 @@ package body GPS.Main_Window is
             Message      : constant String := Data.Nth_Arg (2);
             List         : List_Instance := Data.Nth_Arg (3);
             Combo_Label  : constant String := Data.Nth_Arg (4, "");
-            Choices      : Unbounded_String_Array
-              (1 .. List.Number_Of_Arguments);
+            Choices      :
+              Unbounded_String_Array (1 .. List.Number_Of_Arguments);
 
          begin
             for J in Choices'Range loop
@@ -1966,9 +2002,10 @@ package body GPS.Main_Window is
             --  Create the combo box and its associated group widget
 
             Group_Widget := new Dialog_Group_Widget_Record;
-            Initialize (Group_Widget,
-                        Parent_View         => Main_View,
-                        Allow_Multi_Columns => False);
+            Initialize
+              (Group_Widget,
+               Parent_View         => Main_View,
+               Allow_Multi_Columns => False);
 
             Gtk_New (Combo);
             Group_Widget.Create_Child (Combo, Label => Combo_Label);
@@ -2046,7 +2083,8 @@ package body GPS.Main_Window is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access MDI_Child_Selection_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -2054,14 +2092,16 @@ package body GPS.Main_Window is
    begin
       if Command.Group /= Group_Any then
          Check_Interactive_Selection_Dialog
-           (Get_MDI (Kernel), null,
-            Move_To_Next            => Command.Move_To_Next,
-            Only_Group              => Command.Group);
+           (Get_MDI (Kernel),
+            null,
+            Move_To_Next => Command.Move_To_Next,
+            Only_Group   => Command.Group);
       else
          Check_Interactive_Selection_Dialog
-           (Get_MDI (Kernel), Context.Event,
-            Move_To_Next            => Command.Move_To_Next,
-            Only_Group              => Command.Group);
+           (Get_MDI (Kernel),
+            Context.Event,
+            Move_To_Next => Command.Move_To_Next,
+            Only_Group   => Command.Group);
       end if;
       return Success;
    end Execute;
@@ -2083,8 +2123,7 @@ package body GPS.Main_Window is
    -- Reset_Title --
    -----------------
 
-   procedure Reset_Title
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+   procedure Reset_Title (Kernel : not null access Kernel_Handle_Record'Class)
    is
       Context : Selection_Context;
 
@@ -2092,13 +2131,13 @@ package body GPS.Main_Window is
       function Callback (Param : String; Quoted : Boolean) return String is
          Done : aliased Boolean := False;
       begin
-         return GPS.Kernel.Macros.Substitute
-           (Param, Context, Quoted, Done'Access);
+         return
+           GPS.Kernel.Macros.Substitute (Param, Context, Quoted, Done'Access);
       end Callback;
 
-      MDI  : MDI_Window;
-      C    : MDI_Child;
-      Win  : Gtk_Window;
+      MDI : MDI_Window;
+      C   : MDI_Child;
+      Win : Gtk_Window;
    begin
       if Kernel.Is_In_Destruction then
          return;
@@ -2113,7 +2152,7 @@ package body GPS.Main_Window is
          --  Outline from the bottom dock to the left of the editor.
 
          if C /= null
-            and then C.Get_Widget.Get_Toplevel.all in Gtk_Window_Record'Class
+           and then C.Get_Widget.Get_Toplevel.all in Gtk_Window_Record'Class
          then
             Win := Gtk_Window (C.Get_Widget.Get_Toplevel);
          end if;
@@ -2176,9 +2215,9 @@ package body GPS.Main_Window is
    ---------------
 
    function On_Delete
-      (Win   : access Gtk_Window_Record'Class;
-       Event : Gdk_Event;
-       Data  : Delete_Event_Data) return Boolean
+     (Win   : access Gtk_Window_Record'Class;
+      Event : Gdk_Event;
+      Data  : Delete_Event_Data) return Boolean
    is
       pragma Unreferenced (Event);
    begin
@@ -2198,8 +2237,7 @@ package body GPS.Main_Window is
    -------------
 
    procedure On_Hide
-      (Win   : access Gtk_Window_Record'Class;
-       Data  : Delete_Event_Data)
+     (Win : access Gtk_Window_Record'Class; Data : Delete_Event_Data)
    is
       Width, Height : Gint;
 
@@ -2207,22 +2245,24 @@ package body GPS.Main_Window is
       Win.Get_Size (Width, Height);
 
       if Active (Me) then
-         Trace (Me, "Storing new size for window "
+         Trace
+           (Me,
+            "Storing new size for window "
             & To_String (Data.Name)
-            & " width=" & Width'Img
-            & " height=" & Height'Img);
+            & " width="
+            & Width'Img
+            & " height="
+            & Height'Img);
       end if;
 
       Set_Property
-         (Data.Kernel,
-          Key        => To_String (Data.Name),
-          Name       => "size",
-          Property   =>
-             new Window_Size_Property'
-            (Property_Record with
-               Width  => Width,
-               Height => Height),
-          Persistent => True);
+        (Data.Kernel,
+         Key        => To_String (Data.Name),
+         Name       => "size",
+         Property   =>
+           new Window_Size_Property'
+             (Property_Record with Width => Width, Height => Height),
+         Persistent => True);
    end On_Hide;
 
    -----------------------------------
@@ -2230,10 +2270,10 @@ package body GPS.Main_Window is
    -----------------------------------
 
    procedure Set_Default_Size_From_History
-      (Win    : not null access Gtk_Window_Record'Class;
-       Name   : String;
-       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Width, Height : Gint)
+     (Win           : not null access Gtk_Window_Record'Class;
+      Name          : String;
+      Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Width, Height : Gint)
    is
       Prop  : Window_Size_Property;
       Found : Boolean;
@@ -2246,10 +2286,7 @@ package body GPS.Main_Window is
       end if;
 
       Get_Property
-         (Property => Prop,
-          Key      => Name,
-          Name     => "size",
-          Found    => Found);
+        (Property => Prop, Key => Name, Name => "size", Found => Found);
 
       --  ??? Can we check that the size is small enough for the screen ? We
       --  do not know yet what screen the window will be displayed on (since
@@ -2271,20 +2308,25 @@ package body GPS.Main_Window is
       --  can store the size in the properties file.
 
       Data.Kernel := Kernel;
-      Data.Name   := To_Unbounded_String (Name);
+      Data.Name := To_Unbounded_String (Name);
       Delete_Events.Connect
-         (Win, Gtk.Widget.Signal_Delete_Event,
-          Delete_Events.To_Marshaller (On_Delete'Access), Data);
+        (Win,
+         Gtk.Widget.Signal_Delete_Event,
+         Delete_Events.To_Marshaller (On_Delete'Access),
+         Data);
       Hide_Events.Connect
-         (Win, Gtk.Widget.Signal_Hide,
-          Hide_Events.To_Marshaller (On_Hide'Access), Data);
+        (Win,
+         Gtk.Widget.Signal_Hide,
+         Hide_Events.To_Marshaller (On_Hide'Access),
+         Data);
    end Set_Default_Size_From_History;
 
    ----------
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Window_Size_Property;
       Value : in out GNATCOLL.JSON.JSON_Value)
    is
@@ -2299,11 +2341,11 @@ package body GPS.Main_Window is
    -- Load --
    ----------
 
-   overriding procedure Load
-     (Self  : in out Window_Size_Property;
-      Value : GNATCOLL.JSON.JSON_Value) is
+   overriding
+   procedure Load
+     (Self : in out Window_Size_Property; Value : GNATCOLL.JSON.JSON_Value) is
    begin
-      Self.Width  := Gint'Value (Value.Get ("width"));
+      Self.Width := Gint'Value (Value.Get ("width"));
       Self.Height := Gint'Value (Value.Get ("height"));
    end Load;
 

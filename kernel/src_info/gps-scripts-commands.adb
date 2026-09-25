@@ -20,24 +20,25 @@ package body GPS.Scripts.Commands is
    procedure Free_When_Python_Owns_Ada (S : in out Scheduled_Command_Access);
    --  Free a command, when it was owned by script instances.
 
-   procedure Free_When_Python_Owns_Ada
-      (S : in out Scheduled_Command_Access) is
+   procedure Free_When_Python_Owns_Ada (S : in out Scheduled_Command_Access) is
    begin
       Unref (Command_Access (S));
    end Free_When_Python_Owns_Ada;
 
-   package Command_Script_Proxies is new Script_Proxies
-      (Scheduled_Command_Access, Command_Script_Proxy,
-       Free => Free_When_Python_Owns_Ada);
+   package Command_Script_Proxies is new
+     Script_Proxies
+       (Scheduled_Command_Access,
+        Command_Script_Proxy,
+        Free => Free_When_Python_Owns_Ada);
 
    procedure Command_Cmds
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands.
 
    function Create_Dead_Command
-      (Self : Scheduled_Command_Access) return Scheduled_Command_Access;
-   function Transfer_Ownership is new Command_Script_Proxies.Transfer_Ownership
-      (Detach => Create_Dead_Command);
+     (Self : Scheduled_Command_Access) return Scheduled_Command_Access;
+   function Transfer_Ownership is new
+     Command_Script_Proxies.Transfer_Ownership (Detach => Create_Dead_Command);
    --  Transfer ownership of the command to the script instances associated
    --  with it (if any), instead of having the script instances belong to
    --  the command.
@@ -47,13 +48,13 @@ package body GPS.Scripts.Commands is
    -----------------
 
    function Get_Command
-      (Data       : Callback_Data'Class;
-       Nth        : Positive;
-       Allow_Null : Boolean := False)
-      return Scheduled_Command_Access is
+     (Data       : Callback_Data'Class;
+      Nth        : Positive;
+      Allow_Null : Boolean := False) return Scheduled_Command_Access is
    begin
-      return Command_Script_Proxies.From_Instance
-         (Data.Nth_Arg (Nth, Allow_Null => Allow_Null));
+      return
+        Command_Script_Proxies.From_Instance
+          (Data.Nth_Arg (Nth, Allow_Null => Allow_Null));
    exception
       when No_Data_Set_For_Instance =>
          return null;
@@ -64,11 +65,11 @@ package body GPS.Scripts.Commands is
    -----------------
 
    procedure Set_Command
-      (Inst    : Class_Instance;
-       Command : not null access Scheduled_Command'Class) is
+     (Inst : Class_Instance; Command : not null access Scheduled_Command'Class)
+   is
    begin
       Command_Script_Proxies.Store_In_Instance
-         (Command.Instances, Inst, Scheduled_Command_Access (Command));
+        (Command.Instances, Inst, Scheduled_Command_Access (Command));
    end Set_Command;
 
    ------------------
@@ -76,25 +77,25 @@ package body GPS.Scripts.Commands is
    ------------------
 
    function Get_Instance
-      (Command : not null access Scheduled_Command'Class;
-       Script  : not null access Scripting_Language_Record'Class;
-       Class_To_Create : String := "")
-      return Class_Instance
-   is
+     (Command         : not null access Scheduled_Command'Class;
+      Script          : not null access Scripting_Language_Record'Class;
+      Class_To_Create : String := "") return Class_Instance is
    begin
-      return Command_Script_Proxies.Get_Or_Create_Instance
-         (Command.Instances, Scheduled_Command_Access (Command), Script,
-          Class_To_Create => Class_To_Create);
+      return
+        Command_Script_Proxies.Get_Or_Create_Instance
+          (Command.Instances,
+           Scheduled_Command_Access (Command),
+           Script,
+           Class_To_Create => Class_To_Create);
    end Get_Instance;
 
    ------------------
    -- Command_Cmds --
    ------------------
 
-   procedure Command_Cmds
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure Command_Cmds (Data : in out Callback_Data'Class; Command : String)
    is
-      Cmd              : Scheduled_Command_Access;
+      Cmd : Scheduled_Command_Access;
    begin
       if Command = "progress" then
          Cmd := Get_Command (Data, 1);
@@ -122,8 +123,8 @@ package body GPS.Scripts.Commands is
    -- Get_Command --
    -----------------
 
-   function Get_Command (Command : access Scheduled_Command'Class)
-      return Command_Access is
+   function Get_Command
+     (Command : access Scheduled_Command'Class) return Command_Access is
    begin
       return Command.Command;
    end Get_Command;
@@ -132,8 +133,8 @@ package body GPS.Scripts.Commands is
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
-     (Self : access Scheduled_Command) return String is
+   overriding
+   function Get_Label (Self : access Scheduled_Command) return String is
    begin
       return Self.Command.Get_Label;
    end Get_Label;
@@ -142,7 +143,8 @@ package body GPS.Scripts.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Scheduled_Command) return Command_Return_Type is
    begin
       return Execute (Command.Command);
@@ -152,8 +154,8 @@ package body GPS.Scripts.Commands is
    -- Name --
    ----------
 
-   overriding function Name
-     (Command : access Scheduled_Command) return String is
+   overriding
+   function Name (Command : access Scheduled_Command) return String is
    begin
       return Name (Command.Command);
    end Name;
@@ -162,7 +164,8 @@ package body GPS.Scripts.Commands is
    -- Progress --
    --------------
 
-   overriding function Progress
+   overriding
+   function Progress
      (Command : access Scheduled_Command) return Progress_Record is
    begin
       return Progress (Command.Command);
@@ -172,8 +175,9 @@ package body GPS.Scripts.Commands is
    -- Set_Progress --
    ------------------
 
-   overriding procedure Set_Progress (Command : access Scheduled_Command;
-                                      Progress : Progress_Record) is
+   overriding
+   procedure Set_Progress
+     (Command : access Scheduled_Command; Progress : Progress_Record) is
    begin
       Set_Progress (Command.Command, Progress);
    end Set_Progress;
@@ -182,7 +186,8 @@ package body GPS.Scripts.Commands is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt (Command : in out Scheduled_Command) is
+   overriding
+   procedure Interrupt (Command : in out Scheduled_Command) is
    begin
       Interrupt (Command.Command.all);
    end Interrupt;
@@ -192,7 +197,7 @@ package body GPS.Scripts.Commands is
    -------------------------
 
    function Create_Dead_Command
-      (Self : Scheduled_Command_Access) return Scheduled_Command_Access
+     (Self : Scheduled_Command_Access) return Scheduled_Command_Access
    is
       Result : constant Scheduled_Command_Access := new Scheduled_Command;
    begin
@@ -210,7 +215,8 @@ package body GPS.Scripts.Commands is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (Command : in out Scheduled_Command) is
+   overriding
+   procedure Primitive_Free (Command : in out Scheduled_Command) is
    begin
       --  If some script instance is referencing the command, we need to
       --  keep it in memory, but owned by the instances.
@@ -225,7 +231,8 @@ package body GPS.Scripts.Commands is
    -- Undo --
    ----------
 
-   overriding function Undo (This : access Scheduled_Command) return Boolean is
+   overriding
+   function Undo (This : access Scheduled_Command) return Boolean is
    begin
       return Undo (This.Command);
    end Undo;
@@ -235,8 +242,7 @@ package body GPS.Scripts.Commands is
    --------------------
 
    function Create_Wrapper
-     (Command : access Root_Command'Class)
-      return Scheduled_Command_Access
+     (Command : access Root_Command'Class) return Scheduled_Command_Access
    is
       C : Scheduled_Command_Access;
    begin
@@ -260,7 +266,7 @@ package body GPS.Scripts.Commands is
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
    is
       Command_Class : constant Class_Type :=
-         Kernel.Scripts.New_Class (Command_Class_Name);
+        Kernel.Scripts.New_Class (Command_Class_Name);
    begin
       Kernel.Scripts.Register_Command
         ("progress", Handler => Command_Cmds'Access, Class => Command_Class);

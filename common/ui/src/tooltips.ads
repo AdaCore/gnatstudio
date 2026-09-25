@@ -26,13 +26,13 @@
 --        not at the end of the timeout. This results in a lot of extra
 --        computation for the contents of the tooltip.
 
-with Glib;           use Glib;
-with Gdk.RGBA;       use Gdk.RGBA;
-with Gtk.Widget;     use Gtk.Widget;
+with Glib;       use Glib;
+with Gdk.RGBA;   use Gdk.RGBA;
+with Gtk.Widget; use Gtk.Widget;
 with Gdk.Rectangle;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
-with Gtk.Label;      use Gtk.Label;
+with Gtk.Label;  use Gtk.Label;
 
 package Tooltips is
 
@@ -70,8 +70,7 @@ package Tooltips is
 
    function Show_Tooltip_On_Create_Contents
      (Tooltip : not null access Tooltip_Handler) return Boolean
-   is
-     (True);
+   is (True);
    --  Return True if the tooltip can immediately and automatically be shown
    --  after calling Create_Contents on a tooltip query.
    --  Override this function and return False if your tooltips contents can
@@ -81,8 +80,7 @@ package Tooltips is
 
    function Align_Tooltip_With_Tip_Area
      (Tooltip : not null access Tooltip_Handler) return Boolean
-   is
-     (False);
+   is (False);
    --  A small offset is added between the tooltip and the cursor positions
    --  by default: override this function and return True if the tooltips
    --  should be aligned with its tip area.
@@ -92,7 +90,8 @@ package Tooltips is
    function Create_Contents
      (Tooltip : not null access Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget is abstract;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   is abstract;
    --  Return the widget to be displayed in the tooltip. This widget will be
    --  automatically destroyed when the tooltip is hidden.
    --  This function should return null if the tooltip shouldn't be
@@ -118,8 +117,8 @@ package Tooltips is
    --  Coordinates are relative to the widget.
 
    procedure Associate_To_Widget
-     (Tooltip         : access Tooltip_Handler'Class;
-      Widget          : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Tooltip             : access Tooltip_Handler'Class;
+      Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
       Scroll_Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class := null);
    --  Bind Tooltip to the widget, so that when the mouse is left over Widget,
    --  the tooltip is displayed.
@@ -162,9 +161,7 @@ package Tooltips is
    -----------
 
    procedure Create_Tooltip_Label
-     (Label      : out Gtk_Label;
-      Text       : String;
-      Use_Markup : Boolean := True);
+     (Label : out Gtk_Label; Text : String; Use_Markup : Boolean := True);
    --  Create a label suitable to be displayed in tooltips.
    --  In particular, it ensures that the created label will wrap if it's
    --  needed width becomes too wide to be displayed in a tooltip.

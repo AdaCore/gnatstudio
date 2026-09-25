@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Intl;                         use GPS.Intl;
-with GNAT.Strings;                     use GNAT.Strings;
+with GPS.Intl;     use GPS.Intl;
+with GNAT.Strings; use GNAT.Strings;
 with UTF8_Utils;
 
 package body Builder_Facility_Module.UTF8_Converters is
@@ -25,21 +25,20 @@ package body Builder_Facility_Module.UTF8_Converters is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access is
    begin
-      return new UTF8_Converter'
-        (Child  => Child,
-         Kernel => Self.Kernel);
+      return new UTF8_Converter'(Child => Child, Kernel => Self.Kernel);
    end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access UTF8_Converter;
       Item    : String;
       Command : access Root_Command'Class)

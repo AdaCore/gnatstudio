@@ -23,8 +23,10 @@ with GVD.Variables.Types.Records; use GVD.Variables.Types.Records;
 package body GVD.Variables.Types.Classes is
 
    type Generic_Iterator_Access is access all Generic_Iterator'Class;
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Generic_Iterator'Class, Generic_Iterator_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Generic_Iterator'Class,
+        Generic_Iterator_Access);
 
    type Class_Iterator is new Generic_Iterator with record
       Item     : GVD_Class_Type_Access;
@@ -32,15 +34,19 @@ package body GVD.Variables.Types.Classes is
       Child    : Generic_Iterator_Access;
    end record;
 
-   overriding procedure Adjust   (Self : in out Class_Iterator);
-   overriding procedure Finalize (Self : in out Class_Iterator);
+   overriding
+   procedure Adjust (Self : in out Class_Iterator);
+   overriding
+   procedure Finalize (Self : in out Class_Iterator);
 
-   overriding procedure Next (Iter : in out Class_Iterator);
-   overriding function At_End (Iter : Class_Iterator) return Boolean;
-   overriding function Data
-     (Iter : Class_Iterator)
-      return GVD_Type_Holder'Class;
-   overriding function Field_Name
+   overriding
+   procedure Next (Iter : in out Class_Iterator);
+   overriding
+   function At_End (Iter : Class_Iterator) return Boolean;
+   overriding
+   function Data (Iter : Class_Iterator) return GVD_Type_Holder'Class;
+   overriding
+   function Field_Name
      (Iter : Class_Iterator;
       Lang : not null access Language_Root'Class;
       Base : String := "") return String;
@@ -65,7 +71,8 @@ package body GVD.Variables.Types.Classes is
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (Self : in out Class_Iterator) is
+   overriding
+   procedure Adjust (Self : in out Class_Iterator) is
    begin
       if Self.Child /= null then
          Self.Child := new Generic_Iterator'Class'(Self.Child.all);
@@ -76,7 +83,8 @@ package body GVD.Variables.Types.Classes is
    -- At_End --
    ------------
 
-   overriding function At_End (Iter : Class_Iterator) return Boolean is
+   overriding
+   function At_End (Iter : Class_Iterator) return Boolean is
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
          return False;
@@ -97,7 +105,8 @@ package body GVD.Variables.Types.Classes is
    -- Clear --
    -----------
 
-   overriding procedure Clear (Self : not null access GVD_Class_Type) is
+   overriding
+   procedure Clear (Self : not null access GVD_Class_Type) is
       T : GVD_Generic_Type_Access;
    begin
       for A in Self.Ancestors'Range loop
@@ -117,7 +126,8 @@ package body GVD.Variables.Types.Classes is
    -- Clone --
    -----------
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Class_Type;
       Item : not null GVD_Generic_Type_Access)
    is
@@ -136,8 +146,8 @@ package body GVD.Variables.Types.Classes is
    -- Data --
    ----------
 
-   overriding function Data
-     (Iter : Class_Iterator) return GVD_Type_Holder'Class is
+   overriding
+   function Data (Iter : Class_Iterator) return GVD_Type_Holder'Class is
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
          return Iter.Item.Ancestors (Iter.Ancestor);
@@ -154,7 +164,8 @@ package body GVD.Variables.Types.Classes is
    -- Field_Name --
    ----------------
 
-   overriding function Field_Name
+   overriding
+   function Field_Name
      (Iter : Class_Iterator;
       Lang : not null access Language_Root'Class;
       Base : String := "") return String
@@ -163,17 +174,19 @@ package body GVD.Variables.Types.Classes is
       --  Returns end of the Value up to '.'
 
       function Cut (Value : String) return String is
-         Idx : Integer := Ada.Strings.Fixed.Index
-           (Value, ".", Ada.Strings.Backward);
+         Idx : Integer :=
+           Ada.Strings.Fixed.Index (Value, ".", Ada.Strings.Backward);
       begin
          if Idx > Value'First then
             return Value (Idx + 1 .. Value'Last);
 
          else
             --  Cutting out 'public' prefix for cpp classes
-            Idx := Ada.Strings.Fixed.Index
-              (Value (Value'First .. Value'Last - 1),
-               " ", Ada.Strings.Backward);
+            Idx :=
+              Ada.Strings.Fixed.Index
+                (Value (Value'First .. Value'Last - 1),
+                 " ",
+                 Ada.Strings.Backward);
 
             if Idx > Value'First then
                return Value (Idx + 1 .. Value'Last);
@@ -190,9 +203,10 @@ package body GVD.Variables.Types.Classes is
             return Base;
          else
             if GVD_Type_Holder (Iter.Data) /= Empty_GVD_Type_Holder then
-               return "<" &
-                 Cut (GVD_Type_Holder (Iter.Data).Get_Type.Get_Type_Name) &
-                 ">";
+               return
+                 "<"
+                 & Cut (GVD_Type_Holder (Iter.Data).Get_Type.Get_Type_Name)
+                 & ">";
             else
                return "<parent class>";
             end if;
@@ -210,7 +224,8 @@ package body GVD.Variables.Types.Classes is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Class_Iterator) is
+   overriding
+   procedure Finalize (Self : in out Class_Iterator) is
    begin
       Free (Self.Child);
    end Finalize;
@@ -219,7 +234,8 @@ package body GVD.Variables.Types.Classes is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : not null access GVD_Class_Type) is
+   overriding
+   procedure Free (Self : not null access GVD_Class_Type) is
    begin
       for A in Self.Ancestors'Range loop
          Self.Ancestors (A) := Empty_GVD_Type_Holder;
@@ -234,8 +250,7 @@ package body GVD.Variables.Types.Classes is
    ------------------
 
    function Get_Ancestor
-     (Self : not null access GVD_Class_Type;
-      Num  : Positive)
+     (Self : not null access GVD_Class_Type; Num : Positive)
       return GVD_Type_Holder is
    begin
       pragma Assert (Num <= Self.Num_Ancestors);
@@ -247,8 +262,7 @@ package body GVD.Variables.Types.Classes is
    ---------------
 
    function Get_Child
-     (Self : not null access GVD_Class_Type)
-      return GVD_Type_Holder is
+     (Self : not null access GVD_Class_Type) return GVD_Type_Holder is
    begin
       return Self.Child;
    end Get_Child;
@@ -258,8 +272,7 @@ package body GVD.Variables.Types.Classes is
    -----------------------
 
    function Get_Num_Ancestors
-     (Self : not null access GVD_Class_Type)
-      return Natural is
+     (Self : not null access GVD_Class_Type) return Natural is
    begin
       return Self.Num_Ancestors;
    end Get_Num_Ancestors;
@@ -268,15 +281,15 @@ package body GVD.Variables.Types.Classes is
    -- Get_Type_Name --
    -------------------
 
-   overriding function Get_Type_Name
-     (Self : not null access GVD_Class_Type)
-      return String is
+   overriding
+   function Get_Type_Name (Self : not null access GVD_Class_Type) return String
+   is
    begin
       if Self.Child.Data /= null then
          return Self.Child.Get_Type.Get_Type_Name;
       else
-         return GVD.Variables.Types.Get_Type_Name
-           (GVD_Generic_Type_Access (Self));
+         return
+           GVD.Variables.Types.Get_Type_Name (GVD_Generic_Type_Access (Self));
       end if;
    end Get_Type_Name;
 
@@ -284,13 +297,10 @@ package body GVD.Variables.Types.Classes is
    -- New_Class_Type --
    --------------------
 
-   function New_Class_Type
-     (Num_Ancestors : Natural) return GVD_Type_Holder
-   is
+   function New_Class_Type (Num_Ancestors : Natural) return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Class_Type (Num_Ancestors));
+          (Count => 1, Instance => new GVD_Class_Type (Num_Ancestors));
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_Class_Type;
@@ -299,7 +309,8 @@ package body GVD.Variables.Types.Classes is
    -- Next --
    ----------
 
-   overriding procedure Next (Iter : in out Class_Iterator) is
+   overriding
+   procedure Next (Iter : in out Class_Iterator) is
    begin
       if Iter.Ancestor <= Iter.Item.Ancestors'Last then
          Iter.Ancestor := Iter.Ancestor + 1;
@@ -317,11 +328,11 @@ package body GVD.Variables.Types.Classes is
    -- Replace --
    -------------
 
-   overriding function Replace
+   overriding
+   function Replace
      (Self         : not null access GVD_Class_Type;
       Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class)
-      return GVD_Type_Holder'Class is
+      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class is
    begin
       for A in Self.Ancestors'Range loop
          if Self.Ancestors (A).Data = Current.Data then
@@ -343,8 +354,7 @@ package body GVD.Variables.Types.Classes is
    ---------------
 
    procedure Set_Child
-     (Self  : not null access GVD_Class_Type;
-      Child : GVD_Type_Holder) is
+     (Self : not null access GVD_Class_Type; Child : GVD_Type_Holder) is
    begin
       pragma Assert (Self.Child.Data = null);
 
@@ -356,9 +366,9 @@ package body GVD.Variables.Types.Classes is
    -- Set_Type_Name --
    -------------------
 
-   overriding procedure Set_Type_Name
-     (Self : not null access GVD_Class_Type;
-      Name : String) is
+   overriding
+   procedure Set_Type_Name
+     (Self : not null access GVD_Class_Type; Name : String) is
    begin
       if Self.Child.Data /= null then
          Self.Child.Get_Type.Set_Type_Name (Name);
@@ -369,7 +379,8 @@ package body GVD.Variables.Types.Classes is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self : not null access GVD_Class_Type) return Generic_Iterator'Class
    is
       Iter : Class_Iterator;
@@ -383,8 +394,8 @@ package body GVD.Variables.Types.Classes is
       end if;
 
       if Self.Child.Data /= null then
-         Iter.Child := new Generic_Iterator'Class'
-           (Start (Self.Child.Get_Type));
+         Iter.Child :=
+           new Generic_Iterator'Class'(Start (Self.Child.Get_Type));
 
          if At_End (Iter.Child.all) then
             Free (Iter.Child);
@@ -398,9 +409,9 @@ package body GVD.Variables.Types.Classes is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Class_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Class_Type; Item : GVD_Type_Holder'Class)
       return Boolean
    is
       Result : Boolean;
@@ -412,16 +423,20 @@ package body GVD.Variables.Types.Classes is
          return False;
       end if;
 
-      Result := Self.Num_Ancestors = GVD_Class_Type_Access
-        (Item.Get_Type).Num_Ancestors
-        and then Self.Child.Get_Type.Structurally_Equivalent
-          (GVD_Class_Type_Access (Item.Get_Type).Child);
+      Result :=
+        Self.Num_Ancestors
+        = GVD_Class_Type_Access (Item.Get_Type).Num_Ancestors
+        and then
+          Self.Child.Get_Type.Structurally_Equivalent
+            (GVD_Class_Type_Access (Item.Get_Type).Child);
 
       if Result then
          for A in Self.Ancestors'Range loop
-            Result := Result
-              and then Self.Ancestors (A).Get_Type.Structurally_Equivalent
-              (GVD_Class_Type_Access (Item.Get_Type).Ancestors (A));
+            Result :=
+              Result
+              and then
+                Self.Ancestors (A).Get_Type.Structurally_Equivalent
+                  (GVD_Class_Type_Access (Item.Get_Type).Ancestors (A));
          end loop;
       end if;
 
@@ -437,13 +452,16 @@ package body GVD.Variables.Types.Classes is
 
       if not Result then
          if Self.Num_Ancestors /= 0 then
-            Result := Self.Ancestors (1).Get_Type.Structurally_Equivalent
-              (Item);
+            Result :=
+              Self.Ancestors (1).Get_Type.Structurally_Equivalent (Item);
          end if;
 
          if GVD_Class_Type_Access (Item.Get_Type).Num_Ancestors /= 0 then
-            Result := Result or else Self.Structurally_Equivalent
-              (GVD_Class_Type_Access (Item.Get_Type).Ancestors (1));
+            Result :=
+              Result
+              or else
+                Self.Structurally_Equivalent
+                  (GVD_Class_Type_Access (Item.Get_Type).Ancestors (1));
          end if;
       end if;
 

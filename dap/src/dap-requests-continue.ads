@@ -26,19 +26,18 @@ package DAP.Requests.Continue is
    type Continue_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.ContinueRequest :=
         DAP.Tools.ContinueRequest'
-          (seq       => 0,
-           arguments =>
-             (threadId     => 0,
-              singleThread => False));
+          (seq => 0, arguments => (threadId => 0, singleThread => False));
    end record;
 
    type Continue_DAP_Request_Access is access all Continue_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Continue_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Continue_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -49,14 +48,14 @@ package DAP.Requests.Continue is
      (Self        : in out Continue_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ContinueResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Continue_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Continue_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Continue_DAP_Request)
-      return String is ("continue");
+   overriding
+   function Method (Self : in out Continue_DAP_Request) return String
+   is ("continue");
 
 end DAP.Requests.Continue;

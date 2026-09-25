@@ -24,15 +24,16 @@ package DAP.Requests.StackTrace is
    type StackTrace_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.StackTraceRequest :=
         DAP.Tools.StackTraceRequest'
-          (seq       => 0,
-           arguments => (threadId => 0, others => <>));
+          (seq => 0, arguments => (threadId => 0, others => <>));
    end record;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : StackTrace_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out StackTrace_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -43,22 +44,25 @@ package DAP.Requests.StackTrace is
      (Self        : in out StackTrace_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.StackTraceResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out StackTrace_DAP_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out StackTrace_DAP_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure Set_Seq
-     (Self : in out StackTrace_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out StackTrace_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out StackTrace_DAP_Request) return String is ("stackTrace");
+   overriding
+   function Method (Self : in out StackTrace_DAP_Request) return String
+   is ("stackTrace");
 
 end DAP.Requests.StackTrace;

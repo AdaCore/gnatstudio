@@ -19,29 +19,29 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
-with GNAT.Strings;                 use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 with GPS.Core_Kernels;
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Any_Types;           use GNATCOLL.Any_Types;
-with GNATCOLL.Projects;            use GNATCOLL.Projects;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with Glib;                         use Glib;
-with Glib.Convert;                 use Glib.Convert;
+with Glib;         use Glib;
+with Glib.Convert; use Glib.Convert;
 
-with Gtk.Check_Button;             use Gtk.Check_Button;
-with Gtk.Dialog;                   use Gtk.Dialog;
-with Gtk.Enums;                    use Gtk.Enums;
-with Gtk.Label;                    use Gtk.Label;
-with Gtk.Text_Iter;                use Gtk.Text_Iter;
-with Gtk.Widget;                   use Gtk.Widget;
-with Gtk.Window;                   use Gtk.Window;
+with Gtk.Check_Button; use Gtk.Check_Button;
+with Gtk.Dialog;       use Gtk.Dialog;
+with Gtk.Enums;        use Gtk.Enums;
+with Gtk.Label;        use Gtk.Label;
+with Gtk.Text_Iter;    use Gtk.Text_Iter;
+with Gtk.Widget;       use Gtk.Widget;
+with Gtk.Window;       use Gtk.Window;
 
-with Gtkada.Dialogs;               use Gtkada.Dialogs;
-with Gtkada.File_Selector;         use Gtkada.File_Selector;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 with Basic_Types;                  use Basic_Types;
 with Commands.Interactive;         use Commands.Interactive;
@@ -88,54 +88,56 @@ package body GVD_Module is
    --  WARNING: this constant is shared with builder_module.adb, since we want
    --  to have the same history for the run command in GNAT Studio.
 
-   package Debugger_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Base_Visual_Debugger_Access);
+   package Debugger_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
+       (Element_Type => Base_Visual_Debugger_Access);
 
    type GVD_Module_Record is new Module_ID_Record with record
       Actions : Action_Lists.List;
       --  Actions that have been registered dynamically by this module,
       --  for the dynamic menus
 
-      Debugger_List                  : Debugger_Lists.List;
+      Debugger_List : Debugger_Lists.List;
       --  Points to the list of debuggers
 
-      Current_Debugger               : access Base_Visual_Debugger'Class;
+      Current_Debugger : access Base_Visual_Debugger'Class;
       --  The current visual debugger
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
-   overriding procedure Destroy (Id : in out GVD_Module_Record);
+   overriding
+   procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger module, and kill the underlying debugger
 
-   overriding function Tooltip_Handler
-     (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Gtk_Widget;
+   overriding
+   function Tooltip_Handler
+     (Module : access GVD_Module_Record; Context : Selection_Context)
+      return Gtk_Widget;
    --  See inherited documentation
 
    procedure Process_Auto_Start
-     (Kernel  : Kernel_Handle;
-      Process : Visual_Debugger);
+     (Kernel : Kernel_Handle; Process : Visual_Debugger);
    --  Process Auto_Start_Debuggee preferense
 
    GVD_Module_Name : constant String := "Debugger";
    GVD_Module_ID   : GVD_Module;
 
    Messages_Category_Continue_To_Line : constant VSS.Strings.Virtual_String :=
-                                         "debugger-run-to-line";
+     "debugger-run-to-line";
    Continue_To_Line_Messages_Flags    : constant Message_Flags :=
-                                         (Editor_Line => True,
-                                          Locations   => False,
-                                          Editor_Side => False);
+     (Editor_Line => True, Locations => False, Editor_Side => False);
 
    type On_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_View_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class);
+   overriding
+   procedure Execute
+     (Self   : On_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -143,9 +145,10 @@ package body GVD_Module is
    --  Used to create a column in the editor's left-side bar for the
    --  "Continue to line" clickable icons.
 
-   type On_Location_Changed is new File_Location_Hooks_Function with
-     null record;
-   overriding procedure Execute
+   type On_Location_Changed is new File_Location_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -155,9 +158,10 @@ package body GVD_Module is
    --  Used to display a clickable icon on the gutter to continue the
    --  execution until we reach the given location.
 
-   type On_Debugger_Location_Changed is new Debugger_Hooks_Function with
-     null record;
-   overriding procedure Execute
+   type On_Debugger_Location_Changed is new Debugger_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self     : On_Debugger_Location_Changed;
       Kernel   : not null access Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class);
@@ -166,7 +170,8 @@ package body GVD_Module is
    --  current location.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -195,8 +200,7 @@ package body GVD_Module is
    --  associated messages and the extra column if necessary.
 
    procedure Display_Continue_To_Line_Icons
-     (Process : not null Visual_Debugger;
-      Context  : Selection_Context);
+     (Process : not null Visual_Debugger; Context : Selection_Context);
    --  Display the "Continue to line" clickable icons on the left-editor side
    --  of the current editor, if the context allows it.
 
@@ -228,135 +232,156 @@ package body GVD_Module is
       Project : Project_Type;
       Exec    : Virtual_File;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Initialize_Debugger_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Initialize
 
    type Connect_To_Board_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Connect_To_Board_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Connect to Board
 
    type Load_File_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Load_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Load File
 
    type Add_Symbols_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_Symbols_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Add Symbols
 
    type Load_Core_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Load_Core_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Debug->Debug Core File
 
    type Attach_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Attach_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Attach_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Debug->Debug->Attach
 
    type Detach_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Detach_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Detach_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Debug->Debug->Detach
 
    type Kill_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Kill_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Kill_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Debug->Kill
 
    type Start_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Start_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Start_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Debug->Run... menu
 
    type Step_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Step_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Step_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Step menu
 
    type Stepi_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Stepi_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Stepi_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Step Instruction menu
 
    type Next_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Next_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Next_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Next menu
 
    type Nexti_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Nexti_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Nexti_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Next Instruction menu
 
    type Finish_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Finish_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Finish_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Finish menu
 
    type Continue_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Continue_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Continue_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Continue menu
 
-   type Continue_Until_Line_Command is new Interactive_Command
-   with record
+   type Continue_Until_Line_Command is new Interactive_Command with record
       File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Line : Integer := -1;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Continue_Until_Line_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Continue until current line
 
    type Interrupt_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Interrupt_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Interrupt_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
    --  Debug->Interrupt
 
    type Terminate_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Terminate_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Terminate Current
 
    type Terminate_All_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Terminate_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Debug->Terminate
 
    type Up_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Up_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Up_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
 
    type Down_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Down_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
+   overriding
+   function Execute_Dbg
+     (Command : access Down_Command; Process : Visual_Debugger)
+      return Command_Return_Type;
 
    type On_Executable_Changed is new Debugger_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Executable_Changed;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class);
@@ -366,78 +391,88 @@ package body GVD_Module is
    -- Contextual --
    ----------------
 
-   type Debugger_Inactive_Or_Stopped_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
+   type Debugger_Inactive_Or_Stopped_Filter is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Debugger_Inactive_Or_Stopped_Filter;
       Context : Selection_Context) return Boolean;
    --  True if the debugger has not been started or now idle waiting for new
    --  commands.
 
    type Debugger_Stopped_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Stopped_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Debugger_Stopped_Filter; Context : Selection_Context)
+      return Boolean;
    --  True if the debugger has been started but is now idle waiting for new
    --  commands.
 
    type Debuggee_Started_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Debuggee_Started_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Debuggee_Started_Filter; Context : Selection_Context)
+      return Boolean;
    --  True if the debuggee has been started
 
-   type Attached_Debuggee_Filter  is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Attached_Debuggee_Filter;
-      Context : Selection_Context) return Boolean;
+   type Attached_Debuggee_Filter is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Attached_Debuggee_Filter; Context : Selection_Context)
+      return Boolean;
    --  Return True when the debugger is attached to a debuggee process.
 
    type Debugger_Active_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Active_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Debugger_Active_Filter; Context : Selection_Context)
+      return Boolean;
 
    type Printable_Variable_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Printable_Variable_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Printable_Variable_Filter; Context : Selection_Context)
+      return Boolean;
 
    type Breakable_Source_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Breakable_Source_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Breakable_Source_Filter; Context : Selection_Context)
+      return Boolean;
 
-   type Entity_Name_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Entity_Name_Filter;
-      Context : Selection_Context) return Boolean;
+   type Entity_Name_Filter is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Entity_Name_Filter; Context : Selection_Context)
+      return Boolean;
 
    type In_Debugger_Frame_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access In_Debugger_Frame_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access In_Debugger_Frame_Filter; Context : Selection_Context)
+      return Boolean;
 
-   type Not_Command_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Not_Command_Filter;
-      Context : Selection_Context) return Boolean;
+   type Not_Command_Filter is new Action_Filter_Record with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Not_Command_Filter; Context : Selection_Context)
+      return Boolean;
 
    type Set_Value_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Set_Watchpoint_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Watchpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Show_Location_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Show_Location_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -454,8 +489,7 @@ package body GVD_Module is
       Process : Visual_Debugger_Record'Class renames
         Visual_Debugger_Record'Class (Object.all);
    begin
-      Process.Debugger_Num :=
-        Natural (GVD_Module_ID.Debugger_List.Length) + 1;
+      Process.Debugger_Num := Natural (GVD_Module_ID.Debugger_List.Length) + 1;
 
       GVD_Module_ID.Debugger_List.Prepend
         (Base_Visual_Debugger_Access (Object));
@@ -474,8 +508,7 @@ package body GVD_Module is
           (Base_Visual_Debugger_Access (Object));
       Prev   : constant Debugger_Lists.Cursor :=
         Debugger_Lists.Previous (Cursor);
-      Next   : constant Debugger_Lists.Cursor :=
-        Debugger_Lists.Next (Cursor);
+      Next   : constant Debugger_Lists.Cursor := Debugger_Lists.Next (Cursor);
    begin
       if not Debugger_Lists.Has_Element (Cursor) then
          --  Should never happen
@@ -499,8 +532,8 @@ package body GVD_Module is
 
    procedure For_Each_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Action : access procedure
-        (Object : not null access Base_Visual_Debugger'Class))
+      Action :
+        access procedure (Object : not null access Base_Visual_Debugger'Class))
    is
       pragma Unreferenced (Kernel);
    begin
@@ -514,8 +547,7 @@ package body GVD_Module is
    -----------------------------
 
    function Count_Running_Debuggers
-     (Kernel : not null access Kernel_Handle_Record'Class)
-     return Natural
+     (Kernel : not null access Kernel_Handle_Record'Class) return Natural
    is
       pragma Unreferenced (Kernel);
    begin
@@ -552,9 +584,7 @@ package body GVD_Module is
          --  If we are setting the current debugger to null (i.e: when all the
          --  debuggers are closed), make sure to disable them
 
-         if GVD_Module_ID.Current_Debugger = null
-           and then Current /= null
-         then
+         if GVD_Module_ID.Current_Debugger = null and then Current /= null then
             Enable_Continue_To_Line_On_Editors (Kernel);
          elsif Current = null then
             Disable_Continue_To_Line_On_Editors (Kernel);
@@ -569,8 +599,7 @@ package body GVD_Module is
    -------------------------
 
    procedure Initialize_Debugger
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Args   : String) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Args : String) is
    begin
       Debug_Init
         (GPS.Kernel.Kernel_Handle (Kernel),
@@ -583,12 +612,13 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Add_Symbols_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
@@ -597,29 +627,31 @@ package body GVD_Module is
    begin
       declare
          S : constant Virtual_File :=
-               Select_File
-                 (Title             => -"Select Module",
-                  Parent            => Gtk_Window (Top),
-                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                  Kind              => Open_File,
-                  File_Pattern      => "*",
-                  Pattern_Name      => -"All files",
-                  History           => Get_History (Kernel));
+           Select_File
+             (Title             => -"Select Module",
+              Parent            => Gtk_Window (Top),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              File_Pattern      => "*",
+              Pattern_Name      => -"All files",
+              History           => Get_History (Kernel));
       begin
          if S = GNATCOLL.VFS.No_File then
             return Commands.Failure;
          end if;
 
-         if Process.Descriptor.Remote_Host /= null
-           or else Is_Regular_File (S)
+         if Process.Descriptor.Remote_Host /= null or else Is_Regular_File (S)
          then
             declare
                Addr : constant String :=
-                        Query_User (Gtk_Window (Top),
-                                    -"Enter starting address of module's text"
-                                    & ASCII.LF
-                                    & (-"Optionally leave empty on VxWorks"),
-                                    False, False, "0");
+                 Query_User
+                   (Gtk_Window (Top),
+                    -"Enter starting address of module's text"
+                    & ASCII.LF
+                    & (-"Optionally leave empty on VxWorks"),
+                    False,
+                    False,
+                    "0");
 
             begin
                Add_Symbols
@@ -643,9 +675,10 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Attach_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Attach_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
 
@@ -657,22 +690,23 @@ package body GVD_Module is
       Dummy    : Message_Dialog_Buttons;
 
    begin
-      if Process = null
-        or else Process.Debugger = null
-      then
+      if Process = null or else Process.Debugger = null then
          return Commands.Failure;
       end if;
 
       Debugger := Process.Debugger;
 
       if Command_In_Process (Get_Process (Debugger)) then
-         Dummy := GPS_Message_Dialog
-           ((-"Cannot attach to a task/process while the") & ASCII.LF &
-            (-"underlying debugger is busy.") & ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-            Dialog_Type => Warning,
-            Buttons     => Button_OK,
-            Parent      => Kernel.Get_Main_Window);
+         Dummy :=
+           GPS_Message_Dialog
+             ((-"Cannot attach to a task/process while the")
+              & ASCII.LF
+              & (-"underlying debugger is busy.")
+              & ASCII.LF
+              & (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons     => Button_OK,
+              Parent      => Kernel.Get_Main_Window);
          return Commands.Failure;
       end if;
 
@@ -699,11 +733,12 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Detach_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Detach_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Ignore  : Message_Dialog_Buttons;
@@ -714,13 +749,16 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Ignore := GPS_Message_Dialog
-           ((-"Cannot detach the task/process while the") & ASCII.LF &
-            (-"underlying debugger is busy.") & ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-            Dialog_Type => Warning,
-            Buttons     => Button_OK,
-            Parent      => Kernel.Get_Main_Window);
+         Ignore :=
+           GPS_Message_Dialog
+             ((-"Cannot detach the task/process while the")
+              & ASCII.LF
+              & (-"underlying debugger is busy.")
+              & ASCII.LF
+              & (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons     => Button_OK,
+              Parent      => Kernel.Get_Main_Window);
 
       else
          Detach_Process (Process.Debugger, Mode => GVD.Types.Visible);
@@ -732,9 +770,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Step_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Step_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -746,9 +785,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Stepi_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Stepi_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -760,9 +800,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Next_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Next_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -774,9 +815,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Nexti_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Nexti_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -788,9 +830,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Finish_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Finish_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -803,9 +846,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Continue_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Continue_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -824,25 +868,25 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Continue_Until_Line_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
-                  Visual_Debugger (Get_Current_Debugger (Kernel));
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       File    : constant Virtual_File :=
-                  (if Command.File /= GNATCOLL.VFS.No_File then
-                      Command.File
-                   else
-                      File_Information (Context.Context));
-      Line    : constant Editable_Line_Type := Editable_Line_Type
-        ((if Command.Line > 0 then
-            Command.Line
-         elsif Has_File_Line_Information (Context.Context) then
-            File_Line_Information (Context.Context)
-         else
-            GPS.Kernel.Contexts.Line_Information (Context.Context)));
+        (if Command.File /= GNATCOLL.VFS.No_File
+         then Command.File
+         else File_Information (Context.Context));
+      Line    : constant Editable_Line_Type :=
+        Editable_Line_Type
+          ((if Command.Line > 0
+            then Command.Line
+            elsif Has_File_Line_Information (Context.Context)
+            then File_Line_Information (Context.Context)
+            else GPS.Kernel.Contexts.Line_Information (Context.Context)));
    begin
       Continue_Until_Location
         (Process.Debugger,
@@ -857,9 +901,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Kill_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Kill_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -871,9 +916,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Interrupt_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Interrupt_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -903,30 +949,35 @@ package body GVD_Module is
          Kernel => Process.Kernel);
       Dialog.Add_OK_Cancel;
 
-      Args_Combo := Dialog.Add_Combo
-        (Message => (if On_Vx_56
-                     then -"Entry point and arguments:"
-                     else -"Run arguments:"),
-         Key     => Run_Arguments_History_Key);
+      Args_Combo :=
+        Dialog.Add_Combo
+          (Message =>
+             (if On_Vx_56
+              then -"Entry point and arguments:"
+              else -"Run arguments:"),
+           Key     => Run_Arguments_History_Key);
 
       --  Add a checkbox so that the user can select whether he/she wants to
       --  stop at the beginning of the main program.
 
-      Is_Start_Button := Dialog.Add_Check_Button
-        (Message => -"Stop at beginning of main subprogram",
-         Key     => "stop_beginning_debugger");
+      Is_Start_Button :=
+        Dialog.Add_Check_Button
+          (Message => -"Stop at beginning of main subprogram",
+           Key     => "stop_beginning_debugger");
 
       --  If we are debugging on VxWorks we ask for the entry point to be
       --  executed, and we enable the multi-tasks-mode checkbox.
 
       if On_Vx_56 then
-         Is_Multitask_Button := Dialog.Add_Check_Button
-           (Message => -"Enable VxWorks multi-tasks mode",
-            Key     => "multitask_mode_debugger");
+         Is_Multitask_Button :=
+           Dialog.Add_Check_Button
+             (Message => -"Enable VxWorks multi-tasks mode",
+              Key     => "multitask_mode_debugger");
       else
-         Use_Exec_Dir_Button := Dialog.Add_Check_Button
-           (Message => -"Use exec dir instead of current dir",
-            Key     => "run_in_executable_directory");
+         Use_Exec_Dir_Button :=
+           Dialog.Add_Check_Button
+             (Message => -"Use exec dir instead of current dir",
+              Key     => "run_in_executable_directory");
       end if;
 
       Dialog.Show_All;
@@ -934,14 +985,14 @@ package body GVD_Module is
       Response := Dialog.Run;
 
       declare
-         Is_Start     : constant Boolean := Is_Start_Button = null
-           or else Is_Start_Button.Get_Active;
-         Use_Exec_Dir : constant Boolean := Use_Exec_Dir_Button /= null
-           and then Use_Exec_Dir_Button.Get_Active;
-         Is_Multitask : constant Boolean := Is_Multitask_Button /= null
-           and then Is_Multitask_Button.Get_Active;
-         Args         : constant String := Strip_Ending_Linebreaks
-           (Args_Combo.Get_Text);
+         Is_Start     : constant Boolean :=
+           Is_Start_Button = null or else Is_Start_Button.Get_Active;
+         Use_Exec_Dir : constant Boolean :=
+           Use_Exec_Dir_Button /= null and then Use_Exec_Dir_Button.Get_Active;
+         Is_Multitask : constant Boolean :=
+           Is_Multitask_Button /= null and then Is_Multitask_Button.Get_Active;
+         Args         : constant String :=
+           Strip_Ending_Linebreaks (Args_Combo.Get_Text);
       begin
          Dialog.Destroy;
 
@@ -971,12 +1022,13 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Start_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Start_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
       Ignore  : Message_Dialog_Buttons;
@@ -987,13 +1039,14 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Ignore := GPS_Message_Dialog
-           ((-"Cannot rerun while the underlying debugger is busy.") &
-            ASCII.LF &
-            (-"Interrupt the debugger or wait for its availability."),
-            Dialog_Type => Warning,
-            Buttons     => Button_OK,
-            Parent      => Kernel.Get_Main_Window);
+         Ignore :=
+           GPS_Message_Dialog
+             ((-"Cannot rerun while the underlying debugger is busy.")
+              & ASCII.LF
+              & (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons     => Button_OK,
+              Parent      => Kernel.Get_Main_Window);
          return Commands.Failure;
       end if;
 
@@ -1007,15 +1060,15 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Connect_To_Board_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top      : constant GPS_Window :=
-                       GPS_Window (Get_Main_Window (Kernel));
+      Top      : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
       Process  : constant Visual_Debugger :=
-                       Visual_Debugger (Get_Current_Debugger (Kernel));
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Continue : Boolean := True;
       pragma Unreferenced (Command);
 
@@ -1028,19 +1081,19 @@ package body GVD_Module is
       -- Display_Confirmation_Dialog --
       ---------------------------------
 
-      function Display_Confirmation_Dialog return Boolean
-      is
+      function Display_Confirmation_Dialog return Boolean is
          Response : Message_Dialog_Buttons;
       begin
-         Response := GPS_Message_Dialog
-           (Msg         =>
-              "The debugger is already connected to a target."
-            & ASCII.LF
-            & ASCII.LF
-            & "Do you want to disconnect it and start a new connection?",
-            Buttons     => Button_Yes or Button_No,
-            Dialog_Type => Confirmation,
-            Parent      => Gtk_Window (Top));
+         Response :=
+           GPS_Message_Dialog
+             (Msg         =>
+                "The debugger is already connected to a target."
+                & ASCII.LF
+                & ASCII.LF
+                & "Do you want to disconnect it and start a new connection?",
+              Buttons     => Button_Yes or Button_No,
+              Dialog_Type => Confirmation,
+              Parent      => Gtk_Window (Top));
 
          return Response /= Button_No;
       end Display_Confirmation_Dialog;
@@ -1055,16 +1108,14 @@ package body GVD_Module is
       if Continue then
          declare
             Remote_Target   : constant String :=
-                                Process.Debugger.Get_Remote_Target;
+              Process.Debugger.Get_Remote_Target;
             Remote_Protocol : constant String :=
-                                Process.Debugger.Get_Remote_Protocol;
+              Process.Debugger.Get_Remote_Protocol;
          begin
             --  Try to connect only if the remote target and a protocol have
             --  been specified.
 
-            if Remote_Target /= ""
-              and then Remote_Protocol /= ""
-            then
+            if Remote_Target /= "" and then Remote_Protocol /= "" then
                Connect_To_Target
                  (Process.Debugger,
                   Target   => Remote_Target,
@@ -1083,31 +1134,28 @@ package body GVD_Module is
    ------------------------
 
    procedure Process_Auto_Start
-     (Kernel  : Kernel_Handle;
-      Process : Visual_Debugger)
+     (Kernel : Kernel_Handle; Process : Visual_Debugger)
    is
       Dummy : Boolean;
    begin
-      if Process = null
-        or else Process.Debugger = null
-      then
+      if Process = null or else Process.Debugger = null then
          return;
       end if;
 
       case Debuggee_Start_Type'(Auto_Start_Debuggee.Get_Pref) is
-         when Run =>
+         when Run             =>
             Process.Debugger.Run ("", Mode => GVD.Types.Visible);
 
          when Run_With_Dialog =>
-            Dummy := GPS.Kernel.Actions.Execute_Action
-              (Kernel, "debug run dialog");
+            Dummy :=
+              GPS.Kernel.Actions.Execute_Action (Kernel, "debug run dialog");
 
-         when Continue =>
-               --  The action is for boards support so should be handled in
-               --  board_support.py and gnatemulator.py plugins.
+         when Continue        =>
+            --  The action is for boards support so should be handled in
+            --  board_support.py and gnatemulator.py plugins.
             null;
 
-         when None =>
+         when None            =>
             --  GVD.Process.Spawn shows message in the debugger console
             --  so nothing to do here.
             null;
@@ -1118,7 +1166,8 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Load_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1137,14 +1186,14 @@ package body GVD_Module is
 
       declare
          S : Virtual_File :=
-               Select_File
-                 (Title             => -"Select File to Debug",
-                  File_Pattern      => +("*" & Exec_Suffix & ";*"),
-                  Pattern_Name      => -"Executable files;All files",
-                  Parent            => Get_Current_Window (Kernel),
-                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                  Kind              => Open_File,
-                  History           => Get_History (Kernel));
+           Select_File
+             (Title             => -"Select File to Debug",
+              File_Pattern      => +("*" & Exec_Suffix & ";*"),
+              Pattern_Name      => -"Executable files;All files",
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              History           => Get_History (Kernel));
       begin
          if S = GNATCOLL.VFS.No_File then
             return Commands.Failure;
@@ -1191,12 +1240,13 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Load_Core_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
 
@@ -1205,30 +1255,26 @@ package body GVD_Module is
    begin
       declare
          S : constant Virtual_File :=
-               Select_File
-                 (Title             => -"Select Core File",
-                  File_Pattern      => "core*;*",
-                  Pattern_Name      => -"Core files;All files",
-                  Parent            => Get_Current_Window (Kernel),
-                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                  Kind              => Open_File,
-                  History           => Get_History (Kernel));
+           Select_File
+             (Title             => -"Select Core File",
+              File_Pattern      => "core*;*",
+              Pattern_Name      => -"Core files;All files",
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              History           => Get_History (Kernel));
       begin
          if S = GNATCOLL.VFS.No_File then
             return Commands.Failure;
          end if;
 
-         if Process.Descriptor.Remote_Host /= null
-           or else Is_Regular_File (S)
+         if Process.Descriptor.Remote_Host /= null or else Is_Regular_File (S)
          then
-            Load_Core_File
-              (Process.Debugger, S,
-               Mode => GVD.Types.Visible);
+            Load_Core_File (Process.Debugger, S, Mode => GVD.Types.Visible);
 
          else
             Kernel.Insert
-              ((-"Could not find core file: ") &
-               Display_Full_Name (S),
+              ((-"Could not find core file: ") & Display_Full_Name (S),
                Mode => Error);
          end if;
       end;
@@ -1239,7 +1285,8 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Show_Location_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1247,7 +1294,7 @@ package body GVD_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
-      Name : constant Virtual_File := Process.Current_File;
+      Name    : constant Virtual_File := Process.Current_File;
    begin
       if Name /= GNATCOLL.VFS.No_File then
          Goto_Current_Line (Kernel, Process);
@@ -1259,27 +1306,25 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Process  : constant Visual_Debugger :=
+      Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
 
-      Variable : constant String :=
-        Get_Variable_Name (Context.Context, False);
+      Variable : constant String := Get_Variable_Name (Context.Context, False);
 
-      S        : constant String := Display_Text_Input_Dialog
-        (Kernel   => Process.Kernel,
-         Title    => -"Setting value of " & Variable,
-         Message  => -"Setting value of " & Variable & ':',
-         Key      => "gvd_set_value_dialog");
+      S : constant String :=
+        Display_Text_Input_Dialog
+          (Kernel  => Process.Kernel,
+           Title   => -"Setting value of " & Variable,
+           Message => -"Setting value of " & Variable & ':',
+           Key     => "gvd_set_value_dialog");
    begin
-      if Variable /= ""
-        and then S /= ""
-        and then S (S'First) /= ASCII.NUL
-      then
+      if Variable /= "" and then S /= "" and then S (S'First) /= ASCII.NUL then
          Set_Variable (Process.Debugger, Variable, S);
       end if;
       return Commands.Success;
@@ -1289,7 +1334,8 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Set_Watchpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1298,13 +1344,13 @@ package body GVD_Module is
       Process  : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
       Variable : constant String := Get_Variable_Name (Context.Context, False);
-      Id       : Breakpoint_Identifier with Unreferenced;
+      Id       : Breakpoint_Identifier
+      with Unreferenced;
    begin
       if Variable /= "" then
-         Id := Process.Debugger.Watch
-           (Name    => Variable,
-            Trigger => Write,
-            Mode    => GVD.Types.Visible);
+         Id :=
+           Process.Debugger.Watch
+             (Name => Variable, Trigger => Write, Mode => GVD.Types.Visible);
       end if;
 
       return Commands.Success;
@@ -1314,7 +1360,8 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Debugger_Inactive_Or_Stopped_Filter;
       Context : Selection_Context) return Boolean
    is
@@ -1322,7 +1369,8 @@ package body GVD_Module is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
-      return Process = null
+      return
+        Process = null
         or else Process.Debugger = null
         or else not Command_In_Process (Process);
    end Filter_Matches_Primitive;
@@ -1331,9 +1379,10 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Stopped_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Debugger_Stopped_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       Process : constant Visual_Debugger :=
@@ -1346,15 +1395,17 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Debuggee_Started_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Debuggee_Started_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
-      return Process /= null
+      return
+        Process /= null
         and then Process.Debugger /= null
         and then Process.Debugger.Is_Started;
    end Filter_Matches_Primitive;
@@ -1363,15 +1414,17 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Attached_Debuggee_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Attached_Debuggee_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
-      return Process /= null
+      return
+        Process /= null
         and then Process.Debugger /= null
         and then Process.Debugger.Get_Start_Method = Attached;
    end Filter_Matches_Primitive;
@@ -1380,9 +1433,10 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Debugger_Active_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Debugger_Active_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       Process : constant Visual_Debugger :=
@@ -1395,9 +1449,10 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Printable_Variable_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Printable_Variable_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
 
@@ -1420,8 +1475,7 @@ package body GVD_Module is
          end if;
 
          Copy (Source => End_Iter, Dest => Entity_Start);
-         Search_Entity_Bounds
-           (Entity_Start, Entity_End, Maybe_File => False);
+         Search_Entity_Bounds (Entity_Start, Entity_End, Maybe_File => False);
 
          if Get_Offset (Entity_End) /= Get_Offset (End_Iter)
            or else Get_Offset (Entity_Start) < Get_Offset (Start_Iter)
@@ -1432,7 +1486,7 @@ package body GVD_Module is
 
          --  check whether an entity is selected from its beginning
          declare
-            Lang : constant Language.Language_Access :=
+            Lang                       : constant Language.Language_Access :=
               Get_Language_From_File
                 (Get_Language_Handler (Get_Kernel (Context)),
                  File_Information (Context));
@@ -1444,11 +1498,13 @@ package body GVD_Module is
             Forward_To_Line_End (End_Of_Line, Success);
             Set_Line (Begin_Of_Line, Get_Line (Start_Iter));
 
-            return Text_Information (Context) = Parse_Reference_Backwards
-              (Lang,
-               Buffer       => Get_Text (Begin_Of_Line, End_Of_Line),
-               Start_Offset =>
-                 String_Index_Type (Get_Line_Index (Entity_End)));
+            return
+              Text_Information (Context)
+              = Parse_Reference_Backwards
+                  (Lang,
+                   Buffer       => Get_Text (Begin_Of_Line, End_Of_Line),
+                   Start_Offset =>
+                     String_Index_Type (Get_Line_Index (Entity_End)));
          end;
       end if;
 
@@ -1459,13 +1515,15 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Breakable_Source_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Breakable_Source_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
    begin
-      return Has_File_Information (Context)
+      return
+        Has_File_Information (Context)
         and then not Has_Suffix (File_Information (Context), ".gpr");
    end Filter_Matches_Primitive;
 
@@ -1473,9 +1531,10 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Entity_Name_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Entity_Name_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
    begin
@@ -1486,19 +1545,18 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access In_Debugger_Frame_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access In_Debugger_Frame_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context);
-      Process : constant Visual_Debugger := Visual_Debugger
-        (Get_Current_Debugger (Kernel));
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
 
       function In_Debugger_Frame
-        (Buffer : Editor_Buffer'Class;
-         Line   : Natural)
-         return Boolean;
+        (Buffer : Editor_Buffer'Class; Line : Natural) return Boolean;
       --  Return True if the specified location is in the same frame as
       --  the debugger's current location.
 
@@ -1507,16 +1565,15 @@ package body GVD_Module is
       -----------------------
 
       function In_Debugger_Frame
-        (Buffer : Editor_Buffer'Class;
-         Line   : Natural)
-         return Boolean
+        (Buffer : Editor_Buffer'Class; Line : Natural) return Boolean
       is
-         Debugger_Subprogram : constant String := Block_Name
-           (This        => Buffer.New_Location (Process.Current_Line, 0),
-            Subprogram  => True);
-         New_Loc_Subprogram : constant String := Block_Name
-           (This        => Buffer.New_Location (Line, 0),
-            Subprogram  => True);
+         Debugger_Subprogram : constant String :=
+           Block_Name
+             (This       => Buffer.New_Location (Process.Current_Line, 0),
+              Subprogram => True);
+         New_Loc_Subprogram  : constant String :=
+           Block_Name
+             (This => Buffer.New_Location (Line, 0), Subprogram => True);
       begin
          return Debugger_Subprogram = New_Loc_Subprogram;
       end In_Debugger_Frame;
@@ -1531,13 +1588,11 @@ package body GVD_Module is
       then
          declare
             File   : constant GNATCOLL.VFS.Virtual_File :=
-                       File_Information (Context);
-            Line   : constant Natural := Natural
-              (Contexts.Entity_Line_Information (Context));
+              File_Information (Context);
+            Line   : constant Natural :=
+              Natural (Contexts.Entity_Line_Information (Context));
             Buffer : constant Editor_Buffer'Class :=
-                       Kernel.Get_Buffer_Factory.Get
-                       (File        => File,
-                        Open_View   => False);
+              Kernel.Get_Buffer_Factory.Get (File => File, Open_View => False);
          begin
             if Process.Current_File = File
               and then Process.Current_Line /= Line
@@ -1555,9 +1610,10 @@ package body GVD_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Not_Command_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Not_Command_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
       use Ada.Strings.Unbounded;
@@ -1576,9 +1632,10 @@ package body GVD_Module is
    -- Tooltip_Handler --
    ---------------------
 
-   overriding function Tooltip_Handler
-     (Module  : access GVD_Module_Record;
-      Context : Selection_Context) return Gtk_Widget
+   overriding
+   function Tooltip_Handler
+     (Module : access GVD_Module_Record; Context : Selection_Context)
+      return Gtk_Widget
    is
       pragma Unreferenced (Module);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
@@ -1602,8 +1659,7 @@ package body GVD_Module is
 
       if Continue_To_Line_Buttons.Get_Pref then
          Display_Continue_To_Line_Icons
-           (Process => Debugger,
-            Context => Context);
+           (Process => Debugger, Context => Context);
       end if;
 
       --  Return immediately if we are not hovering on an entity
@@ -1616,28 +1672,29 @@ package body GVD_Module is
       --  current value if possible.
 
       declare
-         Variable_Name            : constant String := Get_Variable_Name
-           (Context, Dereference => False);
+         Variable_Name : constant String :=
+           Get_Variable_Name (Context, Dereference => False);
       begin
          if Variable_Name = ""
-           or else not Can_Tooltip_On_Entity
-             (Get_Language (Debugger.Debugger), Variable_Name)
+           or else
+             not Can_Tooltip_On_Entity
+                   (Get_Language (Debugger.Debugger), Variable_Name)
          then
             return null;
 
          else
             --  Retrieve the debugger output
             Value :=
-              new String'(Value_Of
-                          (Debugger => Debugger.Debugger,
-                           Entity   => Variable_Name,
-                           From_API => True));
+              new String'
+                (Value_Of
+                   (Debugger => Debugger.Debugger,
+                    Entity   => Variable_Name,
+                    From_API => True));
          end if;
 
          if Value.all /= "" then
             Gtk_New
-              (Label,
-               "<b>Debugger value : </b> " & Escape_Text (Value.all));
+              (Label, "<b>Debugger value : </b> " & Escape_Text (Value.all));
             GNAT.Strings.Free (Output);
             --  If the tooltips is too long wrap it
             Label.Set_Line_Wrap (True);
@@ -1677,19 +1734,18 @@ package body GVD_Module is
    is
       Process : Visual_Debugger;
    begin
-      Process := Spawn
-         (Kernel          => Kernel,
-          Prefered_Kind   => Debugger_Kind.Get_Pref,
-          File            => File,
-          Project         => Project,
-          Args            => Args,
-          Load_Executable => Load_Executable_On_Init.Get_Pref);
+      Process :=
+        Spawn
+          (Kernel          => Kernel,
+           Prefered_Kind   => Debugger_Kind.Get_Pref,
+           File            => File,
+           Project         => Project,
+           Args            => Args,
+           Load_Executable => Load_Executable_On_Init.Get_Pref);
 
       Kernel.Refresh_Context;
 
-      if Process /= null
-        and then File /= No_File
-      then
+      if Process /= null and then File /= No_File then
          Process_Auto_Start (Kernel, Process);
       end if;
    end Debug_Init;
@@ -1698,12 +1754,13 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Initialize_Debugger_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       Debug_Init
-         (Get_Kernel (Context.Context), Command.Project, Command.Exec, "");
+        (Get_Kernel (Context.Context), Command.Project, Command.Exec, "");
       return Commands.Success;
    end Execute;
 
@@ -1718,8 +1775,9 @@ package body GVD_Module is
       end if;
 
       declare
-         List : array (1 .. Natural (GVD_Module_ID.Debugger_List.Length)) of
-           Base_Visual_Debugger_Access;
+         List  :
+           array (1 .. Natural (GVD_Module_ID.Debugger_List.Length))
+           of Base_Visual_Debugger_Access;
          Index : Positive := 1;
       begin
          for J of GVD_Module_ID.Debugger_List loop
@@ -1739,7 +1797,8 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Terminate_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1759,7 +1818,8 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Terminate_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1780,9 +1840,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Up_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Up_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -1794,9 +1855,10 @@ package body GVD_Module is
    -- Execute_Dbg --
    -----------------
 
-   overriding function Execute_Dbg
-     (Command : access Down_Command;
-      Process : Visual_Debugger) return Command_Return_Type
+   overriding
+   function Execute_Dbg
+     (Command : access Down_Command; Process : Visual_Debugger)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -1808,7 +1870,8 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Executable_Changed;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class)
@@ -1829,26 +1892,24 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
       Buffer : constant Editor_Buffer'Class :=
-                 Kernel.Get_Buffer_Factory.Get
-                   (File        => File,
-                    Open_View   => False);
+        Kernel.Get_Buffer_Factory.Get (File => File, Open_View => False);
    begin
-      Create_Continue_To_Line_Columns
-        (Kernel => Kernel,
-         Buffer => Buffer);
+      Create_Continue_To_Line_Columns (Kernel => Kernel, Buffer => Buffer);
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Debugger_Location_Changed;
       Kernel   : not null access Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class)
@@ -1862,9 +1923,10 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_View_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class)
+   overriding
+   procedure Execute
+     (Self   : On_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
 
@@ -1886,10 +1948,9 @@ package body GVD_Module is
         (Prj : Project_Type; Main : Virtual_File)
       is
          Main_Name         : constant String :=
-           (if Main = No_File then
-               -"no main file"
-            else
-               Main.Display_Base_Name (Suffix => Main.File_Extension));
+           (if Main = No_File
+            then -"no main file"
+            else Main.Display_Base_Name (Suffix => Main.File_Extension));
          Escaped_Main_Name : constant String :=
            Escape_Underscore (Escape_Menu_Name (Main_Name));
 
@@ -1898,21 +1959,24 @@ package body GVD_Module is
          Menu    : constant String :=
            "/Debug/Initialize/"
            & (if not Show_Project_In_Menu or else Main = No_File
-              then "" else Escape_Underscore (Prj.Name) & '/')
+              then ""
+              else Escape_Underscore (Prj.Name) & '/')
            & Escaped_Main_Name;
          Command : Interactive_Command_Access;
       begin
-         Command := new Initialize_Debugger_Command'
-           (Interactive_Command with
-            Project => Prj,
-            Exec    => Main);
+         Command :=
+           new Initialize_Debugger_Command'
+             (Interactive_Command with Project => Prj, Exec => Main);
          GVD_Module_ID.Actions.Append (Action);
 
          Register_Action
-           (Kernel, Action, Command,
+           (Kernel,
+            Action,
+            Command,
             (if Main /= No_File
-             then (-"Initialize the debugger on the file "
-               & Main.Display_Full_Name)
+             then
+               (-"Initialize the debugger on the file "
+                & Main.Display_Full_Name)
              else -"Initialize the debugger, no file specified"),
             Category => -"Debug");
          Register_Menu (Kernel, Menu, Action => Action);
@@ -1927,17 +1991,20 @@ package body GVD_Module is
       for J in 1 .. Mains.Length loop
          if Mains.List (J).Length /= 0 then
             declare
-               Main : constant Virtual_File := GPS.Core_Kernels.To_File
-                 (Kernel, Mains.List (J).Tuple (2).Str,
-                  --  Here we obtain the file name not from the debugger but
-                  --  from the project itself: we don't need to check if the
-                  --  main's file actually exists on the disk.
-                  Check_Exist => False);
+               Main : constant Virtual_File :=
+                 GPS.Core_Kernels.To_File
+                   (Kernel,
+                    Mains.List (J).Tuple (2).Str,
+                    --  Here we obtain the file name not from the debugger but
+                    --  from the project itself: we don't need to check if the
+                    --  main's file actually exists on the disk.
+                    Check_Exist => False);
 
-               Prj  : constant Virtual_File := GPS.Core_Kernels.To_File
-                 (Kernel, Mains.List (J).Tuple (3).Str);
-               P    : constant Project_Type :=
-                  Kernel.Registry.Tree.Project_From_Path (Prj);
+               Prj : constant Virtual_File :=
+                 GPS.Core_Kernels.To_File
+                   (Kernel, Mains.List (J).Tuple (3).Str);
+               P   : constant Project_Type :=
+                 Kernel.Registry.Tree.Project_From_Path (Prj);
             begin
                Create_Action_And_Menu (P, Main);
             end;
@@ -1963,8 +2030,7 @@ package body GVD_Module is
    -------------
 
    procedure Display_Continue_To_Line_Icons
-     (Process  : not null Visual_Debugger;
-      Context  : Selection_Context)
+     (Process : not null Visual_Debugger; Context : Selection_Context)
    is
       Kernel : Kernel_Handle renames Process.Kernel;
    begin
@@ -1980,46 +2046,44 @@ package body GVD_Module is
       declare
          use Ada.Strings.Unbounded;
 
-         File                    : constant Virtual_File := File_Information
-           (Context);
-         Line                    : constant Natural := Natural
-           (Entity_Line_Information (Context));
+         File                    : constant Virtual_File :=
+           File_Information (Context);
+         Line                    : constant Natural :=
+           Natural (Entity_Line_Information (Context));
          Msg                     : Simple_Message_Access;
          Continue_To_Line_Filter : constant Action_Filter :=
-                                     Lookup_Filter
-                                       (Kernel,
-                                        Name => "Can continue until");
+           Lookup_Filter (Kernel, Name => "Can continue until");
          Help_Text               : constant String :=
-                                     "Continue to line "
-                                     & Natural'Image (Line);
-         Action                  : GPS.Editors.Line_Information.
-           Line_Information_Access;
+           "Continue to line " & Natural'Image (Line);
+         Action                  :
+           GPS.Editors.Line_Information.Line_Information_Access;
       begin
          if Filter_Matches_Primitive (Continue_To_Line_Filter, Context) then
-            Msg := Create_Simple_Message
-              (Get_Messages_Container (Kernel),
-               Category                 =>
-                 Messages_Category_Continue_To_Line,
-               File                     => File,
-               Line                     => Line,
-               Column                   => 1,
-               Text                     => "",
-               Importance               => Unspecified,
-               Flags                    => Continue_To_Line_Messages_Flags,
-               Allow_Auto_Jump_To_First => False);
+            Msg :=
+              Create_Simple_Message
+                (Get_Messages_Container (Kernel),
+                 Category                 =>
+                   Messages_Category_Continue_To_Line,
+                 File                     => File,
+                 Line                     => Line,
+                 Column                   => 1,
+                 Text                     => "",
+                 Importance               => Unspecified,
+                 Flags                    => Continue_To_Line_Messages_Flags,
+                 Allow_Auto_Jump_To_First => False);
 
-            Action := new Line_Information_Record'
-              (Text                     => Null_Unbounded_String,
-               Display_Popup_When_Alone => False,
-               Tooltip_Text             => To_Unbounded_String (Help_Text),
-               Image                    => To_Unbounded_String
-                 ("gps-debugger-continue-until"),
-               Message                  => <>,
-               Category                 => <>,
-               Associated_Command       => new Continue_Until_Line_Command'
-                 (Root_Command with
-                  File => File,
-                  Line => Line));
+            Action :=
+              new Line_Information_Record'
+                (Text                     => Null_Unbounded_String,
+                 Display_Popup_When_Alone => False,
+                 Tooltip_Text             => To_Unbounded_String (Help_Text),
+                 Image                    =>
+                   To_Unbounded_String ("gps-debugger-continue-until"),
+                 Message                  => <>,
+                 Category                 => <>,
+                 Associated_Command       =>
+                   new Continue_Until_Line_Command'
+                     (Root_Command with File => File, Line => Line));
             Msg.Set_Action (Action);
          end if;
       end;
@@ -2029,50 +2093,48 @@ package body GVD_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
       Line, Column : Integer;
       Project      : GNATCOLL.Projects.Project_Type)
    is
-      Process : constant Visual_Debugger := Visual_Debugger
-        (Get_Current_Debugger (Kernel));
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Context : Selection_Context := New_Context (Kernel);
    begin
       if Process = null then
          return;
       end if;
 
-      Set_File_Information
-        (Context,
-         Files   => (1 => File),
-         Project => Project);
+      Set_File_Information (Context, Files => (1 => File), Project => Project);
       Set_Entity_Information
         (Context         => Context,
          Entity_Name     => "",
          Entity_Line     => Editable_Line_Type (Line),
          Entity_Column   => Visible_Column_Type (Column),
          From_Expression => "");
-      Display_Continue_To_Line_Icons
-        (Process => Process,
-         Context => Context);
+      Display_Continue_To_Line_Icons (Process => Process, Context => Context);
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference) is
+      Pref   : Preference)
+   is
       pragma Unreferenced (Self);
    begin
       if Pref = Preference (Continue_To_Line_Buttons) then
          declare
-            Process : constant Visual_Debugger := Visual_Debugger
-              (Get_Current_Debugger (Kernel));
+            Process : constant Visual_Debugger :=
+              Visual_Debugger (Get_Current_Debugger (Kernel));
          begin
             if Process = null then
                return;
@@ -2096,9 +2158,10 @@ package body GVD_Module is
       Buffer : Editor_Buffer'Class) is
    begin
       if Buffer /= Nil_Editor_Buffer
-        and then not Buffer.Has_Information_Column
-          (VSS.Strings.Conversions.To_UTF_8_String
-             (Messages_Category_Continue_To_Line))
+        and then
+          not Buffer.Has_Information_Column
+                (VSS.Strings.Conversions.To_UTF_8_String
+                   (Messages_Category_Continue_To_Line))
       then
          Create_Line_Information_Column
            (Kernel     => Kernel,
@@ -2117,8 +2180,7 @@ package body GVD_Module is
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Get_Messages_Container (Kernel).Remove_Category
-        (Messages_Category_Continue_To_Line,
-         Continue_To_Line_Messages_Flags);
+        (Messages_Category_Continue_To_Line, Continue_To_Line_Messages_Flags);
    end Remove_Continue_To_Line_Messages;
 
    ----------------------------------------
@@ -2129,16 +2191,14 @@ package body GVD_Module is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       Buffers : constant Buffer_Lists.List :=
-                  Kernel.Get_Buffer_Factory.Buffers;
+        Kernel.Get_Buffer_Factory.Buffers;
    begin
       Location_Changed_Hook.Add (new On_Location_Changed);
       File_Edited_Hook.Add (new On_File_Edited);
 
       --  Add the extra column do display the clickable icons
       for Buffer of Buffers loop
-         Create_Continue_To_Line_Columns
-           (Kernel,
-            Buffer => Buffer);
+         Create_Continue_To_Line_Columns (Kernel, Buffer => Buffer);
       end loop;
    end Enable_Continue_To_Line_On_Editors;
 
@@ -2150,7 +2210,7 @@ package body GVD_Module is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       Buffers : constant Buffer_Lists.List :=
-                  Kernel.Get_Buffer_Factory.Buffers;
+        Kernel.Get_Buffer_Factory.Buffers;
 
       function Is_Location_Changed_Function
         (F : not null access Hook_Function'Class) return Boolean
@@ -2163,17 +2223,16 @@ package body GVD_Module is
    begin
       --  We don't need to monitor the debugging context anymore so remove
       --  the Location_Changed and File_Edited hook function.
-      Location_Changed_Hook.Remove
-        (Is_Location_Changed_Function'Access);
-      File_Edited_Hook.Remove
-        (Is_File_Edited_Function'Access);
+      Location_Changed_Hook.Remove (Is_Location_Changed_Function'Access);
+      File_Edited_Hook.Remove (Is_File_Edited_Function'Access);
 
       --  Remove the extra column we may have added on editors
       for Buffer of Buffers loop
          if Buffer /= Nil_Editor_Buffer
-           and Buffer.Has_Information_Column
-             (VSS.Strings.Conversions.To_UTF_8_String
-                (Messages_Category_Continue_To_Line))
+           and
+             Buffer.Has_Information_Column
+               (VSS.Strings.Conversions.To_UTF_8_String
+                  (Messages_Category_Continue_To_Line))
          then
             Remove_Line_Information_Column
               (Kernel     => Kernel,
@@ -2196,10 +2255,10 @@ package body GVD_Module is
       Debugger_Module_ID := Module_ID (GVD_Module_ID);
       if Kernel /= null then
          Register_Module
-           (Module          => Module_ID (GVD_Module_ID),
-            Kernel          => Kernel,
-            Module_Name     => GVD_Module_Name,
-            Priority        => Default_Priority + 20);
+           (Module      => Module_ID (GVD_Module_ID),
+            Kernel      => Kernel,
+            Module_Name => GVD_Module_Name,
+            Priority    => Default_Priority + 20);
       end if;
    end Create_GVD_Module;
 
@@ -2210,16 +2269,16 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Debugger_Filter           : Action_Filter;
-      Debuggee_Started          : Action_Filter;
-      Attached_Debuggee         : Action_Filter;
-      Debugger_Active           : Action_Filter;
-      Printable_Filter          : Action_Filter;
-      Breakable_Filter          : Action_Filter;
-      Entity_Filter             : Action_Filter;
-      Is_Not_Command_Filter     : Action_Filter;
-      Continue_Until_Filter     : Action_Filter;
-      Set_Value_Filter          : Action_Filter;
+      Debugger_Filter       : Action_Filter;
+      Debuggee_Started      : Action_Filter;
+      Attached_Debuggee     : Action_Filter;
+      Debugger_Active       : Action_Filter;
+      Printable_Filter      : Action_Filter;
+      Breakable_Filter      : Action_Filter;
+      Entity_Filter         : Action_Filter;
+      Is_Not_Command_Filter : Action_Filter;
+      Continue_Until_Filter : Action_Filter;
+      Set_Value_Filter      : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
@@ -2236,8 +2295,7 @@ package body GVD_Module is
       Register_Filter (Kernel, Debuggee_Started, "Debuggee started");
 
       Attached_Debuggee := new Attached_Debuggee_Filter;
-      Register_Filter
-        (Kernel, Attached_Debuggee, "Debuggee attached");
+      Register_Filter (Kernel, Attached_Debuggee, "Debuggee attached");
 
       Debugger_Active := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Active, "Debugger active");
@@ -2247,8 +2305,7 @@ package body GVD_Module is
         (Kernel, Printable_Filter, "Debugger printable variable");
 
       Breakable_Filter := new Breakable_Source_Filter;
-      Register_Filter
-        (Kernel, Breakable_Filter, "Debugger breakable source");
+      Register_Filter (Kernel, Breakable_Filter, "Debugger breakable source");
 
       Entity_Filter := new Entity_Name_Filter;
       Register_Filter (Kernel, Entity_Filter, "Debugger entity name");
@@ -2259,20 +2316,18 @@ package body GVD_Module is
 
       Continue_Until_Filter :=
         Debuggee_Started and new In_Debugger_Frame_Filter;
-      Register_Filter
-        (Kernel, Continue_Until_Filter, "Can continue until");
+      Register_Filter (Kernel, Continue_Until_Filter, "Can continue until");
 
-      Set_Value_Filter := Debugger_Filter and Is_Not_Command_Filter and
-        Printable_Filter;
-      Register_Filter
-        (Kernel, Set_Value_Filter, "Debugger set value");
+      Set_Value_Filter :=
+        Debugger_Filter and Is_Not_Command_Filter and Printable_Filter;
+      Register_Filter (Kernel, Set_Value_Filter, "Debugger set value");
 
       Register_Contextual_Submenu
-        (Kernel, "Debug",
-         Group => Debug_Contextual_Group);
+        (Kernel, "Debug", Group => Debug_Contextual_Group);
 
       Register_Action
-        (Kernel, "debug set value",
+        (Kernel,
+         "debug set value",
          Command     => new Set_Value_Command,
          Description => "Modify the value of the variable",
          Filter      => Set_Value_Filter,
@@ -2283,13 +2338,14 @@ package body GVD_Module is
          Action => "debug set value");
 
       Register_Action
-        (Kernel, "debug set watchpoint",
+        (Kernel,
+         "debug set watchpoint",
          Command     => new Set_Watchpoint_Command,
          Description =>
-            -("Set a watchpoint on the variable. The debugger will stop every"
-              & " time the variable's value is changed"),
-         Filter      => Debugger_Filter and Is_Not_Command_Filter and
-           Printable_Filter,
+           -("Set a watchpoint on the variable. The debugger will stop every"
+             & " time the variable's value is changed"),
+         Filter      =>
+           Debugger_Filter and Is_Not_Command_Filter and Printable_Filter,
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel => Kernel,
@@ -2297,7 +2353,8 @@ package body GVD_Module is
          Action => "debug set watchpoint");
 
       Register_Action
-        (Kernel, "debug show current location",
+        (Kernel,
+         "debug show current location",
          Command     => new Show_Location_Command,
          Description => "Display the current debugger location in an editor",
          Filter      => Debugger_Filter,
@@ -2317,72 +2374,90 @@ package body GVD_Module is
       --  Add debugger menus
 
       Register_Action
-        (Kernel, "debug connect to board", new Connect_To_Board_Command,
+        (Kernel,
+         "debug connect to board",
+         new Connect_To_Board_Command,
          Description =>
            -("Opens a simple dialog to connect to a remote board. This option"
-           & " is only relevant to cross debuggers."),
-         Filter   => Debugger_Filter,
-         Category => -"Debug");
+             & " is only relevant to cross debuggers."),
+         Filter      => Debugger_Filter,
+         Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug load file", new Load_File_Command,
+        (Kernel,
+         "debug load file",
+         new Load_File_Command,
          Description =>
            -("Opens a file selection dialog that allows you to choose a"
-           & " program to debug. The program to debug is either an executable"
-           & " for native debugging, or a partially linked module for cross"
-           & " environments (e.g VxWorks)."),
-         Filter   => Debugger_Filter,
-         Category => -"Debug");
+             & " program to debug. The program to debug is either an"
+             & " executable for native debugging, or a partially linked module"
+             & " for cross environments (e.g VxWorks)."),
+         Filter      => Debugger_Filter,
+         Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug add symbols", new Add_Symbols_Command,
+        (Kernel,
+         "debug add symbols",
+         new Add_Symbols_Command,
          Description =>
            -("Add the symbols from a given file/module. This corresponds to"
-           & " the gdb command add-symbol-file. This menu is particularly"
-           & " useful under VxWorks targets, where the modules can be loaded"
-           & " independently of the debugger.  For instance, if a module is"
-           & " independently loaded on the target (e.g. using windshell), it"
-           & " is absolutely required to use this functionality, otherwise"
-           & " the debugger won't work properly."),
-         Filter   => Debugger_Filter,
-         Category => -"Debug");
+             & " the gdb command add-symbol-file. This menu is particularly"
+             & " useful under VxWorks targets, where the modules can be loaded"
+             & " independently of the debugger.  For instance, if a module is"
+             & " independently loaded on the target (e.g. using windshell), it"
+             & " is absolutely required to use this functionality, otherwise"
+             & " the debugger won't work properly."),
+         Filter      => Debugger_Filter,
+         Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug attach", new Attach_Command,
+        (Kernel,
+         "debug attach",
+         new Attach_Command,
          Description => -"Attach to a running process",
          Filter      => Debugger_Filter,
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug detach", new Detach_Command,
+        (Kernel,
+         "debug detach",
+         new Detach_Command,
          Icon_Name   => "gps-debugger-detach-symbolic",
          Description => -"Detach the application from the debugger",
          Filter      => Debugger_Filter and Attached_Debuggee,
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug core file", new Load_Core_Command,
+        (Kernel,
+         "debug core file",
+         new Load_Core_Command,
          Description => -"Debug a core file instead of a running process",
-         Filter   => Debugger_Filter,
+         Filter      => Debugger_Filter,
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug kill", new Kill_Command,
+        (Kernel,
+         "debug kill",
+         new Kill_Command,
          Description => -"Kill the debuggee process",
-         Filter   => Debugger_Filter,
+         Filter      => Debugger_Filter,
          Category    => -"Debug");
 
       GVD.Consoles.Register_Module (Kernel);
 
       Register_Action
-        (Kernel, "debug run dialog", new Start_Command,
+        (Kernel,
+         "debug run dialog",
+         new Start_Command,
          Filter      => Debugger_Active,
          Description =>
            -"Choose the arguments to the program, and start running it",
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug step", new Step_Command,
+        (Kernel,
+         "debug step",
+         new Step_Command,
          Icon_Name    => "gps-debugger-step-symbolic",
          Filter       => Debugger_Active,
          Description  =>
@@ -2391,14 +2466,18 @@ package body GVD_Module is
          For_Learning => True);
 
       Register_Action
-        (Kernel, "debug stepi", new Stepi_Command,
+        (Kernel,
+         "debug stepi",
+         new Stepi_Command,
          Filter      => Debugger_Active,
          Description =>
            -"Execute the program for one machine instruction only",
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug next", new Next_Command,
+        (Kernel,
+         "debug next",
+         new Next_Command,
          Icon_Name    => "gps-debugger-next-symbolic",
          Filter       => Debugger_Active,
          Description  =>
@@ -2408,7 +2487,9 @@ package body GVD_Module is
          For_Learning => True);
 
       Register_Action
-        (Kernel, "debug nexti", new Nexti_Command,
+        (Kernel,
+         "debug nexti",
+         new Nexti_Command,
          Filter      => Debugger_Active,
          Description =>
            -("Execute the program until the next machine instruction, stepping"
@@ -2416,7 +2497,9 @@ package body GVD_Module is
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug finish", new Finish_Command,
+        (Kernel,
+         "debug finish",
+         new Finish_Command,
          Icon_Name    => "gps-debugger-finish-symbolic",
          Filter       => Debugger_Active,
          Description  =>
@@ -2425,21 +2508,24 @@ package body GVD_Module is
          For_Learning => True);
 
       Register_Action
-        (Kernel, "debug continue", new Continue_Command,
+        (Kernel,
+         "debug continue",
+         new Continue_Command,
          Icon_Name    => "gps-debugger-run-symbolic",
          Filter       => Debugger_Active,
          Description  =>
-           -("Continue execution until next breakpoint." & ASCII.LF
-           & "Start the debugger if not started yet"),
+           -("Continue execution until next breakpoint."
+             & ASCII.LF
+             & "Start the debugger if not started yet"),
          Category     => -"Debug",
          For_Learning => True);
 
       Register_Action
-        (Kernel, "debug continue until",
+        (Kernel,
+         "debug continue until",
          new Continue_Until_Line_Command,
          Filter       => Continue_Until_Filter,
-         Description  =>
-           -("Continue execution until the given line."),
+         Description  => -("Continue execution until the given line."),
          Category     => -"Debug",
          For_Learning => True);
       Register_Contextual_Menu
@@ -2448,21 +2534,27 @@ package body GVD_Module is
          Action => "debug continue until line");
 
       Register_Action
-        (Kernel, "debug up", new Up_Command,
+        (Kernel,
+         "debug up",
+         new Up_Command,
          Icon_Name   => "gps-debugger-up-symbolic",
          Filter      => Debugger_Active,
          Description => "Move up one frame",
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug down", new Down_Command,
+        (Kernel,
+         "debug down",
+         new Down_Command,
          Icon_Name   => "gps-debugger-down-symbolic",
          Filter      => Debugger_Active,
          Description => "Move down one frame",
          Category    => -"Debug");
 
       Register_Action
-        (Kernel, "debug interrupt", new Interrupt_Command,
+        (Kernel,
+         "debug interrupt",
+         new Interrupt_Command,
          Icon_Name    => "gps-debugger-pause-symbolic",
          Filter       => Debugger_Active,
          Description  => -"Asynchronously interrupt the debuggee program",
@@ -2470,13 +2562,17 @@ package body GVD_Module is
          For_Learning => True);
 
       Register_Action
-        (Kernel, "terminate debugger", new Terminate_Command,
+        (Kernel,
+         "terminate debugger",
+         new Terminate_Command,
          Icon_Name   => "gps-debugger-terminate-symbolic",
          Description => -"Terminate the current debugger",
          Filter      => Debugger_Active);
 
       Register_Action
-        (Kernel, "terminate all debuggers", new Terminate_All_Command,
+        (Kernel,
+         "terminate all debuggers",
+         new Terminate_All_Command,
          Description => -"Terminate all running debugger",
          Filter      => Debugger_Active);
    end Register_Module;
@@ -2485,7 +2581,8 @@ package body GVD_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Id : in out GVD_Module_Record) is
+   overriding
+   procedure Destroy (Id : in out GVD_Module_Record) is
    begin
       Debug_Terminate (Get_Kernel (Id));
    end Destroy;

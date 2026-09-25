@@ -30,8 +30,7 @@ with VCS2.Engines;            use VCS2.Engines;
 
 package body VCS2.Scripts is
 
-   VCS2_Task_Visitor_Class_Name : constant String :=
-     "VCS2_Task_Visitor";
+   VCS2_Task_Visitor_Class_Name : constant String := "VCS2_Task_Visitor";
 
    type Task_Properties_Record is new Instance_Property_Record with record
       Visitor : Task_Visitor_Access;
@@ -43,102 +42,115 @@ package body VCS2.Scripts is
       Find_Repo      : Subprogram_Type;
       Default_Status : VCS_File_Status;
    end record;
-   overriding function Create_Engine
-     (Self        : not null access Script_Engine_Factory;
-      Working_Dir : Virtual_File)
-     return not null VCS_Engine_Access;
-   overriding function Find_Working_Directory
-     (Self  : not null access Script_Engine_Factory;
-      File  : Virtual_File) return Virtual_File;
-   overriding procedure Primitive_Free
-     (Self : not null access Script_Engine_Factory);
+   overriding
+   function Create_Engine
+     (Self : not null access Script_Engine_Factory; Working_Dir : Virtual_File)
+      return not null VCS_Engine_Access;
+   overriding
+   function Find_Working_Directory
+     (Self : not null access Script_Engine_Factory; File : Virtual_File)
+      return Virtual_File;
+   overriding
+   procedure Primitive_Free (Self : not null access Script_Engine_Factory);
 
    type Script_Engine is new VCS_Engine with record
       Factory : access Script_Engine_Factory'Class;
       Script  : Scripting_Language;
    end record;
-   overriding function Name
-     (Self : not null access Script_Engine) return String;
-   overriding function User_Name
-     (Self : not null access Script_Engine) return String;
-   overriding procedure Async_Fetch_Status_For_Files
-     (Self    : not null access Script_Engine;
-      Files   : File_Array);
-   overriding procedure Async_Fetch_Status_For_Project
-     (Self    : not null access Script_Engine;
-      Project : Project_Type);
-   overriding procedure Async_Fetch_Status_For_All_Files
-     (Self      : not null access Script_Engine;
-      From_User : Boolean);
-   overriding function Default_File_Status
-     (Self    : not null access Script_Engine)
-      return VCS_File_Status is (Self.Factory.Default_Status);
-   overriding procedure Stage_Or_Unstage_Files
-     (Self    : not null access Script_Engine;
-      Files   : GNATCOLL.VFS.File_Array;
-      Stage   : Boolean);
-   overriding procedure Async_Commit_Staged_Files
+   overriding
+   function Name (Self : not null access Script_Engine) return String;
+   overriding
+   function User_Name (Self : not null access Script_Engine) return String;
+   overriding
+   procedure Async_Fetch_Status_For_Files
+     (Self : not null access Script_Engine; Files : File_Array);
+   overriding
+   procedure Async_Fetch_Status_For_Project
+     (Self : not null access Script_Engine; Project : Project_Type);
+   overriding
+   procedure Async_Fetch_Status_For_All_Files
+     (Self : not null access Script_Engine; From_User : Boolean);
+   overriding
+   function Default_File_Status
+     (Self : not null access Script_Engine) return VCS_File_Status
+   is (Self.Factory.Default_Status);
+   overriding
+   procedure Stage_Or_Unstage_Files
+     (Self  : not null access Script_Engine;
+      Files : GNATCOLL.VFS.File_Array;
+      Stage : Boolean);
+   overriding
+   procedure Async_Commit_Staged_Files
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Message : String);
-   overriding procedure Async_Fetch_History
+   overriding
+   procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Filter  : History_Filter);
-   overriding procedure Async_Fetch_Commit_Details
-     (Self        : not null access Script_Engine;
-      Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access Task_Visitor'Class);
-   overriding procedure Async_Diff
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File := No_File);
-   overriding procedure Async_View_File
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File);
-   overriding procedure Async_Annotations
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      File        : Virtual_File);
-   overriding procedure Async_Branches
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class);
-   overriding procedure Async_Action_On_Branch
-     (Self         : not null access Script_Engine;
-      Visitor      : not null access Task_Visitor'Class;
-      Action       : Branch_Action;
+   overriding
+   procedure Async_Fetch_Commit_Details
+     (Self    : not null access Script_Engine;
+      Ids     : not null GNAT.Strings.String_List_Access;
+      Visitor : not null access Task_Visitor'Class);
+   overriding
+   procedure Async_Diff
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Ref     : String;
+      File    : Virtual_File := No_File);
+   overriding
+   procedure Async_View_File
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Ref     : String;
+      File    : Virtual_File);
+   overriding
+   procedure Async_Annotations
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      File    : Virtual_File);
+   overriding
+   procedure Async_Branches
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class);
+   overriding
+   procedure Async_Action_On_Branch
+     (Self               : not null access Script_Engine;
+      Visitor            : not null access Task_Visitor'Class;
+      Action             : Branch_Action;
       Category, Id, Text : String);
-   overriding procedure Async_Discard_Local_Changes
-     (Self        : not null access Script_Engine;
-      Files       : GNATCOLL.VFS.File_Array);
-   overriding procedure Async_Checkout
+   overriding
+   procedure Async_Discard_Local_Changes
+     (Self : not null access Script_Engine; Files : GNATCOLL.VFS.File_Array);
+   overriding
+   procedure Async_Checkout
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Commit  : String);
-   overriding procedure Async_Checkout_File
+   overriding
+   procedure Async_Checkout_File
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Commit  : String;
       File    : Virtual_File);
-   overriding procedure Make_File_Writable
-     (Self       : not null access Script_Engine;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Writable   : Boolean);
+   overriding
+   procedure Make_File_Writable
+     (Self     : not null access Script_Engine;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Writable : Boolean);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   procedure VCS_Handler
-     (Data : in out Callback_Data'Class; Command : String);
+   procedure VCS_Handler (Data : in out Callback_Data'Class; Command : String);
    procedure VCS_Task_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all script functions
 
    procedure Call_Method
-     (Self   : not null access Script_Engine'Class;
-      Method : String) with Inline;
+     (Self : not null access Script_Engine'Class; Method : String)
+   with Inline;
    procedure Call_Method
      (Self   : not null access Script_Engine'Class;
       Method : String;
@@ -147,9 +159,7 @@ package body VCS2.Scripts is
    --  Free Data
 
    procedure Set_Nth_Arg
-     (Data  : in out Callback_Data'Class;
-      Nth   : Integer;
-      Files : File_Array);
+     (Data : in out Callback_Data'Class; Nth : Integer; Files : File_Array);
    procedure Set_Nth_Arg
      (Data    : in out Callback_Data'Class;
       Nth     : Integer;
@@ -161,8 +171,7 @@ package body VCS2.Scripts is
    -----------------
 
    procedure Call_Method
-     (Self   : not null access Script_Engine'Class;
-      Method : String)
+     (Self : not null access Script_Engine'Class; Method : String)
    is
       D : Callback_Data'Class := Create (Self.Script, 0);
    begin
@@ -194,19 +203,20 @@ package body VCS2.Scripts is
    -- Make_File_Writable --
    ------------------------
 
-   overriding procedure Make_File_Writable
-     (Self       : not null access Script_Engine;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Writable   : Boolean)
+   overriding
+   procedure Make_File_Writable
+     (Self     : not null access Script_Engine;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Writable : Boolean)
    is
-      Inst  : constant Class_Instance :=
+      Inst : constant Class_Instance :=
         Create_VCS_Instance (Self.Script, Self);
-      F     : Subprogram_Type := Get_Method (Inst, "make_file_writable");
+      F    : Subprogram_Type := Get_Method (Inst, "make_file_writable");
    begin
       if F /= null then
          declare
             Result : Boolean;
-            Data  : Callback_Data'Class := Self.Script.Create (2);
+            Data   : Callback_Data'Class := Self.Script.Create (2);
          begin
             Data.Set_Nth_Arg (1, Create_File (Self.Script, File));
             Data.Set_Nth_Arg (2, Writable);
@@ -229,8 +239,8 @@ package body VCS2.Scripts is
    -- Name --
    ----------
 
-   overriding function Name
-     (Self : not null access Script_Engine) return String is
+   overriding
+   function Name (Self : not null access Script_Engine) return String is
    begin
       return Self.Factory.Name;
    end Name;
@@ -240,11 +250,9 @@ package body VCS2.Scripts is
    -----------------
 
    procedure Set_Nth_Arg
-     (Data  : in out Callback_Data'Class;
-      Nth   : Integer;
-      Files : File_Array)
+     (Data : in out Callback_Data'Class; Nth : Integer; Files : File_Array)
    is
-      L : List_Instance'Class := New_List (Data.Get_Script);
+      L     : List_Instance'Class := New_List (Data.Get_Script);
       Index : Positive := 1;
    begin
       for F of Files loop
@@ -268,13 +276,16 @@ package body VCS2.Scripts is
       Visitor : not null Task_Visitor_Access)
    is
       Script : constant Scripting_Language := Data.Get_Script;
-      Inst : Class_Instance;
+      Inst   : Class_Instance;
    begin
       --  First arg is the visitor
-      Inst := Script.New_Instance
-        (Script.Get_Repository.New_Class (VCS2_Task_Visitor_Class_Name));
-      Set_Data (Inst, VCS2_Task_Visitor_Class_Name,
-                Task_Properties_Record'(Visitor => Visitor));
+      Inst :=
+        Script.New_Instance
+          (Script.Get_Repository.New_Class (VCS2_Task_Visitor_Class_Name));
+      Set_Data
+        (Inst,
+         VCS2_Task_Visitor_Class_Name,
+         Task_Properties_Record'(Visitor => Visitor));
       Data.Set_Nth_Arg (Nth, Inst);
    end Set_Nth_Arg;
 
@@ -282,9 +293,9 @@ package body VCS2.Scripts is
    -- Async_Fetch_Status_For_Files --
    ----------------------------------
 
-   overriding procedure Async_Fetch_Status_For_Files
-     (Self    : not null access Script_Engine;
-      Files   : File_Array)
+   overriding
+   procedure Async_Fetch_Status_For_Files
+     (Self : not null access Script_Engine; Files : File_Array)
    is
       D : Callback_Data'Class := Create (Self.Script, 1);
    begin
@@ -296,9 +307,9 @@ package body VCS2.Scripts is
    -- Async_Fetch_Status_For_Project --
    ------------------------------------
 
-   overriding procedure Async_Fetch_Status_For_Project
-     (Self    : not null access Script_Engine;
-      Project : Project_Type)
+   overriding
+   procedure Async_Fetch_Status_For_Project
+     (Self : not null access Script_Engine; Project : Project_Type)
    is
       D : Callback_Data'Class := Create (Self.Script, 1);
    begin
@@ -310,9 +321,9 @@ package body VCS2.Scripts is
    -- Async_Fetch_Status_For_All_Files --
    --------------------------------------
 
-   overriding procedure Async_Fetch_Status_For_All_Files
-     (Self      : not null access Script_Engine;
-      From_User : Boolean)
+   overriding
+   procedure Async_Fetch_Status_For_All_Files
+     (Self : not null access Script_Engine; From_User : Boolean)
    is
       D : Callback_Data'Class := Create (Self.Script, 1);
    begin
@@ -324,13 +335,14 @@ package body VCS2.Scripts is
    -- Async_Fetch_History --
    -------------------------
 
-   overriding procedure Async_Fetch_History
+   overriding
+   procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Filter  : History_Filter)
    is
-      D    : Callback_Data'Class := Self.Script.Create (2);
-      L    : List_Instance'Class := Self.Script.New_List;
+      D : Callback_Data'Class := Self.Script.Create (2);
+      L : List_Instance'Class := Self.Script.New_List;
    begin
       Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
 
@@ -354,13 +366,14 @@ package body VCS2.Scripts is
    -- Async_Fetch_Commit_Details --
    --------------------------------
 
-   overriding procedure Async_Fetch_Commit_Details
-     (Self        : not null access Script_Engine;
-      Ids         : not null GNAT.Strings.String_List_Access;
-      Visitor     : not null access Task_Visitor'Class)
+   overriding
+   procedure Async_Fetch_Commit_Details
+     (Self    : not null access Script_Engine;
+      Ids     : not null GNAT.Strings.String_List_Access;
+      Visitor : not null access Task_Visitor'Class)
    is
-      D    : Callback_Data'Class := Create (Self.Script, 2);
-      L    : List_Instance'Class := New_List (Self.Script);
+      D : Callback_Data'Class := Create (Self.Script, 2);
+      L : List_Instance'Class := New_List (Self.Script);
    begin
       for Id in Ids'Range loop
          L.Set_Nth_Arg (Id - Ids'First + 1, Ids (Id).all);
@@ -377,12 +390,13 @@ package body VCS2.Scripts is
    -- Async_Annotations --
    -----------------------
 
-   overriding procedure Async_Annotations
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      File        : Virtual_File)
+   overriding
+   procedure Async_Annotations
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      File    : Virtual_File)
    is
-      D    : Callback_Data'Class := Self.Script.Create (2);
+      D : Callback_Data'Class := Self.Script.Create (2);
    begin
       Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Create_File (Self.Script, File));
@@ -393,11 +407,12 @@ package body VCS2.Scripts is
    -- Async_Branches --
    --------------------
 
-   overriding procedure Async_Branches
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class)
+   overriding
+   procedure Async_Branches
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class)
    is
-      D    : Callback_Data'Class := Self.Script.Create (1);
+      D : Callback_Data'Class := Self.Script.Create (1);
    begin
       Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       Call_Method (Self, "async_branches", D);
@@ -407,10 +422,11 @@ package body VCS2.Scripts is
    -- Async_Action_On_Branch --
    ----------------------------
 
-   overriding procedure Async_Action_On_Branch
-     (Self         : not null access Script_Engine;
-      Visitor      : not null access Task_Visitor'Class;
-      Action       : Branch_Action;
+   overriding
+   procedure Async_Action_On_Branch
+     (Self               : not null access Script_Engine;
+      Visitor            : not null access Task_Visitor'Class;
+      Action             : Branch_Action;
       Category, Id, Text : String)
    is
       D : Callback_Data'Class := Self.Script.Create (5);
@@ -427,9 +443,9 @@ package body VCS2.Scripts is
    -- Async_Discard_Local_Changes --
    ---------------------------------
 
-   overriding procedure Async_Discard_Local_Changes
-     (Self        : not null access Script_Engine;
-      Files       : GNATCOLL.VFS.File_Array)
+   overriding
+   procedure Async_Discard_Local_Changes
+     (Self : not null access Script_Engine; Files : GNATCOLL.VFS.File_Array)
    is
       D : Callback_Data'Class := Self.Script.Create (1);
    begin
@@ -441,13 +457,14 @@ package body VCS2.Scripts is
    -- Async_Diff --
    ----------------
 
-   overriding procedure Async_Diff
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File := No_File)
+   overriding
+   procedure Async_Diff
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Ref     : String;
+      File    : Virtual_File := No_File)
    is
-      D    : Callback_Data'Class := Self.Script.Create (3);
+      D : Callback_Data'Class := Self.Script.Create (3);
    begin
       Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Ref);
@@ -465,13 +482,14 @@ package body VCS2.Scripts is
    -- Async_View_File --
    ---------------------
 
-   overriding procedure Async_View_File
-     (Self        : not null access Script_Engine;
-      Visitor     : not null access Task_Visitor'Class;
-      Ref         : String;
-      File        : Virtual_File)
+   overriding
+   procedure Async_View_File
+     (Self    : not null access Script_Engine;
+      Visitor : not null access Task_Visitor'Class;
+      Ref     : String;
+      File    : Virtual_File)
    is
-      D    : Callback_Data'Class := Self.Script.Create (3);
+      D : Callback_Data'Class := Self.Script.Create (3);
    begin
       Set_Nth_Arg (D, 1, Task_Visitor_Access (Visitor));
       D.Set_Nth_Arg (2, Ref);
@@ -483,15 +501,14 @@ package body VCS2.Scripts is
    -- Create_Engine --
    -------------------
 
-   overriding function Create_Engine
-     (Self        : not null access Script_Engine_Factory;
-      Working_Dir : Virtual_File)
+   overriding
+   function Create_Engine
+     (Self : not null access Script_Engine_Factory; Working_Dir : Virtual_File)
       return not null VCS_Engine_Access
    is
       Script : constant Scripting_Language := Self.Construct.Get_Script;
       R      : constant not null VCS_Engine_Access :=
-                 new Script_Engine'
-                   (VCS_Engine with Factory => Self, Script => Script);
+        new Script_Engine'(VCS_Engine with Factory => Self, Script => Script);
       Data   : Callback_Data'Class := Script.Create (1);
       Inst   : Class_Instance;
 
@@ -512,9 +529,10 @@ package body VCS2.Scripts is
    -- Find_Working_Directory --
    ----------------------------
 
-   overriding function Find_Working_Directory
-     (Self  : not null access Script_Engine_Factory;
-      File  : Virtual_File) return Virtual_File
+   overriding
+   function Find_Working_Directory
+     (Self : not null access Script_Engine_Factory; File : Virtual_File)
+      return Virtual_File
    is
       Script  : constant Scripting_Language := Self.Find_Repo.Get_Script;
       Data    : Callback_Data'Class := Script.Create (1);
@@ -546,8 +564,8 @@ package body VCS2.Scripts is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (Self : not null access Script_Engine_Factory) is
+   overriding
+   procedure Primitive_Free (Self : not null access Script_Engine_Factory) is
    begin
       if Self.Construct /= null then
          Free (Self.Construct);
@@ -561,12 +579,13 @@ package body VCS2.Scripts is
    -- Stage_Or_Unstage_Files --
    ----------------------------
 
-   overriding procedure Stage_Or_Unstage_Files
-     (Self    : not null access Script_Engine;
-      Files   : GNATCOLL.VFS.File_Array;
-      Stage   : Boolean)
+   overriding
+   procedure Stage_Or_Unstage_Files
+     (Self  : not null access Script_Engine;
+      Files : GNATCOLL.VFS.File_Array;
+      Stage : Boolean)
    is
-      Data  : Callback_Data'Class := Create (Self.Script, 2);
+      Data : Callback_Data'Class := Create (Self.Script, 2);
    begin
       Set_Nth_Arg (Data, 1, Files);
       Data.Set_Nth_Arg (2, Stage);
@@ -577,7 +596,8 @@ package body VCS2.Scripts is
    -- Async_Commit_Staged_Files --
    -------------------------------
 
-   overriding procedure Async_Commit_Staged_Files
+   overriding
+   procedure Async_Commit_Staged_Files
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Message : String)
@@ -593,7 +613,8 @@ package body VCS2.Scripts is
    -- Async_Checkout --
    --------------------
 
-   overriding procedure Async_Checkout
+   overriding
+   procedure Async_Checkout
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Commit  : String)
@@ -609,7 +630,8 @@ package body VCS2.Scripts is
    -- Async_Checkout_File --
    -------------------------
 
-   overriding procedure Async_Checkout_File
+   overriding
+   procedure Async_Checkout_File
      (Self    : not null access Script_Engine;
       Visitor : not null access Task_Visitor'Class;
       Commit  : String;
@@ -627,9 +649,8 @@ package body VCS2.Scripts is
    -- User_Name --
    ---------------
 
-   overriding function User_Name
-     (Self : not null access Script_Engine) return String
-   is
+   overriding
+   function User_Name (Self : not null access Script_Engine) return String is
       Inst : constant Class_Instance :=
         Create_VCS_Instance (Self.Script, Self);
       F    : Subprogram_Type := Get_Method (Inst, "user_name");
@@ -654,8 +675,7 @@ package body VCS2.Scripts is
    -- VCS_Handler --
    -----------------
 
-   procedure VCS_Handler
-     (Data : in out Callback_Data'Class; Command : String)
+   procedure VCS_Handler (Data : in out Callback_Data'Class; Command : String)
    is
       Inst : constant Class_Instance := Data.Nth_Arg (1);
       VCS  : VCS_Engine_Access;
@@ -708,15 +728,16 @@ package body VCS2.Scripts is
 
       elsif Command = "_set_file_status" then
          declare
-            Status : constant VCS_File_Status := VCS_File_Status
-               (Integer'(Data.Nth_Arg (3, Integer (Status_Unmodified))));
-            Version : constant Unbounded_String :=
-               To_Unbounded_String (Data.Nth_Arg (4, ""));
+            Status       : constant VCS_File_Status :=
+              VCS_File_Status
+                (Integer'(Data.Nth_Arg (3, Integer (Status_Unmodified))));
+            Version      : constant Unbounded_String :=
+              To_Unbounded_String (Data.Nth_Arg (4, ""));
             Repo_Version : constant Unbounded_String :=
-               To_Unbounded_String (Data.Nth_Arg (5, ""));
-            List : List_Instance := Data.Nth_Arg (2);
-            Count : constant Integer := List.Number_Of_Arguments;
-            Files : GNATCOLL.VFS.File_Array (1 .. Count);
+              To_Unbounded_String (Data.Nth_Arg (5, ""));
+            List         : List_Instance := Data.Nth_Arg (2);
+            Count        : constant Integer := List.Number_Of_Arguments;
+            Files        : GNATCOLL.VFS.File_Array (1 .. Count);
          begin
             for Idx in 1 .. Count loop
                Files (Idx) := Nth_Arg (List, Idx);
@@ -736,8 +757,8 @@ package body VCS2.Scripts is
 
       elsif Command = "_override_status_display" then
          VCS.Override_Display
-           (Status    => VCS_File_Status (Integer'(Data.Nth_Arg (2))),
-            Display   =>
+           (Status  => VCS_File_Status (Integer'(Data.Nth_Arg (2))),
+            Display =>
               (Label     => To_Unbounded_String (Data.Nth_Arg (3, "")),
                Icon_Name => To_Unbounded_String (Data.Nth_Arg (4, ""))));
 
@@ -766,7 +787,7 @@ package body VCS2.Scripts is
       if Command = "success" then
          declare
             Kernel : constant Kernel_Handle := Get_Kernel (Data);
-            Msg : constant String := Data.Nth_Arg (2);
+            Msg    : constant String := Data.Nth_Arg (2);
          begin
             if Msg /= "" then
                Display_Informational_Popup
@@ -801,8 +822,7 @@ package body VCS2.Scripts is
                   N := new Commit_Names (1 .. N_Count);
                   for A in 1 .. N_Count loop
                      declare
-                        B : List_Instance'Class :=
-                          Names.Nth_Arg (A);
+                        B : List_Instance'Class := Names.Nth_Arg (A);
                      begin
                         N (A).Name := B.Nth_Arg (1);
                         N (A).Kind := Name_Kind'Val (B.Nth_Arg (2));
@@ -813,13 +833,13 @@ package body VCS2.Scripts is
                Free (Names);
 
                Visitor.On_History_Line
-                 (ID       => Line.Nth_Arg (1),
-                  Author   => Line.Nth_Arg (2),
-                  Date     => Line.Nth_Arg (3),
-                  Subject  => Line.Nth_Arg (4),
-                  Parents  => P,
-                  Names    => N,
-                  Flags    => Commit_Flags'Val (Line.Nth_Arg (7, 0)));
+                 (ID      => Line.Nth_Arg (1),
+                  Author  => Line.Nth_Arg (2),
+                  Date    => Line.Nth_Arg (3),
+                  Subject => Line.Nth_Arg (4),
+                  Parents => P,
+                  Names   => N,
+                  Flags   => Commit_Flags'Val (Line.Nth_Arg (7, 0)));
                Free (N);
                Free (Line);
             end;
@@ -832,21 +852,19 @@ package body VCS2.Scripts is
             Message => Data.Nth_Arg (4));
 
       elsif Command = "diff_computed" then
-         Visitor.On_Diff_Computed
-           (Diff    => Data.Nth_Arg (2));
+         Visitor.On_Diff_Computed (Diff => Data.Nth_Arg (2));
 
       elsif Command = "file_computed" then
-         Visitor.On_File_Computed
-           (Contents => Data.Nth_Arg (2));
+         Visitor.On_File_Computed (Contents => Data.Nth_Arg (2));
 
       elsif Command = "annotations" then
          declare
             Ids   : List_Instance'Class := Data.Nth_Arg (4);
             Texts : List_Instance'Class := Data.Nth_Arg (5);
 
-            Text  : String_List_Access :=
+            Text     : String_List_Access :=
               new String_List (1 .. Texts.Number_Of_Arguments);
-            Id    : String_List_Access :=
+            Id       : String_List_Access :=
               new String_List (1 .. Texts.Number_Of_Arguments);
             Non_Null : Natural := 0;
          begin
@@ -855,7 +873,7 @@ package body VCS2.Scripts is
                   Commit : constant String := Ids.Nth_Arg (T);
                begin
                   if T = Text'First or else Commit /= Id (Non_Null).all then
-                     Id (T)   := new String'(Commit);
+                     Id (T) := new String'(Commit);
                      Text (T) := new String'(Texts.Nth_Arg (T));
                      Non_Null := T;
                   end if;
@@ -923,13 +941,14 @@ package body VCS2.Scripts is
       if Command = "_register" then
          declare
             F : constant not null VCS_Engine_Factory_Access :=
-                  new Script_Engine_Factory'
-                    (VCS_Engine_Factory with
-                     Kernel         => Kernel,
-                     Construct      => Data.Nth_Arg (2),
-                     Default_Status =>
-                       VCS_File_Status (Integer'(Data.Nth_Arg (3))),
-                     Find_Repo      => Data.Nth_Arg (4));
+              new Script_Engine_Factory'
+                (VCS_Engine_Factory
+                 with
+                   Kernel         => Kernel,
+                   Construct      => Data.Nth_Arg (2),
+                   Default_Status =>
+                     VCS_File_Status (Integer'(Data.Nth_Arg (3))),
+                   Find_Repo      => Data.Nth_Arg (4));
 
          begin
             Register_Factory (Get_Kernel (Data), Data.Nth_Arg (1), F);
@@ -939,10 +958,9 @@ package body VCS2.Scripts is
          declare
             P : constant Project_Type := Get_Data (Data, 1);
             F : constant not null VCS_Engine_Access :=
-               VCS_Engine_Access (Kernel.VCS.Get_VCS (P));
+              VCS_Engine_Access (Kernel.VCS.Get_VCS (P));
          begin
-            Data.Set_Return_Value
-              (Create_VCS_Instance (Get_Script (Data), F));
+            Data.Set_Return_Value (Create_VCS_Instance (Get_Script (Data), F));
          end;
 
       elsif Command = "active_vcs" then
@@ -970,8 +988,8 @@ package body VCS2.Scripts is
 
       elsif Command = "supported_systems" then
          declare
-            Choices : Unbounded_String := To_Unbounded_String
-              ("auto" & ASCII.LF & "none");
+            Choices : Unbounded_String :=
+              To_Unbounded_String ("auto" & ASCII.LF & "none");
 
             procedure On_Name (Name : String);
             procedure On_Name (Name : String) is
@@ -992,7 +1010,8 @@ package body VCS2.Scripts is
    procedure Register_Scripts
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      VCS : constant Class_Type := Kernel.Scripts.New_Class (VCS_Class_Name);
+      VCS          : constant Class_Type :=
+        Kernel.Scripts.New_Class (VCS_Class_Name);
       Task_Visitor : constant Class_Type :=
         Kernel.Scripts.New_Class (VCS2_Task_Visitor_Class_Name);
    begin
@@ -1003,10 +1022,11 @@ package body VCS2.Scripts is
          Handler       => Static_VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("_register",
-         Params        => (1 => Param ("name"),
-                           2 => Param ("construct"),
-                           3 => Param ("default_status"),
-                           4 => Param ("discover_working_dir")),
+         Params        =>
+           (1 => Param ("name"),
+            2 => Param ("construct"),
+            3 => Param ("default_status"),
+            4 => Param ("discover_working_dir")),
 
          Static_Method => True,
          Class         => VCS,
@@ -1029,101 +1049,102 @@ package body VCS2.Scripts is
          Handler       => Static_VCS_Handler'Access);
 
       Kernel.Scripts.Register_Property
-        ("name",
-         Class         => VCS,
-         Getter        => VCS_Handler'Access);
+        ("name", Class => VCS, Getter => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("ensure_status_for_files",
-         Params        => (1 => Param ("files")),
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Params  => (1 => Param ("files")),
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("ensure_status_for_project",
-         Params        => (1 => Param ("project")),
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Params  => (1 => Param ("project")),
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("ensure_status_for_all_source_files",
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_run_in_background",
-         Params        => (1 => Param ("background")),
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Params  => (1 => Param ("background")),
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("invalidate_status_cache",
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_file_status",
-         Params        => (1 => Param ("file")),
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Params  => (1 => Param ("file")),
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("_set_file_status",
-         Params        => (1 => Param ("file"),
-                           2 => Param ("status", Optional => True),
-                           3 => Param ("version",    Optional => True),
-                           4 => Param ("repo_version", Optional => True)),
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Params  =>
+           (1 => Param ("file"),
+            2 => Param ("status", Optional => True),
+            3 => Param ("version", Optional => True),
+            4 => Param ("repo_version", Optional => True)),
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("_override_status_display",
-         Params        => (1 => Param ("status"),
-                           2 => Param ("label"),
-                           3 => Param ("icon_name")),
-         Class         => VCS,
-         Handler       => VCS_Handler'Access);
+         Params  =>
+           (1 => Param ("status"),
+            2 => Param ("label"),
+            3 => Param ("icon_name")),
+         Class   => VCS,
+         Handler => VCS_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("success",
-         Params        => (1 => (Param ("msg", Optional => True))),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  => (1 => (Param ("msg", Optional => True))),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("history_line",
-         Params        => (2 => Param ("line")),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  => (2 => Param ("line")),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_details",
-         Params        => (2 => Param ("id"),
-                           3 => Param ("header"),
-                           4 => Param ("message")),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  =>
+           (2 => Param ("id"), 3 => Param ("header"), 4 => Param ("message")),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("diff_computed",
-         Params        => (2 => Param ("diff")),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  => (2 => Param ("diff")),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("file_computed",
-         Params        => (2 => Param ("contents")),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  => (2 => Param ("contents")),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("annotations",
-         Params        => (2 => Param ("file"),
-                           3 => Param ("first_line"),
-                           4 => Param ("ids"),
-                           5 => Param ("annotations")),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  =>
+           (2 => Param ("file"),
+            3 => Param ("first_line"),
+            4 => Param ("ids"),
+            5 => Param ("annotations")),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("branches",
-         Params        => (2 => Param ("category"),
-                           3 => Param ("iconname"),
-                           4 => Param ("can_rename"),
-                           5 => Param ("branches")),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  =>
+           (2 => Param ("category"),
+            3 => Param ("iconname"),
+            4 => Param ("can_rename"),
+            5 => Param ("branches")),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
       Kernel.Scripts.Register_Command
         ("tooltip",
-         Params        => (2 => Param ("text")),
-         Class         => Task_Visitor,
-         Handler       => VCS_Task_Handler'Access);
+         Params  => (2 => Param ("text")),
+         Class   => Task_Visitor,
+         Handler => VCS_Task_Handler'Access);
    end Register_Scripts;
 
 end VCS2.Scripts;

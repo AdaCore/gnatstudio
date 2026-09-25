@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO;            use Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 
-with GNAT.Expect;            use GNAT.Expect;
-with GNAT.Expect.TTY;        use GNAT.Expect.TTY;
-with GNAT.Regpat;            use GNAT.Regpat;
-with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with GNAT.Expect;        use GNAT.Expect;
+with GNAT.Expect.TTY;    use GNAT.Expect.TTY;
+with GNAT.Regpat;        use GNAT.Regpat;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
 
 with Toolchains_Old;         use Toolchains_Old;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -29,7 +29,7 @@ with String_Utils;           use String_Utils;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with Vdiff2_Module;          use Vdiff2_Module;
 
-with String_Diff;            use String_Diff;
+with String_Diff; use String_Diff;
 
 package body Diff_Utils2 is
 
@@ -86,8 +86,8 @@ package body Diff_Utils2 is
       if Matches (2) = No_Match then
          Occurrence.Range1.Last := Occurrence.Range1.First;
       else
-         Occurrence.Range1.Last := Natural'Value
-           (S (Matches (2).First + 1 .. Matches (2).Last));
+         Occurrence.Range1.Last :=
+           Natural'Value (S (Matches (2).First + 1 .. Matches (2).Last));
       end if;
 
       Occurrence.Range2.First :=
@@ -96,25 +96,25 @@ package body Diff_Utils2 is
       if Matches (5) = No_Match then
          Occurrence.Range2.Last := Occurrence.Range2.First;
       else
-         Occurrence.Range2.Last := Natural'Value
-           (S (Matches (5).First + 1 .. Matches (5).Last));
+         Occurrence.Range2.Last :=
+           Natural'Value (S (Matches (5).First + 1 .. Matches (5).Last));
       end if;
 
       --  Fix the beginning and end numbers and set action appropriately
 
       case S (Matches (3).First) is
-         when 'a' =>
+         when 'a'    =>
             Occurrence.Range2.Action := Append;
             Occurrence.Range2.Last := Occurrence.Range2.Last + 1;
             Occurrence.Range1.Last := Occurrence.Range1.First;
             Occurrence.Range1.First := Occurrence.Range1.First + 1;
 
-         when 'c' =>
+         when 'c'    =>
             Occurrence.Range2.Action := Change;
             Occurrence.Range1.Last := Occurrence.Range1.Last + 1;
             Occurrence.Range2.Last := Occurrence.Range2.Last + 1;
 
-         when 'd' =>
+         when 'd'    =>
             Occurrence.Range2.Action := Delete;
             Occurrence.Range1.Last := Occurrence.Range1.Last + 1;
             Occurrence.Range2.Last := Occurrence.Range2.First;
@@ -150,20 +150,22 @@ package body Diff_Utils2 is
       Occurrence := new Diff_Chunk;
 
       for J in 1 .. 3 loop
-         Rang := Natural'Value
-           (Chunk.S_Chunk (J).all
-              (Chunk.Matches_Chunk (J)(1).First ..
-                 Chunk.Matches_Chunk (J)(1).Last));
+         Rang :=
+           Natural'Value
+             (Chunk.S_Chunk (J).all
+                (Chunk.Matches_Chunk (J) (1).First
+                 .. Chunk.Matches_Chunk (J) (1).Last));
          Block_Ordered.S_Chunk (Rang) := Chunk.S_Chunk (J);
          Block_Ordered.Matches_Chunk (Rang) := Chunk.Matches_Chunk (J);
       end loop;
 
-      if Chunk.Matches_Chunk (0)(1) = No_Match then
+      if Chunk.Matches_Chunk (0) (1) = No_Match then
          Loc_Str := "0";
       else
-         Loc_Str := Chunk.S_Chunk (0).all
-           (Chunk.Matches_Chunk (0)(1).First ..
-              Chunk.Matches_Chunk (0)(1).Last);
+         Loc_Str :=
+           Chunk.S_Chunk (0).all
+             (Chunk.Matches_Chunk (0) (1).First
+              .. Chunk.Matches_Chunk (0) (1).Last);
       end if;
 
       Location := Natural'Value (Loc_Str);
@@ -173,26 +175,28 @@ package body Diff_Utils2 is
          VRange (K).First :=
            Natural'Value
              (Block_Ordered.S_Chunk (K)
-                (Block_Ordered.Matches_Chunk (K)(2).First ..
-                   Block_Ordered.Matches_Chunk (K)(2).Last));
+                (Block_Ordered.Matches_Chunk (K) (2).First
+                 .. Block_Ordered.Matches_Chunk (K) (2).Last));
 
-         if Block_Ordered.Matches_Chunk (K)(3) = No_Match then
+         if Block_Ordered.Matches_Chunk (K) (3) = No_Match then
             VRange (K).Last := VRange (K).First;
          else
-            VRange (K).Last := Natural'Value
-              (Block_Ordered.S_Chunk (K)
-                 (Block_Ordered.Matches_Chunk (K)(4).First ..
-                    Block_Ordered.Matches_Chunk (K)(4).Last));
+            VRange (K).Last :=
+              Natural'Value
+                (Block_Ordered.S_Chunk (K)
+                   (Block_Ordered.Matches_Chunk (K) (4).First
+                    .. Block_Ordered.Matches_Chunk (K) (4).Last));
          end if;
 
          case Block_Ordered.S_Chunk (K)
-              (Block_Ordered.Matches_Chunk (K)(5).First) is
-            when 'a' =>
+                (Block_Ordered.Matches_Chunk (K) (5).First)
+         is
+            when 'a'    =>
                VRange (K).Action := Append;
                VRange (K).First := VRange (K).First + 1;
                VRange (K).Last := VRange (K).First;
 
-            when 'c' =>
+            when 'c'    =>
                VRange (K).Action := Change;
                VRange (K).Last := VRange (K).Last + 1;
 
@@ -235,8 +239,9 @@ package body Diff_Utils2 is
       Diff_Command       : String;
       Ref_File, New_File : GNATCOLL.VFS.Virtual_File) return Diff_List
    is
-      Pattern    : constant Pattern_Matcher := Compile
-        ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n", Multiple_Lines);
+      Pattern    : constant Pattern_Matcher :=
+        Compile
+          ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n", Multiple_Lines);
       Descriptor : TTY_Process_Descriptor;
       Matches    : Match_Array (0 .. 5);
       Args       : Argument_List (1 .. 2);
@@ -252,8 +257,9 @@ package body Diff_Utils2 is
 
       if Cmd = No_File then
          Kernel.Insert
-           ("command not found: " & Diff_Command &
-            ". You should modify the ""Visual Diff"" preferences",
+           ("command not found: "
+            & Diff_Command
+            & ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
          Free (Cmd_Args);
          return Ret;
@@ -263,14 +269,20 @@ package body Diff_Utils2 is
       Args (2) := new String'(+Full_Name (New_File));
 
       if Active (Me) then
-         Trace (Me, "spawn: " & Diff_Command
-                & " " & (+Full_Name (New_File))
-                & " " & (+Full_Name (Ref_File)));
+         Trace
+           (Me,
+            "spawn: "
+            & Diff_Command
+            & " "
+            & (+Full_Name (New_File))
+            & " "
+            & (+Full_Name (Ref_File)));
       end if;
 
       begin
          Non_Blocking_Spawn
-           (Descriptor, +Cmd.Full_Name,
+           (Descriptor,
+            +Cmd.Full_Name,
             Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
          Free (Cmd_Args);
          Free (Args);
@@ -307,8 +319,8 @@ package body Diff_Utils2 is
    is
       Patch_Command : constant String := Patch_Cmd.Get_Pref;
       Pattern_Any   : constant Pattern_Matcher := Compile (".+");
-      Pattern       : constant Pattern_Matcher := Compile
-        ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
+      Pattern       : constant Pattern_Matcher :=
+        Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?");
       Args          : Argument_List (1 .. 7);
       Descriptor    : TTY_Process_Descriptor;
       Ret           : Diff_List;
@@ -330,13 +342,14 @@ package body Diff_Utils2 is
         or else (not Revert and then not New_File.Is_Regular_File)
       then
          Cmd_Args := Argument_String_To_List (Patch_Command);
-         Cmd      :=
+         Cmd :=
            Locate_Tool_Executable (+Unquote (Cmd_Args (Cmd_Args'First).all));
 
          if Cmd = No_File then
             Kernel.Insert
-              ("command not found: " & Patch_Command &
-                 ". You should modify the ""Visual Diff"" preferences",
+              ("command not found: "
+               & Patch_Command
+               & ". You should modify the ""Visual Diff"" preferences",
                Mode => Error);
             Free (Cmd_Args);
             return Ret;
@@ -360,16 +373,19 @@ package body Diff_Utils2 is
          Args (Num_Args) := new String'(+Full_Name (Diff_File));
 
          if Active (Me) then
-            Trace (Me, "spawn: " &
-                     Argument_List_To_String
-                     (Cmd_Args.all & Args (1 .. Num_Args)));
+            Trace
+              (Me,
+               "spawn: "
+               & Argument_List_To_String
+                   (Cmd_Args.all & Args (1 .. Num_Args)));
          end if;
 
          begin
             Non_Blocking_Spawn
-              (Descriptor, +Cmd.Full_Name,
-               Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) &
-                 Args (1 .. Num_Args));
+              (Descriptor,
+               +Cmd.Full_Name,
+               Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last)
+               & Args (1 .. Num_Args));
             Free (Cmd_Args);
             Free (Args);
 
@@ -421,8 +437,7 @@ package body Diff_Utils2 is
             Item.List :=
               Diff3 (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
          else
-            Item.List :=
-              Diff (Kernel, Item.Files (1), Item.Files (2));
+            Item.List := Diff (Kernel, Item.Files (1), Item.Files (2));
          end if;
       end if;
    end Diff3;
@@ -432,7 +447,8 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel                           :
+        access GPS.Kernel.Kernel_Handle_Record'Class;
       My_Change, Old_File, Your_Change : Virtual_File) return Diff_List
    is
       Diff3_Command : constant String := Diff3_Cmd.Get_Pref;
@@ -445,37 +461,38 @@ package body Diff_Utils2 is
    -----------
 
    function Diff3
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Diff3_Command : String;
+     (Kernel                           :
+        access GPS.Kernel.Kernel_Handle_Record'Class;
+      Diff3_Command                    : String;
       My_Change, Old_File, Your_Change : Virtual_File) return Diff_List
    is
-      Pattern_Bloc   : constant Pattern_Matcher :=
-                         Compile ("^====?([1-3])?\r?$", Multiple_Lines);
-      Pattern_Chunk  : constant Pattern_Matcher :=
-                         Compile ("^([1-3]):([0-9]+)(,([0-9]+))?([acd])\r?$",
-                                  Multiple_Lines);
-      Descriptor     : TTY_Process_Descriptor;
-      Matches_Block  : Match_Array (0 .. 1);
-      Matches_Chunk1,
-      Matches_Chunk2,
-      Matches_Chunk3 : Match_Array (0 .. 5);
+      Pattern_Bloc                                   :
+        constant Pattern_Matcher :=
+          Compile ("^====?([1-3])?\r?$", Multiple_Lines);
+      Pattern_Chunk                                  :
+        constant Pattern_Matcher :=
+          Compile ("^([1-3]):([0-9]+)(,([0-9]+))?([acd])\r?$", Multiple_Lines);
+      Descriptor                                     : TTY_Process_Descriptor;
+      Matches_Block                                  : Match_Array (0 .. 1);
+      Matches_Chunk1, Matches_Chunk2, Matches_Chunk3 : Match_Array (0 .. 5);
 
-      Chunk          : Diff3_Block;
-      Args           : Argument_List (1 .. 3);
-      Result         : Expect_Match;
-      Ret            : Diff_List;
-      Occurrence     : Diff_Chunk_Access;
-      Cmd            : Virtual_File;
-      Cmd_Args       : Argument_List_Access;
+      Chunk      : Diff3_Block;
+      Args       : Argument_List (1 .. 3);
+      Result     : Expect_Match;
+      Ret        : Diff_List;
+      Occurrence : Diff_Chunk_Access;
+      Cmd        : Virtual_File;
+      Cmd_Args   : Argument_List_Access;
 
    begin
       Cmd_Args := Argument_String_To_List (Diff3_Command);
-      Cmd      := Locate_Tool_Executable (+Cmd_Args (Cmd_Args'First).all);
+      Cmd := Locate_Tool_Executable (+Cmd_Args (Cmd_Args'First).all);
 
       if Cmd = No_File then
          Kernel.Insert
-           ("command not found: " & Diff3_Command &
-            ". You should modify the ""Visual Diff"" preferences",
+           ("command not found: "
+            & Diff3_Command
+            & ". You should modify the ""Visual Diff"" preferences",
             Mode => Error);
          Free (Cmd_Args);
          return Ret;
@@ -486,36 +503,43 @@ package body Diff_Utils2 is
       Args (3) := new String'(+Full_Name (Your_Change));
 
       if Active (Me) then
-         Trace (Me, "spawn: " & Diff3_Command & " " &
-                Display_Full_Name (My_Change)
-                & " " & Display_Full_Name (Old_File)
-                & " " & Display_Full_Name (Your_Change));
+         Trace
+           (Me,
+            "spawn: "
+            & Diff3_Command
+            & " "
+            & Display_Full_Name (My_Change)
+            & " "
+            & Display_Full_Name (Old_File)
+            & " "
+            & Display_Full_Name (Your_Change));
       end if;
 
       Non_Blocking_Spawn
-        (Descriptor, +Cmd.Full_Name,
+        (Descriptor,
+         +Cmd.Full_Name,
          Cmd_Args (Cmd_Args'First + 1 .. Cmd_Args'Last) & Args);
       Free (Cmd_Args);
       Free (Args);
 
       loop
-         Expect (Descriptor, Result, Pattern_Bloc,  Matches_Block,
-                 Timeout => -1);
+         Expect
+           (Descriptor, Result, Pattern_Bloc, Matches_Block, Timeout => -1);
          Chunk.S_Chunk (0) := new String'(Expect_Out_Match (Descriptor));
          Chunk.Matches_Chunk (0) := new Match_Array'(Matches_Block);
 
-         Expect (Descriptor, Result, Pattern_Chunk,
-                 Matches_Chunk1, Timeout => -1);
+         Expect
+           (Descriptor, Result, Pattern_Chunk, Matches_Chunk1, Timeout => -1);
          Chunk.S_Chunk (1) := new String'(Expect_Out_Match (Descriptor));
          Chunk.Matches_Chunk (1) := new Match_Array'(Matches_Chunk1);
 
-         Expect (Descriptor, Result, Pattern_Chunk,
-                 Matches_Chunk2, Timeout => -1);
+         Expect
+           (Descriptor, Result, Pattern_Chunk, Matches_Chunk2, Timeout => -1);
          Chunk.S_Chunk (2) := new String'(Expect_Out_Match (Descriptor));
          Chunk.Matches_Chunk (2) := new Match_Array'(Matches_Chunk2);
 
-         Expect (Descriptor, Result, Pattern_Chunk,
-                 Matches_Chunk3, Timeout => -1);
+         Expect
+           (Descriptor, Result, Pattern_Chunk, Matches_Chunk3, Timeout => -1);
          Chunk.S_Chunk (3) := new String'(Expect_Out_Match (Descriptor));
          Chunk.Matches_Chunk (3) := new Match_Array'(Matches_Chunk3);
 
@@ -538,10 +562,7 @@ package body Diff_Utils2 is
    -- Simplify --
    --------------
 
-   function Simplify
-     (Diff     : Diff_List;
-      Ref_File : T_Loc) return Diff_List
-   is
+   function Simplify (Diff : Diff_List; Ref_File : T_Loc) return Diff_List is
       Ref        : constant T_Loc := Ref_File;
       Curr_Chunk : Diff_Chunk_Access;
       VRange     : array (1 .. 3) of Diff_Range;
@@ -550,10 +571,7 @@ package body Diff_Utils2 is
    begin
       for Item of Diff loop
          Curr_Chunk := new Diff_Chunk'(Item.all);
-         VRange     :=
-           (Curr_Chunk.Range1,
-            Curr_Chunk.Range2,
-            Curr_Chunk.Range3);
+         VRange := (Curr_Chunk.Range1, Curr_Chunk.Range2, Curr_Chunk.Range3);
 
          if Curr_Chunk.Location = Ref then
             case VRange (Ref).Action is
@@ -572,7 +590,7 @@ package body Diff_Utils2 is
                         end if;
                      end if;
                   end loop;
-                  --  this case is not a conflict even if Location := 0
+               --  this case is not a conflict even if Location := 0
 
                when others =>
                   null;
@@ -634,8 +652,7 @@ package body Diff_Utils2 is
       Old_Range : Natural := 1;
 
       procedure Cb
-        (Old_Obj, New_Obj : Character;
-         State            : String_Diff.Diff_State);
+        (Old_Obj, New_Obj : Character; State : String_Diff.Diff_State);
       --  Callback for the diff procedure
 
       --------
@@ -643,16 +660,20 @@ package body Diff_Utils2 is
       --------
 
       procedure Cb
-        (Old_Obj, New_Obj : Character;
-         State            : String_Diff.Diff_State)
+        (Old_Obj, New_Obj : Character; State : String_Diff.Diff_State)
       is
          pragma Unreferenced (Old_Obj, New_Obj);
          Action : Diff_Action;
       begin
          case State is
-            when Added => Action := Append;
-            when Removed => Action := Delete;
-            when Equal => Action := Nothing;
+            when Added   =>
+               Action := Append;
+
+            when Removed =>
+               Action := Delete;
+
+            when Equal   =>
+               Action := Nothing;
          end case;
 
          if Current_Chunk /= null
@@ -666,39 +687,43 @@ package body Diff_Utils2 is
             when Nothing =>
                Old_Range := Old_Range + 1;
 
-            when Append =>
+            when Append  =>
                if Current_Chunk = null then
-                  Current_Chunk := new Diff_Chunk'
-                    (Range1   => (First              => Old_Range,
-                                  Last               => Old_Range + 1,
-                                  Action             => Action,
-                                  Blank_Lines_Mark   => <>,
-                                  Special_Lines_Mark => <>),
-                     Range2   => Null_Range,
-                     Range3   => Null_Range,
-                     Location => 0,
-                     Conflict => False);
+                  Current_Chunk :=
+                    new Diff_Chunk'
+                      (Range1   =>
+                         (First              => Old_Range,
+                          Last               => Old_Range + 1,
+                          Action             => Action,
+                          Blank_Lines_Mark   => <>,
+                          Special_Lines_Mark => <>),
+                       Range2   => Null_Range,
+                       Range3   => Null_Range,
+                       Location => 0,
+                       Conflict => False);
                else
                   Current_Chunk.Range1.Last := Current_Chunk.Range1.Last + 1;
                end if;
 
                Old_Range := Old_Range + 1;
 
-            when Delete =>
+            when Delete  =>
                if Current_Chunk = null then
-                  Current_Chunk := new Diff_Chunk'
-                    (Range1   => (First              => Old_Range - 1,
-                                  Last               => Old_Range,
-                                  Action             => Action,
-                                  Blank_Lines_Mark   => <>,
-                                  Special_Lines_Mark => <>),
-                     Range2   => Null_Range,
-                     Range3   => Null_Range,
-                     Location => 0,
-                     Conflict => False);
+                  Current_Chunk :=
+                    new Diff_Chunk'
+                      (Range1   =>
+                         (First              => Old_Range - 1,
+                          Last               => Old_Range,
+                          Action             => Action,
+                          Blank_Lines_Mark   => <>,
+                          Special_Lines_Mark => <>),
+                       Range2   => Null_Range,
+                       Range3   => Null_Range,
+                       Location => 0,
+                       Conflict => False);
                end if;
 
-            when Change =>
+            when Change  =>
                null;
          end case;
       end Cb;
@@ -731,8 +756,8 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Vdiff : in out Diff_Head_Access) is
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
    begin
       Free (Vdiff.all);
       Unchecked_Free (Vdiff);
@@ -760,9 +785,10 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Vdiff_List : in out Diff_Head_List_Access) is
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation
-          (Diff_Head_List.Vector, Diff_Head_List_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Diff_Head_List.Vector,
+           Diff_Head_List_Access);
    begin
       Vdiff_List.Clear;
       Unchecked_Free (Vdiff_List);

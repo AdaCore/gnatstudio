@@ -43,8 +43,8 @@ with Gtk.Tree_View;
 
 package GPS.Tree_View is
 
-   type GPS_Tree_View_Record is
-     abstract new Gtk.Tree_View.Gtk_Tree_View_Record with private;
+   type GPS_Tree_View_Record is abstract
+     new Gtk.Tree_View.Gtk_Tree_View_Record with private;
 
    type GPS_Tree_View is access all GPS_Tree_View_Record'Class;
 
@@ -54,14 +54,14 @@ package GPS.Tree_View is
 
    procedure Set_Source_Model
      (Self         : access GPS_Tree_View_Record;
-      Source_Model : not null
-         access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
+      Source_Model :
+        not null access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class);
    --  Set source model. The stack of models must never be changed.
 
    function To_Lowest_Model_Iter
      (Self : not null access GPS_Tree_View_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter is abstract;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter
+   is abstract;
    --  Converts iterator from the view's source model to Lowest model.
 
 private
@@ -71,11 +71,11 @@ private
    type Node_Record;
    type Node_Access is access all Node_Record;
 
-   package Node_Vectors is
-     new Ada.Containers.Vectors (Node_Index, Node_Access);
+   package Node_Vectors is new
+     Ada.Containers.Vectors (Node_Index, Node_Access);
 
-   package Path_List is
-      new Ada.Containers.Doubly_Linked_Lists (Gtk.Tree_Model.Gtk_Tree_Path);
+   package Path_List is new
+     Ada.Containers.Doubly_Linked_Lists (Gtk.Tree_Model.Gtk_Tree_Path);
 
    package Tree_View_Sources is new Generic_Sources (GPS_Tree_View);
 
@@ -85,12 +85,12 @@ private
       Children : Node_Vectors.Vector;
    end record;
 
-   type GPS_Tree_View_Record is
-     abstract new Gtk.Tree_View.Gtk_Tree_View_Record with record
+   type GPS_Tree_View_Record is abstract new Gtk.Tree_View.Gtk_Tree_View_Record
+   with record
       Lowest_Model : Gtk.Tree_Model.Gtk_Tree_Model;
       --  Lowest model.
 
-      Root          : Node_Access;
+      Root : Node_Access;
       --  Root node. The tree reflects underling model, not the model directly
       --  connected to the view.
 
@@ -105,7 +105,8 @@ private
      (Self : not null access GPS_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node : not null Node_Access) is null;
+      Node : not null Node_Access)
+   is null;
    --  Called when new row is inserted into the Lowest model. Node is
    --  initialized and inserted internal node.
 
@@ -113,7 +114,8 @@ private
      (Self : not null access GPS_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node : not null Node_Access) is null;
+      Node : not null Node_Access)
+   is null;
    --  Called when row is expanded as result of user or application request
 
 end GPS.Tree_View;

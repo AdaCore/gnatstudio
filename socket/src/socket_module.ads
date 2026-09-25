@@ -22,7 +22,7 @@ with GPS.Kernel;
 
 package Socket_Module is
 
-   Default_GPS_Port   : constant := 50000;
+   Default_GPS_Port : constant := 50000;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -31,8 +31,7 @@ package Socket_Module is
    --  interaction with the GNAT Studio shell.
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Port   : Natural);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Port : Natural);
    --  Same as above, but specify an alternate port number.
 
 end Socket_Module;

@@ -43,16 +43,16 @@ package body Code_Analysis_GUI is
    ---------------------------
 
    function Build_Analysis_Report
-     (Kernel      : Kernel_Handle;
-      Binary_Mode : Boolean) return Code_Analysis_Report_Access
+     (Kernel : Kernel_Handle; Binary_Mode : Boolean)
+      return Code_Analysis_Report_Access
    is
-      View        : constant Code_Analysis_Report_Access :=
-                      new Code_Analysis_Report;
-      Scrolled    : Gtk_Scrolled_Window;
-      Text_Render : Gtk_Cell_Renderer_Text;
-      Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
-      Bar_Render  : Gtk_Cell_Renderer_Progress;
-      Dummy       : Gint;
+      View             : constant Code_Analysis_Report_Access :=
+        new Code_Analysis_Report;
+      Scrolled         : Gtk_Scrolled_Window;
+      Text_Render      : Gtk_Cell_Renderer_Text;
+      Pixbuf_Rend      : Gtk_Cell_Renderer_Pixbuf;
+      Bar_Render       : Gtk_Cell_Renderer_Progress;
+      Dummy            : Gint;
       pragma Unreferenced (Kernel, Dummy);
       --  Warning board widgets
       Warning_Image    : Gtk_Image;
@@ -61,7 +61,7 @@ package body Code_Analysis_GUI is
       Label_And_Button : Gtk_Vbox;
       Button_Box       : Gtk_Hbox;
    begin
-      View.Binary_Mode       := Binary_Mode;
+      View.Binary_Mode := Binary_Mode;
       Initialize_Vbox (View, False, 0);
 
       View.Tree := new Code_Analysis_Tree_View_Record;
@@ -91,14 +91,16 @@ package body Code_Analysis_GUI is
       Gtk_New_Vbox (Label_And_Button, False, 7);
       Gtk_New_Hbox (Button_Box);
       Gtk_New_From_Icon_Name
-        (Warning_Image, "gps-emblem-build-warning",
+        (Warning_Image,
+         "gps-emblem-build-warning",
          Gtk.Enums.Icon_Size_Small_Toolbar);
       Gtk_New
         (Board_Label,
          -"This coverage report is empty. You can populate it with the "
-         & '"' & (-"Load data..." & '"' &
-           (-" entries of the /Tools/Coverage menu or the button below."
-             )));
+         & '"'
+         & (-"Load data..."
+            & '"'
+            & (-" entries of the /Tools/Coverage menu or the button below.")));
       Set_Line_Wrap (Board_Label, True);
       Set_Justify (Board_Label, Justify_Left);
       Gtk_New (View.Load_Button, -"Load data for all projects");
@@ -127,8 +129,10 @@ package body Code_Analysis_GUI is
       Set_Justify (Board_Label, Justify_Left);
       Gtk_New (Full_Tree_Button, -"Show full tree");
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Full_Tree_Button, Gtk.Button.Signal_Clicked,
-         Show_Full_Tree'Access, View);
+        (Full_Tree_Button,
+         Gtk.Button.Signal_Clicked,
+         Show_Full_Tree'Access,
+         View);
       Pack_Start (View.Empty_Board, Warning_Image, False, False, 7);
       Pack_Start (Label_And_Button, Board_Label, False, True, 7);
       Pack_Start (Button_Box, Full_Tree_Button, False, False, 0);
@@ -145,7 +149,7 @@ package body Code_Analysis_GUI is
       Gtk_New (Pixbuf_Rend);
       Pack_Start (View.Node_Column, Pixbuf_Rend, False);
       Add_Attribute
-         (View.Node_Column, Pixbuf_Rend, "icon-name", Icon_Name_Col);
+        (View.Node_Column, Pixbuf_Rend, "icon-name", Icon_Name_Col);
       Gtk_New (Text_Render);
       Pack_Start (View.Node_Column, Text_Render, False);
       Add_Attribute (View.Node_Column, Text_Render, "text", Name_Col);
@@ -186,9 +190,7 @@ package body Code_Analysis_GUI is
       Dummy := Append_Column (View.Tree, View.Cov_Percent);
       Gtk_New (Bar_Render);
       Glib.Properties.Set_Property
-        (Bar_Render,
-         Gtk.Cell_Renderer.Width_Property,
-         Progress_Bar_Width_Cst);
+        (Bar_Render, Gtk.Cell_Renderer.Width_Property, Progress_Bar_Width_Cst);
       Pack_Start (View.Cov_Percent, Bar_Render, False);
       Add_Attribute (View.Cov_Percent, Bar_Render, "value", Cov_Bar_Val);
       Add_Attribute (View.Cov_Percent, Bar_Render, "text", Cov_Bar_Label);
@@ -227,8 +229,7 @@ package body Code_Analysis_GUI is
    -- Name --
    ----------
 
-   function Name (View : access Code_Analysis_Report'Class) return String
-   is
+   function Name (View : access Code_Analysis_Report'Class) return String is
    begin
       return Get_Name (View.Tree);
    end Name;
@@ -246,7 +247,8 @@ package body Code_Analysis_GUI is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self       : not null access Code_Analysis_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean
    is
@@ -283,8 +285,7 @@ package body Code_Analysis_GUI is
    -- Show_Flat_List_Of_Files --
    -----------------------------
 
-   procedure Show_Flat_List_Of_Files
-     (Object : access Gtk_Widget_Record'Class)
+   procedure Show_Flat_List_Of_Files (Object : access Gtk_Widget_Record'Class)
    is
       View : constant Code_Analysis_Report_Access :=
         Code_Analysis_Report_Access (Object);
@@ -332,8 +333,7 @@ package body Code_Analysis_GUI is
    ---------------------------------
 
    procedure Set_Non_Analyzed_Visibility
-     (View    : not null access Code_Analysis_Report'Class;
-      Visible : Boolean) is
+     (View : not null access Code_Analysis_Report'Class; Visible : Boolean) is
    begin
       View.Tree.Show_Non_Analyzed := Visible;
       View.Tree.Refilter;
@@ -365,8 +365,8 @@ package body Code_Analysis_GUI is
          if Iter /= Null_Iter then
             M := View.Model;
             declare
-               Node : constant Node_Access := Code_Analysis.Node_Access
-                 (Node_Set.Get (M, Iter, Node_Col));
+               Node : constant Node_Access :=
+                 Code_Analysis.Node_Access (Node_Set.Get (M, Iter, Node_Col));
             begin
                if Node.all in Code_Analysis.Project'Class then
                   --  So we are on a project node
@@ -422,8 +422,8 @@ package body Code_Analysis_GUI is
       View   : Code_Analysis_Report_Access;
       Iter   : Gtk_Tree_Iter)
    is
-      File_Node : constant File_Access := File_Access
-        (File_Set.Get (View.Model, Iter, Node_Col));
+      File_Node : constant File_Access :=
+        File_Access (File_Set.Get (View.Model, Iter, Node_Col));
    begin
       Open_File_Editor (Kernel, View, File_Node, False);
    end Open_File_Editor_On_File;
@@ -437,10 +437,10 @@ package body Code_Analysis_GUI is
       View   : Code_Analysis_Report_Access;
       Iter   : Gtk_Tree_Iter)
    is
-      File_Node : constant File_Access := File_Access
-        (File_Set.Get (View.Model, Iter, File_Col));
-      Subp_Node : constant Subprogram_Access := Subprogram_Access
-        (Subprogram_Set.Get (View.Model, Iter, Node_Col));
+      File_Node : constant File_Access :=
+        File_Access (File_Set.Get (View.Model, Iter, File_Col));
+      Subp_Node : constant Subprogram_Access :=
+        Subprogram_Access (Subprogram_Set.Get (View.Model, Iter, Node_Col));
    begin
       Open_File_Editor
         (Kernel, View, File_Node, True, Subp_Node.Start, Subp_Node.Column);
@@ -451,8 +451,8 @@ package body Code_Analysis_GUI is
    ----------------------
 
    procedure Setup_Local_Menu
-     (View    : not null access Code_Analysis_Report'Class;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+     (View : not null access Code_Analysis_Report'Class;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       use Project_Maps;
 
@@ -462,20 +462,26 @@ package body Code_Analysis_GUI is
       if First (View.Projects.all) /= No_Element then
          Gtk_New (Item, -"Show flat list of files");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Show_Flat_List_Of_Files'Access, View);
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Show_Flat_List_Of_Files'Access,
+            View);
          Append (Menu, Item);
          Gtk_New (Item, -"Show flat list of subprograms");
          Gtkada.Handlers.Widget_Callback.Object_Connect
-           (Item, Gtk.Menu_Item.Signal_Activate,
-            Show_Flat_List_Of_Subprograms'Access, View);
+           (Item,
+            Gtk.Menu_Item.Signal_Activate,
+            Show_Flat_List_Of_Subprograms'Access,
+            View);
          Append (Menu, Item);
 
          if not Has_Child (View.Model, Iter) then
             Gtk_New (Item, -"Show full tree");
             Gtkada.Handlers.Widget_Callback.Object_Connect
-              (Item, Gtk.Menu_Item.Signal_Activate,
-               Show_Full_Tree'Access, View);
+              (Item,
+               Gtk.Menu_Item.Signal_Activate,
+               Show_Full_Tree'Access,
+               View);
             Append (Menu, Item);
          end if;
       end if;

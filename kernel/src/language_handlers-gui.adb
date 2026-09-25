@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Case_Handling;             use Case_Handling;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GPS.Intl;                  use GPS.Intl;
-with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
+with Case_Handling;      use Case_Handling;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GPS.Intl;           use GPS.Intl;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
 
-with GUI_Utils;                 use GUI_Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GUI_Utils;    use GUI_Utils;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package body Language_Handlers.GUI is
 
@@ -35,10 +35,12 @@ package body Language_Handlers.GUI is
       File    : GNATCOLL.VFS.Virtual_File;
       Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
    is
-      Combo     : Gtk_Combo_Box_Text;
-      Languages : Argument_List := Known_Languages (Handler, Sorted => True);
-      Project_Lang : constant String := Mixed_Case
-        (Get_Language_From_File (Handler, File, From_Project_Only => True));
+      Combo        : Gtk_Combo_Box_Text;
+      Languages    : Argument_List :=
+        Known_Languages (Handler, Sorted => True);
+      Project_Lang : constant String :=
+        Mixed_Case
+          (Get_Language_From_File (Handler, File, From_Project_Only => True));
 
    begin
       Gtk_New (Combo);
@@ -57,9 +59,7 @@ package body Language_Handlers.GUI is
 
       if File = GNATCOLL.VFS.No_File and then Default /= "" then
          Set_Active_Text
-           (Combo          => Combo,
-            Text           => Default,
-            Case_Sensitive => False);
+           (Combo => Combo, Text => Default, Case_Sensitive => False);
 
       elsif File /= GNATCOLL.VFS.No_File
         and then Language_Is_Overridden (Handler, File)

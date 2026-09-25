@@ -19,29 +19,29 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Utils;
 with Interactive_Consoles;
-with System;                     use System;
+with System; use System;
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with Glib.Types;                 use Glib.Types;
-with Glib.Object;                use Glib.Object;
-with Gtk.Clipboard;              use Gtk.Clipboard;
-with Gtk.Editable;               use Gtk.Editable;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Text_View;              use Gtk.Text_View;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Widget;                 use Gtk.Widget;
+with GNAT.OS_Lib;      use GNAT.OS_Lib;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with Glib.Types;       use Glib.Types;
+with Glib.Object;      use Glib.Object;
+with Gtk.Clipboard;    use Gtk.Clipboard;
+with Gtk.Editable;     use Gtk.Editable;
+with Gtk.Label;        use Gtk.Label;
+with Gtk.Text_View;    use Gtk.Text_View;
+with Gtk.Text_Iter;    use Gtk.Text_Iter;
+with Gtk.Tree_View;    use Gtk.Tree_View;
+with Gtk.Widget;       use Gtk.Widget;
 
-with Default_Preferences;        use Default_Preferences;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GUI_Utils;                  use GUI_Utils;
-with XML_Utils;                  use XML_Utils;
+with Default_Preferences; use Default_Preferences;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
+with GUI_Utils;           use GUI_Utils;
+with XML_Utils;           use XML_Utils;
 with XML_Parsers;
 
 package body GPS.Kernel.Clipboard is
@@ -50,31 +50,33 @@ package body GPS.Kernel.Clipboard is
 
    Clipboard_Size_Pref : Integer_Preference;
 
-   Text_Cst            : aliased constant String := "text";
-   Append_Cst          : aliased constant String := "append";
-   Index1_Cst          : aliased constant String := "index1";
-   Index2_Cst          : aliased constant String := "index2";
+   Text_Cst   : aliased constant String := "text";
+   Append_Cst : aliased constant String := "append";
+   Index1_Cst : aliased constant String := "index1";
+   Index2_Cst : aliased constant String := "index2";
 
    type Clipboard_Module_Record is new Module_ID_Record with null record;
    Clipboard_Module_Id : Module_ID := null;
-   Module_Name : constant String := "Clipboard_Module";
+   Module_Name         : constant String := "Clipboard_Module";
 
-   package Implements_Editable is new Glib.Types.Implements
-     (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
+   package Implements_Editable is new
+     Glib.Types.Implements
+       (Gtk.Editable.Gtk_Editable,
+        GObject_Record,
+        GObject);
    function "+"
-     (Widget : access GObject_Record'Class)
-      return Gtk.Editable.Gtk_Editable
-      renames Implements_Editable.To_Interface;
+     (Widget : access GObject_Record'Class) return Gtk.Editable.Gtk_Editable
+   renames Implements_Editable.To_Interface;
    --  Conversion from objects to their Gtk.Editable interface
 
-   function Convert is new Ada.Unchecked_Conversion
-     (Clipboard_Access, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Clipboard_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Selection_List, Selection_List_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Clipboard_Record, Clipboard_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (Clipboard_Access, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Clipboard_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Selection_List, Selection_List_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Clipboard_Record, Clipboard_Access);
 
    procedure Append_To_Clipboard (Clipboard : access Clipboard_Record);
    --  Add the contents of the Gtk.Clipboard to Clipboard.
@@ -98,7 +100,8 @@ package body GPS.Kernel.Clipboard is
    --  This also sets Clipboard.Target_Widget to null;
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -112,7 +115,8 @@ package body GPS.Kernel.Clipboard is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -154,29 +158,27 @@ package body GPS.Kernel.Clipboard is
    -- Create_Clipboard --
    ----------------------
 
-   procedure Create_Clipboard
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure Create_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
       Clipboard   : constant Clipboard_Access := new Clipboard_Record;
       Size        : Integer;
       Filename    : constant Virtual_File :=
-                      Create_From_Dir
-                        (Get_Home_Dir (Kernel), "clipboards.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "clipboards.xml");
       File, Child : Node_Ptr;
       Err         : GNAT.Strings.String_Access;
    begin
       if Clipboard_Size_Pref = null then
-         Clipboard_Size_Pref := Create
-           (Get_Preferences (Kernel),
-            Path    => -"General:Clipboard",
-            Name    => "Clipboard-Size",
-            Label   => "Clipboard Size",
-            Default => 10,
-            Doc     =>
-               -("Number of entries in the clipboard that can be accessed"
-                 & " via Paste Previous."),
-            Minimum => 1,
-            Maximum => 1_000);
+         Clipboard_Size_Pref :=
+           Create
+             (Get_Preferences (Kernel),
+              Path    => -"General:Clipboard",
+              Name    => "Clipboard-Size",
+              Label   => "Clipboard Size",
+              Default => 10,
+              Doc     =>
+                -("Number of entries in the clipboard that can be accessed"
+                  & " via Paste Previous."),
+              Minimum => 1,
+              Maximum => 1_000);
       end if;
 
       Clipboard.Kernel := Kernel_Handle (Kernel);
@@ -191,16 +193,14 @@ package body GPS.Kernel.Clipboard is
             Insert (Kernel, Err.all, Mode => Error);
          else
             Child := File.Child;
-            Size  := 1;
-            while Size <= Clipboard.List'Last
-              and then Child /= null
-            loop
+            Size := 1;
+            while Size <= Clipboard.List'Last and then Child /= null loop
                Clipboard.List (Size) := new String'(Child.Value.all);
                if Get_Attribute_S (Child, "last", "false") = "true" then
                   Clipboard.Last_Paste := Size;
                end if;
 
-               Size  := Size + 1;
+               Size := Size + 1;
                Child := Child.Next;
             end loop;
             Free (File);
@@ -221,7 +221,7 @@ package body GPS.Kernel.Clipboard is
 
    procedure Destroy_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
       Filename  : constant Virtual_File :=
-                    Create_From_Dir (Get_Home_Dir (Kernel), "clipboards.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "clipboards.xml");
       File      : Node_Ptr;
       Child     : Node_Ptr;
       Clipboard : Clipboard_Access;
@@ -292,8 +292,8 @@ package body GPS.Kernel.Clipboard is
       Text : Glib.UTF8_String := "")
    is
       pragma Unreferenced (Clip);
-      Clipboard : constant Clipboard_Access := Get_Clipboard
-        (Clipboard_Module_Id.Get_Kernel);
+      Clipboard : constant Clipboard_Access :=
+        Get_Clipboard (Clipboard_Module_Id.Get_Kernel);
    begin
       if Clipboard = null then
          return;
@@ -305,10 +305,9 @@ package body GPS.Kernel.Clipboard is
          Free (Clipboard.List (Clipboard.List'Last));
          Clipboard.List (Clipboard.List'First + 1 .. Clipboard.List'Last) :=
            Clipboard.List (Clipboard.List'First .. Clipboard.List'Last - 1);
-         Clipboard.List (Clipboard.List'First) := new String'
-           (Text);
+         Clipboard.List (Clipboard.List'First) := new String'(Text);
 
-         Clipboard.Last_Paste  := Clipboard.List'First;
+         Clipboard.Last_Paste := Clipboard.List'First;
          Clipboard_Changed_Hook.Run (Clipboard.Kernel);
       end if;
 
@@ -445,8 +444,7 @@ package body GPS.Kernel.Clipboard is
    ----------------------------
 
    procedure Copy_Text_In_Clipboard
-     (Clipboard : access Clipboard_Record;
-      Text      : String) is
+     (Clipboard : access Clipboard_Record; Text : String) is
    begin
       Set_Text (Gtk.Clipboard.Get, Text);
       Append_To_Clipboard (Clipboard);
@@ -457,14 +455,11 @@ package body GPS.Kernel.Clipboard is
    ---------------------
 
    procedure Paste_Clipboard
-     (Clipboard     : access Clipboard_Record;
-      Index_In_List : Natural := 0) is
+     (Clipboard : access Clipboard_Record; Index_In_List : Natural := 0) is
    begin
       Clipboard.Last_Is_From_System := False;
 
-      if Index_In_List /= 0
-        and then Index_In_List in Clipboard.List'Range
-      then
+      if Index_In_List /= 0 and then Index_In_List in Clipboard.List'Range then
          Clipboard.Last_Paste := Index_In_List;
          Clipboard_Changed_Hook.Run (Clipboard.Kernel);
 
@@ -485,8 +480,8 @@ package body GPS.Kernel.Clipboard is
       elsif Clipboard.List (Clipboard.Last_Paste) /= null then
          --  If we reach this, paste the GNAT Studio clipboard
          Trace (Me, "Pasting GNAT Studio clipboard");
-         Set_Text (Gtk.Clipboard.Get,
-                   Clipboard.List (Clipboard.Last_Paste).all);
+         Set_Text
+           (Gtk.Clipboard.Get, Clipboard.List (Clipboard.Last_Paste).all);
          Do_Paste_On_Target_Widget (Clipboard);
       end if;
 
@@ -508,9 +503,7 @@ package body GPS.Kernel.Clipboard is
       Widget    : Gtk_Widget;
       Ignore    : Boolean;
    begin
-      if Clipboard = null
-        or else Text = ""
-      then
+      if Clipboard = null or else Text = "" then
          return;
       end if;
 
@@ -528,8 +521,9 @@ package body GPS.Kernel.Clipboard is
          Set_Text (Clip, Clipboard.List (Clipboard.Last_Paste).all);
       end if;
 
-      Widget := Interactive_Consoles.Find_Interactive_Console
-        (Get_Current_Focus_Widget (Clipboard.Kernel));
+      Widget :=
+        Interactive_Consoles.Find_Interactive_Console
+          (Get_Current_Focus_Widget (Clipboard.Kernel));
       if Widget /= null then
          Interactive_Consoles.Interactive_Console (Widget).Paste_Text
            (GNATCOLL.Utils.Strip_CR (Text), Ignore);
@@ -584,7 +578,8 @@ package body GPS.Kernel.Clipboard is
             Clipboard.First_Position := Get_Offset (Iter);
 
             Paste_Clipboard
-              (Buffer, Gtk.Clipboard.Get,
+              (Buffer,
+               Gtk.Clipboard.Get,
                Default_Editable => Default_Editable);
          end if;
       end if;
@@ -606,9 +601,11 @@ package body GPS.Kernel.Clipboard is
 
       if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
          if Clipboard.Last_Position /= Get_Position (+Widget) then
-            Trace (Me, "Paste Previous not at the same position in Editable "
-                   & Clipboard.Last_Position'Img
-                   & Get_Position (+Widget)'Img);
+            Trace
+              (Me,
+               "Paste Previous not at the same position in Editable "
+               & Clipboard.Last_Position'Img
+               & Get_Position (+Widget)'Img);
             return;
          end if;
 
@@ -616,9 +613,11 @@ package body GPS.Kernel.Clipboard is
          Buffer := Get_Buffer (Gtk_Text_View (Widget));
          Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
          if Clipboard.Last_Position /= Get_Offset (Iter) then
-            Trace (Me, "Paste Previous not at the same position "
-                   & Clipboard.Last_Position'Img
-                   & Get_Offset (Iter)'Img);
+            Trace
+              (Me,
+               "Paste Previous not at the same position "
+               & Clipboard.Last_Position'Img
+               & Get_Offset (Iter)'Img);
             return;
          end if;
       else
@@ -655,8 +654,8 @@ package body GPS.Kernel.Clipboard is
       Clipboard.Last_Is_From_System := False;
 
       if Clipboard.List (Clipboard.Last_Paste) /= null then
-         Set_Text (Gtk.Clipboard.Get,
-                   Clipboard.List (Clipboard.Last_Paste).all);
+         Set_Text
+           (Gtk.Clipboard.Get, Clipboard.List (Clipboard.Last_Paste).all);
 
          --  Paste the new contents
          if Is_A (Widget.Get_Type, Gtk.Editable.Get_Type) then
@@ -667,7 +666,8 @@ package body GPS.Kernel.Clipboard is
             Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
             Clipboard.First_Position := Get_Offset (Iter);
             Paste_Clipboard
-              (Buffer, Gtk.Clipboard.Get,
+              (Buffer,
+               Gtk.Clipboard.Get,
                Default_Editable => Get_Editable (Gtk_Text_View (Widget)));
             Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
             Clipboard.Last_Position := Get_Offset (Iter);
@@ -695,8 +695,8 @@ package body GPS.Kernel.Clipboard is
    -- Get_Last_Paste --
    --------------------
 
-   function Get_Last_Paste
-     (Clipboard : access Clipboard_Record) return Integer is
+   function Get_Last_Paste (Clipboard : access Clipboard_Record) return Integer
+   is
    begin
       return Clipboard.Last_Paste;
    end Get_Last_Paste;
@@ -706,8 +706,7 @@ package body GPS.Kernel.Clipboard is
    ---------------------
 
    procedure Merge_Clipboard
-     (Clipboard      : access Clipboard_Record;
-      Index1, Index2 : Natural)
+     (Clipboard : access Clipboard_Record; Index1, Index2 : Natural)
    is
       Str : GNAT.Strings.String_Access;
    begin
@@ -716,8 +715,9 @@ package body GPS.Kernel.Clipboard is
         and then Clipboard.List (Index1) /= null
         and then Clipboard.List (Index2) /= null
       then
-         Str := new String'(Clipboard.List (Index2).all
-                            & Clipboard.List (Index1).all);
+         Str :=
+           new String'
+             (Clipboard.List (Index2).all & Clipboard.List (Index1).all);
          Free (Clipboard.List (Index1));
          Clipboard.List (Index1) := Str;
 
@@ -748,17 +748,37 @@ package body GPS.Kernel.Clipboard is
          Module_Name => Module_Name);
 
       Register_Command
-        (Kernel, "copy", 1, 2, Class => Class, Static_Method => True,
-         Handler => Clipboard_Handler'Access);
+        (Kernel,
+         "copy",
+         1,
+         2,
+         Class         => Class,
+         Static_Method => True,
+         Handler       => Clipboard_Handler'Access);
       Register_Command
-        (Kernel, "merge", 2, 2, Class => Class, Static_Method => True,
-         Handler => Clipboard_Handler'Access);
+        (Kernel,
+         "merge",
+         2,
+         2,
+         Class         => Class,
+         Static_Method => True,
+         Handler       => Clipboard_Handler'Access);
       Register_Command
-        (Kernel, "current", 0, 0, Class => Class, Static_Method => True,
-         Handler => Clipboard_Handler'Access);
+        (Kernel,
+         "current",
+         0,
+         0,
+         Class         => Class,
+         Static_Method => True,
+         Handler       => Clipboard_Handler'Access);
       Register_Command
-        (Kernel, "contents", 0, 0, Class => Class, Static_Method => True,
-         Handler => Clipboard_Handler'Access);
+        (Kernel,
+         "contents",
+         0,
+         0,
+         Class         => Class,
+         Static_Method => True,
+         Handler       => Clipboard_Handler'Access);
    end Register_Module;
 
    -----------------------
@@ -772,10 +792,10 @@ package body GPS.Kernel.Clipboard is
       List   : Selection_List_Access;
    begin
       if Command = "copy" then
-         Name_Parameters (Data, (1 => Text_Cst'Access,
-                                 2 => Append_Cst'Access));
+         Name_Parameters
+           (Data, (1 => Text_Cst'Access, 2 => Append_Cst'Access));
          declare
-            Append : constant Boolean := Nth_Arg (Data, 2, False);
+            Append    : constant Boolean := Nth_Arg (Data, 2, False);
             Clipboard : constant Clipboard_Access := Get_Clipboard (Kernel);
          begin
             if Clipboard = null then
@@ -789,14 +809,15 @@ package body GPS.Kernel.Clipboard is
          end;
 
       elsif Command = "merge" then
-         Name_Parameters (Data, (1 => Index1_Cst'Access,
-                                 2 => Index2_Cst'Access));
-         Merge_Clipboard (Get_Clipboard (Kernel), Nth_Arg (Data, 1) + 1,
-                          Nth_Arg (Data, 2) + 1);
+         Name_Parameters
+           (Data, (1 => Index1_Cst'Access, 2 => Index2_Cst'Access));
+         Merge_Clipboard
+           (Get_Clipboard (Kernel),
+            Nth_Arg (Data, 1) + 1,
+            Nth_Arg (Data, 2) + 1);
 
       elsif Command = "current" then
-         Set_Return_Value
-           (Data, Get_Last_Paste (Get_Clipboard (Kernel)) - 1);
+         Set_Return_Value (Data, Get_Last_Paste (Get_Clipboard (Kernel)) - 1);
 
       elsif Command = "contents" then
          Set_Return_Value_As_List (Data);

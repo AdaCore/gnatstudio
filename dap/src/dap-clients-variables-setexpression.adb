@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings.Conversions;
-with DAP.Clients.Stack_Trace;     use DAP.Clients.Stack_Trace;
+with DAP.Clients.Stack_Trace; use DAP.Clients.Stack_Trace;
 
 package body DAP.Clients.Variables.SetExpression is
 
@@ -30,13 +30,14 @@ package body DAP.Clients.Variables.SetExpression is
    is
       use DAP.Modules.Variables.Items;
 
-      Req : Set_Expression_Request_Access := new Set_Expression_Request
-        (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
+      Req : Set_Expression_Request_Access :=
+        new Set_Expression_Request
+              (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
       Req.Params := Params;
       Req.Parameters.arguments.expression := Params.Name;
-      Req.Parameters.arguments.value      := Params.Value;
-      Req.Parameters.arguments.frameId    :=
+      Req.Parameters.arguments.value := Params.Value;
+      Req.Parameters.arguments.frameId :=
         Client.Get_Stack_Trace.Get_Current_Frame_Id;
       if Params.Item.Info /= null
         and then Params.Item.Info.Format /= Default_Format
@@ -52,7 +53,8 @@ package body DAP.Clients.Variables.SetExpression is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Set_Expression_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetExpressionResponse;
@@ -71,11 +73,11 @@ package body DAP.Clients.Variables.SetExpression is
          if Found then
             Variable := Element (Cursor);
 
-            Variable.Data.a_type             := Result.a_body.a_type;
-            Variable.Data.value              := Result.a_body.value;
-            Variable.Data.indexedVariables   := Result.a_body.indexedVariables;
-            Variable.Data.namedVariables     := Result.a_body.namedVariables;
-            Variable.Data.presentationHint   := Result.a_body.presentationHint;
+            Variable.Data.a_type := Result.a_body.a_type;
+            Variable.Data.value := Result.a_body.value;
+            Variable.Data.indexedVariables := Result.a_body.indexedVariables;
+            Variable.Data.namedVariables := Result.a_body.namedVariables;
+            Variable.Data.presentationHint := Result.a_body.presentationHint;
             Variable.Data.variablesReference :=
               (if Result.a_body.variablesReference.Is_Set
                then Result.a_body.variablesReference.Value
@@ -87,8 +89,8 @@ package body DAP.Clients.Variables.SetExpression is
 
       else
          Self.Kernel.Get_Messages_Window.Insert_Error
-           (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.Name) &
-              " is not set.");
+           (VSS.Strings.Conversions.To_UTF_8_String (Self.Params.Name)
+            & " is not set.");
 
          Free (Self.Params);
       end if;
@@ -98,13 +100,14 @@ package body DAP.Clients.Variables.SetExpression is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Set_Expression_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      DAP.Requests.SetExpression.Set_Expression_DAP_Request
-        (Self).On_Error_Message (Client, Message);
+      DAP.Requests.SetExpression.Set_Expression_DAP_Request (Self)
+        .On_Error_Message (Client, Message);
       Free (Self.Params);
    end On_Error_Message;
 
@@ -112,12 +115,13 @@ package body DAP.Clients.Variables.SetExpression is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Set_Expression_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
-      DAP.Requests.SetExpression.Set_Expression_DAP_Request
-        (Self).On_Rejected (Client);
+      DAP.Requests.SetExpression.Set_Expression_DAP_Request (Self).On_Rejected
+        (Client);
       Free (Self.Params);
    end On_Rejected;
 

@@ -26,12 +26,13 @@ package body CodePeer.Bridge.Annotations_Readers.V4_5 is
       File       : not null Code_Analysis.File_Access)
       return not null Annotations_Reader_Access is
    begin
-      return Result : constant not null Annotations_Reader_Access :=
-        new Annotations_Reader_V4_5
+      return
+         Result : constant not null Annotations_Reader_Access :=
+           new Annotations_Reader_V4_5
       do
          declare
-            Reader : Annotations_Reader_V4_5'Class
-              renames Annotations_Reader_V4_5'Class (Result.all);
+            Reader : Annotations_Reader_V4_5'Class renames
+              Annotations_Reader_V4_5'Class (Result.all);
 
          begin
             Reader.Initialize (Categories, File);
@@ -43,9 +44,9 @@ package body CodePeer.Bridge.Annotations_Readers.V4_5 is
    -- Get_Subprogram --
    --------------------
 
-   overriding function Get_Subprogram
-     (Self : Annotations_Reader_V4_5)
-      return CodePeer.Subprogram_Data_Access is
+   overriding
+   function Get_Subprogram
+     (Self : Annotations_Reader_V4_5) return CodePeer.Subprogram_Data_Access is
    begin
       return Self.Subprogram;
    end Get_Subprogram;
@@ -54,8 +55,9 @@ package body CodePeer.Bridge.Annotations_Readers.V4_5 is
    -- Start_Subprogram --
    ----------------------
 
-   overriding procedure Start_Subprogram
-     (Self : in out Annotations_Reader_V4_5;
+   overriding
+   procedure Start_Subprogram
+     (Self  : in out Annotations_Reader_V4_5;
       Attrs : Sax.Attributes.Attributes'Class)
    is
       Subprogram_Name : constant String := Attrs.Get_Value ("name");
@@ -64,9 +66,9 @@ package body CodePeer.Bridge.Annotations_Readers.V4_5 is
       if Self.Get_File.Subprograms.Contains (Subprogram_Name) then
          Self.Subprogram :=
            CodePeer.Subprogram_Data_Access
-             (Code_Analysis.Get_Or_Create
-                (Self.Get_File,
-                 Subprogram_Name).Analysis_Data.CodePeer_Data);
+             (Code_Analysis.Get_Or_Create (Self.Get_File, Subprogram_Name)
+                .Analysis_Data
+                .CodePeer_Data);
       end if;
    end Start_Subprogram;
 

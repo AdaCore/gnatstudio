@@ -25,7 +25,9 @@ with Ada.Strings.UTF_Encoding;
 
 with VSS.Strings;
 
-package Glib.Convert.VSS_Utils with Preelaborate is
+package Glib.Convert.VSS_Utils
+  with Preelaborate
+is
 
    function Escape_Text
      (S : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String;

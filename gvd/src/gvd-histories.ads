@@ -38,9 +38,7 @@ package GVD.Histories is
 
    type Direction is (Forward, Backward);
 
-   procedure Append
-     (History : in out History_List;
-      Data    : Data_Type);
+   procedure Append (History : in out History_List; Data : Data_Type);
    --  Append a new value to the history.
    --  The pointer to the current value now points to this new entry.
 
@@ -68,7 +66,7 @@ package GVD.Histories is
    --  If Collapse_Duplicates is False, this will always be 1.
    --  No_Such_Item is raised if the list is empty.
 
-   procedure Wind  (History : in out History_List; D : Direction);
+   procedure Wind (History : in out History_List; D : Direction);
    --  Move forward or backward until end of history.
 
    function Length (History : History_List) return Integer;

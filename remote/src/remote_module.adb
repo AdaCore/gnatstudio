@@ -18,25 +18,25 @@
 with GNAT.Strings;
 
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 pragma Warnings (Off, ".*is an internal GNAT unit");
 with GNAT.Expect.TTY.Remote;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with GPS.Kernel;                use GPS.Kernel;
+with Commands;                 use Commands;
+with Commands.Interactive;     use Commands.Interactive;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Project;
-with GPS.Kernel.Remote;         use GPS.Kernel.Remote;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with GPS.Kernel.Remote;        use GPS.Kernel.Remote;
+with Gtkada.File_Selector;     use Gtkada.File_Selector;
 with XML_Parsers;
-with XML_Utils;                 use XML_Utils;
+with XML_Utils;                use XML_Utils;
 
 with Remote.View;
 
@@ -48,19 +48,22 @@ package body Remote_Module is
       Database : Remote.Db.Remote_Db_Type_Access;
    end record;
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Remote_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
-   overriding procedure Destroy (Module : in out Remote_Module_Record);
+   overriding
+   procedure Destroy (Module : in out Remote_Module_Record);
    --  See doc for inherited subprogram
 
    Remote_Module_Id : Module_ID;
-   Module_Name : constant String := "Remote_Module";
+   Module_Name      : constant String := "Remote_Module";
 
    type On_File_Saved is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -74,7 +77,8 @@ package body Remote_Module is
    --  Project->Open remote menu
 
    type Open_Remote_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Open_Remote_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open a file selector allowing the user to open a file on a remote
@@ -111,7 +115,8 @@ package body Remote_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Open_Remote_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -133,7 +138,7 @@ package body Remote_Module is
       begin
          if Filename /= GNATCOLL.VFS.No_File then
             Open_File_Action_Hook.Run
-               (Kernel, Filename, Project => GNATCOLL.Projects.No_Project);
+              (Kernel, Filename, Project => GNATCOLL.Projects.No_Project);
          end if;
       end;
       return Success;
@@ -143,7 +148,8 @@ package body Remote_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -155,7 +161,8 @@ package body Remote_Module is
          if not Remote.Is_Local (J) then
             Do_Sync := True;
 
-            for K in Remote.Distant_Server_Type'First
+            for K in
+              Remote.Distant_Server_Type'First
               .. Remote.Distant_Server_Type'Pred (J)
             loop
                if Remote.Get_Nickname (J) = Remote.Get_Nickname (K) then
@@ -185,7 +192,8 @@ package body Remote_Module is
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Remote_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -205,7 +213,8 @@ package body Remote_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Remote_Module_Record) is
+   overriding
+   procedure Destroy (Module : in out Remote_Module_Record) is
    begin
       GNAT.Expect.TTY.Remote.Close_All;
       Remote.Db.Free (Module.Database);
@@ -217,8 +226,7 @@ package body Remote_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Remote_Module_Id := new Remote_Module_Record;
       Register_Module
@@ -241,7 +249,9 @@ package body Remote_Module is
          Description => -"Open remote project");
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "open from host", new Open_Remote_Command,
+        (Kernel,
+         "open from host",
+         new Open_Remote_Command,
          Description => -"Open a file from a remote host",
          Icon_Name   => "gps-open-file-symbolic");
 
@@ -265,7 +275,7 @@ package body Remote_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Filename    : constant Virtual_File :=
-                      Create_From_Dir (Get_Home_Dir (Kernel), "remote.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "remote.xml");
       File, Child : Node_Ptr;
       Err         : GNAT.Strings.String_Access;
 
@@ -301,8 +311,7 @@ package body Remote_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Filename : constant Virtual_File :=
-                   Create_From_Dir
-                     (Get_Home_Dir (Kernel), "remote.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "remote.xml");
       File     : Node_Ptr;
       Success  : Boolean;
 

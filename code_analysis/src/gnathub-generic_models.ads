@@ -17,7 +17,7 @@
 
 with Ada.Containers.Ordered_Sets;
 
-with Glib;                                use Glib;
+with Glib; use Glib;
 with Glib.Values;
 with Gtk.Widget;
 
@@ -34,30 +34,30 @@ generic
    Columns : Glib.GType_Array;
    --  Types of columns
 
-   with procedure Get_Value
-     (Self   : Item_Access;
-      View   : Gtk.Widget.Gtk_Widget;
-      Column : Glib.Gint;
-      Value  : out Glib.Values.GValue);
+   with
+     procedure Get_Value
+       (Self   : Item_Access;
+        View   : Gtk.Widget.Gtk_Widget;
+        Column : Glib.Gint;
+        Value  : out Glib.Values.GValue);
    --  Should set column's value in to Value parameter
 
-   with function Get_History_Name
-     (Self  : Item;
-      View  : Gtk.Widget.Gtk_Widget)
-      return String;
+   with
+     function Get_History_Name
+       (Self : Item; View : Gtk.Widget.Gtk_Widget) return String;
    --  Should return name for history of given item
 
    with function "<" (Left : Item_Access; Right : Item_Access) return Boolean;
    with package Item_Sets is new Ada.Containers.Ordered_Sets (Item_Access);
    --  Containers of items
 
-package GNAThub.Generic_Models is
+package GNAThub.Generic_Models
+is
 
    Active_Column : constant Glib.Gint := Glib.Gint (Columns'Last + 1);
 
-   package Ordered_Set_Models is
-     new CodePeer.Generic_Ordered_Set_Models
-       (Item, Item_Access, "<", Item_Sets);
+   package Ordered_Set_Models is new
+     CodePeer.Generic_Ordered_Set_Models (Item, Item_Access, "<", Item_Sets);
 
    type Criteria_Model_Record is
      new Ordered_Set_Models.Ordered_Set_Model_Record with private;
@@ -84,12 +84,10 @@ package GNAThub.Generic_Models is
       Default        : Boolean);
 
    procedure Show
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access);
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access);
 
    procedure Hide
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access);
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access);
 
    procedure Show_All (Self : access Criteria_Model_Record'Class);
 
@@ -105,7 +103,8 @@ package GNAThub.Generic_Models is
    function Is_Full (Self : access Criteria_Model_Record'Class) return Boolean;
    --  Returns True if all items are selected
 
-   overriding procedure Clear (Self : access Criteria_Model_Record);
+   overriding
+   procedure Clear (Self : access Criteria_Model_Record);
 
 private
 
@@ -118,14 +117,17 @@ private
       Selected_Items : Item_Sets.Set;
    end record;
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Criteria_Model_Record) return Glib.Gint;
 
-   overriding function Get_Column_Type
-     (Self  : access Criteria_Model_Record;
-      Index : Glib.Gint) return Glib.GType;
+   overriding
+   function Get_Column_Type
+     (Self : access Criteria_Model_Record; Index : Glib.Gint)
+      return Glib.GType;
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Criteria_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;

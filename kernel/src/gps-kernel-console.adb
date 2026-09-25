@@ -15,74 +15,78 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;           use Ada, Ada.Calendar;
+with Ada.Calendar;
+use Ada, Ada.Calendar;
 
-with GNAT.Calendar;          use GNAT.Calendar;
-with GNAT.Calendar.Time_IO;  use GNAT.Calendar.Time_IO;
-with GNAT.IO;                use GNAT.IO;
-with GNAT.OS_Lib;            use GNAT.OS_Lib;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNAT.Calendar;         use GNAT.Calendar;
+with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
+with GNAT.IO;               use GNAT.IO;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
-with Glib.Object;            use Glib.Object;
+with Glib.Object; use Glib.Object;
 
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Enums;  use Gtk.Enums;
+with Gtk.Menu;   use Gtk.Menu;
+with Gtk.Widget; use Gtk.Widget;
 
-with Gtkada.File_Selector;   use Gtkada.File_Selector;
-with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.MDI;           use Gtkada.MDI;
 
-with Commands.Interactive;   use Commands, Commands.Interactive;
-with Config;                 use Config;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Config;                           use Config;
 with Generic_Views;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages.Tools_Output;  use GPS.Kernel.Messages.Tools_Output;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Histories;              use Histories;
-with String_Utils;           use String_Utils;
-with Default_Preferences;    use Default_Preferences;
+with GPS.Intl;                         use GPS.Intl;
+with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with Histories;                        use Histories;
+with String_Utils;                     use String_Utils;
+with Default_Preferences;              use Default_Preferences;
 
 package body GPS.Kernel.Console is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.CONSOLE");
 
    Wrap_Lines : Boolean_Preference;
 
-   type GPS_Message_Record is new Interactive_Console_Record with
-      null record;
+   type GPS_Message_Record is new Interactive_Console_Record with null record;
    --  Type for the messages window. This is mostly use to have a unique tag
    --  for this console, so that we can save it in the desktop
 
-   overriding procedure Create_Menu
-     (View    : not null access GPS_Message_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Create_Menu
+     (View : not null access GPS_Message_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Initialize
      (Console : access GPS_Message_Record'Class) return Gtk_Widget;
    --  Initialize the messages window, and return the focus widget.
 
-   package Messages_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Message_Window",
-      View_Name          => -"Messages",
-      Formal_View_Record => GPS_Message_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Initialize         => Initialize,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      MDI_Flags          => 0,  --  prevent explicit delete
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Consoles);
+   package Messages_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Message_Window",
+        View_Name          => -"Messages",
+        Formal_View_Record => GPS_Message_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        MDI_Flags          => 0,  --  prevent explicit delete
+        Areas              => Gtkada.MDI.Sides_Only,
+        Group              => Group_Consoles);
    use Messages_Views;
    subtype GPS_Message is Messages_Views.View_Access;
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -91,25 +95,29 @@ package body GPS.Kernel.Console is
    type Kernel_Messages_Window is new Abstract_Messages_Window with record
       Kernel : Kernel_Handle;
    end record;
-   overriding procedure Insert
+   overriding
+   procedure Insert
      (Self   : not null access Kernel_Messages_Window;
       Text   : String;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info);
-   overriding procedure Insert_UTF8
+   overriding
+   procedure Insert_UTF8
      (Self   : not null access Kernel_Messages_Window;
       UTF8   : String;
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info);
-   overriding procedure Raise_Console
-     (Self       : not null access Kernel_Messages_Window;
-      Give_Focus : Boolean);
-   overriding procedure Clear
-     (Self   : not null access Kernel_Messages_Window);
-   overriding function Get_Virtual_Console
+   overriding
+   procedure Raise_Console
+     (Self : not null access Kernel_Messages_Window; Give_Focus : Boolean);
+   overriding
+   procedure Clear (Self : not null access Kernel_Messages_Window);
+   overriding
+   function Get_Virtual_Console
      (Self : not null access Kernel_Messages_Window)
       return GNATCOLL.Scripts.Virtual_Console;
-   overriding function Get_Console_Window
+   overriding
+   function Get_Console_Window
      (Self : not null access Kernel_Messages_Window)
       return Gtk.Widget.Gtk_Widget;
 
@@ -122,19 +130,22 @@ package body GPS.Kernel.Console is
    --  Factor code between Insert_Non_UTF8 and Insert_UTF8
 
    type Clear_Messages_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Clear_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Clear the contents of the messages window
 
    type Save_Messages_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Save_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Saves the contents of the message window in a file
 
    type Load_Messages_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Load_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Load the contents of a file into the Messages window
@@ -147,13 +158,13 @@ package body GPS.Kernel.Console is
    -----------------
 
    function Get_Console
-     (Kernel : access Kernel_Handle_Record'Class;
-      Create_If_Not_Exist : Boolean := True) return Interactive_Console
-   is
+     (Kernel              : access Kernel_Handle_Record'Class;
+      Create_If_Not_Exist : Boolean := True) return Interactive_Console is
    begin
       if Create_If_Not_Exist then
-         return Interactive_Console
-            (Messages_Views.Get_Or_Create_View (Kernel, Focus => False));
+         return
+           Interactive_Console
+             (Messages_Views.Get_Or_Create_View (Kernel, Focus => False));
       else
          return Interactive_Console (Messages_Views.Retrieve_View (Kernel));
       end if;
@@ -163,9 +174,8 @@ package body GPS.Kernel.Console is
    -- Clear --
    -----------
 
-   overriding procedure Clear
-     (Self   : not null access Kernel_Messages_Window)
-   is
+   overriding
+   procedure Clear (Self : not null access Kernel_Messages_Window) is
       Console : constant Interactive_Console := Get_Console (Self.Kernel);
    begin
       if Console /= null then
@@ -177,7 +187,8 @@ package body GPS.Kernel.Console is
    -- Get_Console_Window --
    ------------------------
 
-   overriding function Get_Console_Window
+   overriding
+   function Get_Console_Window
      (Self : not null access Kernel_Messages_Window)
       return Gtk.Widget.Gtk_Widget is
    begin
@@ -188,7 +199,8 @@ package body GPS.Kernel.Console is
    -- Get_Virtual_Console --
    -------------------------
 
-   overriding function Get_Virtual_Console
+   overriding
+   function Get_Virtual_Console
      (Self : not null access Kernel_Messages_Window)
       return GNATCOLL.Scripts.Virtual_Console
    is
@@ -227,12 +239,16 @@ package body GPS.Kernel.Console is
 
             if UTF8 then
                Insert_UTF8
-                 (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
-                  Add_LF, Mode);
+                 (Console,
+                  "[" & Image (T, ISO_Date & " %T") & "] " & Text,
+                  Add_LF,
+                  Mode);
             else
                Insert
-                 (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
-                  Add_LF, Mode);
+                 (Console,
+                  "[" & Image (T, ISO_Date & " %T") & "] " & Text,
+                  Add_LF,
+                  Mode);
             end if;
 
             Self.Raise_Console (Give_Focus => False);
@@ -244,8 +260,8 @@ package body GPS.Kernel.Console is
                Insert (Console, Text, Add_LF, Mode);
             end if;
 
-            Messages_Views.Child_From_View
-              (GPS_Message (Console)).Highlight_Child;
+            Messages_Views.Child_From_View (GPS_Message (Console))
+              .Highlight_Child;
          end if;
       end if;
    end Internal_Insert;
@@ -254,7 +270,8 @@ package body GPS.Kernel.Console is
    -- Insert --
    ------------
 
-   overriding procedure Insert
+   overriding
+   procedure Insert
      (Self   : not null access Kernel_Messages_Window;
       Text   : String;
       Add_LF : Boolean := True;
@@ -267,7 +284,8 @@ package body GPS.Kernel.Console is
    -- Insert_UTF8 --
    -----------------
 
-   overriding procedure Insert_UTF8
+   overriding
+   procedure Insert_UTF8
      (Self   : not null access Kernel_Messages_Window;
       UTF8   : String;
       Add_LF : Boolean := True;
@@ -280,9 +298,9 @@ package body GPS.Kernel.Console is
    -- Raise_Console --
    -------------------
 
-   overriding procedure Raise_Console
-     (Self       : not null access Kernel_Messages_Window;
-      Give_Focus : Boolean)
+   overriding
+   procedure Raise_Console
+     (Self : not null access Kernel_Messages_Window; Give_Focus : Boolean)
    is
       View : constant GPS_Message :=
         Messages_Views.Retrieve_View (Self.Kernel);
@@ -296,7 +314,8 @@ package body GPS.Kernel.Console is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Save_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -308,12 +327,12 @@ package body GPS.Kernel.Console is
    begin
       declare
          File : constant Virtual_File :=
-                  Select_File
-                    (Title             => -"Save messages window as",
-                     Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                     Kind              => Save_File,
-                     Parent            => Get_Current_Window (View.Kernel),
-                     History           => Get_History (View.Kernel));
+           Select_File
+             (Title             => -"Save messages window as",
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Save_File,
+              Parent            => Get_Current_Window (View.Kernel),
+              History           => Get_History (View.Kernel));
       begin
          if File = GNATCOLL.VFS.No_File then
             return Commands.Success;
@@ -335,24 +354,26 @@ package body GPS.Kernel.Console is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Load_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Self);
-      View : constant GPS_Message :=
+      View     : constant GPS_Message :=
         Messages_Views.Retrieve_View (Get_Kernel (Context.Context));
       Contents : GNAT.Strings.String_Access;
       Last     : Natural;
       CR_Found : Boolean;
       File     : Virtual_File;
    begin
-      File := Select_File
-        (Title             => -"Select file to load in the messages window",
-         Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-         Kind              => Open_File,
-         Parent            => Get_Current_Window (View.Kernel),
-         History           => Get_History (View.Kernel));
+      File :=
+        Select_File
+          (Title             => -"Select file to load in the messages window",
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           Parent            => Get_Current_Window (View.Kernel),
+           History           => Get_History (View.Kernel));
 
       if File = GNATCOLL.VFS.No_File then
          return Commands.Success;
@@ -385,7 +406,8 @@ package body GPS.Kernel.Console is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Clear_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -403,7 +425,8 @@ package body GPS.Kernel.Console is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -440,13 +463,14 @@ package body GPS.Kernel.Console is
    ----------------
 
    function Initialize
-     (Console : access GPS_Message_Record'Class) return Gtk_Widget
-   is
+     (Console : access GPS_Message_Record'Class) return Gtk_Widget is
    begin
-      Wrap_Lines := Console.Kernel.Get_Preferences.Create_Invisible_Pref
-        ("messages-wrap-line", True,
-         Label => -"Wrap lines",
-         Doc   => -"Wrap long lines in the console.");
+      Wrap_Lines :=
+        Console.Kernel.Get_Preferences.Create_Invisible_Pref
+          ("messages-wrap-line",
+           True,
+           Label => -"Wrap lines",
+           Doc   => -"Wrap long lines in the console.");
 
       Initialize
         (Console,
@@ -456,7 +480,7 @@ package body GPS.Kernel.Console is
          Console.Kernel.all'Address,
          History_List => null,
          ANSI_Support => Host /= Windows, --  ANSI_Support does not work
-                                          --  well under Windows ???
+         --  well under Windows ???
          Key          => "",
          Toolbar_Name => "Messages",
          Wrap_Mode    => Wrap_Char);
@@ -467,8 +491,7 @@ package body GPS.Kernel.Console is
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Console);
 
       Setup_Contextual_Menu
-        (Kernel          => Console.Kernel,
-         Event_On_Widget => Get_View (Console));
+        (Kernel => Console.Kernel, Event_On_Widget => Get_View (Console));
       return Gtk_Widget (Console.Get_View);
    end Initialize;
 
@@ -476,10 +499,10 @@ package body GPS.Kernel.Console is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access GPS_Message_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
+   overriding
+   procedure Create_Menu
+     (View : not null access GPS_Message_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Wrap_Lines);
    end Create_Menu;
@@ -492,9 +515,8 @@ package body GPS.Kernel.Console is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Msg_Window : constant not null Abstract_Messages_Window_Access :=
-                     new Kernel_Messages_Window'
-                       (Abstract_Messages_Window with
-                        Kernel => Kernel_Handle (Kernel));
+        new Kernel_Messages_Window'
+          (Abstract_Messages_Window with Kernel => Kernel_Handle (Kernel));
       Msg        : GPS_Message;
       pragma Unreferenced (Msg);
 
@@ -504,26 +526,29 @@ package body GPS.Kernel.Console is
       Kernel.Set_Messages_Window (Msg_Window);
 
       Register_Action
-        (Kernel, "messages clear",
+        (Kernel,
+         "messages clear",
          new Clear_Messages_Command,
          -"Clear the contents of the Messages window",
          Icon_Name => "gps-clear-symbolic",
-         Category => -"Messages");
+         Category  => -"Messages");
 
       Register_Action
-        (Kernel, "messages save to file",
+        (Kernel,
+         "messages save to file",
          new Save_Messages_Command,
          -"Save the contents of the messages window to a file",
          Icon_Name => "gps-save-symbolic",
-         Category => -"Messages");
+         Category  => -"Messages");
 
       Register_Action
-        (Kernel, "messages load from file",
+        (Kernel,
+         "messages load from file",
          new Load_Messages_Command,
          -("Loads the contents of a file into the Messages window, and process"
            & " locations into the Locations window."),
          Icon_Name => "gps-open-file-symbolic",
-         Category => -"Messages");
+         Category  => -"Messages");
 
       --  After the actions have been registered, so that the icons are found.
       --  Do not grab the focus, since this would emit the "context_changed"

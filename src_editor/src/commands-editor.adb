@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with Glib.Unicode;          use Glib.Unicode;
-with Gtk.Text_Buffer;       use Gtk.Text_Buffer;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with Glib.Unicode;      use Glib.Unicode;
+with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
 
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
-with Src_Editor_Box;                  use Src_Editor_Box;
-with Src_Editor_Module;               use Src_Editor_Module;
-with Src_Editor_View;                 use Src_Editor_View;
+with Language.Abstract_Language_Tree;    use Language.Abstract_Language_Tree;
+with Src_Editor_Box;                     use Src_Editor_Box;
+with Src_Editor_Module;                  use Src_Editor_Module;
+with Src_Editor_View;                    use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
-use  Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 
 package body Commands.Editor is
 
@@ -37,9 +37,8 @@ package body Commands.Editor is
    -- Create --
    ------------
 
-   procedure Create
-     (Item   : out Check_Modified_State;
-      Buffer : Source_Buffer) is
+   procedure Create (Item : out Check_Modified_State; Buffer : Source_Buffer)
+   is
    begin
       Item := new Check_Modified_State_Type;
       Item.Buffer := Buffer;
@@ -49,7 +48,8 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Check_Modified_State_Type) return Command_Return_Type is
    begin
       Set_Last_Status (Command.Buffer, Get_Status (Command.Buffer));
@@ -60,8 +60,8 @@ package body Commands.Editor is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (X : in out Remove_Blank_Lines_Command_Type) is
+   overriding
+   procedure Primitive_Free (X : in out Remove_Blank_Lines_Command_Type) is
    begin
       if not Get_Deleted (X.Mark) then
          Delete_Mark (X.Buffer, X.Mark);
@@ -74,8 +74,8 @@ package body Commands.Editor is
 
    function Is_Null_Command (Command : Editor_Command) return Boolean is
    begin
-      return (Command = null
-              or else Command.Current_Text = Null_Unbounded_String);
+      return
+        (Command = null or else Command.Current_Text = Null_Unbounded_String);
    end Is_Null_Command;
 
    -------------------
@@ -128,8 +128,7 @@ package body Commands.Editor is
    -----------------------
 
    function Avoid_Move_Cursor
-     (Command : access Editor_Command_Type) return Boolean
-   is
+     (Command : access Editor_Command_Type) return Boolean is
    begin
       return Command.Buffer.Is_Cursor_Frozen;
    end Avoid_Move_Cursor;
@@ -147,9 +146,8 @@ package body Commands.Editor is
    -- Set_Text --
    --------------
 
-   procedure Set_Text
-     (Item : Editor_Command;
-      Text : Basic_Types.UTF8_String) is
+   procedure Set_Text (Item : Editor_Command; Text : Basic_Types.UTF8_String)
+   is
    begin
       Item.Current_Text := To_Unbounded_String (Text);
    end Set_Text;
@@ -170,12 +168,12 @@ package body Commands.Editor is
       else
          case Item.Direction is
             when Forward | Extended =>
-               Item.Current_Text := To_Unbounded_String (UTF8)
-                 & Item.Current_Text;
+               Item.Current_Text :=
+                 To_Unbounded_String (UTF8) & Item.Current_Text;
 
-            when Backward =>
-               Item.Current_Text := Item.Current_Text
-                 & To_Unbounded_String (UTF8);
+            when Backward           =>
+               Item.Current_Text :=
+                 Item.Current_Text & To_Unbounded_String (UTF8);
          end case;
       end if;
 
@@ -194,24 +192,23 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Editor_Command_Type) return Command_Return_Type
    is
-      C      : constant Cursor := Command.Linked_Cursor.Element;
+      C            : constant Cursor := Command.Linked_Cursor.Element;
       MC_Sync_Save : Cursors_Sync_Type;
 
-      procedure Set_Cursor_Position
-        (Loc, Sel_Loc : Loc_T; View : Source_View);
+      procedure Set_Cursor_Position (Loc, Sel_Loc : Loc_T; View : Source_View);
       --  Set the action's cursor at the right place whether it is a multi
       --  cursor or the main cursor
 
-      procedure Set_Cursor_Position
-        (Loc, Sel_Loc : Loc_T; View : Source_View)
+      procedure Set_Cursor_Position (Loc, Sel_Loc : Loc_T; View : Source_View)
       is
          Iter : Gtk_Text_Iter;
          Mark : Gtk_Text_Mark;
-         Sync : constant Cursors_Sync_Type
-           := Get_Cursors_Sync (Command.Buffer);
+         Sync : constant Cursors_Sync_Type :=
+           Get_Cursors_Sync (Command.Buffer);
       begin
 
          --  The cursor is a multi cursor
@@ -219,9 +216,7 @@ package body Commands.Editor is
             if Is_Alive (C) then
                Mark := Get_Mark (C);
 
-               if Mark /= null
-                 and then Loc.Line /= 0
-               then
+               if Mark /= null and then Loc.Line /= 0 then
                   Command.Buffer.Get_Iter_At_Screen_Position
                     (Iter, Loc.Line, Loc.Col);
 
@@ -267,12 +262,13 @@ package body Commands.Editor is
       User_Executed : constant Boolean := Command.User_Executed;
 
       First_Loc : constant Loc_T :=
-        (if not User_Executed then
+        (if not User_Executed
+         then
            (if Command.Edition_Mode = Insertion
             then Command.Locs.Start_Loc
             else Command.Locs.End_Loc)
          else
-            (if Command.Locs.Start_Loc < Command.Locs.End_Loc
+           (if Command.Locs.Start_Loc < Command.Locs.End_Loc
             then Command.Locs.Start_Loc
             else Command.Locs.End_Loc));
 
@@ -284,12 +280,13 @@ package body Commands.Editor is
          Command.User_Executed := False;
 
       else
-         Editor := Get_Source_Box_From_MDI
-           (Find_Editor
-              (Kernel  => Get_Kernel (Command.Buffer),
-               File    => Command.Buffer.Get_Filename,
-               Project => GNATCOLL.Projects.No_Project));
---           (Find_Current_Editor (Get_Kernel (Command.Buffer)));
+         Editor :=
+           Get_Source_Box_From_MDI
+             (Find_Editor
+                (Kernel  => Get_Kernel (Command.Buffer),
+                 File    => Command.Buffer.Get_Filename,
+                 Project => GNATCOLL.Projects.No_Project));
+         --           (Find_Current_Editor (Get_Kernel (Command.Buffer)));
          if Editor /= null then
             --  Might not have an editor yet when this is called as part of
             --  the initial loading of the file.
@@ -319,7 +316,7 @@ package body Commands.Editor is
                   To_String (Command.Current_Text),
                   False);
 
-            when Deletion =>
+            when Deletion  =>
                Delete
                  (Command.Buffer,
                   First_Loc.Line,
@@ -349,9 +346,8 @@ package body Commands.Editor is
    -- Undo --
    ----------
 
-   overriding function Undo
-     (Command : access Editor_Command_Type) return Boolean
-   is
+   overriding
+   function Undo (Command : access Editor_Command_Type) return Boolean is
       New_Locs : constant Editor_Command_Locations :=
         (Start_Loc     => Command.Locs.End_Loc,
          End_Loc       => Command.Locs.Start_Loc,
@@ -378,8 +374,7 @@ package body Commands.Editor is
    ----------------------
 
    procedure Set_End_Location
-     (Command : access Editor_Command_Type;
-      Position : Gtk_Text_Iter)
+     (Command : access Editor_Command_Type; Position : Gtk_Text_Iter)
    is
       L : Editable_Line_Type;
       C : Character_Index;
@@ -393,9 +388,7 @@ package body Commands.Editor is
    ----------------------
 
    procedure Set_End_Location
-     (Command : access Editor_Command_Type;
-      Cursor_Loc, Sel_Loc : Loc_T)
-   is
+     (Command : access Editor_Command_Type; Cursor_Loc, Sel_Loc : Loc_T) is
    begin
       Command.Locs.End_Loc := Cursor_Loc;
       Command.Locs.End_Sel_Loc := Sel_Loc;
@@ -405,12 +398,12 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Editor_Replace_Slice_Type) return Command_Return_Type
    is
       Editor : Source_Editor_Box;
-      Sync   : constant Cursors_Sync_Type :=
-        Get_Cursors_Sync (Command.Buffer);
+      Sync   : constant Cursors_Sync_Type := Get_Cursors_Sync (Command.Buffer);
    begin
       Set_Manual_Sync (Get_Main_Cursor (Command.Buffer));
 
@@ -435,17 +428,20 @@ package body Commands.Editor is
             Command.End_Column_After);
       end if;
 
-      if Command.Move_Cursor and then Is_Valid_Position
-        (Command.Buffer, Command.End_Line_After, Command.End_Column_After)
+      if Command.Move_Cursor
+        and then
+          Is_Valid_Position
+            (Command.Buffer, Command.End_Line_After, Command.End_Column_After)
       then
-         Editor := Get_Source_Box_From_MDI
-           (Find_Current_Editor (Get_Kernel (Command.Buffer)));
+         Editor :=
+           Get_Source_Box_From_MDI
+             (Find_Current_Editor (Get_Kernel (Command.Buffer)));
 
          Set_Cursor_Position
            (Command.Buffer,
             Command.End_Line_After,
             Command.End_Column_After,
-            Internal  => True);
+            Internal => True);
          Scroll_To_Cursor_Location (Get_View (Editor));
       end if;
 
@@ -460,17 +456,15 @@ package body Commands.Editor is
    -- Undo --
    ----------
 
-   overriding function Undo
-     (Command : access Editor_Replace_Slice_Type) return Boolean
-   is
+   overriding
+   function Undo (Command : access Editor_Replace_Slice_Type) return Boolean is
       Editor : Source_Editor_Box;
-      Sync   : constant Cursors_Sync_Type :=
-        Get_Cursors_Sync (Command.Buffer);
+      Sync   : constant Cursors_Sync_Type := Get_Cursors_Sync (Command.Buffer);
    begin
       if not Is_Valid_Position
-        (Command.Buffer,
-         Command.End_Line_After,
-         Command.End_Column_After)
+               (Command.Buffer,
+                Command.End_Line_After,
+                Command.End_Column_After)
       then
          return True;
       end if;
@@ -486,21 +480,22 @@ package body Commands.Editor is
          To_String (Command.Text_Before),
          False);
 
-      Editor := Get_Source_Box_From_MDI
-        (Find_Current_Editor (Get_Kernel (Command.Buffer)));
+      Editor :=
+        Get_Source_Box_From_MDI
+          (Find_Current_Editor (Get_Kernel (Command.Buffer)));
 
       if Command.Force_End then
          Set_Cursor_Position
            (Command.Buffer,
             Command.End_Line_Before,
             Command.End_Column_Before,
-            Internal  => True);
+            Internal => True);
       else
          Set_Cursor_Position
            (Command.Buffer,
             Command.Start_Line,
             Command.Start_Column,
-            Internal  => True);
+            Internal => True);
       end if;
 
       Scroll_To_Cursor_Location (Get_View (Editor));
@@ -523,8 +518,7 @@ package body Commands.Editor is
       End_Column   : Character_Index;
       Text         : Basic_Types.UTF8_String;
       Force_End    : Boolean := False;
-      Move_Cursor  : Boolean := True)
-   is
+      Move_Cursor  : Boolean := True) is
    begin
       Item := new Editor_Replace_Slice_Type;
       Item.Buffer := Buffer;
@@ -533,7 +527,8 @@ package body Commands.Editor is
       Item.End_Line_Before := End_Line;
       Item.End_Column_Before := End_Column;
       Item.Force_End := Force_End;
-      Item.Text_Before := Get_Text
+      Item.Text_Before :=
+        Get_Text
           (Buffer,
            Start_Line,
            Start_Column,
@@ -547,7 +542,8 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Blank_Lines_Command_Type)
       return Command_Return_Type is
    begin
@@ -560,9 +556,9 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Hide_Editable_Lines_Type)
-      return Command_Return_Type is
+   overriding
+   function Execute
+     (Command : access Hide_Editable_Lines_Type) return Command_Return_Type is
    begin
       if Blocks_Are_Exact (Command.Buffer) then
          --  Do not actually hide the lines if the block information is not
@@ -577,9 +573,10 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Unhide_Editable_Lines_Type)
-      return Command_Return_Type is
+   overriding
+   function Execute
+     (Command : access Unhide_Editable_Lines_Type) return Command_Return_Type
+   is
    begin
       Unhide_Lines
         (Command.Buffer,
@@ -593,9 +590,9 @@ package body Commands.Editor is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Update_Async_Record)
-      return Commands.Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Update_Async_Record) return Commands.Command_Return_Type
    is
       Tree : Semantic_Tree'Class :=
         Command.Kernel.Get_Abstract_Tree_For_File ("EDIT", Command.Filename);
@@ -610,9 +607,8 @@ package body Commands.Editor is
    -- Name --
    ----------
 
-   overriding function Name
-     (Command : access Update_Async_Record) return String
-   is
+   overriding
+   function Name (Command : access Update_Async_Record) return String is
       pragma Unreferenced (Command);
    begin
       return "Semantic tree update";
@@ -622,43 +618,52 @@ package body Commands.Editor is
    -- Debug_String --
    ------------------
 
-   overriding function Debug_String
-     (C : Hide_Editable_Lines_Type) return String is
+   overriding
+   function Debug_String (C : Hide_Editable_Lines_Type) return String is
    begin
       return "Hide_Editable_Lines: " & C.Number'Img;
    end Debug_String;
 
-   overriding function Debug_String
-     (C : Unhide_Editable_Lines_Type) return String is
+   overriding
+   function Debug_String (C : Unhide_Editable_Lines_Type) return String is
    begin
       return "Unhide_Editable_Lines: " & C.Base_Line'Img;
    end Debug_String;
 
-   overriding function Debug_String
-     (C : Check_Modified_State_Type) return String
-   is
+   overriding
+   function Debug_String (C : Check_Modified_State_Type) return String is
       pragma Unreferenced (C);
    begin
       return "Check_Modified_State";
    end Debug_String;
 
-   overriding function Debug_String
-     (C : Editor_Command_Type) return String is
-      function Loc_String (L : Loc_T) return String is
-         (L.Line'Img & ":" & L.Col'Img);
+   overriding
+   function Debug_String (C : Editor_Command_Type) return String is
+      function Loc_String (L : Loc_T) return String
+      is (L.Line'Img & ":" & L.Col'Img);
    begin
-      return C.Edition_Mode'Img
-        & " " & To_String (C.Current_Text) & " - "
-        & "START POSITIONS : " & Loc_String (C.Locs.Start_Loc) & " "
-        & Loc_String (C.Locs.Start_Sel_Loc) & " END POSITIONS : "
-        & Loc_String (C.Locs.End_Loc) & " " & Loc_String (C.Locs.End_Sel_Loc);
+      return
+        C.Edition_Mode'Img
+        & " "
+        & To_String (C.Current_Text)
+        & " - "
+        & "START POSITIONS : "
+        & Loc_String (C.Locs.Start_Loc)
+        & " "
+        & Loc_String (C.Locs.Start_Sel_Loc)
+        & " END POSITIONS : "
+        & Loc_String (C.Locs.End_Loc)
+        & " "
+        & Loc_String (C.Locs.End_Sel_Loc);
    end Debug_String;
 
-   overriding function Debug_String
-     (C : Editor_Replace_Slice_Type) return String is
+   overriding
+   function Debug_String (C : Editor_Replace_Slice_Type) return String is
    begin
-      return "REPLACE: "
-        & To_String (C.Text_Before) & "->"
+      return
+        "REPLACE: "
+        & To_String (C.Text_Before)
+        & "->"
         & To_String (C.Text_After);
    end Debug_String;
 

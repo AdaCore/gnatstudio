@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Basic_Types;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with Remote;                use Remote;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with Remote;            use Remote;
 
 package Shared_Macros is
 
@@ -32,8 +32,7 @@ package Shared_Macros is
       Server              : Server_Type := GPS_Server;
       For_Shell           : Boolean := False;
       Opened_Files        : Basic_Types.File_Sets.Set :=
-        Basic_Types.File_Sets.Empty_Set)
-      return String;
+        Basic_Types.File_Sets.Empty_Set) return String;
    --  Return the replacement suitable for %Param.
    --  This should mostly be used from GPS.Kernel.Macros.Substitute and from
    --  Build_Command_Utils.Substitute function implementations.
@@ -61,33 +60,58 @@ package Shared_Macros is
    --  Documents all supported macros from this package
 
 private
-   LF : constant Character := ASCII.LF;
+   LF  : constant Character := ASCII.LF;
    Doc : aliased constant String :=
-        "Current File information" & LF
-      & "%f      base name" & LF
-      & "%fd     directory name" & LF
-      & "%fk     krunched base name" & LF
-      & "%F      absolute path" & LF
-      & "%fo     files opened in editors" & LF
+     "Current File information"
+     & LF
+     & "%f      base name"
+     & LF
+     & "%fd     directory name"
+     & LF
+     & "%fk     krunched base name"
+     & LF
+     & "%F      absolute path"
+     & LF
+     & "%fo     files opened in editors"
+     & LF
 
-      & LF & "Project information" & LF
-      & "%o      absolute path of object directory for current project" & LF
-      & "%O      absolute path of object directory for root project" & LF
-      & "%pps    switch -P with absolute path, if there is a project" & LF
-      & "%PPs    switch -P with absolute path of root project" & LF
-      & "%p      name of current project" & LF
-      & "%P      name of current root project" & LF
-      & "%Pl     lower-cased name of current project" & LF
-      & "%Pb     base name for current project file" & LF
-      & "%pp     absolute path for current project file" & LF
-      & "%PP     absolute path for root project" & LF
-      & "%prd    list of recursive absolute paths for source dirs" & LF
-      & "%prf    list of recursive absolute paths for source files" & LF
-      & "%prdf   tmp file with recursive absolute paths for source dirs" & LF
-      & "%prsf   tmp file with recursive absolute paths for source files" & LF
-      & "%pd     list of absolute paths for source dirs" & LF
-      & "%pf     list of absolute paths for source files" & LF
-      & "%pdf    tmp file with absolute paths for source dirs" & LF
-      & "%psf    tmp file with absolute paths for source files";
+     & LF
+     & "Project information"
+     & LF
+     & "%o      absolute path of object directory for current project"
+     & LF
+     & "%O      absolute path of object directory for root project"
+     & LF
+     & "%pps    switch -P with absolute path, if there is a project"
+     & LF
+     & "%PPs    switch -P with absolute path of root project"
+     & LF
+     & "%p      name of current project"
+     & LF
+     & "%P      name of current root project"
+     & LF
+     & "%Pl     lower-cased name of current project"
+     & LF
+     & "%Pb     base name for current project file"
+     & LF
+     & "%pp     absolute path for current project file"
+     & LF
+     & "%PP     absolute path for root project"
+     & LF
+     & "%prd    list of recursive absolute paths for source dirs"
+     & LF
+     & "%prf    list of recursive absolute paths for source files"
+     & LF
+     & "%prdf   tmp file with recursive absolute paths for source dirs"
+     & LF
+     & "%prsf   tmp file with recursive absolute paths for source files"
+     & LF
+     & "%pd     list of absolute paths for source dirs"
+     & LF
+     & "%pf     list of absolute paths for source files"
+     & LF
+     & "%pdf    tmp file with absolute paths for source dirs"
+     & LF
+     & "%psf    tmp file with absolute paths for source files";
 
 end Shared_Macros;

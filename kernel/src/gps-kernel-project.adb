@@ -15,28 +15,28 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;          use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 pragma Warnings (Off, ".*is an internal GNAT unit");
-with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
+with GNAT.Expect.TTY.Remote;  use GNAT.Expect.TTY.Remote;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
 with VSS.Strings.Conversions;
 
 with GNATCOLL.JSON;
-with GNATCOLL.Projects;                use GNATCOLL.Projects;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Projects;                         use Projects;
-with Remote;                           use Remote;
+with Projects; use Projects;
+with Remote;   use Remote;
 
-with Gtk.Enums;                        use Gtk.Enums;
-with Gtkada.File_Selector;             use Gtkada.File_Selector;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Custom;
@@ -56,69 +56,68 @@ package body GPS.Kernel.Project is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.PROJECT");
 
    Report_Missing_Dirs : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.PROJECTS_MISSING_DIRS_WARNING",
-             Default => Off);
+     Create ("GPS.INTERNAL.PROJECTS_MISSING_DIRS_WARNING", Default => Off);
 
-   Location_Category : constant VSS.Strings.Virtual_String := "Project";
+   Location_Category      : constant VSS.Strings.Virtual_String := "Project";
    --  Category uses in the Location window for errors related to loading the
    --  project file
    Location_Message_Flags : constant Message_Flags :=
-     (Editor_Side => True,
-      Editor_Line => False,
-      Locations   => True);
+     (Editor_Side => True, Editor_Line => False, Locations => True);
 
    type GPS_Project_Tree is new Project_Tree with record
-      Handle    : Kernel_Handle;
-      Propagate : Boolean := True;
+      Handle                 : Kernel_Handle;
+      Propagate              : Boolean := True;
       Has_Undefined_Eternals : Boolean := False;
    end record;
    type GPS_Project_Tree_Access is access all GPS_Project_Tree'Class;
-   overriding function Data_Factory
-     (Self : GPS_Project_Tree) return Project_Data_Access;
-   overriding procedure Recompute_View
-     (Self   : in out GPS_Project_Tree;
-      Errors : Error_Report := null);
+   overriding
+   function Data_Factory (Self : GPS_Project_Tree) return Project_Data_Access;
+   overriding
+   procedure Recompute_View
+     (Self : in out GPS_Project_Tree; Errors : Error_Report := null);
    --  See inherited documentation
 
    type GPS_Project_Environment is new Project_Environment with record
       Kernel : access Kernel_Handle_Record'Class;
    end record;
-   overriding procedure Spawn_Gnatls
-     (Self         : GPS_Project_Environment;
-      Fd           : out GNAT.Expect.Process_Descriptor_Access;
-      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
-      Errors       : Error_Report);
-   overriding function Gnatls_Host
-     (Self : GPS_Project_Environment) return String;
-   overriding procedure Set_GNAT_Version
-     (Self         : in out GPS_Project_Environment;
-      Version      : String);
+   overriding
+   procedure Spawn_Gnatls
+     (Self        : GPS_Project_Environment;
+      Fd          : out GNAT.Expect.Process_Descriptor_Access;
+      Gnatls_Args : GNAT.OS_Lib.Argument_List_Access;
+      Errors      : Error_Report);
+   overriding
+   function Gnatls_Host (Self : GPS_Project_Environment) return String;
+   overriding
+   procedure Set_GNAT_Version
+     (Self : in out GPS_Project_Environment; Version : String);
 
-   package String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,   --  "section#key"
-      Element_Type    => String,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package String_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,   --  "section#key"
+        Element_Type    => String,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
    type Scenario_Vars_Property is new Property_Record with record
       Map : String_Maps.Map;
    end record;
    type Scenario_Vars_Property_Access is
      access all Scenario_Vars_Property'Class;
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Scenario_Vars_Property;
       Value : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
-     (Self  : in out Scenario_Vars_Property;
-      Value : GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Load
+     (Self : in out Scenario_Vars_Property; Value : GNATCOLL.JSON.JSON_Value);
    --  A property used to store the current scenario for the next
    --  GNAT Studio session.
 
    procedure Restore_Scenario_Vars
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Virtual_File);
+     (Kernel : access Kernel_Handle_Record'Class; Project : Virtual_File);
    procedure Save_Scenario_Vars
-     (Self    : not null access GPS_Project_Tree'Class);
+     (Self : not null access GPS_Project_Tree'Class);
    --  Restore the scenario variables set in previous sessions.
    --  They get their value from the following sources:
    --    1 - command line -Xvar=value switches
@@ -134,7 +133,8 @@ package body GPS.Kernel.Project is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Self  : access Scenario_Vars_Property;
       Value : in out GNATCOLL.JSON.JSON_Value)
    is
@@ -161,9 +161,9 @@ package body GPS.Kernel.Project is
    -- Load --
    ----------
 
-   overriding procedure Load
-     (Self  : in out Scenario_Vars_Property;
-      Value : GNATCOLL.JSON.JSON_Value)
+   overriding
+   procedure Load
+     (Self : in out Scenario_Vars_Property; Value : GNATCOLL.JSON.JSON_Value)
    is
       use GNATCOLL.JSON;
 
@@ -183,8 +183,7 @@ package body GPS.Kernel.Project is
    ---------------------------
 
    procedure Restore_Scenario_Vars
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Virtual_File)
+     (Kernel : access Kernel_Handle_Record'Class; Project : Virtual_File)
    is
       use String_Maps;
       C     : String_Maps.Cursor;
@@ -196,15 +195,14 @@ package body GPS.Kernel.Project is
          C := Vars.Map.First;
          while Has_Element (C) loop
             declare
-               Name    : constant String := Key (C);
-               Value   : constant String := Element (C);
+               Name  : constant String := Key (C);
+               Value : constant String := Element (C);
             begin
                if Kernel.Registry.Environment.Value (Name) = "" then
-                  Trace (Me, "Restoring environment var: "
-                         & Name & "=" & Value);
+                  Trace
+                    (Me, "Restoring environment var: " & Name & "=" & Value);
                   Kernel.Registry.Environment.Change_Environment
-                    (Name  => Name,
-                     Value => Value);
+                    (Name => Name, Value => Value);
                end if;
                Next (C);
             end;
@@ -216,14 +214,12 @@ package body GPS.Kernel.Project is
    -- Save_Scenario_Vars --
    ------------------------
 
-   procedure Save_Scenario_Vars
-     (Self : not null access GPS_Project_Tree'Class)
+   procedure Save_Scenario_Vars (Self : not null access GPS_Project_Tree'Class)
    is
       Vars         : Scenario_Vars_Property_Access;
       Typed_Vars   : constant Scenario_Variable_Array :=
-                       Self.Scenario_Variables;
-      Untyped_Vars : constant Untyped_Variable_Array :=
-                       Self.Untyped_Variables;
+        Self.Scenario_Variables;
+      Untyped_Vars : constant Untyped_Variable_Array := Self.Untyped_Variables;
    begin
       --  Save existing scenario in the properties, so that we can restore it
       --  when the project is reloaded
@@ -235,18 +231,14 @@ package body GPS.Kernel.Project is
          for Var of Typed_Vars loop
             --  Do not save if the value corresponds to the default value.
             if External_Default (Var) /= Value (Var) then
-               Vars.Map.Include
-                 (External_Name (Var),
-                  Value (Var));
+               Vars.Map.Include (External_Name (Var), Value (Var));
             end if;
          end loop;
 
          --  Save the untyped scenario variables
          for Var of Untyped_Vars loop
             if External_Default (Var) /= Value (Var) then
-               Vars.Map.Include
-                 (External_Name (Var),
-                  Value (Var));
+               Vars.Map.Include (External_Name (Var), Value (Var));
             end if;
          end loop;
 
@@ -264,8 +256,7 @@ package body GPS.Kernel.Project is
    --------------------------------
 
    procedure Save_Scenario_Vars_On_Exit
-     (Handle : not null access Kernel_Handle_Record'Class)
-   is
+     (Handle : not null access Kernel_Handle_Record'Class) is
    begin
       Save_Scenario_Vars
         (GPS_Project_Tree_Access (Get_Registry (Handle).Tree));
@@ -275,9 +266,9 @@ package body GPS.Kernel.Project is
    -- Set_GNAT_Version --
    ----------------------
 
-   overriding procedure Set_GNAT_Version
-     (Self    : in out GPS_Project_Environment;
-      Version : String) is
+   overriding
+   procedure Set_GNAT_Version
+     (Self : in out GPS_Project_Environment; Version : String) is
    begin
       Self.Kernel.GNAT_Version_Cache :=
         VSS.Strings.Conversions.To_Virtual_String (Version);
@@ -287,16 +278,18 @@ package body GPS.Kernel.Project is
    -- Spawn_Gnatls --
    ------------------
 
-   overriding procedure Spawn_Gnatls
-     (Self         : GPS_Project_Environment;
-      Fd           : out GNAT.Expect.Process_Descriptor_Access;
-      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
-      Errors       : Error_Report)
-   is
+   overriding
+   procedure Spawn_Gnatls
+     (Self        : GPS_Project_Environment;
+      Fd          : out GNAT.Expect.Process_Descriptor_Access;
+      Gnatls_Args : GNAT.OS_Lib.Argument_List_Access;
+      Errors      : Error_Report) is
    begin
       if not Is_Local (Build_Server) then
          Remote_Spawn
-           (Fd, Get_Nickname (Build_Server), Gnatls_Args.all,
+           (Fd,
+            Get_Nickname (Build_Server),
+            Gnatls_Args.all,
             Err_To_Out => True);
       else
          --  Inherited version spawns gnatls locally
@@ -308,9 +301,8 @@ package body GPS.Kernel.Project is
    -- Gnatls_Host --
    -----------------
 
-   overriding function Gnatls_Host
-     (Self : GPS_Project_Environment) return String
-   is
+   overriding
+   function Gnatls_Host (Self : GPS_Project_Environment) return String is
       pragma Unreferenced (Self);
    begin
       return Get_Nickname (Build_Server);
@@ -326,8 +318,8 @@ package body GPS.Kernel.Project is
    is
       Tree : constant Project_Tree_Access := new GPS_Project_Tree;
       Env  : constant Project_Environment_Access :=
-         new GPS_Project_Environment'
-            (Project_Environment with Kernel => Handle);
+        new GPS_Project_Environment'
+          (Project_Environment with Kernel => Handle);
    begin
       Env.Set_Save_Config_File (Saved_Config_File);
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
@@ -338,8 +330,8 @@ package body GPS.Kernel.Project is
    -- Data_Factory --
    ------------------
 
-   overriding function Data_Factory
-     (Self : GPS_Project_Tree) return Project_Data_Access
+   overriding
+   function Data_Factory (Self : GPS_Project_Tree) return Project_Data_Access
    is
       pragma Unreferenced (Self);
    begin
@@ -350,10 +342,9 @@ package body GPS.Kernel.Project is
    -- Recompute_View --
    --------------------
 
-   overriding procedure Recompute_View
-     (Self   : in out GPS_Project_Tree;
-      Errors : Error_Report := null)
-   is
+   overriding
+   procedure Recompute_View
+     (Self : in out GPS_Project_Tree; Errors : Error_Report := null) is
    begin
       Cleanup_Subdirs (Self);
 
@@ -381,8 +372,7 @@ package body GPS.Kernel.Project is
    --------------------
 
    function Recompute_View
-     (Handle : access Kernel_Handle_Record'Class)
-      return Boolean
+     (Handle : access Kernel_Handle_Record'Class) return Boolean
    is
       Has_Error : Boolean := False;
 
@@ -418,8 +408,7 @@ package body GPS.Kernel.Project is
    -- Recompute_View --
    --------------------
 
-   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class)
-   is
+   procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
       Dummy : Boolean;
    begin
       Dummy := Recompute_View (Handle);
@@ -435,7 +424,8 @@ package body GPS.Kernel.Project is
       Load_Default_Desktop : Boolean := True;
       Clear                : Boolean := True)
    is
-      Block_Me : constant Block_Trace_Handle := Create (Me) with Unreferenced;
+      Block_Me : constant Block_Trace_Handle := Create (Me)
+      with Unreferenced;
 
       function Find_Custom_File (Name : Filesystem_String) return Virtual_File;
       --  Parse GNATSTUDIO_CUSTOM_PATH for a file named Name overriding the
@@ -509,9 +499,7 @@ package body GPS.Kernel.Project is
 
       if Found then
          Load_Project
-           (Kernel, Project,
-            Clear      => Clear,
-            Is_Default => Is_Default);
+           (Kernel, Project, Clear => Clear, Is_Default => Is_Default);
       else
          Load_Empty_Project (Kernel);
       end if;
@@ -535,9 +523,7 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Parent);
    begin
       Load_Default_Project
-        (Kernel,
-         Directory => Get_Current_Dir,
-         Clear     => False);
+        (Kernel, Directory => Get_Current_Dir, Clear => False);
 
       return True;
    end Load_Default_Project;
@@ -546,9 +532,7 @@ package body GPS.Kernel.Project is
    -- Load_Empty_Project --
    ------------------------
 
-   procedure Load_Empty_Project
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure Load_Empty_Project (Kernel : access Kernel_Handle_Record'Class) is
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
    begin
@@ -590,7 +574,7 @@ package body GPS.Kernel.Project is
    ------------------------------
 
    procedure Reload_Project_If_Needed
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel         : access Kernel_Handle_Record'Class;
       Recompute_View : Boolean := False)
    is
       procedure Report_Error (S : String);
@@ -657,11 +641,11 @@ package body GPS.Kernel.Project is
       Is_Default   : Boolean := False;
       Keep_Desktop : Boolean := False)
    is
-      Block_Me  : constant Block_Trace_Handle :=
-         Create (Me, (if Active (Me) then Project.Display_Full_Name else ""))
-         with Unreferenced;
+      Block_Me : constant Block_Trace_Handle :=
+        Create (Me, (if Active (Me) then Project.Display_Full_Name else ""))
+      with Unreferenced;
 
-      Has_Error               : Boolean := False;
+      Has_Error : Boolean := False;
 
       Has_Undefined_Externals : Boolean := False;
 
@@ -693,21 +677,20 @@ package body GPS.Kernel.Project is
          --  available for these scenario variables.
 
          declare
-            Undefined_External_Msg : constant String :=
-                                "undefined external";
+            Undefined_External_Msg : constant String := "undefined external";
          begin
             Has_Undefined_Externals :=
-              Ada.Strings.Fixed.Index
-                (S, Pattern => Undefined_External_Msg) /= 0;
+              Ada.Strings.Fixed.Index (S, Pattern => Undefined_External_Msg)
+              /= 0;
          end;
       end Report_Error;
 
-      Ignore : Boolean;
+      Ignore             : Boolean;
       pragma Unreferenced (Ignore);
-      New_Project_Loaded  : Boolean;
-      Same_Project        : Boolean;
-      Local_Project       : GNATCOLL.VFS.Virtual_File;
-      Previous_Project    : Virtual_File;
+      New_Project_Loaded : Boolean;
+      Same_Project       : Boolean;
+      Local_Project      : GNATCOLL.VFS.Virtual_File;
+      Previous_Project   : Virtual_File;
 
    begin
       Trace (Me, "Clearing messages");
@@ -736,8 +719,7 @@ package body GPS.Kernel.Project is
 
       --  Unless we are reloading the same project
 
-      if not No_Save
-        and then not Save_MDI_Children (Kernel, Force => False)
+      if not No_Save and then not Save_MDI_Children (Kernel, Force => False)
       then
          return;
       end if;
@@ -782,10 +764,12 @@ package body GPS.Kernel.Project is
             if not Is_Regular_File (Local_Project) then
                Kernel.Insert
                  ((-"Cannot find remote project file ")
-                  & Display_Full_Name (Project) & (-" at local place ")
-                  & Display_Full_Name (Local_Project) &
-                  (-". Please check your remote configuration."),
-                  Mode => Error, Add_LF => False);
+                  & Display_Full_Name (Project)
+                  & (-" at local place ")
+                  & Display_Full_Name (Local_Project)
+                  & (-". Please check your remote configuration."),
+                  Mode   => Error,
+                  Add_LF => False);
 
                --  Need to run Project_Changing hook to reset build_server
                Project_Changing_Hook.Run (Kernel, Previous_Project);
@@ -825,10 +809,10 @@ package body GPS.Kernel.Project is
             GPS_Project_Tree_Access (Kernel.Registry.Tree).Propagate := True;
             New_Project_Loaded := True;
             Kernel.Registry.Tree.Load
-              (Root_Project_Path => Local_Project,
-               Env               => Kernel.Registry.Environment,
-               Errors            => Report_Error'Unrestricted_Access,
-               Recompute_View    => False,
+              (Root_Project_Path   => Local_Project,
+               Env                 => Kernel.Registry.Environment,
+               Errors              => Report_Error'Unrestricted_Access,
+               Recompute_View      => False,
                Report_Missing_Dirs => Active (Report_Missing_Dirs));
             Kernel.Last_Invalid_Project := No_File;
          exception
@@ -841,26 +825,27 @@ package body GPS.Kernel.Project is
             --  Check if a remote configuration was applied and failure occured
             if not Is_Local (Build_Server) then
                Report_Error
-                 (-"Error while loading project '" &
-                  Display_Full_Name (Local_Project, True) &
-                  (-"'. Trying with the build server set to (local)...") &
-                  ASCII.LF);
+                 (-"Error while loading project '"
+                  & Display_Full_Name (Local_Project, True)
+                  & (-"'. Trying with the build server set to (local)...")
+                  & ASCII.LF);
 
                --  Reset the build server
                Trace (Me, "Reset the build server");
-               Assign (Kernel_Handle (Kernel),
-                       Build_Server,
-                       "",
-                       Local_Project,
-                       Reload_Prj => False);
+               Assign
+                 (Kernel_Handle (Kernel),
+                  Build_Server,
+                  "",
+                  Local_Project,
+                  Reload_Prj => False);
                Trace (Me, "Load the project locally");
 
                begin
                   Kernel.Registry.Tree.Load
-                    (Root_Project_Path => Local_Project,
-                     Errors            => Report_Error'Unrestricted_Access,
-                     Env               => Kernel.Registry.Environment,
-                     Recompute_View    => False,
+                    (Root_Project_Path   => Local_Project,
+                     Errors              => Report_Error'Unrestricted_Access,
+                     Env                 => Kernel.Registry.Environment,
+                     Recompute_View      => False,
                      Report_Missing_Dirs => Active (Report_Missing_Dirs));
                   New_Project_Loaded := True;
                   Kernel.Last_Invalid_Project := No_File;
@@ -904,16 +889,18 @@ package body GPS.Kernel.Project is
          --  python script needs to open or refresh windows as a result.
 
          if not Same_Project and not Keep_Desktop then
-            Ignore := Load_Desktop
-              (Kernel, For_Project => Local_Project);
+            Ignore := Load_Desktop (Kernel, For_Project => Local_Project);
          end if;
          --  Reallow the backup save
          Set_Is_Loading (False);
 
       elsif not Same_Project then
-         Kernel.Insert (-"Cannot find project file "
-                        & Display_Full_Name (Project) & ASCII.LF,
-                        Mode => Error, Add_LF => False);
+         Kernel.Insert
+           (-"Cannot find project file "
+            & Display_Full_Name (Project)
+            & ASCII.LF,
+            Mode   => Error,
+            Add_LF => False);
          Ignore := Load_Desktop (Kernel);
 
          Xref.Project_Changed (Kernel.Databases);
@@ -924,9 +911,7 @@ package body GPS.Kernel.Project is
         and then not Kernel.Get_Ignore_Project_Load_Errors
       then
          Open_File_Action_Hook.Run
-           (Kernel  => Kernel,
-            File    => Local_Project,
-            Project => No_Project);
+           (Kernel => Kernel, File => Local_Project, Project => No_Project);
       end if;
 
       --  Display a warning message in the Messages view if we've found
@@ -936,11 +921,11 @@ package body GPS.Kernel.Project is
          Kernel.Insert
            (Text =>
               "Some scenario variables relying on undefined "
-            & "externals have been found while loading the "
-            & "project: GNAT Studio will use the first available "
-            & "values for these scenario variables as a fallback "
-            & "(go to the Scenario view to see which values were "
-            & "picked).",
+              & "externals have been found while loading the "
+              & "project: GNAT Studio will use the first available "
+              & "values for these scenario variables as a fallback "
+              & "(go to the Scenario view to see which values were "
+              & "picked).",
             Mode => Error);
          Kernel.Insert
            (Text =>
@@ -954,8 +939,8 @@ package body GPS.Kernel.Project is
    -- Get_Project --
    -----------------
 
-   function Get_Project (Handle : access Kernel_Handle_Record'Class)
-      return Project_Type is
+   function Get_Project
+     (Handle : access Kernel_Handle_Record'Class) return Project_Type is
    begin
       return Handle.Registry.Tree.Root_Project;
    end Get_Project;
@@ -979,8 +964,8 @@ package body GPS.Kernel.Project is
 
    function Lookup_Project
      (Self : not null access Kernel_Handle_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File)
-      return GNATCOLL.Projects.Project_Type is
+      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Projects.Project_Type
+   is
    begin
       return Self.Registry.Tree.Project_From_Path (File);
    end Lookup_Project;
@@ -990,8 +975,8 @@ package body GPS.Kernel.Project is
    --------------------------
 
    function Get_Project_For_File
-     (Tree : access Project_Tree'Class;
-      File : GNATCOLL.VFS.Virtual_File) return Project_Type
+     (Tree : access Project_Tree'Class; File : GNATCOLL.VFS.Virtual_File)
+      return Project_Type
    is
       Iter : Project_Iterator;
       Prj  : Project_Type;
@@ -999,9 +984,10 @@ package body GPS.Kernel.Project is
    begin
       if Is_Directory (File) then
          if Tree.Directory_Belongs_To_Project
-           (File.Full_Name, Direct_Only => False)
+              (File.Full_Name, Direct_Only => False)
          then
             return Tree.Root_Project;   --   ??? Not accurate
+
          else
             return No_Project;
          end if;
@@ -1010,7 +996,7 @@ package body GPS.Kernel.Project is
          --  Do we have a source file ?
          declare
             F_Info : constant File_Info'Class :=
-                       File_Info'Class (Tree.Info_Set (File).First_Element);
+              File_Info'Class (Tree.Info_Set (File).First_Element);
          begin
             Prj := F_Info.Project;
          end;
@@ -1039,7 +1025,8 @@ package body GPS.Kernel.Project is
    -- Scenario_Variables --
    ------------------------
 
-   function Scenario_Variables (Kernel : access Kernel_Handle_Record'Class)
+   function Scenario_Variables
+     (Kernel : access Kernel_Handle_Record'Class)
       return Scenario_Variable_Array is
    begin
       return Kernel.Registry.Tree.Scenario_Variables;
@@ -1061,8 +1048,8 @@ package body GPS.Kernel.Project is
    -------------------------
 
    function Save_Single_Project
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Project : Project_Type) return Boolean
+     (Kernel : access Kernel_Handle_Record'Class; Project : Project_Type)
+      return Boolean
    is
       Result : Boolean := True;
 
@@ -1115,7 +1102,9 @@ package body GPS.Kernel.Project is
       Project.Switches
         (To_Lower (To_String (Tool.Project_Package)),
          File,
-         To_Lower (To_String (Tool.Project_Index)), Value, Is_Default);
+         To_Lower (To_String (Tool.Project_Index)),
+         Value,
+         Is_Default);
 
       --  If no value was found, we might have to return the initial value
       if Value = null
@@ -1130,8 +1119,8 @@ package body GPS.Kernel.Project is
       end if;
 
       declare
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (Argument_List, Argument_List_Access);
+         procedure Unchecked_Free is new
+           Ada.Unchecked_Deallocation (Argument_List, Argument_List_Access);
          Cmd : constant Argument_List := Value.all;
       begin
          Unchecked_Free (Value);

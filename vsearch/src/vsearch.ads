@@ -18,11 +18,11 @@
 --  This package provides the Search view.
 
 with Glib.Object;
-with Gtk.Text_Mark;       use Gtk.Text_Mark;
-with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Text_Mark; use Gtk.Text_Mark;
+with Gtk.Widget;    use Gtk.Widget;
 
-with Find_Utils;          use Find_Utils;
-with GPS.Kernel;          use GPS.Kernel;
+with Find_Utils; use Find_Utils;
+with GPS.Kernel; use GPS.Kernel;
 with Projects;
 
 package Vsearch is

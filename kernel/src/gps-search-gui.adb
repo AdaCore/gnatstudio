@@ -17,53 +17,54 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
-with GNAT.Strings;                  use GNAT.Strings;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
-with GNATCOLL.Utils;                use GNATCOLL.Utils;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;          use GNAT.Strings;
+with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with System;
 with System.Address_Image;
 
 with VSS.Strings.Conversions;
 
-with Glib;                          use Glib;
-with Glib.Properties;               use Glib.Properties;
-with Glib.Values;                   use Glib.Values;
-with Gtk.Alignment;                 use Gtk.Alignment;
-with Gtk.Cell_Renderer;             use Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle;      use Gtk.Cell_Renderer_Toggle;
-with Gtk.Check_Button;              use Gtk.Check_Button;
-with Gtk.Enums;                     use Gtk.Enums;
-with Gtk.Frame;                     use Gtk.Frame;
-with Gtk.Label;                     use Gtk.Label;
-with Gtk.List_Store;                use Gtk.List_Store;
-with Gtk.Toggle_Button;             use Gtk.Toggle_Button;
-with Gtk.Tree_Model;                use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;          use Gtk.Tree_View_Column;
-with Gtk.Tree_View;                 use Gtk.Tree_View;
-with Gtk.Spin_Button;               use Gtk.Spin_Button;
-with Gtk.Widget;                    use Gtk.Widget;
-with Gtkada.Entry_Completion;       use Gtkada.Entry_Completion;
-with Gtkada.Handlers;               use Gtkada.Handlers;
+with Glib;                     use Glib;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Values;              use Glib.Values;
+with Gtk.Alignment;            use Gtk.Alignment;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.List_Store;           use Gtk.List_Store;
+with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Spin_Button;          use Gtk.Spin_Button;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Entry_Completion;  use Gtkada.Entry_Completion;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Commands.Interactive;          use Commands, Commands.Interactive;
-with Default_Preferences;           use Default_Preferences;
-with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences; use Default_Preferences;
+with GPS.Kernel.Actions;  use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 with GPS.Kernel.Search.Actions;
 with GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Search.Sources;
 with GPS.Kernel.Search.Plugins;
 with GPS.Kernel.Search.Preferences;
 with GPS.Kernel.Search.History;
-with GPS.Intl;                      use GPS.Intl;
-with GPS.Main_Window;               use GPS.Main_Window;
-with Histories;                     use Histories;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Main_Window;     use GPS.Main_Window;
+with Histories;           use Histories;
 
 package body GPS.Search.GUI is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH_GUI");
@@ -75,9 +76,9 @@ package body GPS.Search.GUI is
    --  The preferred order of providers
 
    type Global_Search_Module_Record is new Module_ID_Record with record
-      Search          : Gtkada_Entry;
+      Search : Gtkada_Entry;
 
-      Registry        : Search_Provider_Registry_Access;
+      Registry : Search_Provider_Registry_Access;
       --  List of all the providers of the Global Search.
 
       Default_Command : Global_Search_Command_Access;
@@ -96,16 +97,16 @@ package body GPS.Search.GUI is
    procedure Free (Self : in out Results_Array_Access);
    --  Free self and the search results
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Search_Provider_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Search_Provider_Access);
 
    type Settings_Toggle_Record is new Gtk_Cell_Renderer_Toggle_Record
-     with record
-       Kernel    : Kernel_Handle;
-       Model     : Gtk_List_Store;
-       Data      : access Glib.Object.GObject_Record'Class;
-       On_Change : On_Settings_Changed_Callback;
-     end record;
+   with record
+      Kernel    : Kernel_Handle;
+      Model     : Gtk_List_Store;
+      Data      : access Glib.Object.GObject_Record'Class;
+      On_Change : On_Settings_Changed_Callback;
+   end record;
    type Settings_Toggle is access all Settings_Toggle_Record'Class;
 
    procedure On_Toggle_Provider
@@ -114,8 +115,7 @@ package body GPS.Search.GUI is
    --  Called when a provider is enabled or disabled in the settings
 
    procedure On_Reorder_Provider
-     (Toggle : access Glib.Object.GObject_Record'Class;
-      Path   : Gtk_Tree_Path);
+     (Toggle : access Glib.Object.GObject_Record'Class; Path : Gtk_Tree_Path);
    --  Called when rows are reordered in the settings dialog
 
    procedure Update_Provider_Order
@@ -136,8 +136,7 @@ package body GPS.Search.GUI is
    --  Reset the global search entry after <escape> or a search is selected
 
    procedure Change_Proposals_Per_Provider
-     (Spin : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
+     (Spin : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the user changes the number of proposals per provider
    --  through the settings.
 
@@ -145,7 +144,8 @@ package body GPS.Search.GUI is
    -- Get_Current_Progress --
    --------------------------
 
-   overriding function Get_Current_Progress
+   overriding
+   function Get_Current_Progress
      (Self : not null access Overall_Search_Provider) return Natural
    is
       Progress : Integer := 0;
@@ -161,7 +161,8 @@ package body GPS.Search.GUI is
    -- Get_Total_Progress --
    ------------------------
 
-   overriding function Get_Total_Progress
+   overriding
+   function Get_Total_Progress
      (Self : not null access Overall_Search_Provider) return Integer
    is
       Provider_Total_Progress : Integer;
@@ -182,8 +183,8 @@ package body GPS.Search.GUI is
    -- Reset_Progress --
    --------------------
 
-   overriding procedure Reset_Progress
-     (Self : not null access Overall_Search_Provider) is
+   overriding
+   procedure Reset_Progress (Self : not null access Overall_Search_Provider) is
    begin
       --  Reset all the registered providers' progress
       for Provider_Info of Self.Registry.Providers loop
@@ -196,9 +197,9 @@ package body GPS.Search.GUI is
    ----------------------------------
 
    procedure Register_Provider_And_Action
-     (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Provider   : not null access Kernel_Search_Provider'Class;
-      Icon_Name  : String := "")
+     (Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Provider  : not null access Kernel_Search_Provider'Class;
+      Icon_Name : String := "")
    is
       Command : Global_Search_Command_Access;
    begin
@@ -216,8 +217,9 @@ package body GPS.Search.GUI is
 
       Command := new Global_Search_Command;
       Command.Provider := Search_Provider_Access (Provider);
-      Command.History := new History_Key'
-        ("global-search-entry-" & History_Key (Provider.Display_Name));
+      Command.History :=
+        new History_Key'
+          ("global-search-entry-" & History_Key (Provider.Display_Name));
       Register_Action
         (Kernel      => Kernel,
          Name        => Action_Name_Prefix & Provider.Display_Name,
@@ -239,7 +241,8 @@ package body GPS.Search.GUI is
    Whole_Word     : constant Flags := 16;
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -247,51 +250,51 @@ package body GPS.Search.GUI is
 
    function Create_Search_Instance
      (Script   : not null access Scripting_Language_Record'Class;
-      Provider : access Search_Provider'Class)
-      return Class_Instance;
+      Provider : access Search_Provider'Class) return Class_Instance;
    function Create_Search_Result_Instance
-     (Script   : not null access Scripting_Language_Record'Class;
-      Result   : Search_Result_Access)
-      return Class_Instance;
+     (Script : not null access Scripting_Language_Record'Class;
+      Result : Search_Result_Access) return Class_Instance;
    --  Create a new class instance for GPS.Search or GPS.Search_Result
 
    procedure Search_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Search_Result_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Search_Result_Setters
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handlers for the shell commands
 
    type Python_Search_Provider is new Kernel_Search_Provider with record
       Name : GNAT.Strings.String_Access;
       Inst : aliased Instance_List;
    end record;
-   type Python_Search_Provider_Access
-      is access all Python_Search_Provider'Class;
-   overriding procedure Free (Self : in out Python_Search_Provider);
-   overriding procedure Set_Pattern
+   type Python_Search_Provider_Access is
+     access all Python_Search_Provider'Class;
+   overriding
+   procedure Free (Self : in out Python_Search_Provider);
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Python_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Python_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
-   overriding function Display_Name
-     (Self     : not null access Python_Search_Provider) return String
-     is (Self.Name.all);
+   overriding
+   function Display_Name
+     (Self : not null access Python_Search_Provider) return String
+   is (Self.Name.all);
 
    type Python_Search_Result is new Kernel_Search_Result with record
       Inst : aliased Instance_List;
    end record;
-   overriding procedure Execute
-     (Self : not null access Python_Search_Result;
-      Give_Focus : Boolean);
-   overriding procedure Free (Self : in out Python_Search_Result);
+   overriding
+   procedure Execute
+     (Self : not null access Python_Search_Result; Give_Focus : Boolean);
+   overriding
+   procedure Free (Self : in out Python_Search_Result);
 
    procedure Set_Search_Pattern
      (Data   : Callback_Data'Class;
@@ -304,32 +307,35 @@ package body GPS.Search.GUI is
       Pattern  : Search_Pattern_Access;
    end record;
    type Provider_Property is access all Provider_Property_Record'Class;
-   overriding procedure Destroy (Prop : in out Provider_Property_Record);
+   overriding
+   procedure Destroy (Prop : in out Provider_Property_Record);
 
    type Result_Property_Record is new Instance_Property_Record with record
       Result : Search_Result_Access;
    end record;
    type Result_Property is access all Result_Property_Record'Class;
-   overriding procedure Destroy (Prop : in out Result_Property_Record);
+   overriding
+   procedure Destroy (Prop : in out Result_Property_Record);
 
    function Get_Search_Provider
      (Data : Callback_Data'Class; Num : Positive)
       return Search_Provider_Access;
    function Get_Search_Result
-     (Data : Callback_Data'Class; Num : Positive)
-      return Result_Property;
+     (Data : Callback_Data'Class; Num : Positive) return Result_Property;
    --  Retrieve the provider or result information from the given parameter
 
    -------------------
    -- Documentation --
    -------------------
 
-   overriding function Documentation
+   overriding
+   function Documentation
      (Self : not null access Overall_Search_Provider) return String
    is
       pragma Unreferenced (Self);
    begin
-      return "Searches everywhere in GNAT Studio. In the list of results,"
+      return
+        "Searches everywhere in GNAT Studio. In the list of results,"
         & " click on the name of the context (file names, actions,...) to"
         & " limit the results to that context only, and display all possible"
         & " matches in that context.";
@@ -340,8 +346,8 @@ package body GPS.Search.GUI is
    ----------
 
    procedure Free (Self : in out Result_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Result_Array, Result_Array_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Result_Array, Result_Array_Access);
    begin
       if Self /= null then
          for S in Self'Range loop
@@ -355,8 +361,8 @@ package body GPS.Search.GUI is
    -- Free --
    ----------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Results_Array, Results_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Results_Array, Results_Array_Access);
 
    procedure Free (Self : in out Results_Array_Access) is
    begin
@@ -383,7 +389,8 @@ package body GPS.Search.GUI is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Overall_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Overall_Search_Provider) is
    begin
       Free (Self.Results);
       Free (Self.Registry);
@@ -393,7 +400,8 @@ package body GPS.Search.GUI is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Overall_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -402,8 +410,7 @@ package body GPS.Search.GUI is
    begin
       Trace (Me, "Starting search for '" & Get_Text (Pattern) & "'");
       Self.Pattern := Search_Pattern_Access (Pattern);
-      Self.Limit   := Natural'Min
-        (Limit, Pref_Proposals_Per_Provider.Get_Pref);
+      Self.Limit := Natural'Min (Limit, Pref_Proposals_Per_Provider.Get_Pref);
 
       Free (Self.Results);
 
@@ -435,8 +442,8 @@ package body GPS.Search.GUI is
          exit when Self.Provider = null;
 
          if Self.Provider.Enabled then
-            Trace (Me, "Set pattern for provider: " &
-                     Self.Provider.Display_Name);
+            Trace
+              (Me, "Set pattern for provider: " & Self.Provider.Display_Name);
             Self.Provider.Set_Pattern (Self.Pattern, Limit => Self.Limit);
             Self.Results (Count).Provider := Self.Provider;
             Count := Count + 1;
@@ -460,7 +467,8 @@ package body GPS.Search.GUI is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Overall_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
@@ -493,16 +501,15 @@ package body GPS.Search.GUI is
                --  (we always want to run "file content" provider last, since
                --  it is slower.
 
-               Result.Score := Result.Score
-                 + (100 - Self.Provider.Rank) * 1_000_000;
+               Result.Score :=
+                 Result.Score + (100 - Self.Provider.Rank) * 1_000_000;
 
                --  ??? This doesn't take into account score modification that
                --  will be done by the entry_completion for instance to show
                --  most recent items first, or shorter items.
 
                Insert_At := Current.Current_Index + 1;
-               for J in reverse Current.Result'First ..
-                 Current.Current_Index
+               for J in reverse Current.Result'First .. Current.Current_Index
                loop
                   exit when Result.Score <= Current.Result (J).Score;
                   Insert_At := J;
@@ -559,7 +566,7 @@ package body GPS.Search.GUI is
       --  Move to next provider
       Self.Next_Provider;
 
-      Result   := null;
+      Result := null;
       Has_Next := True;
    end Next;
 
@@ -567,12 +574,11 @@ package body GPS.Search.GUI is
    -- Next_Provider --
    -------------------
 
-   procedure Next_Provider (Self : not null access Overall_Search_Provider)
-   is
+   procedure Next_Provider (Self : not null access Overall_Search_Provider) is
       Old : Results_Array_Access;
    begin
-      if Self.Results (Self.Current_Provider).Current_Returned >
-        Self.Results (Self.Current_Provider).Current_Index
+      if Self.Results (Self.Current_Provider).Current_Returned
+        > Self.Results (Self.Current_Provider).Current_Index
       then
          --  We processed all results from the provider
          if Self.Results'Length = 1 then
@@ -586,8 +592,9 @@ package body GPS.Search.GUI is
             Free (Old (Self.Current_Provider).Result);
 
             Self.Results := new Results_Array (1 .. Old'Length - 1);
-            Self.Results.all := Old (Old'First .. Self.Current_Provider - 1) &
-              Old (Self.Current_Provider + 1 .. Old'Last);
+            Self.Results.all :=
+              Old (Old'First .. Self.Current_Provider - 1)
+              & Old (Self.Current_Provider + 1 .. Old'Last);
             Unchecked_Free (Old);
             Self.Current_Provider := Self.Current_Provider - 1;
          end if;
@@ -619,13 +626,13 @@ package body GPS.Search.GUI is
    -- Complete_Suffix --
    ---------------------
 
-   overriding function Complete_Suffix
-     (Self      : not null access Overall_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String
+   overriding
+   function Complete_Suffix
+     (Self    : not null access Overall_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class) return String
    is
       Suffix : Unbounded_String;
-      Found : Boolean := False;
+      Found  : Boolean := False;
    begin
       Self.Set_Pattern (Pattern);
 
@@ -644,11 +651,12 @@ package body GPS.Search.GUI is
                   begin
                      for S in Current'Range loop
                         if Tmp'First + S - Current'First > Tmp'Last
-                          or else Current (S) /=
-                             Tmp (Tmp'First + S - Current'First)
+                          or else
+                            Current (S) /= Tmp (Tmp'First + S - Current'First)
                         then
-                           Suffix := To_Unbounded_String
-                             (Current (Current'First .. S - 1));
+                           Suffix :=
+                             To_Unbounded_String
+                               (Current (Current'First .. S - 1));
                            exit;
                         end if;
                      end loop;
@@ -668,8 +676,9 @@ package body GPS.Search.GUI is
    -- Display_Name --
    ------------------
 
-   overriding function Display_Name
-     (Self     : not null access Overall_Search_Provider) return String is
+   overriding
+   function Display_Name
+     (Self : not null access Overall_Search_Provider) return String is
    begin
       if Self.Provider = null then
          return "";
@@ -722,9 +731,9 @@ package body GPS.Search.GUI is
    begin
       if Module.Current_Command /= null then
          Add_To_History
-            (Get_History (S.Get_Kernel).all,
-             Module.Current_Command.History.all,
-             VSS.Strings.Conversions.To_Virtual_String (S.Get_Text));
+           (Get_History (S.Get_Kernel).all,
+            Module.Current_Command.History.all,
+            VSS.Strings.Conversions.To_Virtual_String (S.Get_Text));
       end if;
 
       Reset;
@@ -734,9 +743,10 @@ package body GPS.Search.GUI is
    -- Execute --
    -------------
 
-   overriding function Execute
-      (Self    : access Global_Search_Command;
-       Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self    : access Global_Search_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Context);
       Kernel : constant Kernel_Handle := Module.Get_Kernel;
@@ -744,7 +754,7 @@ package body GPS.Search.GUI is
       Module.Current_Command := Global_Search_Command_Access (Self);
 
       Create_New_Key_If_Necessary
-         (Get_History (Kernel).all, Self.History.all, Strings);
+        (Get_History (Kernel).all, Self.History.all, Strings);
       Set_Max_Length (Get_History (Kernel).all, 1, Self.History.all);
 
       Module.Search.Set_Completion (Self.Provider);
@@ -768,8 +778,7 @@ package body GPS.Search.GUI is
    -----------------------------------
 
    procedure Change_Proposals_Per_Provider
-     (Spin : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+     (Spin : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       S : constant Gtk_Spin_Button := Gtk_Spin_Button (Spin);
    begin
@@ -781,15 +790,15 @@ package body GPS.Search.GUI is
       end if;
       Set_Pref
         (Pref_Proposals_Per_Provider,
-         Get_Preferences (Kernel), Integer (S.Get_Value));
+         Get_Preferences (Kernel),
+         Integer (S.Get_Value));
    end Change_Proposals_Per_Provider;
 
    ---------------------------
    -- Update_Provider_Order --
    ---------------------------
 
-   procedure Update_Provider_Order
-     (Self : access Settings_Toggle_Record'Class)
+   procedure Update_Provider_Order (Self : access Settings_Toggle_Record'Class)
    is
       Iter     : Gtk_Tree_Iter := Self.Model.Get_Iter_First;
       Provider : Search_Provider_Access;
@@ -819,8 +828,7 @@ package body GPS.Search.GUI is
    -------------------------
 
    procedure On_Reorder_Provider
-     (Toggle : access Glib.Object.GObject_Record'Class;
-      Path   : Gtk_Tree_Path)
+     (Toggle : access Glib.Object.GObject_Record'Class; Path : Gtk_Tree_Path)
    is
       pragma Unreferenced (Path);
       T : constant Settings_Toggle := Settings_Toggle (Toggle);
@@ -859,10 +867,11 @@ package body GPS.Search.GUI is
    -- Edit_Settings --
    -------------------
 
-   overriding procedure Edit_Settings
-     (Self : not null access Overall_Search_Provider;
-      Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
-      Data : not null access Glib.Object.GObject_Record'Class;
+   overriding
+   procedure Edit_Settings
+     (Self      : not null access Overall_Search_Provider;
+      Box       : not null access Gtk.Box.Gtk_Box_Record'Class;
+      Data      : not null access Glib.Object.GObject_Record'Class;
       On_Change : On_Settings_Changed_Callback)
    is
       Spin     : Gtk_Spin_Button;
@@ -895,16 +904,16 @@ package body GPS.Search.GUI is
 
       Gtk_New (Relative, -"Display relative paths");
       Relative.Set_Tooltip_Text
-        (-("Whether to display paths of project's sources as relative" &
-           " to the project file."));
+        (-("Whether to display paths of project's sources as relative"
+           & " to the project file."));
       V.Pack_Start (Relative, Expand => False);
-      Associate (Get_History (Self.Kernel).all,
-                 Key_Search_Displays_Relative_Paths,
-                 Relative,
-                 Default => False);
+      Associate
+        (Get_History (Self.Kernel).all,
+         Key_Search_Displays_Relative_Paths,
+         Relative,
+         Default => False);
       Relative.On_Toggled
-        (Gtk.Toggle_Button.Cb_GObject_Void (On_Change),
-         Data, After => True);
+        (Gtk.Toggle_Button.Cb_GObject_Void (On_Change), Data, After => True);
 
       Gtk_New (Label, -"Proposals per context:");
       B.Pack_Start (Label, Expand => False);
@@ -915,11 +924,12 @@ package body GPS.Search.GUI is
       B.Pack_Start (Spin, Expand => False);
 
       Kernel_Callback.Connect
-        (Spin, Signal_Value_Changed,
-         Change_Proposals_Per_Provider'Access, Self.Kernel);
+        (Spin,
+         Signal_Value_Changed,
+         Change_Proposals_Per_Provider'Access,
+         Self.Kernel);
       Spin.On_Value_Changed
-        (Gtk.Spin_Button.Cb_GObject_Void (On_Change),
-         Data, After => True);
+        (Gtk.Spin_Button.Cb_GObject_Void (On_Change), Data, After => True);
 
       Gtk_New (Frame);
       Frame.Set_Label (-"Categories");
@@ -933,10 +943,8 @@ package body GPS.Search.GUI is
       Label.Set_Alignment (0.0, 0.5);
       B.Pack_Start (Label, Expand => False);
 
-      Gtk_New (Model,
-               (0 => GType_Boolean,
-                1 => GType_String,
-                2 => GType_Pointer));
+      Gtk_New
+        (Model, (0 => GType_Boolean, 1 => GType_String, 2 => GType_Pointer));
       Gtk_New (View, Model);
       View.Set_Name ("gps-search-gui-settings");
       View.Set_Headers_Visible (False);
@@ -1000,25 +1008,24 @@ package body GPS.Search.GUI is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
       pragma Unreferenced (Self, Kernel);
    begin
-      if Pref = null
-        or else Pref = Preference (Pref_Provider_Order)
-      then
+      if Pref = null or else Pref = Preference (Pref_Provider_Order) then
          declare
-            Vals : String_List_Access := GNATCOLL.Utils.Split
-              (Pref_Provider_Order.Get_Pref, On => ';');
+            Vals : String_List_Access :=
+              GNATCOLL.Utils.Split (Pref_Provider_Order.Get_Pref, On => ';');
 
             --  leave space for providers not part of the preference
-            Rank : Positive := 2;
-            P    : Positive;
+            Rank     : Positive := 2;
+            P        : Positive;
             Provider : Search_Provider_Access;
-            Enabled : Boolean;
+            Enabled  : Boolean;
 
             Unset : constant Positive := Positive'Last / 2;
             --  To find out which provides were not specified in the
@@ -1031,16 +1038,17 @@ package body GPS.Search.GUI is
                Provider := Module.Registry.Get (P);
                exit when Provider = null;
                Provider.Rank :=
-                  Unset + Positive'Min (Provider.Rank, Positive'Last / 2);
+                 Unset + Positive'Min (Provider.Rank, Positive'Last / 2);
                P := P + 1;
             end loop;
 
             --  Then set the new values
 
             for V in Vals'Range loop
-               if Vals (V)(Vals (V)'First) = '-' then
-                  Provider := Module.Registry.Get (Vals (V)
-                                   (Vals (V)'First + 1 .. Vals (V)'Last));
+               if Vals (V) (Vals (V)'First) = '-' then
+                  Provider :=
+                    Module.Registry.Get
+                      (Vals (V) (Vals (V)'First + 1 .. Vals (V)'Last));
                   Enabled := False;
                else
                   Provider := Module.Registry.Get (Vals (V).all);
@@ -1081,12 +1089,11 @@ package body GPS.Search.GUI is
 
    function Create_Search_Instance
      (Script   : not null access Scripting_Language_Record'Class;
-      Provider : access Search_Provider'Class)
-      return Class_Instance
+      Provider : access Search_Provider'Class) return Class_Instance
    is
       Search_Class : constant Class_Type :=
         New_Class (Get_Kernel (Script), "Search");
-      Inst : Class_Instance;
+      Inst         : Class_Instance;
    begin
       if Provider = null then
          return No_Class_Instance;
@@ -1101,10 +1108,10 @@ package body GPS.Search.GUI is
 
       Inst := New_Instance (Script, Search_Class);
       Set_Data
-        (Inst, "Search",
+        (Inst,
+         "Search",
          Provider_Property_Record'
-           (Provider => Search_Provider_Access (Provider),
-            Pattern  => null));
+           (Provider => Search_Provider_Access (Provider), Pattern => null));
       return Inst;
    end Create_Search_Instance;
 
@@ -1113,12 +1120,11 @@ package body GPS.Search.GUI is
    -----------------------------------
 
    function Create_Search_Result_Instance
-     (Script   : not null access Scripting_Language_Record'Class;
-      Result   : Search_Result_Access)
-      return Class_Instance
+     (Script : not null access Scripting_Language_Record'Class;
+      Result : Search_Result_Access) return Class_Instance
    is
       Result_Class : Class_Type;
-      Inst : Class_Instance := No_Class_Instance;
+      Inst         : Class_Instance := No_Class_Instance;
    begin
       if Result /= null then
          if Result.all in Python_Search_Result'Class then
@@ -1146,17 +1152,17 @@ package body GPS.Search.GUI is
    -------------------------
 
    function Get_Search_Provider
-     (Data : Callback_Data'Class; Num : Positive)
-      return Search_Provider_Access
+     (Data : Callback_Data'Class; Num : Positive) return Search_Provider_Access
    is
       Search_Class : constant Class_Type :=
         New_Class (Get_Kernel (Data), "Search");
-      Inst : constant Class_Instance := Nth_Arg (Data, Num, Search_Class);
-      Props : Provider_Property;
+      Inst         : constant Class_Instance :=
+        Nth_Arg (Data, Num, Search_Class);
+      Props        : Provider_Property;
    begin
       if Inst /= No_Class_Instance then
-         Props := Provider_Property
-           (Instance_Property'(Get_Data (Inst, "Search")));
+         Props :=
+           Provider_Property (Instance_Property'(Get_Data (Inst, "Search")));
          if Props /= null then
             return Props.Provider;
          end if;
@@ -1169,37 +1175,39 @@ package body GPS.Search.GUI is
    -----------------------
 
    function Get_Search_Result
-     (Data : Callback_Data'Class; Num : Positive)
-      return Result_Property
+     (Data : Callback_Data'Class; Num : Positive) return Result_Property
    is
       Result_Class : constant Class_Type :=
         New_Class (Get_Kernel (Data), "Search_Result");
-      Inst : constant Class_Instance :=
+      Inst         : constant Class_Instance :=
         Nth_Arg (Data, Num, Result_Class, Allow_Null => True);
-      Props : Result_Property;
+      Props        : Result_Property;
    begin
       if Inst /= No_Class_Instance then
-         Props := Result_Property
-           (Instance_Property'(Get_Data (Inst, "Search_Result")));
+         Props :=
+           Result_Property
+             (Instance_Property'(Get_Data (Inst, "Search_Result")));
 
          if Props = null then
             Set_Data
               (Inst, "Search_Result", Result_Property_Record'(Result => null));
-            Props := Result_Property
-              (Instance_Property'(Get_Data (Inst, "Search_Result")));
+            Props :=
+              Result_Property
+                (Instance_Property'(Get_Data (Inst, "Search_Result")));
          end if;
 
          if Props.Result = null then
             --  Always ensure we create a proper search result for Ada.
 
-            Props.Result := new Python_Search_Result'
-              (Kernel   => Get_Kernel (Data),
-               Inst     => Null_Instance_List,
-               Score    => 100,
-               Short    => new String'(""),
-               Long     => null,
-               Id       => <>,
-               Provider => null);
+            Props.Result :=
+              new Python_Search_Result'
+                (Kernel   => Get_Kernel (Data),
+                 Inst     => Null_Instance_List,
+                 Score    => 100,
+                 Short    => new String'(""),
+                 Long     => null,
+                 Id       => <>,
+                 Provider => null);
             --  Provider is set in the handler for "next", before returning
             --  the type to Ada.
 
@@ -1222,12 +1230,13 @@ package body GPS.Search.GUI is
    is
       Search_Class : constant Class_Type :=
         New_Class (Get_Kernel (Data), "Search");
-      Inst : constant Class_Instance := Nth_Arg (Data, Num, Search_Class);
-      Props : Provider_Property;
+      Inst         : constant Class_Instance :=
+        Nth_Arg (Data, Num, Search_Class);
+      Props        : Provider_Property;
    begin
       if Inst /= No_Class_Instance then
-         Props := Provider_Property
-           (Instance_Property'(Get_Data (Inst, "Search")));
+         Props :=
+           Provider_Property (Instance_Property'(Get_Data (Inst, "Search")));
          if Props /= null then
             if Props.Pattern /= null then
                Free (Props.Pattern);
@@ -1242,7 +1251,8 @@ package body GPS.Search.GUI is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Prop : in out Provider_Property_Record) is
+   overriding
+   procedure Destroy (Prop : in out Provider_Property_Record) is
    begin
       Trace (Me, "Freeing search_pattern");
       if Prop.Pattern /= null then
@@ -1254,7 +1264,8 @@ package body GPS.Search.GUI is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Prop : in out Result_Property_Record) is
+   overriding
+   procedure Destroy (Prop : in out Result_Property_Record) is
       Res : Search_Result_Access := Prop.Result;
    begin
       if Res /= null then
@@ -1262,8 +1273,9 @@ package body GPS.Search.GUI is
          --  again call this function. So make this procedure reentrant.
          Prop.Result := null;
 
-         Trace (Me, "Freeing search_result "
-                & System.Address_Image (Res.all'Address));
+         Trace
+           (Me,
+            "Freeing search_result " & System.Address_Image (Res.all'Address));
          Free (Res);
       end if;
    end Destroy;
@@ -1273,9 +1285,7 @@ package body GPS.Search.GUI is
    -----------------------------
 
    procedure Search_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Use GPS.Search.lookup to create instances");
@@ -1284,10 +1294,10 @@ package body GPS.Search.GUI is
          declare
             Provider : constant Search_Provider_Access :=
               Get_Search_Provider (Data, 1);
-            Pattern : constant String := Nth_Arg (Data, 2);
-            Flag    : constant Flags := Flags (Nth_Arg (Data, 3, 0));
-            Kind    : Search_Kind := Full_Text;
-            P : Search_Pattern_Access;
+            Pattern  : constant String := Nth_Arg (Data, 2);
+            Flag     : constant Flags := Flags (Nth_Arg (Data, 3, 0));
+            Kind     : Search_Kind := Full_Text;
+            P        : Search_Pattern_Access;
          begin
             if (Flag and Fuzzy) /= 0 then
                Kind := GPS.Search.Fuzzy;
@@ -1298,11 +1308,12 @@ package body GPS.Search.GUI is
             end if;
 
             if Provider /= null then
-               P := Build
-                 (Pattern        => Pattern,
-                  Case_Sensitive => (Flag and Case_Sensitive) /= 0,
-                  Whole_Word     => (Flag and Whole_Word) /= 0,
-                  Kind           => Kind);
+               P :=
+                 Build
+                   (Pattern        => Pattern,
+                    Case_Sensitive => (Flag and Case_Sensitive) /= 0,
+                    Whole_Word     => (Flag and Whole_Word) /= 0,
+                    Kind           => Kind);
                Set_Search_Pattern (Data, 1, P);
                Provider.Set_Pattern (P);
             end if;
@@ -1342,7 +1353,7 @@ package body GPS.Search.GUI is
          declare
             Name     : constant String := Nth_Arg (Data, 1);
             Provider : constant Search_Provider_Access :=
-                         Module.Registry.Get (Name);
+              Module.Registry.Get (Name);
          begin
             if Provider /= null then
                Set_Return_Value
@@ -1362,9 +1373,9 @@ package body GPS.Search.GUI is
 
       elsif Command = "register" then
          declare
-            Name : constant String := Nth_Arg (Data, 1);
-            Inst : constant Class_Instance := Nth_Arg (Data, 2);
-            Rank : constant Integer := Data.Nth_Arg (3, -1);
+            Name     : constant String := Nth_Arg (Data, 1);
+            Inst     : constant Class_Instance := Nth_Arg (Data, 2);
+            Rank     : constant Integer := Data.Nth_Arg (3, -1);
             Provider : Python_Search_Provider_Access;
          begin
             Provider := new Python_Search_Provider;
@@ -1384,17 +1395,14 @@ package body GPS.Search.GUI is
    ------------------------------------
 
    procedure Search_Result_Commands_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Should be used as an iterator");
 
       elsif Command = "show" then
          declare
-            Result : constant Result_Property :=
-              Get_Search_Result (Data, 1);
+            Result : constant Result_Property := Get_Search_Result (Data, 1);
          begin
             if Result /= null then
                Result.Result.Execute (Give_Focus => True);
@@ -1403,12 +1411,9 @@ package body GPS.Search.GUI is
 
       elsif Command = "short" then
          declare
-            Result : constant Result_Property :=
-              Get_Search_Result (Data, 1);
+            Result : constant Result_Property := Get_Search_Result (Data, 1);
          begin
-            if Result /= null
-              and then Result.Result.Short /= null
-            then
+            if Result /= null and then Result.Result.Short /= null then
                Set_Return_Value (Data, Result.Result.Short.all);
             else
                Set_Return_Value (Data, String'(""));
@@ -1417,12 +1422,9 @@ package body GPS.Search.GUI is
 
       elsif Command = "long" then
          declare
-            Result : constant Result_Property :=
-              Get_Search_Result (Data, 1);
+            Result : constant Result_Property := Get_Search_Result (Data, 1);
          begin
-            if Result /= null
-              and then Result.Result.Long /= null
-            then
+            if Result /= null and then Result.Result.Long /= null then
                Set_Return_Value (Data, Result.Result.Long.all);
             else
                Set_Return_Value (Data, String'(""));
@@ -1436,14 +1438,11 @@ package body GPS.Search.GUI is
    ---------------------------
 
    procedure Search_Result_Setters
-     (Data    : in out Callback_Data'Class;
-      Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "short" then
          declare
-            Result : constant Result_Property :=
-              Get_Search_Result (Data, 1);
+            Result : constant Result_Property := Get_Search_Result (Data, 1);
          begin
             if Result.Result.Short /= Result.Result.Long then
                Free (Result.Result.Short);
@@ -1454,8 +1453,7 @@ package body GPS.Search.GUI is
 
       elsif Command = "long" then
          declare
-            Result : constant Result_Property :=
-              Get_Search_Result (Data, 1);
+            Result : constant Result_Property := Get_Search_Result (Data, 1);
          begin
             if Result.Result.Short /= Result.Result.Long then
                Free (Result.Result.Long);
@@ -1470,7 +1468,8 @@ package body GPS.Search.GUI is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Python_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Python_Search_Provider) is
    begin
       Free (Self.Name);
    end Free;
@@ -1479,7 +1478,8 @@ package body GPS.Search.GUI is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Python_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -1488,27 +1488,28 @@ package body GPS.Search.GUI is
 
       Curs   : Inst_Cursor := First (Self.Inst);
       Inst   : Class_Instance;
-      Result : Class_Instance with Unreferenced;
+      Result : Class_Instance
+      with Unreferenced;
 
    begin
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);
          declare
-            Sub  : Subprogram_Type :=
-              Get_Method (Inst, "set_pattern");
-            Args : Callback_Data'Class :=
-              Create (Get_Script (Inst), 2);
+            Sub  : Subprogram_Type := Get_Method (Inst, "set_pattern");
+            Args : Callback_Data'Class := Create (Get_Script (Inst), 2);
             P    : Flags := 0;
          begin
             Set_Nth_Arg (Args, 1, Pattern.Get_Text);
 
             case Pattern.Get_Kind is
-            when GPS.Search.Full_Text =>
-               P := P or Flags'(Substrings);
-            when GPS.Search.Regexp =>
-               P := P or Flags'(Regexp);
-            when GPS.Search.Fuzzy | GPS.Search.Approximate =>
-               P := P or Flags'(Fuzzy);
+               when GPS.Search.Full_Text                      =>
+                  P := P or Flags'(Substrings);
+
+               when GPS.Search.Regexp                         =>
+                  P := P or Flags'(Regexp);
+
+               when GPS.Search.Fuzzy | GPS.Search.Approximate =>
+                  P := P or Flags'(Fuzzy);
             end case;
 
             if Pattern.Get_Case_Sensitive then
@@ -1534,7 +1535,8 @@ package body GPS.Search.GUI is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Python_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
@@ -1543,13 +1545,13 @@ package body GPS.Search.GUI is
       Inst : Class_Instance;
       R    : Result_Property;
    begin
-      Result   := null;
+      Result := null;
       Has_Next := False;
 
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);
          declare
-            Sub : Subprogram_Type := Get_Method (Inst, "get");
+            Sub  : Subprogram_Type := Get_Method (Inst, "get");
             Args : Callback_Data'Class := Create (Get_Script (Inst), 0);
             List : List_Instance'Class := Execute (Sub, Args);
          begin
@@ -1580,9 +1582,9 @@ package body GPS.Search.GUI is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self : not null access Python_Search_Result;
-      Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Python_Search_Result; Give_Focus : Boolean)
    is
       pragma Unreferenced (Give_Focus);
       Curs : Inst_Cursor := First (Self.Inst);
@@ -1594,8 +1596,7 @@ package body GPS.Search.GUI is
          Sub := Get_Method (Inst, "show");
          if Sub /= null then
             declare
-               Args : Callback_Data'Class :=
-                 Create (Get_Script (Inst), 0);
+               Args : Callback_Data'Class := Create (Get_Script (Inst), 0);
                B    : constant Boolean := Execute (Sub, Args);
                pragma Unreferenced (B);
             begin
@@ -1611,15 +1612,17 @@ package body GPS.Search.GUI is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Python_Search_Result) is
-      Curs : Inst_Cursor := First (Self.Inst);
-      Inst : Class_Instance;
-      Result    : Result_Property;
+   overriding
+   procedure Free (Self : in out Python_Search_Result) is
+      Curs   : Inst_Cursor := First (Self.Inst);
+      Inst   : Class_Instance;
+      Result : Result_Property;
    begin
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);
-         Result := Result_Property
-           (Instance_Property'(Get_Data (Inst, "Search_Result")));
+         Result :=
+           Result_Property
+             (Instance_Property'(Get_Data (Inst, "Search_Result")));
 
          if Result /= null then
             Result.Result := null;
@@ -1636,24 +1639,22 @@ package body GPS.Search.GUI is
    ---------------------
 
    procedure Register_Module
-      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Overall : constant Overall_Search_Provider_Access :=
-         new Overall_Search_Provider;
-      Align   : Gtk_Alignment;
-      Vbox    : Gtk_Vbox;
-      Command : Global_Search_Command_Access;
-      P       : Kernel_Search_Provider_Access;
-      Search_Class : constant Class_Type :=
+      Overall             : constant Overall_Search_Provider_Access :=
+        new Overall_Search_Provider;
+      Align               : Gtk_Alignment;
+      Vbox                : Gtk_Vbox;
+      Command             : Global_Search_Command_Access;
+      P                   : Kernel_Search_Provider_Access;
+      Search_Class        : constant Class_Type :=
         New_Class (Kernel.Scripts, "Search");
       Search_Result_Class : constant Class_Type :=
         New_Class (Kernel.Scripts, "Search_Result");
 
    begin
       Register_Module
-         (Module      => Module,
-          Kernel      => Kernel,
-          Module_Name => "Global_Search");
+        (Module => Module, Kernel => Kernel, Module_Name => "Global_Search");
 
       Overall.Kernel := Kernel_Handle (Kernel);
       Overall.Registry := Module.Registry;
@@ -1665,40 +1666,51 @@ package body GPS.Search.GUI is
       Register_Action
         (Kernel       => Kernel,
          Name         => "Global Search",
-         Command      =>
-           Interactive_Command_Access (Command),
+         Command      => Interactive_Command_Access (Command),
          Description  =>
            "Activate the global search field in the main toolbar",
          Category     => "Search",
          For_Learning => True);
 
-      Pref_Proposals_Per_Provider := Create
-        (Get_Preferences (Kernel),
-         Name    => "Proposals_Per_Context",
-         Label   => "Number of proposals",
-         Path    => ":Omnisearch",
-         Doc     => "Number of proposals per context in the global search",
-         Minimum => 2,
-         Maximum => 20,
-         Default => 5);
+      Pref_Proposals_Per_Provider :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "Proposals_Per_Context",
+           Label   => "Number of proposals",
+           Path    => ":Omnisearch",
+           Doc     => "Number of proposals per context in the global search",
+           Minimum => 2,
+           Maximum => 20,
+           Default => 5);
 
-      Pref_Provider_Order := Create
-        (Get_Preferences (Kernel),
-         Name    => "Providers_Order",
-         Label   => "Search contexts order",
-         Path    => ":Omnisearch",
-         Doc     => "Order in which the search contexts are displayed in the"
-         & " global search",
-         Default =>
-           Provider_Opened_Win & ";"
-           & Provider_Filenames & ";"
-           & Provider_Entities & ";"
-           & Provider_Actions & ";"
-           & Provider_Builds & ";"
-           & Provider_Preferences & ";"
-           & Provider_Bookmarks & ";"
-           & Provider_Sources & ";"
-           & Provider_Plugins & ";");
+      Pref_Provider_Order :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "Providers_Order",
+           Label   => "Search contexts order",
+           Path    => ":Omnisearch",
+           Doc     =>
+             "Order in which the search contexts are displayed in the"
+             & " global search",
+           Default =>
+             Provider_Opened_Win
+             & ";"
+             & Provider_Filenames
+             & ";"
+             & Provider_Entities
+             & ";"
+             & Provider_Actions
+             & ";"
+             & Provider_Builds
+             & ";"
+             & Provider_Preferences
+             & ";"
+             & Provider_Bookmarks
+             & ";"
+             & Provider_Sources
+             & ";"
+             & Provider_Plugins
+             & ";");
 
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all,
@@ -1707,7 +1719,7 @@ package body GPS.Search.GUI is
 
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       Register_Provider_And_Action
-        (Kernel, P, Icon_Name  => "gps-open-file-symbolic");
+        (Kernel, P, Icon_Name => "gps-open-file-symbolic");
 
       P := new GPS.Kernel.Search.Actions.Actions_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
@@ -1733,12 +1745,12 @@ package body GPS.Search.GUI is
         (Align, Expand => False);
 
       Gtk_New
-         (Module.Search,
-          Kernel              => Kernel,
-          Name                => "global_search",
-          Completion_In_Popup => True,
-          Case_Sensitive      => False,
-          Completion          => Module.Default_Command.Provider);
+        (Module.Search,
+         Kernel              => Kernel,
+         Name                => "global_search",
+         Completion_In_Popup => True,
+         Case_Sensitive      => False,
+         Completion          => Module.Default_Command.Provider);
       Module.Search.Set_Name ("global-search");
 
       Gtk_New_Vbox (Vbox);
@@ -1755,62 +1767,74 @@ package body GPS.Search.GUI is
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
       Register_Command
-        (Kernel.Scripts, Constructor_Method,
+        (Kernel.Scripts,
+         Constructor_Method,
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "set_pattern",
-         Params  => (1 => Param ("pattern"),
-                     2 => Param ("flags", Optional => True)),
+        (Kernel.Scripts,
+         "set_pattern",
+         Params  =>
+           (1 => Param ("pattern"), 2 => Param ("flags", Optional => True)),
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "is_result_ready",
+        (Kernel.Scripts,
+         "is_result_ready",
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "get",
+        (Kernel.Scripts,
+         "get",
          Class   => Search_Class,
          Handler => Search_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "lookup",
+        (Kernel.Scripts,
+         "lookup",
          Params        => (1 => Param ("name")),
          Static_Method => True,
          Class         => Search_Class,
          Handler       => Search_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "set_active",
+        (Kernel.Scripts,
+         "set_active",
          Params        => (1 => Param ("value")),
          Static_Method => False,
          Class         => Search_Class,
          Handler       => Search_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "register",
-         Params        => (1 => Param ("name"),
-                           2 => Param ("provider"),
-                           3 => Param ("rank", Optional => True)),
+        (Kernel.Scripts,
+         "register",
+         Params        =>
+           (1 => Param ("name"),
+            2 => Param ("provider"),
+            3 => Param ("rank", Optional => True)),
          Static_Method => True,
          Class         => Search_Class,
          Handler       => Search_Commands_Handler'Access);
 
       Register_Command
-        (Kernel.Scripts, Constructor_Method,
+        (Kernel.Scripts,
+         Constructor_Method,
          Class   => Search_Result_Class,
          Handler => Search_Result_Commands_Handler'Access);
       Register_Command
-        (Kernel.Scripts, "show",
+        (Kernel.Scripts,
+         "show",
          Class   => Search_Result_Class,
          Handler => Search_Result_Commands_Handler'Access);
       Register_Property
-        (Kernel.Scripts, "short",
-          Class   => Search_Result_Class,
-          Getter  => Search_Result_Commands_Handler'Access,
-          Setter  => Search_Result_Setters'Access);
+        (Kernel.Scripts,
+         "short",
+         Class  => Search_Result_Class,
+         Getter => Search_Result_Commands_Handler'Access,
+         Setter => Search_Result_Setters'Access);
       Register_Property
-        (Kernel.Scripts, "long",
-          Class   => Search_Result_Class,
-          Getter  => Search_Result_Commands_Handler'Access,
-          Setter  => Search_Result_Setters'Access);
+        (Kernel.Scripts,
+         "long",
+         Class  => Search_Result_Class,
+         Getter => Search_Result_Commands_Handler'Access,
+         Setter => Search_Result_Setters'Access);
    end Register_Module;
 
 end GPS.Search.GUI;

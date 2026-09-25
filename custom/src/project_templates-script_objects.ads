@@ -23,19 +23,19 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.Python;       use GNATCOLL.Python;
-with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.Python;  use GNATCOLL.Python;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
-with Gtk.Assistant;         use Gtk.Assistant;
-with Glib;                  use Glib;
+with Gtk.Assistant; use Gtk.Assistant;
+with Glib;          use Glib;
 
-with GPS.Core_Kernels;      use GPS.Core_Kernels;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package Project_Templates.Script_Objects is
 
    function TUS (Str : String) return Ada.Strings.Unbounded.Unbounded_String
-      renames Ada.Strings.Unbounded.To_Unbounded_String;
+   renames Ada.Strings.Unbounded.To_Unbounded_String;
 
    type Script_Object is tagged record
       Object     : PyObject := Py_None;
@@ -46,33 +46,29 @@ package Project_Templates.Script_Objects is
    end record;
 
    procedure Build_Python_Object
-      (Self          : in out Script_Object;
-       Python_Script : Virtual_File;
-       Kernel        : not null Core_Kernel);
+     (Self          : in out Script_Object;
+      Python_Script : Virtual_File;
+      Kernel        : not null Core_Kernel);
    --  Builds the PyObject used to access 'get_pages' and 'on_apply' methods.
    --  Sets the scripting language used internally.
 
-   function Add_Pages (Self      : in out Script_Object;
-                       Assistant : in out Gtk_Assistant) return Gint
-      with Pre => Self.Object /= Py_None and then Self.Language /= null;
+   function Add_Pages
+     (Self : in out Script_Object; Assistant : in out Gtk_Assistant)
+      return Gint
+   with Pre => Self.Object /= Py_None and then Self.Language /= null;
    --  Returns zero if no page were added or if the object doesn't have a
    --  'get_pages' method.
 
    procedure Apply (Self : in out Script_Object)
-      with Pre => Self.Object /= Py_None and then Self.Language /= null;
+   with Pre => Self.Object /= Py_None and then Self.Language /= null;
    --  Calls the 'on_apply' method of the internal PyObject.
 
    function Has_Method
-      (Self        : in out Script_Object;
-       Method_Name : String) return Boolean
-      with Pre => Self.Object /= Py_None and then Self.Language /= null;
+     (Self : in out Script_Object; Method_Name : String) return Boolean
+   with Pre => Self.Object /= Py_None and then Self.Language /= null;
    --  Checks that the underlying PyObject has a method with a certain name.
 
    Null_Script_Object : constant Script_Object :=
-   (Py_None,
-    null,
-    TUS ("get_pages"),
-    TUS ("on_apply"),
-    TUS ("get_object"));
+     (Py_None, null, TUS ("get_pages"), TUS ("on_apply"), TUS ("get_object"));
 
 end Project_Templates.Script_Objects;

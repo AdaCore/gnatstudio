@@ -26,7 +26,8 @@ package body CodePeer.Bridge.Annotations_Readers is
    -- End_Element --
    -----------------
 
-   overriding procedure End_Element
+   overriding
+   procedure End_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
@@ -49,9 +50,10 @@ package body CodePeer.Bridge.Annotations_Readers is
       Annotation_Categories : Annotation_Category_Maps.Map;
       File                  : in out Code_Analysis.File'Class)
    is
-      procedure Free is
-        new Ada.Unchecked_Deallocation
-          (Abstract_Annotations_Reader'Class, Annotations_Reader_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation
+          (Abstract_Annotations_Reader'Class,
+           Annotations_Reader_Access);
 
    begin
       case Format is
@@ -60,7 +62,7 @@ package body CodePeer.Bridge.Annotations_Readers is
               CodePeer.Bridge.Annotations_Readers.V4_5.Create_Reader
                 (Annotation_Categories, File'Unchecked_Access);
 
-         when 6 =>
+         when 6      =>
             Self.Reader :=
               CodePeer.Bridge.Annotations_Readers.V6.Create_Reader
                 (Annotation_Categories, File'Unchecked_Access);
@@ -74,7 +76,8 @@ package body CodePeer.Bridge.Annotations_Readers is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;

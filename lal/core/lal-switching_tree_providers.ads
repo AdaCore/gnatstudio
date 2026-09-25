@@ -21,7 +21,7 @@
 with GNATCOLL.VFS;
 
 with LAL.Semantic_Trees;
-with Language.Abstract_Language_Tree;   use Language.Abstract_Language_Tree;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package LAL.Switching_Tree_Providers is
 
@@ -29,7 +29,8 @@ package LAL.Switching_Tree_Providers is
       Nested : LAL.Semantic_Trees.Provider;
    end record;
 
-   overriding function Get_Tree_For_File
+   overriding
+   function Get_Tree_For_File
      (Self    : in out Provider;
       Context : String;
       File    : GNATCOLL.VFS.Virtual_File) return Semantic_Tree'Class;

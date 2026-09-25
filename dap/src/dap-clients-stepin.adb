@@ -26,8 +26,7 @@ package body DAP.Clients.StepIn is
    function Create
      (Kernel      : not null Kernel_Handle;
       Thread_Id   : Integer;
-      Instruction : Boolean)
-      return Step_In_Request_Access
+      Instruction : Boolean) return Step_In_Request_Access
    is
       Self : constant Step_In_Request_Access := new Step_In_Request (Kernel);
    begin
@@ -44,7 +43,8 @@ package body DAP.Clients.StepIn is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Step_In_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.StepInResponse;

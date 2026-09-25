@@ -52,8 +52,8 @@ package body GPS.Customizable_Modules is
          Current := Abstract_Module_List.First (List);
          while Has_Element (Current) loop
             Customizable_Module_Record'Class
-              (Abstract_Module_List.Element (Current).all).Customize
-                (File, Tmp, Level);
+              (Abstract_Module_List.Element (Current).all)
+              .Customize (File, Tmp, Level);
 
             Current := Abstract_Module_List.Next (Current);
          end loop;

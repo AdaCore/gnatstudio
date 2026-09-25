@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GPS.Editors;            use GPS.Editors;
-with GPS.Kernel;             use GPS.Kernel;
+with GPS.Editors; use GPS.Editors;
+with GPS.Kernel;  use GPS.Kernel;
 with GNATCOLL.VFS;
 
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Codefix.Text_Manager; use Codefix.Text_Manager;
 
 package Codefix.GPS_Io is
 
@@ -31,14 +31,14 @@ package Codefix.GPS_Io is
 
    overriding
    function Get_New_Mark
-     (Current_Text : Console_Interface;
-      Cursor       : File_Cursor'Class) return Mark_Abstr'Class;
+     (Current_Text : Console_Interface; Cursor : File_Cursor'Class)
+      return Mark_Abstr'Class;
    --  Create a new mark at the position specified by the cursor.
 
    overriding
    function Get_Current_Cursor
-     (Current_Text : Console_Interface;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class;
+     (Current_Text : Console_Interface; Mark : Mark_Abstr'Class)
+      return File_Cursor'Class;
    --  Return the current position of the mark.
 
    overriding
@@ -47,16 +47,14 @@ package Codefix.GPS_Io is
 
    overriding
    function Get
-     (This   : Console_Interface;
-      Cursor : Text_Cursor'Class;
-      Len    : Natural) return String;
+     (This : Console_Interface; Cursor : Text_Cursor'Class; Len : Natural)
+      return String;
    --  Get Len characters from the file and the position specified by the
    --  cursor.
 
    overriding
    function Get
-     (This   : Console_Interface;
-      Cursor : Text_Cursor'Class) return Character;
+     (This : Console_Interface; Cursor : Text_Cursor'Class) return Character;
    --  Get the character from the file and the position specified by the
    --  cursor.
 
@@ -96,24 +94,21 @@ package Codefix.GPS_Io is
 
    overriding
    procedure Delete_Line
-     (This : in out Console_Interface;
-      Cursor : Text_Cursor'Class);
+     (This : in out Console_Interface; Cursor : Text_Cursor'Class);
    --  Delete the line where the cursor is.
 
    overriding
    procedure Indent_Line
-     (This   : in out Console_Interface;
-      Cursor : Text_Cursor'Class);
+     (This : in out Console_Interface; Cursor : Text_Cursor'Class);
    --  Indent the line pointed by the cursor.
 
    overriding
    procedure Initialize
-     (This : in out Console_Interface;
-      Path : GNATCOLL.VFS.Virtual_File);
+     (This : in out Console_Interface; Path : GNATCOLL.VFS.Virtual_File);
    --  Initialize the structure of the Console_Interface. Actually do noting.
 
-   overriding function Read_File
-     (This : Console_Interface) return Unbounded_String;
+   overriding
+   function Read_File (This : Console_Interface) return Unbounded_String;
    --  Get the entire file
 
    overriding

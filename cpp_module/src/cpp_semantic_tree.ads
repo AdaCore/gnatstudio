@@ -25,8 +25,7 @@ with Language;        use Language;
 package Cpp_Semantic_Tree is
 
    pragma Suppress (Container_Checks);
-   package Token_List is
-     new Ada.Containers.Vectors (Positive, Token_Record);
+   package Token_List is new Ada.Containers.Vectors (Positive, Token_Record);
 
    type Parsed_Expression is record
       Tokens : Token_List.Vector;
@@ -40,8 +39,7 @@ package Cpp_Semantic_Tree is
    function Parse_Expression_Backward
      (Buffer       : access constant Glib.UTF8_String;
       Start_Offset : String_Index_Type;
-      End_Offset   : String_Index_Type := 0)
-      return Parsed_Expression;
+      End_Offset   : String_Index_Type := 0) return Parsed_Expression;
    --  Parse backwards the Buffer containing source C/C++ code. Start_Offset
    --  and End_Offset are offsets (in bytes) specifying the source to parse.
    --  Buffer must have a lifetime superior or equal to the resulting parser

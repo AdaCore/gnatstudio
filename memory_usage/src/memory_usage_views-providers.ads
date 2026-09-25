@@ -62,7 +62,7 @@ private package Memory_Usage_Views.Providers is
 
    function Is_Enabled
      (Self : not null access Memory_Usage_Provider_Type) return Boolean
-      is abstract;
+   is abstract;
    --  Return True if the given memory usage provider is enabled and False
    --  otherwise.
    --
@@ -71,7 +71,8 @@ private package Memory_Usage_Views.Providers is
 
    procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Memory_Usage_Provider_Type;
-      Visitor : Provider_Task_Visitor) is abstract;
+      Visitor : Provider_Task_Visitor)
+   is abstract;
    --  Ask the given memory usage provider to fetch the memory usage data
 
    ------------

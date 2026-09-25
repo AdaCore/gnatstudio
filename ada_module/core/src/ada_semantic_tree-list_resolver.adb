@@ -41,13 +41,12 @@ package body Ada_Semantic_Tree.List_Resolver is
    -- Get_Construct --
    -------------------
 
-   overriding function Get_Construct
-     (Param : Formal_Parameter)
-      return access Simple_Construct_Information
-   is
+   overriding
+   function Get_Construct
+     (Param : Formal_Parameter) return access Simple_Construct_Information is
    begin
-      return Get_Construct
-        (To_Construct_Tree_Iterator (Entity_Access (Param)));
+      return
+        Get_Construct (To_Construct_Tree_Iterator (Entity_Access (Param)));
    end Get_Construct;
 
    --------------
@@ -74,8 +73,10 @@ package body Ada_Semantic_Tree.List_Resolver is
    ----------
 
    procedure Free (This : in out List_Profile_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
-        (List_Profile, List_Profile_Access);
+      procedure Internal is new
+        Standard.Ada.Unchecked_Deallocation
+          (List_Profile,
+           List_Profile_Access);
    begin
       Internal (This);
    end Free;
@@ -85,18 +86,19 @@ package body Ada_Semantic_Tree.List_Resolver is
    ----------------------------
 
    function Is_Entity_With_Profile
-     (Entity       : Entity_Access;
-      Visible_From : Visibility_Context) return Boolean
+     (Entity : Entity_Access; Visible_From : Visibility_Context) return Boolean
    is
       Used_Entity : Entity_Access;
    begin
       if Get_Construct (Entity).Category in Subprogram_Category then
          return True;
       else
-         Used_Entity := Get_Last_Visible_Declaration
-           (Entity, Visible_From.File, Visible_From.Offset);
+         Used_Entity :=
+           Get_Last_Visible_Declaration
+             (Entity, Visible_From.File, Visible_From.Offset);
 
-         return Get_Construct (Used_Entity).Category in Type_Category
+         return
+           Get_Construct (Used_Entity).Category in Type_Category
            or else Get_Construct (Used_Entity).Attributes (Array_Attribute);
       end if;
    end Is_Entity_With_Profile;
@@ -108,8 +110,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    function Get_List_Profile
      (Entity       : Entity_Access;
       Visible_From : Visibility_Context;
-      Kind         : Profile_Kind := Regular_Profile)
-      return List_Profile
+      Kind         : Profile_Kind := Regular_Profile) return List_Profile
    is
       function Compute_Entity_To_Analyse return Entity_Access;
 
@@ -119,8 +120,9 @@ package body Ada_Semantic_Tree.List_Resolver is
             --  In the case of types, we only consider the most visible view
             --  in order to take into account possibly hidden fileds.
 
-            return Get_Last_Visible_Declaration
-              (Entity, Visible_From.File, Visible_From.Offset);
+            return
+              Get_Last_Visible_Declaration
+                (Entity, Visible_From.File, Visible_From.Offset);
          else
             --  For other entities, the body is not visible, so consider only
             --  the given declaration
@@ -153,8 +155,8 @@ package body Ada_Semantic_Tree.List_Resolver is
                   --  parameters.
                   null;
                elsif Get_Construct (It).Category = Cat_Parameter then
-                  Result_Array (Index) := To_Entity_Access
-                    (Get_File (Used_Entity), It);
+                  Result_Array (Index) :=
+                    To_Entity_Access (Get_File (Used_Entity), It);
                   Index := Index + 1;
                else
                   exit;
@@ -167,8 +169,8 @@ package body Ada_Semantic_Tree.List_Resolver is
               and then Is_Parent_Scope (Scope, It)
             loop
                if Get_Construct (It).Is_Generic_Spec then
-                  Result_Array (Index) := To_Entity_Access
-                    (Get_File (Used_Entity), It);
+                  Result_Array (Index) :=
+                    To_Entity_Access (Get_File (Used_Entity), It);
                   Index := Index + 1;
                else
                   exit;
@@ -201,8 +203,7 @@ package body Ada_Semantic_Tree.List_Resolver is
             if Ada_Type /= Null_Ada_Type_Access then
                --  This is a tagged type, use the hierarchy information
 
-               Private_Root := First_Private_Parent
-                 (Ada_Type, Visible_From);
+               Private_Root := First_Private_Parent (Ada_Type, Visible_From);
 
                declare
                   Fields : constant Entity_Array :=
@@ -221,9 +222,9 @@ package body Ada_Semantic_Tree.List_Resolver is
                   if Get_Construct (It).Category = Cat_Field
                     or else Get_Construct (It).Category = Cat_Discriminant
                   then
-                     Result_Array (Index) := Get_First_Occurence
-                       (To_Entity_Access
-                          (Get_File (Used_Entity), It));
+                     Result_Array (Index) :=
+                       Get_First_Occurence
+                         (To_Entity_Access (Get_File (Used_Entity), It));
                      Index := Index + 1;
                   end if;
 
@@ -263,9 +264,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    -- Get_Entity --
    ----------------
 
-   function Get_Entity
-     (Profile : List_Profile) return Entity_Access
-   is
+   function Get_Entity (Profile : List_Profile) return Entity_Access is
       pragma Unreferenced (Profile);
    begin
       return Null_Entity_Access;
@@ -284,8 +283,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    -- Get_Aggregate_Parent --
    --------------------------
 
-   function Get_Aggregate_Parent
-     (Params : List_Profile) return Entity_Access
+   function Get_Aggregate_Parent (Params : List_Profile) return Entity_Access
    is
    begin
       return Params.Aggregate_Parent;
@@ -305,8 +303,10 @@ package body Ada_Semantic_Tree.List_Resolver is
    ----------
 
    procedure Free (This : in out Actual_Parameter_Resolver_Access) is
-      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
-        (Actual_Parameter_Resolver, Actual_Parameter_Resolver_Access);
+      procedure Unchecked_Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Actual_Parameter_Resolver,
+           Actual_Parameter_Resolver_Access);
    begin
       if This /= null then
          for J in This.Actual_Params'Range loop
@@ -322,8 +322,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    ---------------
 
    function Deep_Copy
-     (This : Actual_Parameter_Resolver)
-      return Actual_Parameter_Resolver
+     (This : Actual_Parameter_Resolver) return Actual_Parameter_Resolver
    is
       Result : Actual_Parameter_Resolver (This.Length);
    begin
@@ -347,8 +346,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    -----------------------------------
 
    function Get_Actual_Parameter_Resolver
-     (Profile : List_Profile)
-      return Actual_Parameter_Resolver
+     (Profile : List_Profile) return Actual_Parameter_Resolver
    is
       Result : Actual_Parameter_Resolver (Profile.Nb_Params);
    begin
@@ -373,8 +371,8 @@ package body Ada_Semantic_Tree.List_Resolver is
    begin
       Result.Is_Named := False;
 
-      Result.Expression := Parse_Expression_Backward
-        (Buffer, Param_End, Param_Start, True);
+      Result.Expression :=
+        Parse_Expression_Backward (Buffer, Param_End, Param_Start, True);
 
       if Result.Expression.Tokens.Length >= 2 then
          It := First (Result.Expression.Tokens);
@@ -417,18 +415,22 @@ package body Ada_Semantic_Tree.List_Resolver is
       for J in Params.Actual_Params'Range loop
          if Params.Actual_Params (J) = Null_Actual_Parameter then
             if Actual.Is_Named
-              and then Get_Construct
-                (To_Construct_Tree_Iterator
-                     (Params.Profile.Params (J))).Name /= No_Symbol
+              and then
+                Get_Construct
+                  (To_Construct_Tree_Iterator (Params.Profile.Params (J)))
+                  .Name
+                /= No_Symbol
             then
                if Equal
-                 (Get_Name
-                    (Actual.Expression,
-                     Element (Actual.Expression.Tokens.First)),
-                  Get (Get_Construct
-                    (To_Construct_Tree_Iterator
-                       (Params.Profile.Params (J))).Name).all,
-                  False)
+                    (Get_Name
+                       (Actual.Expression,
+                        Element (Actual.Expression.Tokens.First)),
+                     Get
+                       (Get_Construct
+                          (To_Construct_Tree_Iterator
+                             (Params.Profile.Params (J)))
+                          .Name).all,
+                     False)
                then
                   Param_Added := True;
                   Params.Actual_Params (J) := Actual;
@@ -460,7 +462,7 @@ package body Ada_Semantic_Tree.List_Resolver is
       Success    : out Boolean)
    is
       Param_Start, Param_End : String_Index_Type := 0;
-      Paren_Depth : Integer := 0;
+      Paren_Depth            : Integer := 0;
 
       function Callback
         (Entity         : Language_Entity;
@@ -476,7 +478,8 @@ package body Ada_Semantic_Tree.List_Resolver is
       is
          pragma Unreferenced (Entity, Partial_Entity);
 
-         Word : constant String := Buffer (Sloc_Start.Index .. Sloc_End.Index);
+         Word        : constant String :=
+           Buffer (Sloc_Start.Index .. Sloc_End.Index);
          Param_Added : Boolean;
       begin
          if Paren_Depth = 0 then
@@ -492,10 +495,11 @@ package body Ada_Semantic_Tree.List_Resolver is
                if Word = ")" or else Word = "," then
                   Param_End := String_Index_Type (Sloc_End.Index - 1);
 
-                  Actual := Get_Actual_Parameter
-                    (Buffer      => Buffer,
-                     Param_Start => Param_Start,
-                     Param_End   => Param_End);
+                  Actual :=
+                    Get_Actual_Parameter
+                      (Buffer      => Buffer,
+                       Param_Start => Param_Start,
+                       Param_End   => Param_End);
 
                   Append_Actual
                     (Params      => Params,
@@ -550,9 +554,9 @@ package body Ada_Semantic_Tree.List_Resolver is
       else
          for J in Params.Actual_Params'Range loop
             if Params.Actual_Params (J) = Null_Actual_Parameter
-              and then not
-                Get_Construct
-                  (Params.Profile.Params (J)).Attributes (Ada_Assign_Attribute)
+              and then
+                not Get_Construct (Params.Profile.Params (J)).Attributes
+                      (Ada_Assign_Attribute)
             then
                return False;
             end if;
@@ -579,11 +583,11 @@ package body Ada_Semantic_Tree.List_Resolver is
    -------------------------
 
    function Get_Missing_Formals
-     (Params : Actual_Parameter_Resolver)
-      return Formal_Parameter_Array
+     (Params : Actual_Parameter_Resolver) return Formal_Parameter_Array
    is
-      Result : Formal_Parameter_Array
-        (1 .. Params.Profile.Params'Length - Params.Params_Set);
+      Result       :
+        Formal_Parameter_Array
+          (1 .. Params.Profile.Params'Length - Params.Params_Set);
       Result_Index : Integer := 1;
    begin
       for J in Params.Profile.Params'Range loop
@@ -604,12 +608,11 @@ package body Ada_Semantic_Tree.List_Resolver is
    ------------------------------
 
    function Any_Named_Formal_Missing
-     (Params : Actual_Parameter_Resolver) return Boolean
-   is
+     (Params : Actual_Parameter_Resolver) return Boolean is
    begin
       for J in Params.Profile.Params'Range loop
          if Params.Actual_Params (J) = Null_Actual_Parameter
-            and then Params.Profile.Params (J) /= Null_Entity_Access
+           and then Params.Profile.Params (J) /= Null_Entity_Access
          then
             return True;
          end if;
@@ -623,15 +626,14 @@ package body Ada_Semantic_Tree.List_Resolver is
    -------------------------------
 
    function Get_Expression_For_Formal
-     (Params : Actual_Parameter_Resolver;
-      Name   : String) return Parsed_Expression
+     (Params : Actual_Parameter_Resolver; Name : String)
+      return Parsed_Expression
    is
       Lower_Name : constant String := To_Lower (Name);
    begin
       for J in Params.Profile.Params'Range loop
-         if To_Lower
-           (Get (Get_Construct (Params.Profile.Params (J)).Name).all) =
-           Lower_Name
+         if To_Lower (Get (Get_Construct (Params.Profile.Params (J)).Name).all)
+           = Lower_Name
          then
             return Params.Actual_Params (J).Expression;
          end if;

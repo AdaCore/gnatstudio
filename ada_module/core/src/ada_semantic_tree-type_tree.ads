@@ -20,7 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Ada_Semantic_Tree.Units;     use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Units; use Ada_Semantic_Tree.Units;
 with Ada.Containers.Ordered_Sets;
 
 package Ada_Semantic_Tree.Type_Tree is
@@ -77,8 +77,7 @@ package Ada_Semantic_Tree.Type_Tree is
    --  function, otherwise null is returned.
 
    function Get_Entity_Or_Overridden
-     (Primitive : Ada_Primitive_Access)
-      return Entity_Access;
+     (Primitive : Ada_Primitive_Access) return Entity_Access;
    --  Return either the entity pointed by this primitive if it's explicitely
    --  declared, or the closed overridden subprogram. If serveal matches (e.g.
    --  in the case of multiple interfaces inheritence), one is picked up
@@ -96,14 +95,14 @@ package Ada_Semantic_Tree.Type_Tree is
    --  Return the parents of this type
 
    function First_Private_Parent
-     (Ada_Type        : Ada_Type_Access;
-      From_Visibility : Visibility_Context) return Ada_Type_Access;
+     (Ada_Type : Ada_Type_Access; From_Visibility : Visibility_Context)
+      return Ada_Type_Access;
    --  Return the first parent not visible from the current context - null if
    --  the whole hierarchy is visible.
 
    function Get_Fields_From
-     (Ada_Type       : Ada_Type_Access;
-      Starting_After : Ada_Type_Access) return Entity_Array;
+     (Ada_Type : Ada_Type_Access; Starting_After : Ada_Type_Access)
+      return Entity_Array;
    --  Return fields from Ada_Type, ignoring the ones from Starting_After and
    --  its parents (if not null). This is typically usefull when computing
    --  extension aggregates.
@@ -118,7 +117,7 @@ package Ada_Semantic_Tree.Type_Tree is
 private
 
    type Primitive_Subprogram is record
-      Entity                : Entity_Persistent_Access;
+      Entity : Entity_Persistent_Access;
       --  If the primitive is declared or overridden for this type, this holds
       --  the corresponding entity. Otherwise, it's null.
 
@@ -136,35 +135,39 @@ private
 
    type Ada_Primitive_Access is access all Primitive_Subprogram;
 
-   procedure Free is new Standard.Ada.Unchecked_Deallocation
-     (Primitive_Array, Primitive_Array_Access);
+   procedure Free is new
+     Standard.Ada.Unchecked_Deallocation
+       (Primitive_Array,
+        Primitive_Array_Access);
 
    type Timestamped_Entity is record
       Timestamp : Integer;
       Entity    : Entity_Persistent_Access;
    end record;
 
-   type Timestamp_Entity_Array is array
-     (Integer range <>) of Timestamped_Entity;
+   type Timestamp_Entity_Array is
+     array (Integer range <>) of Timestamped_Entity;
 
    type Timestamp_Entity_Array_Access is access all Timestamp_Entity_Array;
 
-   procedure Free is new Standard.Ada.Unchecked_Deallocation
-     (Timestamp_Entity_Array, Timestamp_Entity_Array_Access);
+   procedure Free is new
+     Standard.Ada.Unchecked_Deallocation
+       (Timestamp_Entity_Array,
+        Timestamp_Entity_Array_Access);
 
-   package Entity_Lists_Pck is new Ada.Containers.Ordered_Sets
-     (Entity_Persistent_Access);
+   package Entity_Lists_Pck is new
+     Ada.Containers.Ordered_Sets (Entity_Persistent_Access);
 
    use Entity_Lists_Pck;
 
    type Ada_Type_Record is record
-      Parents                : Timestamp_Entity_Array_Access;
-      Children               : Entity_Lists_Pck.Set;
+      Parents  : Timestamp_Entity_Array_Access;
+      Children : Entity_Lists_Pck.Set;
 
-      Entity                 : Entity_Persistent_Access;
+      Entity : Entity_Persistent_Access;
 
-      Primitives             : Primitive_Array_Access;
-      Dotted_Notation_Sb     : Entity_Persistent_Array_Access;
+      Primitives         : Primitive_Array_Access;
+      Dotted_Notation_Sb : Entity_Persistent_Array_Access;
 
       Enclosing_Unit_Timestamp : Unit_Hierarchy_Timestamp;
       Analysis_Timestamp       : Integer := 0;
@@ -172,8 +175,8 @@ private
 
    type Ada_Type_Access is access all Ada_Type_Record;
 
-   procedure Free is new Standard.Ada.Unchecked_Deallocation
-     (Ada_Type_Record, Ada_Type_Access);
+   procedure Free is new
+     Standard.Ada.Unchecked_Deallocation (Ada_Type_Record, Ada_Type_Access);
 
    Null_Ada_Type_Access : constant Ada_Type_Access := null;
 

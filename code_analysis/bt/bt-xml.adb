@@ -33,9 +33,8 @@ package body BT.Xml is
    end Xml_Directory;
 
    function Xml_File_Name
-     (Output_Dir     : String;
-      File_Name      : String;
-      For_Backtraces : Boolean) return String;
+     (Output_Dir : String; File_Name : String; For_Backtraces : Boolean)
+      return String;
    --  Return the XML file name corresponding to the given parameters
 
    -------------------
@@ -43,9 +42,8 @@ package body BT.Xml is
    -------------------
 
    function Xml_File_Name
-     (Output_Dir     : String;
-      File_Name      : String;
-      For_Backtraces : Boolean) return String
+     (Output_Dir : String; File_Name : String; For_Backtraces : Boolean)
+      return String
    is
       Xml_File_Name : constant String :=
         Xml_Directory (Output_Dir) & Simple_Name (File_Name);
@@ -63,8 +61,7 @@ package body BT.Xml is
    ------------------------
 
    function Xml_Vals_File_Name
-     (Output_Dir : String;
-      File_Name  : String) return String is
+     (Output_Dir : String; File_Name : String) return String is
    begin
       return Xml_File_Name (Output_Dir, File_Name, For_Backtraces => False);
    end Xml_Vals_File_Name;

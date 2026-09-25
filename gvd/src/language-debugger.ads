@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Debugger;             use Debugger;
+with Debugger; use Debugger;
 with GVD.Variables.Types;
 
 package Language.Debugger is
@@ -23,14 +23,14 @@ package Language.Debugger is
    type Language_Debugger is abstract new Language_Root with private;
    type Language_Debugger_Access is access all Language_Debugger'Class;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Language_Debugger) return Strings.String_Access;
    --  Function used for all debugger languages as this is not used. This
    --  version always returns null.
 
    procedure Set_Debugger
-     (The_Language : access Language_Debugger;
-      The_Debugger : Debugger_Access);
+     (The_Language : access Language_Debugger; The_Debugger : Debugger_Access);
    --  Set the debugger associated with a language.
 
    function Get_Debugger
@@ -42,7 +42,8 @@ package Language.Debugger is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out GVD.Variables.Types.GVD_Type_Holder) is abstract;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder)
+   is abstract;
    --  Parse the type of Entity.
    --  Type_Str should contain the type as returned by the debugger.
    --  Entity is used to get the type of the fields or array items.
@@ -53,7 +54,8 @@ package Language.Debugger is
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
-      Repeat_Num : out Positive) is abstract;
+      Repeat_Num : out Positive)
+   is abstract;
    --  Parse the value of an entity, for a given language.
    --  Entity contains entity name.
    --  Type_Str should contain the value, as returned by the debugger itself.
@@ -65,7 +67,8 @@ package Language.Debugger is
       Entity       : String;
       Index        : in out Natural;
       Start_Of_Dim : Natural;
-      Result       : out GVD.Variables.Types.GVD_Type_Holder) is abstract;
+      Result       : out GVD.Variables.Types.GVD_Type_Holder)
+   is abstract;
    --  Parse the description of an array type.
    --  Index should point at the opening character of the array in Type_Str
    --  (ie "array " in gdb Ada, or "int [4]" in gdb C).
@@ -73,13 +76,14 @@ package Language.Debugger is
    --  dimensions ("[4]" in the above example)
 
    procedure Parse_Record_Type
-     (Lang      : access Language_Debugger;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder;
-      End_On    : String) is abstract;
+     (Lang     : access Language_Debugger;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
+      End_On   : String)
+   is abstract;
    --  Parse the type describing a record.
    --  Index should pointer after the initial "record ", and the record is
    --  assumed to end on a string like End_On.
@@ -91,13 +95,14 @@ package Language.Debugger is
      (Lang     : access Language_Debugger;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out GVD.Variables.Types.GVD_Type_Holder) is abstract;
+      Result   : in out GVD.Variables.Types.GVD_Type_Holder)
+   is abstract;
    --  Parse the value of an array.
 
    function Set_Variable
-     (Lang     : access Language_Debugger;
-      Var_Name : String;
-      Value    : String) return String is abstract;
+     (Lang : access Language_Debugger; Var_Name : String; Value : String)
+      return String
+   is abstract;
    --  Return the command to use to set a variable, depending on a language
    --  specific language.
 
@@ -105,13 +110,13 @@ package Language.Debugger is
       Record_Start : Character;
       --  Character that starts the display of record values
 
-      Record_End   : Character;
+      Record_End : Character;
       --  Character that ends the display of record values
 
-      Array_Start  : Character;
+      Array_Start : Character;
       --  Character that starts the display of array values
 
-      Array_End    : Character;
+      Array_End : Character;
       --  Character that ends the display of array values
 
       Record_Field : String (1 .. Record_Field_Length);
@@ -125,8 +130,8 @@ package Language.Debugger is
    --  since the fields depend on the debugger.
 
    function Get_Language_Debugger_Context
-     (Lang : access Language_Debugger)
-      return Language_Debugger_Context is abstract;
+     (Lang : access Language_Debugger) return Language_Debugger_Context
+   is abstract;
    --  Return the language/Debugger context.
 
 private

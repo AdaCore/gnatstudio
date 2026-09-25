@@ -16,10 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Tags;
-with Gtkada.MDI;           use Gtkada.MDI;
-with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtkada.MDI;      use Gtkada.MDI;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with GPS.Kernel.Actions;
 
@@ -36,9 +36,9 @@ package body DAP.Views is
    -- Set_Client --
    ----------------
 
-   overriding procedure Set_Client
-     (Self : not null access View_Record;
-      Id   : Client_Id_Type) is
+   overriding
+   procedure Set_Client
+     (Self : not null access View_Record; Id : Client_Id_Type) is
    begin
       Self.Client_Id := Id;
    end Set_Client;
@@ -52,9 +52,10 @@ package body DAP.Views is
       use DAP.Clients;
 
       type Open_Command is new Interactive_Command with null record;
-      overriding function Execute
-        (Self    : access Open_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type;
+      overriding
+      function Execute
+        (Self : access Open_Command; Context : Interactive_Command_Context)
+         return Command_Return_Type;
       --  Opens the view and attach to current debugger
 
       --------------------
@@ -79,7 +80,7 @@ package body DAP.Views is
          --  appending Name to the MDI child's title.
          --  Otherwise, just retrieve the already existing MDI child.
          if View = null and then Create_If_Necessary then
-            View  := Formal_Views.Get_Or_Create_View (Kernel);
+            View := Formal_Views.Get_Or_Create_View (Kernel);
             Widget_Callback.Connect
               (View, Gtk.Widget.Signal_Destroy, Destroy_Access);
             Child := Formal_Views.Child_From_View (View);
@@ -114,8 +115,7 @@ package body DAP.Views is
       -- Raise_View --
       ----------------
 
-      procedure Raise_View (View : access Formal_View_Record'Class)
-      is
+      procedure Raise_View (View : access Formal_View_Record'Class) is
          Child : MDI_Child;
       begin
          if View /= null then
@@ -132,9 +132,10 @@ package body DAP.Views is
       -- Execute --
       -------------
 
-      overriding function Execute
-        (Self    : access Open_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type
+      overriding
+      function Execute
+        (Self : access Open_Command; Context : Interactive_Command_Context)
+         return Command_Return_Type
       is
          pragma Unreferenced (Self);
          use DAP.Clients;
@@ -158,7 +159,8 @@ package body DAP.Views is
       -- Execute --
       -------------
 
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self     : On_Debugger_Started;
          Kernel   : not null access Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
@@ -181,7 +183,8 @@ package body DAP.Views is
       -- Execute --
       -------------
 
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self      : On_Debugger_State_Changed;
          Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -202,10 +205,11 @@ package body DAP.Views is
       -- Execute --
       -------------
 
-      overriding procedure Execute
-         (Self     : On_Debug_Process_Terminated;
-          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
+      overriding
+      procedure Execute
+        (Self     : On_Debug_Process_Terminated;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self);
 
@@ -221,10 +225,11 @@ package body DAP.Views is
       -- Execute --
       -------------
 
-      overriding procedure Execute
-         (Self     : On_Debugger_Terminated;
-          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
+      overriding
+      procedure Execute
+        (Self     : On_Debugger_Terminated;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
       is
          V : constant access Formal_View_Record'Class :=
            Formal_Views.Retrieve_View (Kernel, True);
@@ -240,7 +245,8 @@ package body DAP.Views is
       -- Execute --
       -------------
 
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self     : On_Debug_Location_Changed;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
@@ -259,8 +265,7 @@ package body DAP.Views is
       -- On_Destroy --
       ----------------
 
-      procedure On_Destroy
-        (View : access Gtk.Widget.Gtk_Widget_Record'Class)
+      procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class)
       is
          use DAP.Clients;
 
@@ -314,7 +319,9 @@ package body DAP.Views is
          end if;
 
          GPS.Kernel.Actions.Register_Action
-           (Kernel, Action_Name, new Open_Command,
+           (Kernel,
+            Action_Name,
+            new Open_Command,
             Description => Description,
             Category    => "Views",
             Filter      => F);
@@ -326,9 +333,9 @@ package body DAP.Views is
    -- Get_Client --
    ----------------
 
-   overriding function Get_Client
-     (Self : not null access View_Record)
-      return DAP.Clients.DAP_Client_Access
-     is (DAP.Module.Get_Debugger (Self.Client_Id));
+   overriding
+   function Get_Client
+     (Self : not null access View_Record) return DAP.Clients.DAP_Client_Access
+   is (DAP.Module.Get_Debugger (Self.Client_Id));
 
 end DAP.Views;

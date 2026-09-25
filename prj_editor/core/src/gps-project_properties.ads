@@ -26,15 +26,15 @@
 with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.Strings;
-with GNAT.OS_Lib;                        use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
-with GNATCOLL.Projects;                  use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
-with GPS.Core_Kernels;                   use GPS.Core_Kernels;
-with GPS.Customizable_Modules;           use GPS.Customizable_Modules;
+with GPS.Core_Kernels;         use GPS.Core_Kernels;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 
-with XML_Utils;                          use XML_Utils;
+with XML_Utils; use XML_Utils;
 
 package GPS.Project_Properties is
 
@@ -45,36 +45,40 @@ package GPS.Project_Properties is
    -- Attribute descriptions --
    ----------------------------
 
-   type Attribute_As is (Attribute_As_String,
-                         Attribute_As_Filename,
-                         Attribute_As_Unit,
-                         Attribute_As_Directory,
-                         Attribute_As_Static_List,
-                         Attribute_As_Dynamic_List);
-   type File_Filter is (Filter_None,
-                        Filter_From_Project,
-                        Filter_From_Extended,
-                        Filter_From_All_Projects);
+   type Attribute_As is
+     (Attribute_As_String,
+      Attribute_As_Filename,
+      Attribute_As_Unit,
+      Attribute_As_Directory,
+      Attribute_As_Static_List,
+      Attribute_As_Dynamic_List);
+   type File_Filter is
+     (Filter_None,
+      Filter_From_Project,
+      Filter_From_Extended,
+      Filter_From_All_Projects);
 
-   type Attribute_Type (Typ : Attribute_As := Attribute_As_String) is
-   record
+   type Attribute_Type (Typ : Attribute_As := Attribute_As_String) is record
       case Typ is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Unit
-            | Attribute_As_Directory   =>
-            Default           : GNAT.Strings.String_Access;
-            Filter            : File_Filter := Filter_None;
-            Allow_Empty       : Boolean := True;
+            | Attribute_As_Directory
+         =>
+            Default     : GNAT.Strings.String_Access;
+            Filter      : File_Filter := Filter_None;
+            Allow_Empty : Boolean := True;
+
          when Attribute_As_Static_List =>
             Static_Allows_Any_String : Boolean := False;
-            Static_List       : GNAT.Strings.String_List_Access;
-            Static_Default    : Boolean_List;
+            Static_List              : GNAT.Strings.String_List_Access;
+            Static_Default           : Boolean_List;
+
          when Attribute_As_Dynamic_List =>
             Dynamic_Allows_Any_String : Boolean := False;
-            Dynamic_List_Lang : GNAT.Strings.String_Access;
-            Dynamic_List_Cmd  : GNAT.Strings.String_Access;
-            Dynamic_Default   : GNAT.Strings.String_Access;
+            Dynamic_List_Lang         : GNAT.Strings.String_Access;
+            Dynamic_List_Cmd          : GNAT.Strings.String_Access;
+            Dynamic_Default           : GNAT.Strings.String_Access;
       end case;
    end record;
 
@@ -83,12 +87,12 @@ package GPS.Project_Properties is
       Index_Value : GNAT.Strings.String_Access;  --  null for the general case
    end record;
 
-   type Indexed_Attribute_Type_Array
-     is array (Natural range <>) of Indexed_Attribute_Type;
+   type Indexed_Attribute_Type_Array is
+     array (Natural range <>) of Indexed_Attribute_Type;
    type Indexed_Attribute_Type_List is access Indexed_Attribute_Type_Array;
 
-   type Attribute_Description (Indexed : Boolean := False) is tagged limited
-   record
+   type Attribute_Description (Indexed : Boolean := False) is
+   tagged limited record
       Name                 : GNAT.Strings.String_Access;
       Pkg                  : GNAT.Strings.String_Access;
       Description          : GNAT.Strings.String_Access;
@@ -100,12 +104,12 @@ package GPS.Project_Properties is
       Base_Name_Only       : Boolean := False;
       Case_Sensitive_Index : Boolean := False;
 
-      Disable_If_Not_Set   : Boolean := False;
+      Disable_If_Not_Set : Boolean := False;
       --  If True, the project attribute needs to be explicitly specified by
       --  the user or the editor is greyed out (non-mutually exclusive
       --  attributes) or hidden (mutually exclusive attributes).
 
-      Mutually_Exclusive   : Boolean := False;
+      Mutually_Exclusive : Boolean := False;
       --  If True, this project attribute is mutually exclusive with other
       --  project attributes.
 
@@ -114,15 +118,16 @@ package GPS.Project_Properties is
             Index_Attribute : GNAT.Strings.String_Access;
             Index_Package   : GNAT.Strings.String_Access;
             Index_Types     : Indexed_Attribute_Type_List;
+
          when False =>
-            Non_Index_Type  : Attribute_Type;
+            Non_Index_Type : Attribute_Type;
       end case;
    end record;
    type Attribute_Description_Access is access all Attribute_Description'Class;
    --  Type used to represent an attribute description
 
-   package Attribute_Description_Lists is
-     new Ada.Containers.Doubly_Linked_Lists
+   package Attribute_Description_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
        (Element_Type => Attribute_Description_Access,
         "="          => "=");
 
@@ -146,12 +151,11 @@ package GPS.Project_Properties is
    --  If the attribute has no description, return an empty string.
 
    function Get_Default_Value
-     (Attr          : access Attribute_Description'Class;
-      Index         : String) return String;
+     (Attr : access Attribute_Description'Class; Index : String) return String;
    function Get_Default_Value
-     (Kernel        : access Core_Kernel_Record'Class;
-      Attr          : access Attribute_Description'Class;
-      Index         : String := "") return String_List_Access;
+     (Kernel : access Core_Kernel_Record'Class;
+      Attr   : access Attribute_Description'Class;
+      Index  : String := "") return String_List_Access;
    --  Get default value as specified in the attribute definition
    --  This is used to reflect the value the attribute has if not specified
    --  in the project.
@@ -177,8 +181,8 @@ package GPS.Project_Properties is
    --  Return True if Attr was explicitly defined in Project
 
    function Is_Any_String
-     (Attr  : access Attribute_Description'Class;
-      Index : String) return Boolean;
+     (Attr : access Attribute_Description'Class; Index : String)
+      return Boolean;
    --  Whether, for the index Index, Attr behaves like a free-form string.
    --  False is returned for special types like lists, filenames,...
 
@@ -188,8 +192,8 @@ package GPS.Project_Properties is
    --  Return the type to use for an attribute given its index. This properly
    --  handles the case where the attribute isn't indexed
 
-   type List_Attribute_Callback is access procedure
-     (Value : String; Is_Default : Boolean);
+   type List_Attribute_Callback is
+     access procedure (Value : String; Is_Default : Boolean);
    --  Is_Default is set to true if Value is set as a default value for the
    --  attribute in the XML file
 
@@ -199,17 +203,19 @@ package GPS.Project_Properties is
       Callback : List_Attribute_Callback);
    --  Calls Callback for each possible value of the attribute
 
-   type Attribute_Page_Section_Record (Mutually_Exclusive : Boolean := False)
+   type Attribute_Page_Section_Record
+     (Mutually_Exclusive : Boolean := False)
    is tagged limited record
-      Name               : GNAT.Strings.String_Access;
+      Name : GNAT.Strings.String_Access;
       --  Name of the section
 
-      Attributes         : Attribute_Description_Lists.List;
+      Attributes : Attribute_Description_Lists.List;
       --  List of the attributes belonging to this section
 
       case Mutually_Exclusive is
          when True =>
             Description : GNAT.Strings.String_Access;
+
          when others =>
             null;
       end case;
@@ -221,8 +227,8 @@ package GPS.Project_Properties is
    --  If Mutually_Exclusive is True, all the attributes belonging to this
    --  section are mutually exclusive.
 
-   package Attribute_Page_Section_Lists is
-     new Ada.Containers.Doubly_Linked_Lists
+   package Attribute_Page_Section_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
        (Element_Type => Attribute_Page_Section,
         "="          => "=");
 
@@ -244,8 +250,8 @@ package GPS.Project_Properties is
    type Attribute_Page is access all Attribute_Page_Record'Class;
    --  Type used to represent page containing sections of attributes
 
-   package Attribute_Page_Lists is
-     new Ada.Containers.Doubly_Linked_Lists
+   package Attribute_Page_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
        (Element_Type => Attribute_Page,
         "="          => "=");
 
@@ -265,14 +271,12 @@ package GPS.Project_Properties is
    --  Return list of pages of attribute pages known to the module
 
    function Get_Attribute_Type_From_Name
-     (Module : access Base_Properties_Module;
-      Pkg    : String;
-      Name   : String) return Attribute_Description_Access;
+     (Module : access Base_Properties_Module; Pkg : String; Name : String)
+      return Attribute_Description_Access;
    --  Find the description of an attribute given its package and name
 
    function New_Attribute_Description
-     (Module  : access Base_Properties_Module;
-      Indexed : Boolean)
+     (Module : access Base_Properties_Module; Indexed : Boolean)
       return Attribute_Description_Access;
    --  Create new empty Attribute_Description (Indexed) record.
    --  Derived modules could ovveride it to return extended version of
@@ -281,13 +285,15 @@ package GPS.Project_Properties is
 private
 
    type Base_Properties_Module (Kernel : access Core_Kernel_Record'Class) is
-     new Customizable_Module_Record with
-   record
-      Pages  : Attribute_Page_Lists.List;
+     new Customizable_Module_Record
+   with record
+      Pages : Attribute_Page_Lists.List;
    end record;
 
-   overriding procedure Destroy (Module : in out Base_Properties_Module);
-   overriding procedure Customize
+   overriding
+   procedure Destroy (Module : in out Base_Properties_Module);
+   overriding
+   procedure Customize
      (Module : access Base_Properties_Module;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;

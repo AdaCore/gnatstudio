@@ -15,66 +15,67 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers;              use Ada.Containers;
+with Ada.Containers;        use Ada.Containers;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings;                 use Ada.Strings;
+with Ada.Strings;           use Ada.Strings;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
-with GNAT.Regpat;                 use GNAT.Regpat;
-with GNAT.Strings;                use GNAT.Strings;
+with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Strings;          use GNAT.Strings;
 
-with Cairo;                       use Cairo;
-with Glib;                        use Glib;
-with Glib.Convert;                use Glib.Convert;
-with Glib.Object;                 use Glib.Object;
-with Glib.Values;                 use Glib.Values;
-with Glib_Values_Utils;           use Glib_Values_Utils;
+with Cairo;             use Cairo;
+with Glib;              use Glib;
+with Glib.Convert;      use Glib.Convert;
+with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Event;                   use Gdk.Event;
-with Gdk.Rectangle;               use Gdk.Rectangle;
-with Gdk.RGBA;                    use Gdk.RGBA;
+with Gdk.Event;     use Gdk.Event;
+with Gdk.Rectangle; use Gdk.Rectangle;
+with Gdk.RGBA;      use Gdk.RGBA;
 
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
-with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Label;                   use Gtk.Label;
-with Gtk.Menu;                    use Gtk.Menu;
-with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
-with Gtk.Text_Tag;                use Gtk.Text_Tag;
-with Gtk.Tree_Model;              use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
-with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Drawing_Area;       use Gtk.Drawing_Area;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Menu;               use Gtk.Menu;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Text_Tag;           use Gtk.Text_Tag;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Widget;             use Gtk.Widget;
 
-with Gtkada.MDI;                  use Gtkada.MDI;
-with Gtkada.Style;                use Gtkada.Style;
-with Gtkada.Tree_View;            use Gtkada.Tree_View;
+with Gtkada.MDI;       use Gtkada.MDI;
+with Gtkada.Style;     use Gtkada.Style;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 
-with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Intl;                    use GPS.Intl;
-with GPS.Search;                  use GPS.Search;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Search;             use GPS.Search;
 with GPS_Unbounded_String_Vectors;
 
-with Commands.Interactive;        use Commands, Commands.Interactive;
-with Filter_Panels;               use Filter_Panels;
-with Default_Preferences;         use Default_Preferences;
-with Generic_Views;               use Generic_Views;
-with Tooltips;                    use Tooltips;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Filter_Panels;       use Filter_Panels;
+with Default_Preferences; use Default_Preferences;
+with Generic_Views;       use Generic_Views;
+with Tooltips;            use Tooltips;
 with VCS2.Diff;
-with VCS2.Engines;                use VCS2.Engines;
-with VCS2.Views;                  use VCS2.Views;
-with Gtk.Paned; use Gtk.Paned;
+with VCS2.Engines;        use VCS2.Engines;
+with VCS2.Views;          use VCS2.Views;
+with Gtk.Paned;           use Gtk.Paned;
 
 package body VCS2.History is
    pragma Warnings (Off);
@@ -94,16 +95,16 @@ package body VCS2.History is
    Number_Commits  : constant Integer := 500;
 
    Color_Palettes : constant array (0 .. 9) of Gdk_RGBA :=
-     (0   => (0.09, 0.46, 0.72, 1.0),
-      1   => (1.00, 0.50, 0.00, 1.0),
-      2   => (0.14, 0.63, 0.13, 1.0),
-      3   => (0.85, 0.14, 0.12, 1.0),
-      4   => (0.58, 0.39, 0.75, 1.0),
-      5   => (0.55, 0.34, 0.29, 1.0),
-      6   => (0.90, 0.45, 0.77, 1.0),
-      7   => (0.50, 0.50, 0.50, 1.0),
-      8   => (0.74, 0.75, 0.00, 1.0),
-      9   => (0.00, 0.75, 0.82, 1.0));
+     (0 => (0.09, 0.46, 0.72, 1.0),
+      1 => (1.00, 0.50, 0.00, 1.0),
+      2 => (0.14, 0.63, 0.13, 1.0),
+      3 => (0.85, 0.14, 0.12, 1.0),
+      4 => (0.58, 0.39, 0.75, 1.0),
+      5 => (0.55, 0.34, 0.29, 1.0),
+      6 => (0.90, 0.45, 0.77, 1.0),
+      7 => (0.50, 0.50, 0.50, 1.0),
+      8 => (0.74, 0.75, 0.00, 1.0),
+      9 => (0.00, 0.75, 0.82, 1.0));
    --  Color palette from d3js.org
 
    Show_Author             : Boolean_Preference;
@@ -118,8 +119,10 @@ package body VCS2.History is
 
    No_Graph_Column : constant Graph_Column := Graph_Column'Last;
 
-   package Boolean_Vectors is new Ada.Containers.Vectors
-     (Index_Type => Graph_Column, Element_Type => Boolean);
+   package Boolean_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Graph_Column,
+        Element_Type => Boolean);
 
    type History_View_Config is record
       Initialized  : Boolean := False;
@@ -142,40 +145,41 @@ package body VCS2.History is
    type Parent_Array_Access is access all Parent_Array;
 
    type Node_Data is record
-      ID            : Ada.Strings.Unbounded.Unbounded_String;
-      Author        : Ada.Strings.Unbounded.Unbounded_String;
-      Date          : Ada.Strings.Unbounded.Unbounded_String;
-      Subject       : Ada.Strings.Unbounded.Unbounded_String;
-      Parents       : Parent_Array_Access;
-      Names         : Commit_Names_Access;
+      ID      : Ada.Strings.Unbounded.Unbounded_String;
+      Author  : Ada.Strings.Unbounded.Unbounded_String;
+      Date    : Ada.Strings.Unbounded.Unbounded_String;
+      Subject : Ada.Strings.Unbounded.Unbounded_String;
+      Parents : Parent_Array_Access;
+      Names   : Commit_Names_Access;
 
-      Col           : Graph_Column := No_Graph_Column;
+      Col : Graph_Column := No_Graph_Column;
       --  which column to draw in
 
       Circle_Center : Gdouble;
       --  coordinate, depending on current scroll value
 
-      Num_Children  : Natural := 0;
+      Num_Children : Natural := 0;
       --  Number of children commits
 
-      Line          : Integer := -1;
+      Line : Integer := -1;
       --  Line number within the tree model
 
-      Visible       : Visibility;
+      Visible : Visibility;
       --  A node is visible when this field is Always_Visible or more.
 
-      Flags         : Commit_Flags := 0;
+      Flags : Commit_Flags := 0;
    end record;
    type Node_Data_Access is access all Node_Data;
 
-   package Commit_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Ada.Strings.Unbounded.Unbounded_String,
-      Element_Type    => Node_Data_Access,    --  owned
-      Hash            => Ada.Strings.Unbounded.Hash,
-      Equivalent_Keys => Ada.Strings.Unbounded."=");
+   package Commit_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Ada.Strings.Unbounded.Unbounded_String,
+        Element_Type    => Node_Data_Access,    --  owned
+        Hash            => Ada.Strings.Unbounded.Hash,
+        Equivalent_Keys => Ada.Strings.Unbounded."=");
 
-   package Line_Vectors is new Ada.Containers.Vectors
-     (Line_Index, Node_Data_Access);
+   package Line_Vectors is new
+     Ada.Containers.Vectors (Line_Index, Node_Data_Access);
    --  Information for each commit line.
    --  This comes straight from the various VCS plugins, and are also used when
    --  filtering and laying out the graph.
@@ -183,27 +187,26 @@ package body VCS2.History is
    --  vector.
 
    type History_Tree_Record is new Tree_View_Record with record
-      Config      : History_View_Config;
-      Commits     : Commit_Maps.Map;
-      Scrolled    : Gtk_Scrolled_Window;
-      Graph       : Gtk_Drawing_Area;
+      Config   : History_View_Config;
+      Commits  : Commit_Maps.Map;
+      Scrolled : Gtk_Scrolled_Window;
+      Graph    : Gtk_Drawing_Area;
 
-      Show_Graph  : Boolean := True;
+      Show_Graph : Boolean := True;
       --  Whether to show the graph, depending on preferences and filtering
 
-      Lines       : Line_Vectors.Vector;
+      Lines : Line_Vectors.Vector;
       --  The visible commits, in the order they were returned by the VCS.
       --  Invisible commits are not added
 
       Max_Columns : Natural := 0;  --  Number of columns in the graph
 
       User_Filter : History_Filter :=
-        (Up_To_Lines   => Number_Commits,
-         others        => <>);
+        (Up_To_Lines => Number_Commits, others => <>);
       --  Current filter
 
-      Col_Author  : Gtk_Tree_View_Column;
-      Col_Date    : Gtk_Tree_View_Column;
+      Col_Author : Gtk_Tree_View_Column;
+      Col_Date   : Gtk_Tree_View_Column;
 
       Has_Show_Older : Boolean := False;
       --  Whether the "show older" button is visible
@@ -244,35 +247,39 @@ package body VCS2.History is
      (Self       : not null access Tree_View_Record'Class;
       Store_Iter : Gtk_Tree_Iter) return Commit_ID;
 
-   package Expansion is new Expansion_Support
-     (Tree_Record        => Tree_View_Record,
-      Id                 => Commit_ID,
-      Get_Id             => Get_ID_From_Node,
-      Hash               => Ada.Strings.Hash);
+   package Expansion is new
+     Expansion_Support
+       (Tree_Record => Tree_View_Record,
+        Id          => Commit_ID,
+        Get_Id      => Get_ID_From_Node,
+        Hash        => Ada.Strings.Hash);
 
    type History_Child_Record is new GPS_MDI_Child_Record with null record;
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access History_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
 
    type History_View_Record is new Base_VCS_View_Record with record
       Paned                   : Gtk_Paned;
       Refresh_On_Pref_Changed : Boolean := True;
    end record;
-   overriding procedure Refresh
-     (Self : not null access History_View_Record);
-   overriding procedure On_Preferences_Changed
-     (Self : not null access History_View_Record;
-      Pref : Preference);
-   overriding procedure Create_Menu
-     (View    : not null access History_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure On_Create
-     (Self    : not null access History_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Refresh (Self : not null access History_View_Record);
+   overriding
+   procedure On_Preferences_Changed
+     (Self : not null access History_View_Record; Pref : Preference);
+   overriding
+   procedure Create_Menu
+     (View : not null access History_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure On_Create
+     (Self  : not null access History_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
+   overriding
+   procedure Filter_Changed
      (Self    : not null access History_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
 
@@ -286,23 +293,24 @@ package body VCS2.History is
    procedure Show_Progress_Bar (Self : access History_View_Record'Class);
    --  Hide the view and show a progress bar before the first commit is found
 
-   package History_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "VCS_History",
-      View_Name          => "History",
-      Formal_View_Record => History_View_Record,
-      Formal_MDI_Child   => History_Child_Record,
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Both,
-      Position           => Position_Right,
-      Initialize         => Initialize);
+   package History_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "VCS_History",
+        View_Name          => "History",
+        Formal_View_Record => History_View_Record,
+        Formal_MDI_Child   => History_Child_Record,
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Both,
+        Position           => Position_Right,
+        Initialize         => Initialize);
    use History_Views;
    subtype History_View is History_Views.View_Access;
 
    function On_Draw_Graph
-     (Self : access GObject_Record'Class;
-      Cr   : Cairo.Cairo_Context) return Boolean;
+     (Self : access GObject_Record'Class; Cr : Cairo.Cairo_Context)
+      return Boolean;
    --  Draws the graph on the side of the tree
 
    procedure On_Scrolled (Self : access GObject_Record'Class);
@@ -312,15 +320,18 @@ package body VCS2.History is
    --  Called when one or more files are selected
 
    type On_Line_Seen is new Task_Visitor with record
-      Kernel   : Kernel_Handle;
+      Kernel : Kernel_Handle;
 
-      Data     : Layout_Idle_Data_Access;
+      Data : Layout_Idle_Data_Access;
       --  The same data that will be used for layout once all lines have been
       --  retrieved.
    end record;
-   overriding procedure On_Start (Self : not null access On_Line_Seen);
-   overriding procedure Free (Self : in out On_Line_Seen);
-   overriding procedure On_History_Line
+   overriding
+   procedure On_Start (Self : not null access On_Line_Seen);
+   overriding
+   procedure Free (Self : in out On_Line_Seen);
+   overriding
+   procedure On_History_Line
      (Self    : not null access On_Line_Seen;
       ID      : String;
       Author  : String;
@@ -337,7 +348,8 @@ package body VCS2.History is
       Kernel   : Kernel_Handle;
       Multiple : Boolean;
    end record;
-   overriding procedure On_Commit_Details
+   overriding
+   procedure On_Commit_Details
      (Self    : not null access On_Details;
       ID      : String;
       Header  : String;
@@ -345,65 +357,75 @@ package body VCS2.History is
    --  Visitor when getting the details for a set of commits
 
    type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the active VCS changes
 
    type On_VCS_Refresh is new Vcs_Refresh_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self          : On_VCS_Refresh;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Is_File_Saved : Boolean);
 
    type History_For_File is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access History_For_File;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access History_For_File; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Refresh_History is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Refresh_History;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Refresh_History; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Show_History_Command is new Root_Command with record
       Kernel    : Kernel_Handle;
       File      : Virtual_File;
       Commit_Id : Unbounded_String;
    end record;
-   overriding function Execute
-     (Self    : access Show_History_Command) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Show_History_Command) return Command_Return_Type;
 
    type On_Checkout is new Task_Visitor with null record;
-   overriding procedure On_Success
+   overriding
+   procedure On_Success
      (Self   : not null access On_Checkout;
       Kernel : not null access Kernel_Handle_Record'Class);
 
    type Checkout is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Checkout;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Checkout; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Checkout_File is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Checkout_File;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Checkout_File; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Is_Commit_Id_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Commit_Id_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Commit_Id_Filter; Context : Selection_Context)
+      return Boolean;
    --  Whether the context has commit id information.
 
    type Is_File_Commit_Id_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_File_Commit_Id_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_File_Commit_Id_Filter; Context : Selection_Context)
+      return Boolean;
    --  Whether the context has commit id information and file is set.
 
    function On_Button_Press
-     (Self   : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean;
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    --  Called when the user selected a new line
 
    procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
@@ -422,14 +444,15 @@ package body VCS2.History is
    -- Tooltips --
    --------------
 
-   type History_View_Tooltip_Handler is new Tooltips.Tooltip_Handler with
-      record
-         History : History_View;
-      end record;
+   type History_View_Tooltip_Handler is new Tooltips.Tooltip_Handler
+   with record
+      History : History_View;
+   end record;
    type History_View_Tooltip_Handler_Access is
      access all History_View_Tooltip_Handler;
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access History_View_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
@@ -438,7 +461,8 @@ package body VCS2.History is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access History_View_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
@@ -449,9 +473,7 @@ package body VCS2.History is
       Box  : Gtk_Box;
 
       procedure Add_Label
-        (Box     : Gtk_Box;
-         Name    : String;
-         Message : Unbounded_String);
+        (Box : Gtk_Box; Name : String; Message : Unbounded_String);
       --  Add a new label containing Name and Message in Box
 
       ---------------
@@ -459,9 +481,7 @@ package body VCS2.History is
       ---------------
 
       procedure Add_Label
-        (Box     : Gtk_Box;
-         Name    : String;
-         Message : Unbounded_String)
+        (Box : Gtk_Box; Name : String; Message : Unbounded_String)
       is
          Label : Gtk_Label;
       begin
@@ -482,9 +502,9 @@ package body VCS2.History is
          Tooltip.Set_Tip_Area (Area);
          Gtk_New_Vbox (Box);
          declare
-            Tree  : constant History_Tree     :=
+            Tree  : constant History_Tree :=
               History_Tree (Tooltip.History.Tree);
-            Model : constant Gtk_Tree_Model   := Tree.Get_Model;
+            Model : constant Gtk_Tree_Model := Tree.Get_Model;
             N     : constant Node_Data_Access :=
               Tree.Lines (Integer (Get_Int (Model, Iter, Column_Line)));
          begin
@@ -504,29 +524,27 @@ package body VCS2.History is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access History_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
-      Context   : Selection_Context :=
+      Context : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
-      V         : constant History_View :=
+      V       : constant History_View :=
         History_View (GPS_MDI_Child (Self).Get_Actual_Widget);
-      Tree      : constant History_Tree :=
+      Tree    : constant History_Tree :=
         (if V /= null then History_Tree (V.Tree) else null);
 
-      X, Y      : Gdouble;
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column;
-      Buffer_X, Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Iter      : Gtk_Tree_Iter := Null_Iter;
+      X, Y               : Gdouble;
+      Path               : Gtk_Tree_Path;
+      Column             : Gtk_Tree_View_Column;
+      Buffer_X, Buffer_Y : Gint;
+      Row_Found          : Boolean;
+      Iter               : Gtk_Tree_Iter := Null_Iter;
 
       procedure On_Selected
-        (M : Gtk_Tree_Model;
-         P : Gtk_Tree_Path;
-         I : Gtk_Tree_Iter);
+        (M : Gtk_Tree_Model; P : Gtk_Tree_Path; I : Gtk_Tree_Iter);
       --  Called for each selected row
 
       -----------------
@@ -534,9 +552,7 @@ package body VCS2.History is
       -----------------
 
       procedure On_Selected
-        (M : Gtk_Tree_Model;
-         P : Gtk_Tree_Path;
-         I : Gtk_Tree_Iter)
+        (M : Gtk_Tree_Model; P : Gtk_Tree_Path; I : Gtk_Tree_Iter)
       is
          pragma Unreferenced (P);
          N : constant Node_Data_Access :=
@@ -553,14 +569,14 @@ package body VCS2.History is
       if Event /= null then
          Get_Coords (Event, X, Y);
          V.Tree.Get_Path_At_Pos
-           (Gint (X), Gint (Y), Path, Column,
-            Buffer_X, Buffer_Y, Row_Found);
+           (Gint (X), Gint (Y), Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
          if Path /= Null_Gtk_Tree_Path then
             Iter := V.Tree.Model.Get_Iter (Path);
             declare
-               N : constant Node_Data_Access := Tree.Lines
-                 (Integer (V.Tree.Model.Get_Int (Iter, Column_Line)));
+               N : constant Node_Data_Access :=
+                 Tree.Lines
+                   (Integer (V.Tree.Model.Get_Int (Iter, Column_Line)));
             begin
                Set_Commit_Id_Information (Context, To_String (N.ID));
             end;
@@ -568,8 +584,7 @@ package body VCS2.History is
          Path_Free (Path);
 
       elsif Tree.Get_Selection.Count_Selected_Rows = 1 then
-         Tree.Get_Selection.Selected_Foreach
-           (On_Selected'Unrestricted_Access);
+         Tree.Get_Selection.Selected_Foreach (On_Selected'Unrestricted_Access);
       else
          return Context;
       end if;
@@ -610,17 +625,18 @@ package body VCS2.History is
    -------------------
 
    function On_Draw_Graph
-     (Self : access GObject_Record'Class;
-      Cr   : Cairo.Cairo_Context) return Boolean
+     (Self : access GObject_Record'Class; Cr : Cairo.Cairo_Context)
+      return Boolean
    is
-      View   : constant History_View := History_View (Self);
-      Tree   : constant History_Tree := History_Tree (View.Tree);
+      View                 : constant History_View := History_View (Self);
+      Tree                 : constant History_Tree := History_Tree (View.Tree);
       Line_Start, Line_End : Line_Index;
 
       procedure Draw_Lines;
       --  Draw circle for the commit and links to its parents.
 
-      procedure Set_Color (Col : Graph_Column) with Inline;
+      procedure Set_Color (Col : Graph_Column)
+      with Inline;
       --  Set the color for the corresponding column
 
       ---------------
@@ -642,12 +658,12 @@ package body VCS2.History is
          --  How to display a link to the parent node. This is used when a node
          --  is offscreen.
 
-         Y3, Y2   : Gdouble;
-         Data, DP : Node_Data_Access;
-         X, X2    : Gdouble;
-         Is_Occupied  : array (1 .. Tree.Max_Columns) of Parent_Link_Type :=
+         Y3, Y2      : Gdouble;
+         Data, DP    : Node_Data_Access;
+         X, X2       : Gdouble;
+         Is_Occupied : array (1 .. Tree.Max_Columns) of Parent_Link_Type :=
            (others => No_Link);
-         Is_Merge : Boolean;
+         Is_Merge    : Boolean;
 
       begin
          for Line in 1 .. Line_Start - 1 loop
@@ -670,14 +686,15 @@ package body VCS2.History is
          Set_Line_Width (Cr, 2.0);
          for Line in Line_Start .. Line_End loop
             Data := Tree.Lines (Line);
-            X    := Gdouble (Data.Col) * Column_Width;
+            X := Gdouble (Data.Col) * Column_Width;
 
-            Arc (Cr,
-                 Xc     => X,
-                 Yc     => Data.Circle_Center,
-                 Radius => Radius,
-                 Angle1 => 0.0,
-                 Angle2 => 6.2831853072);
+            Arc
+              (Cr,
+               Xc     => X,
+               Yc     => Data.Circle_Center,
+               Radius => Radius,
+               Angle1 => 0.0,
+               Angle2 => 6.2831853072);
 
             if (Data.Flags and Commit_Uncommitted) /= 0 then
                Set_Source_Color (Cr, (0.5, 0.5, 0.5, 1.0));
@@ -692,10 +709,10 @@ package body VCS2.History is
             Stroke (Cr);
 
             case Is_Occupied (Data.Col) is
-               when No_Link =>
+               when No_Link          =>
                   null;
 
-               when Visible_Parent =>
+               when Visible_Parent   =>
                   Move_To (Cr, X, 0.0);
                   Line_To (Cr, X, Data.Circle_Center - Radius);
                   Stroke (Cr);
@@ -734,12 +751,12 @@ package body VCS2.History is
                         X2 := Gdouble (DP.Col) * Column_Width;
                         Y2 := Data.Circle_Center + Radius + 16.0;
                         Y3 := (Data.Circle_Center + Radius + Y2) / 2.0;
-                        Curve_To (Cr, X, Y3,  X2, Y3,  X2, Y2);
+                        Curve_To (Cr, X, Y3, X2, Y3, X2, Y2);
 
                         --  Parent has a single child, but current has
                         --  multiple parents: this is a merge
-                        Is_Merge := DP.Num_Children = 1
-                          and then Data.Parents'Length > 1;
+                        Is_Merge :=
+                          DP.Num_Children = 1 and then Data.Parents'Length > 1;
 
                         if DP.Line = Data.Line + 1 and then not Is_Merge then
                            Set_Color (Data.Col);
@@ -790,6 +807,7 @@ package body VCS2.History is
    begin
       if not Tree.Show_Graph then
          return True;  --  handled
+
       end if;
 
       Set_Source_Color (Cr, Browsers_Bg_Color.Get_Pref);
@@ -798,18 +816,19 @@ package body VCS2.History is
 
       Tree.Get_Visible_Range (Start, Finish, Success);
       if Success then
-         Line_Start := Integer
-           (Tree.Model.Get_Int
-              (Tree.Get_Store_Iter_For_Filter_Path (Start),
-               Column_Line));
+         Line_Start :=
+           Integer
+             (Tree.Model.Get_Int
+                (Tree.Get_Store_Iter_For_Filter_Path (Start), Column_Line));
 
          declare
             Tmp : Integer;
          begin
-            Tmp := Integer
-              (Tree.Model.Get_Int
-                 (Tree.Get_Store_Iter_For_Filter_Path (Finish),
-                  Column_Line));
+            Tmp :=
+              Integer
+                (Tree.Model.Get_Int
+                   (Tree.Get_Store_Iter_For_Filter_Path (Finish),
+                    Column_Line));
             if Tree.Has_Show_Older and then Tmp = -1 then
                Line_End := Tree.User_Filter.Up_To_Lines;
             else
@@ -817,16 +836,16 @@ package body VCS2.History is
             end if;
          end;
 
-         Tree.Convert_Bin_Window_To_Widget_Coords
-           (0, 0, Base_X, Base_Y);
+         Tree.Convert_Bin_Window_To_Widget_Coords (0, 0, Base_X, Base_Y);
 
          --  Compute the coordinate for all nodes in current view layout
 
          for Line in Line_Start .. Line_End loop
             if Tree.Lines (Line).Visible >= Always_Visible then
                Tree.Get_Cell_Area (Start, null, Rect);
-               Tree.Lines (Line).Circle_Center := Gdouble
-                 (Base_Y + Rect.Y + (Rect.Height + Inter_Row_Space) / 2);
+               Tree.Lines (Line).Circle_Center :=
+                 Gdouble
+                   (Base_Y + Rect.Y + (Rect.Height + Inter_Row_Space) / 2);
                Next (Start);
             end if;
          end loop;
@@ -834,8 +853,7 @@ package body VCS2.History is
          Path_Free (Start);
          Path_Free (Finish);
 
-         Rectangle
-           (Cr, 0.0, Gdouble (Base_Y), Outside_Graph, Outside_Graph);
+         Rectangle (Cr, 0.0, Gdouble (Base_Y), Outside_Graph, Outside_Graph);
          Clip (Cr);
 
          Draw_Lines;
@@ -859,10 +877,10 @@ package body VCS2.History is
    ---------------------
 
    function On_Button_Press
-     (Self   : access GObject_Record'Class;
-      Event  : Gdk_Event_Button) return Boolean
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
-      View : constant History_View := History_View (Self);
+      View           : constant History_View := History_View (Self);
       X, Y           : Gint;
       Found          : Boolean;
       Cell_X, Cell_Y : Gint;
@@ -877,8 +895,8 @@ package body VCS2.History is
       if Found then
          --  If the user selected the "show older" entry
          if View.Tree.Model.Get_Int
-           (View.Tree.Get_Store_Iter_For_Filter_Path (Path),
-            Column_Line) = -1
+              (View.Tree.Get_Store_Iter_For_Filter_Path (Path), Column_Line)
+           = -1
          then
             History_Tree (View.Tree).User_Filter.Up_To_Lines :=
               History_Tree (View.Tree).User_Filter.Up_To_Lines
@@ -896,7 +914,8 @@ package body VCS2.History is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access History_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access)
    is
@@ -920,8 +939,8 @@ package body VCS2.History is
             Pos := Text'Last;
             while Pos >= Text'First + 5 loop
                if Text (Pos) = '@' then
-                  Tree.User_Filter.Select_Id := To_Unbounded_String
-                    (Text (Pos + 1 .. Text'Last));
+                  Tree.User_Filter.Select_Id :=
+                    To_Unbounded_String (Text (Pos + 1 .. Text'Last));
 
                   --  Will be selected after we have fetched the new contents
                   --  but we do not want to preserve the current selection
@@ -951,11 +970,12 @@ package body VCS2.History is
             Tree.User_Filter.For_File := No_File;
 
             case Get_Kind (Pattern) is
-            when Full_Text | Fuzzy | Approximate =>
-               Tree.User_Filter.Filter := To_Unbounded_String
-                 (GNAT.Regpat.Quote (Text));
-            when Regexp =>
-               Tree.User_Filter.Filter := To_Unbounded_String (Text);
+               when Full_Text | Fuzzy | Approximate =>
+                  Tree.User_Filter.Filter :=
+                    To_Unbounded_String (GNAT.Regpat.Quote (Text));
+
+               when Regexp                          =>
+                  Tree.User_Filter.Filter := To_Unbounded_String (Text);
             end case;
          end if;
 
@@ -967,9 +987,10 @@ package body VCS2.History is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Commit_Id_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Commit_Id_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Self);
    begin
@@ -980,22 +1001,22 @@ package body VCS2.History is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_File_Commit_Id_Filter;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_File_Commit_Id_Filter; Context : Selection_Context)
+      return Boolean is
    begin
       if not Has_Commit_Id_Information (Context) then
          return False;
       end if;
 
       declare
-         View : constant History_View := History_Views.Retrieve_View
-           (Get_Kernel (Context));
+         View : constant History_View :=
+           History_Views.Retrieve_View (Get_Kernel (Context));
          Tree : constant History_Tree :=
            (if View /= null then History_Tree (View.Tree) else null);
       begin
-         return Tree /= null
-           and then Tree.User_Filter.For_File /= No_File;
+         return Tree /= null and then Tree.User_Filter.For_File /= No_File;
       end;
    end Filter_Matches_Primitive;
 
@@ -1003,9 +1024,10 @@ package body VCS2.History is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access History_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access History_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Show_Ellipsis);
       Append_Menu (Menu, View.Kernel, Show_ID);
@@ -1019,7 +1041,8 @@ package body VCS2.History is
    -- On_Commit_Details --
    -----------------------
 
-   overriding procedure On_Commit_Details
+   overriding
+   procedure On_Commit_Details
      (Self    : not null access On_Details;
       ID      : String;
       Header  : String;
@@ -1071,9 +1094,7 @@ package body VCS2.History is
       Count : Natural := 0;
 
       procedure On_Selected
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter);
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter);
       --  Called for each selected row
 
       -----------------
@@ -1081,9 +1102,7 @@ package body VCS2.History is
       -----------------
 
       procedure On_Selected
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter)
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
       is
          pragma Unreferenced (Path);
          N : constant Node_Data_Access :=
@@ -1107,9 +1126,11 @@ package body VCS2.History is
             VCS.Queue_Fetch_Commit_Details
               (Ids     => Ids,
                Visitor =>
-                  new On_Details'(Task_Visitor with
-                    Kernel   => Self.Kernel,
-                    Multiple => Count - Ids'First > 1));
+                 new On_Details'
+                   (Task_Visitor
+                    with
+                      Kernel   => Self.Kernel,
+                      Multiple => Count - Ids'First > 1));
          end if;
       end if;
    end On_Selection_Changed;
@@ -1131,20 +1152,20 @@ package body VCS2.History is
       Initialize_Vbox (Self, Homogeneous => False);
       Self.On_Destroy (On_Destroy'Access);
 
-      Base_VCS_View_Record (Self.all).Filter_Options :=
-        Has_Regexp or Debounce;
+      Base_VCS_View_Record (Self.all).Filter_Options := Has_Regexp or Debounce;
       Base_VCS_View_Record (Self.all).Filter_Hist_Prefix :=
         To_Unbounded_String ("history");
 
       T := new History_Tree_Record;
       Self.Tree := Tree_View (T);
-      Initialize (Self.Tree,
-                  (Column_Line    => GType_Int,
-                   Column_Author  => GType_String,
-                   Column_Date    => GType_String,
-                   Column_Subject => GType_String),
-                  Capability_Type  => Filtered,
-                  Set_Visible_Func => True);
+      Initialize
+        (Self.Tree,
+         (Column_Line    => GType_Int,
+          Column_Author  => GType_String,
+          Column_Date    => GType_String,
+          Column_Subject => GType_String),
+         Capability_Type  => Filtered,
+         Set_Visible_Func => True);
       Set_Name (Self.Tree, "History Tree");
 
       Gtk_New_Hpaned (Self.Paned);
@@ -1202,11 +1223,11 @@ package body VCS2.History is
       T.Col_Date.Add_Attribute (Text, "text", Column_Date);
 
       Setup_Contextual_Menu
-        (Kernel          => Self.Kernel,
-         Event_On_Widget => Self.Tree);
+        (Kernel => Self.Kernel, Event_On_Widget => Self.Tree);
 
-      Tooltip := new History_View_Tooltip_Handler'
-        (Tooltips.Tooltip_Handler with History => History_View (Self));
+      Tooltip :=
+        new History_View_Tooltip_Handler'
+          (Tooltips.Tooltip_Handler with History => History_View (Self));
       Tooltip.Associate_To_Widget (Self.Tree);
 
       return Gtk_Widget (Self.Tree);
@@ -1238,17 +1259,14 @@ package body VCS2.History is
    -- Label_For_Checkout_File --
    -----------------------------
 
-   function Label_For_Checkout_File
-     (Context : Selection_Context) return String
+   function Label_For_Checkout_File (Context : Selection_Context) return String
    is
       View : constant History_View :=
         History_Views.Get_Or_Create_View (Get_Kernel (Context));
       Tree : constant History_Tree := History_Tree (View.Tree);
 
    begin
-      if Tree /= null
-        and then Tree.User_Filter.For_File /= No_File
-      then
+      if Tree /= null and then Tree.User_Filter.For_File /= No_File then
          return +(Tree.User_Filter.For_File.Base_Name);
 
       else
@@ -1260,10 +1278,10 @@ package body VCS2.History is
    -- On_Create --
    ---------------
 
-   overriding procedure On_Create
-     (Self    : not null access History_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class)
-   is
+   overriding
+   procedure On_Create
+     (Self  : not null access History_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class) is
    begin
       Base_VCS_View_Record (Self.all).On_Create (Child);  --  inherited
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
@@ -1274,11 +1292,11 @@ package body VCS2.History is
    -- On_Preferences_Changed --
    ----------------------------
 
-   overriding procedure On_Preferences_Changed
-     (Self : not null access History_View_Record;
-      Pref : Preference)
+   overriding
+   procedure On_Preferences_Changed
+     (Self : not null access History_View_Record; Pref : Preference)
    is
-      T  : constant History_Tree := History_Tree (Self.Tree);
+      T      : constant History_Tree := History_Tree (Self.Tree);
       Config : History_View_Config;
    begin
       Base_VCS_View_Record (Self.all).On_Preferences_Changed (Pref);
@@ -1309,7 +1327,8 @@ package body VCS2.History is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1325,7 +1344,8 @@ package body VCS2.History is
    -- On_History_Line --
    ---------------------
 
-   overriding procedure On_History_Line
+   overriding
+   procedure On_History_Line
      (Self    : not null access On_Line_Seen;
       ID      : String;
       Author  : String;
@@ -1336,10 +1356,9 @@ package body VCS2.History is
       Flags   : Commit_Flags)
    is
       View              : constant History_View :=
-                            History_Views.Retrieve_View (Self.Kernel);
+        History_Views.Retrieve_View (Self.Kernel);
       Tree              : constant History_Tree :=
-                            (if View /= null then
-                               History_Tree (View.Tree) else null);
+        (if View /= null then History_Tree (View.Tree) else null);
       C                 : Commit_Maps.Cursor;
       N, Parent_N       : Node_Data_Access;
       Is_Head_Of_Branch : Boolean;
@@ -1357,12 +1376,12 @@ package body VCS2.History is
             N := Commit_Maps.Element (C);
          end if;
 
-         N.ID      := To_Unbounded_String (ID);
-         N.Author  := To_Unbounded_String (Author);
-         N.Date    := To_Unbounded_String (Date);
+         N.ID := To_Unbounded_String (ID);
+         N.Author := To_Unbounded_String (Author);
+         N.Date := To_Unbounded_String (Date);
          N.Subject := To_Unbounded_String (Subject);
-         N.Names   := Names;
-         N.Flags   := Flags;
+         N.Names := Names;
+         N.Flags := Flags;
 
          if not Parents.Is_Empty then
             N.Parents := new Parent_Array (1 .. Natural (Parents.Length));
@@ -1378,7 +1397,7 @@ package body VCS2.History is
            or else not Tree.Config.Collapse   --  want to view all
            or else Names /= null       --  named commit
            or else Parents.Length > 1  --  first commit on a branch
-                                       --  a branching commit
+           --  a branching commit
            or else Is_Head_Of_Branch   --  current head of the branch
          then
             N.Visible := Always_Visible;
@@ -1428,6 +1447,7 @@ package body VCS2.History is
 
          Parents.Clear;  --  adopted
          Names := null;  --  adopted
+
       end if;
    end On_History_Line;
 
@@ -1437,14 +1457,14 @@ package body VCS2.History is
 
    procedure Reset_Lines (Self : not null access History_Tree_Record'Class) is
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Parent_Array, Parent_Array_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Node_Data, Node_Data_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Parent_Array, Parent_Array_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Node_Data, Node_Data_Access);
 
    begin
       for L of Self.Commits loop
-         L.Col     := No_Graph_Column;
+         L.Col := No_Graph_Column;
          L.Visible := 0;
          Free (L.Names);
 
@@ -1590,21 +1610,24 @@ package body VCS2.History is
             end loop;
          end if;
 
-         Init_Set_Int    (V (Column_Line),   Gint (Data.Current));
+         Init_Set_Int (V (Column_Line), Gint (Data.Current));
          Init_Set_String (V (Column_Author), To_String (N.Author));
-         Init_Set_String (V (Column_Date),   To_String (N.Date));
+         Init_Set_String (V (Column_Date), To_String (N.Date));
 
          Tmp := Null_Unbounded_String;
          if N.Names /= null then
             for B in N.Names'Range loop
                case N.Names (B).Kind is
-                  when Name_Head =>
+                  when Name_Head   =>
                      Append (Tmp, "<span background='#ff6600'");
-                  when Name_Local =>
+
+                  when Name_Local  =>
                      Append (Tmp, "<span background='#fee391'");
+
                   when Name_Remote =>
                      Append (Tmp, "<span background='#a6bddb'");
-                  when Name_Tag =>
+
+                  when Name_Tag    =>
                      Append (Tmp, "<span background='#a1d99b'");
                end case;
 
@@ -1661,10 +1684,11 @@ package body VCS2.History is
       V    : Glib.Values.GValue_Array (All_Columns);
       Iter : Gtk_Tree_Iter;
    begin
-      Tree.Has_Show_Older := Data.Current <= Tree.Lines.Last_Index
+      Tree.Has_Show_Older :=
+        Data.Current <= Tree.Lines.Last_Index
         or else Tree.Lines.Last_Index = Tree.User_Filter.Up_To_Lines;
       if Tree.Has_Show_Older then
-         Init_Set_Int    (V (Column_Line), -1);
+         Init_Set_Int (V (Column_Line), -1);
          Init_Set_String (V (Column_Author), "");
          Init_Set_String (V (Column_Date), "");
          Init_Set_String
@@ -1674,8 +1698,7 @@ package body VCS2.History is
       end if;
 
       --  Force redisplay of graph
-      Trace (Me, "done inserting nodes, max columns="
-             & Tree.Max_Columns'Img);
+      Trace (Me, "done inserting nodes, max columns=" & Tree.Max_Columns'Img);
 
       if Tree.Show_Graph then
          Tree.Scrolled.Set_No_Show_All (False);
@@ -1693,16 +1716,16 @@ package body VCS2.History is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out On_Line_Seen)
-   is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Layout_Idle_Data, Layout_Idle_Data_Access);
+   overriding
+   procedure Free (Self : in out On_Line_Seen) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Layout_Idle_Data, Layout_Idle_Data_Access);
 
       View : constant History_View :=
         History_Views.Retrieve_View (Self.Kernel);
 
       Tree : constant History_Tree :=
-               (if View /= null then History_Tree (View.Tree) else null);
+        (if View /= null then History_Tree (View.Tree) else null);
    begin
       if Tree /= null then
          Finish_Filling_Tree (Tree, Self.Data);
@@ -1729,7 +1752,8 @@ package body VCS2.History is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self          : On_VCS_Refresh;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Is_File_Saved : Boolean)
@@ -1746,9 +1770,10 @@ package body VCS2.History is
    -- On_Start --
    --------------
 
-   overriding procedure On_Start (Self : not null access On_Line_Seen) is
+   overriding
+   procedure On_Start (Self : not null access On_Line_Seen) is
       View : constant History_View :=
-         History_Views.Retrieve_View (Self.Kernel);
+        History_Views.Retrieve_View (Self.Kernel);
       Tree : History_Tree;
    begin
       if View /= null then
@@ -1770,7 +1795,8 @@ package body VCS2.History is
 
             --  If we have a filter, we can't show the graph, since we are
             --  missing too many commits.
-            Tree.Show_Graph := Tree.User_Filter.Filter = ""
+            Tree.Show_Graph :=
+              Tree.User_Filter.Filter = ""
               and then Tree.User_Filter.For_File = No_File
               and then Tree.User_Filter.Select_Id = "";
 
@@ -1790,7 +1816,8 @@ package body VCS2.History is
    -- On_Success --
    ----------------
 
-   overriding procedure On_Success
+   overriding
+   procedure On_Success
      (Self   : not null access On_Checkout;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1804,7 +1831,8 @@ package body VCS2.History is
    -- Refresh --
    -------------
 
-   overriding procedure Refresh (Self : not null access History_View_Record) is
+   overriding
+   procedure Refresh (Self : not null access History_View_Record) is
       VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
       Tree : constant History_Tree := History_Tree (Self.Tree);
 
@@ -1813,8 +1841,8 @@ package body VCS2.History is
          Self.Show_Progress_Bar;
          VCS.Queue_Fetch_History
            (Visitor =>
-               new On_Line_Seen'
-              (Task_Visitor with Kernel => Self.Kernel, others => <>),
+              new On_Line_Seen'
+                (Task_Visitor with Kernel => Self.Kernel, others => <>),
             Filter  => Tree.User_Filter);
       end if;
    end Refresh;
@@ -1823,14 +1851,15 @@ package body VCS2.History is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Refresh_History;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Refresh_History; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : constant History_View  :=
-                 History_Views.Get_Or_Create_View (Kernel);
+      View   : constant History_View :=
+        History_Views.Get_Or_Create_View (Kernel);
    begin
       Refresh (View);
       return Success;
@@ -1840,9 +1869,10 @@ package body VCS2.History is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access History_For_File;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access History_For_File; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
       File   : constant Virtual_File := File_Information (Context.Context);
@@ -1851,21 +1881,22 @@ package body VCS2.History is
       VCS    : VCS_Engine_Access;
 
       procedure Set_Initial_Filter
-         (View : not null access History_View_Record'Class);
+        (View : not null access History_View_Record'Class);
       procedure Set_Initial_Filter
-         (View : not null access History_View_Record'Class) is
+        (View : not null access History_View_Record'Class) is
       begin
          View.Refresh_On_Pref_Changed := False;
       end Set_Initial_Filter;
 
    begin
       if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS :=
+           VCS_Engine_Access (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
          Set_Active_VCS (Kernel, VCS);
 
-         View := History_Views.Get_Or_Create_View
-            (Kernel, Focus => True, Init => Set_Initial_Filter'Access);
+         View :=
+           History_Views.Get_Or_Create_View
+             (Kernel, Focus => True, Init => Set_Initial_Filter'Access);
 
          --  The view will be refreshed automatically because of the
          --  call to Set_Filter
@@ -1879,30 +1910,36 @@ package body VCS2.History is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Show_History_Command) return Command_Return_Type
    is
-      View   : History_View;
-      VCS    : VCS_Engine_Access;
+      View : History_View;
+      VCS  : VCS_Engine_Access;
 
       procedure Set_Initial_Filter
-         (View : not null access History_View_Record'Class);
+        (View : not null access History_View_Record'Class);
       procedure Set_Initial_Filter
-         (View : not null access History_View_Record'Class) is
+        (View : not null access History_View_Record'Class) is
       begin
          View.Refresh_On_Pref_Changed := False;
       end Set_Initial_Filter;
 
    begin
-      VCS := VCS_Engine_Access
-        (Self.Kernel.VCS.Guess_VCS_For_Directory (Self.File.Dir));
+      VCS :=
+        VCS_Engine_Access
+          (Self.Kernel.VCS.Guess_VCS_For_Directory (Self.File.Dir));
       Set_Active_VCS (Self.Kernel, VCS);
 
-      View := History_Views.Get_Or_Create_View
-         (Self.Kernel, Focus => True, Init => Set_Initial_Filter'Access);
+      View :=
+        History_Views.Get_Or_Create_View
+          (Self.Kernel, Focus => True, Init => Set_Initial_Filter'Access);
       View.Refresh_On_Pref_Changed := True;
-      View.Set_Filter ("file:" & Self.File.Display_Full_Name
-                       & "@" & To_String (Self.Commit_Id));
+      View.Set_Filter
+        ("file:"
+         & Self.File.Display_Full_Name
+         & "@"
+         & To_String (Self.Commit_Id));
       return Success;
    end Execute;
 
@@ -1910,9 +1947,10 @@ package body VCS2.History is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Checkout;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Checkout; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
 
@@ -1929,9 +1967,10 @@ package body VCS2.History is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Checkout_File;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Checkout_File; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
 
@@ -1939,8 +1978,7 @@ package body VCS2.History is
       Commit : constant String := Commit_Id_Information (Context.Context);
       View   : constant History_View := History_Views.Retrieve_View (Kernel);
       Tree   : constant History_Tree :=
-        (if View /= null then
-            History_Tree (View.Tree) else null);
+        (if View /= null then History_Tree (View.Tree) else null);
       VCS    : constant VCS_Engine_Access := Active_VCS (Kernel);
 
    begin
@@ -1962,11 +2000,13 @@ package body VCS2.History is
       File      : Virtual_File;
       Commit_ID : String) return Commands.Command_Access is
    begin
-      return new Show_History_Command'
-        (Root_Command with
-           Kernel    => Kernel_Handle (Kernel),
-           File      => File,
-           Commit_Id => To_Unbounded_String (Commit_ID));
+      return
+        new Show_History_Command'
+          (Root_Command
+           with
+             Kernel    => Kernel_Handle (Kernel),
+             File      => File,
+             Commit_Id => To_Unbounded_String (Commit_ID));
    end Create_Show_History_Command;
 
    ---------------------
@@ -1978,44 +2018,46 @@ package body VCS2.History is
    begin
       History_Views.Register_Module (Kernel);
 
-      Show_ID := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("vcs-history-show-id",
-         Default => False,
-         Label   => -"Show ID");
+      Show_ID :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("vcs-history-show-id", Default => False, Label => -"Show ID");
 
-      Show_Author := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("vcs-history-show-author",
-         Default => False,
-         Label   => -"Show Author");
+      Show_Author :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("vcs-history-show-author",
+           Default => False,
+           Label   => -"Show Author");
 
-      Show_Date := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("vcs-history-show-date",
-         Default => False,
-         Label   => -"Show Date");
+      Show_Date :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("vcs-history-show-date", Default => False, Label => -"Show Date");
 
-      Show_All_Branches := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("vcs-history-show-all-branches",
-         Default => False,
-         Label   => -"Show All Branches");
+      Show_All_Branches :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("vcs-history-show-all-branches",
+           Default => False,
+           Label   => -"Show All Branches");
 
-      Collapse_Simple_Commits := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("vcs-history-collapse",
-         Default  => False,
-         Label    => -"Hide non-branch related commits");
+      Collapse_Simple_Commits :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("vcs-history-collapse",
+           Default => False,
+           Label   => -"Hide non-branch related commits");
 
       Register_Action
-        (Kernel, "open history for current file",
+        (Kernel,
+         "open history for current file",
          Description =>
            -("Show the History view and display the history of changes for"
-           & " the current file only."),
+             & " the current file only."),
          Command     => new History_For_File,
          Filter      => Lookup_Filter (Kernel, "File"),
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "history refresh",
-         Description =>
-           -("Refresh the history view"),
+        (Kernel,
+         "history refresh",
+         Description => -("Refresh the history view"),
          Command     => new Refresh_History,
          Category    => "VCS2",
          Icon_Name   => "gps-refresh-symbolic");
@@ -2040,20 +2082,20 @@ package body VCS2.History is
         (Kernel => Kernel,
          Action => "open history for current file",
          Label  => "Version Control/Show history for file",
-         Group    => VCS_Contextual_Group);
+         Group  => VCS_Contextual_Group);
 
       Register_Contextual_Menu
         (Kernel => Kernel,
          Action => "checkout to commit",
          Label  => "Checkout to the revision",
-         Group    => VCS_Contextual_Group);
+         Group  => VCS_Contextual_Group);
 
       Register_Contextual_Menu
         (Kernel => Kernel,
          Action => "checkout file to commit",
          Label  => "Checkout %C to the revision",
          Custom => Label_For_Checkout_File'Access,
-         Group    => VCS_Contextual_Group);
+         Group  => VCS_Contextual_Group);
 
    end Register_Module;
 

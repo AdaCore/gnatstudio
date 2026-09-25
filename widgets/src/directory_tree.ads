@@ -55,8 +55,8 @@ package Directory_Tree is
    --  directory. See below for another widget that provides multiple directory
    --  selection.
 
-   type Dir_Tree_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
+   type Dir_Tree_Record is
+     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
    type Dir_Tree is access all Dir_Tree_Record'Class;
 
    procedure Gtk_New
@@ -99,8 +99,8 @@ package Directory_Tree is
    -- High-level directory selector --
    -----------------------------------
 
-   type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record
-     with private;
+   type Directory_Selector_Record is
+     new Gtk.Paned.Gtk_Paned_Record with private;
    type Directory_Selector is access all Directory_Selector_Record'Class;
 
    No_Selection : constant GNATCOLL.VFS.File_Array := (1 .. 0 => <>);
@@ -123,7 +123,7 @@ package Directory_Tree is
    --  Internal function for the creation of new widgets.
 
    function Get_Single_Selection
-     (Selector  : access Directory_Selector_Record'Class)
+     (Selector : access Directory_Selector_Record'Class)
       return GNATCOLL.VFS.Virtual_File;
    --  Return the directory selected by the user.
    --  If Selector allowed multiple directories, only the first one is
@@ -144,14 +144,16 @@ private
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
    --  Custom data for the asynchronous fill function.
 
-   package File_Append_Directory_Timeout is
-      new Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
+   package File_Append_Directory_Timeout is new
+     Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
 
-   package Timeout_Id_List is new Ada.Containers.Vectors
-     (Positive, Glib.Main.G_Source_Id, "=" => Glib.Main."=");
+   package Timeout_Id_List is new
+     Ada.Containers.Vectors
+       (Positive,
+        Glib.Main.G_Source_Id,
+        "=" => Glib.Main."=");
 
-   type Dir_Tree_Record is new
-     Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
+   type Dir_Tree_Record is new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
    with record
       File_Tree  : Gtk.Tree_View.Gtk_Tree_View;
       File_Model : Gtk.Tree_Store.Gtk_Tree_Store;
@@ -161,7 +163,7 @@ private
       Path                : Gtk.Tree_Model.Gtk_Tree_Path;
       Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
 
-      Current_Dir         : GNATCOLL.VFS.Virtual_File;
+      Current_Dir : GNATCOLL.VFS.Virtual_File;
 
       Fill_Timeout_Ids : Timeout_Id_List.Vector;
    end record;
@@ -169,8 +171,8 @@ private
    type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record with record
       Directory : Dir_Tree;
 
-      List_Tree  : Gtk.Tree_View.Gtk_Tree_View;
-      List_Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      List_Tree            : Gtk.Tree_View.Gtk_Tree_View;
+      List_Model           : Gtk.Tree_Store.Gtk_Tree_Store;
       Tree_Contextual_Menu : Gtk.Menu.Gtk_Menu;
    end record;
 

@@ -15,23 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
 
 with VSS.Strings.Conversions;
 
-with Glib;                         use Glib;
+with Glib;              use Glib;
 with Glib.Object;
-with Glib.Values;                  use Glib.Values;
-with Glib_Values_Utils;            use Glib_Values_Utils;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Enums;      use Gtk.Enums;
 with Gtk.Tree_Sortable;
-with Gtk.Tree_Store;               use Gtk.Tree_Store;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
 
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
 
 with Basic_Types;
 with Commands;
@@ -46,15 +46,15 @@ package body GPS.Location_View.Listener is
    use type Glib.Main.G_Source_Id;
    use type Basic_Types.Visible_Column_Type;
 
-   Column_Types : Glib.GType_Array
-     (0 .. Listener_Columns'Pos (Listener_Columns'Last));
+   Column_Types :
+     Glib.GType_Array (0 .. Listener_Columns'Pos (Listener_Columns'Last));
 
-   package Message_Conversions is
-     new System.Address_To_Access_Conversions
+   package Message_Conversions is new
+     System.Address_To_Access_Conversions
        (GPS.Kernel.Messages.Abstract_Message'Class);
 
-   package Classic_Tree_Model_Sources is
-     new Glib.Main.Generic_Sources (Classic_Tree_Model);
+   package Classic_Tree_Model_Sources is new
+     Glib.Main.Generic_Sources (Classic_Tree_Model);
 
    procedure Update_Background_Color
      (Self          : not null access Locations_Listener'Class;
@@ -69,8 +69,7 @@ package body GPS.Location_View.Listener is
    --  Refresh the background color after the deletions are finished
 
    function Find_Heaviest_In_Children_Of
-     (Model  : Classic_Tree_Model;
-      Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+     (Model : Classic_Tree_Model; Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Find the iter that has the heaviest value in the children of Parent.
    --  return Null_Iter if Parent has no children;
 
@@ -120,33 +119,28 @@ package body GPS.Location_View.Listener is
    --  nonequvalence is reported or end of Funcs is reached.
 
    function Compare_In_Base_Name_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint;
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint;
    --  Compare files of A and B in base name order.
 
    function Compare_In_Line_Column_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint;
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint;
    --  Compare message of A and B in line:column order.
 
    function Compare_In_Weight_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint;
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint;
    --  Compare nodes A and B in weight order.
 
    function Compare_In_Path_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint;
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint;
    --  Compare A and B in path order.
 
    function Compare_Nodes
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint;
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint;
    --  Compares rows
 
    procedure Disable_Sorting
@@ -172,7 +166,7 @@ package body GPS.Location_View.Listener is
    --  ??? Must be moved to GtkAda
 
    function Get_Markup
-     (Message  : not null access Abstract_Message'Class) return String;
+     (Message : not null access Abstract_Message'Class) return String;
    --  Returns string that is used for the markup column
 
    Stop_Sorting_On_Count : constant Glib.Gint := 1000;
@@ -182,7 +176,8 @@ package body GPS.Location_View.Listener is
    -- Category_Added --
    --------------------
 
-   overriding procedure Category_Added
+   overriding
+   procedure Category_Added
      (Self                     : not null access Locations_Listener;
       Category                 : VSS.Strings.Virtual_String;
       Allow_Auto_Jump_To_First : Boolean)
@@ -200,7 +195,8 @@ package body GPS.Location_View.Listener is
       GPS.Editors.GtkAda.Set_Mark (Mark, GPS.Editors.Nil_Editor_Mark);
 
       Set_And_Clear
-        (Gtk_Tree_Store (Self.Model), Iter,
+        (Gtk_Tree_Store (Self.Model),
+         Iter,
          (-Category_Column,
           -Weight_Column,
           -File_Column,
@@ -216,22 +212,23 @@ package body GPS.Location_View.Listener is
           -Number_Of_Children_Column,
           -Sort_Order_Hint_Column,
           -Message_Column),
-         (1  => As_String  (Category),
-          2  => As_Int     (0),
-          3  => As_File    (No_File),
-          4  => As_Int     (-1),
-          5  => As_Int     (-1),
-          6  => As_String  (Category),
-          7  => As_String  (String'("gps-emblem-category")),
-          8  => As_String  (Category),
-          9  => As_String  (Category),
+         (1  => As_String (Category),
+          2  => As_Int (0),
+          3  => As_File (No_File),
+          4  => As_Int (-1),
+          5  => As_Int (-1),
+          6  => As_String (Category),
+          7  => As_String (String'("gps-emblem-category")),
+          8  => As_String (Category),
+          9  => As_String (Category),
           10 => Mark,
           11 => As_Pointer (System.Null_Address),
-          12 => As_String  (Category),
-          13 => As_Int     (0),
-          14 => As_Int
-            (Sort_Order_Hint'Pos
-               (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
+          12 => As_String (Category),
+          13 => As_Int (0),
+          14 =>
+            As_Int
+              (Sort_Order_Hint'Pos
+                 (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
                     (Category))),
           15 => As_Pointer (System.Null_Address)));
    end Category_Added;
@@ -240,7 +237,8 @@ package body GPS.Location_View.Listener is
    -- Category_Removed --
    ----------------------
 
-   overriding procedure Category_Removed
+   overriding
+   procedure Category_Removed
      (Self     : not null access Locations_Listener;
       Category : VSS.Strings.Virtual_String)
    is
@@ -280,9 +278,8 @@ package body GPS.Location_View.Listener is
    -------------------
 
    function Compare_Nodes
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint
    is
       Self  : constant Classic_Tree_Model :=
         Classic_Tree_Model (Gtk_Tree_Store'(-Model));
@@ -295,44 +292,57 @@ package body GPS.Location_View.Listener is
 
          case Self.File_Order is
             when Category_Default_Sort =>
-               Hint := Sort_Order_Hint'Val
-                 (Get_Int (Model, A, -Sort_Order_Hint_Column));
+               Hint :=
+                 Sort_Order_Hint'Val
+                   (Get_Int (Model, A, -Sort_Order_Hint_Column));
 
                case Self.Messages_Order is
                   when By_Weight =>
                      case Hint is
-                        when Chronological =>
-                           return Compare
-                             (Model, A, B,
-                              (Compare_In_Weight_Order'Access,
-                               Compare_In_Path_Order'Access));
+                        when Chronological                  =>
+                           return
+                             Compare
+                               (Model,
+                                A,
+                                B,
+                                (Compare_In_Weight_Order'Access,
+                                 Compare_In_Path_Order'Access));
 
                         when Sort_Order_Hint'(Alphabetical) =>
-                           return Compare
-                             (Model, A, B,
-                              (Compare_In_Weight_Order'Access,
-                               Compare_In_Base_Name_Order'Access,
-                               Compare_In_Path_Order'Access));
+                           return
+                             Compare
+                               (Model,
+                                A,
+                                B,
+                                (Compare_In_Weight_Order'Access,
+                                 Compare_In_Base_Name_Order'Access,
+                                 Compare_In_Path_Order'Access));
                      end case;
 
-                  when others =>
+                  when others    =>
                      case Hint is
-                        when Chronological =>
+                        when Chronological                  =>
                            return Compare_In_Path_Order (Model, A, B);
 
                         when Sort_Order_Hint'(Alphabetical) =>
-                           return Compare
-                             (Model, A, B,
-                              (Compare_In_Base_Name_Order'Access,
-                               Compare_In_Path_Order'Access));
+                           return
+                             Compare
+                               (Model,
+                                A,
+                                B,
+                                (Compare_In_Base_Name_Order'Access,
+                                 Compare_In_Path_Order'Access));
                      end case;
                end case;
 
-            when Alphabetical =>
-               return Compare
-                 (Model, A, B,
-                  (Compare_In_Base_Name_Order'Access,
-                   Compare_In_Path_Order'Access));
+            when Alphabetical          =>
+               return
+                 Compare
+                   (Model,
+                    A,
+                    B,
+                    (Compare_In_Base_Name_Order'Access,
+                     Compare_In_Path_Order'Access));
          end case;
 
       elsif Depth = 2 then
@@ -340,17 +350,23 @@ package body GPS.Location_View.Listener is
 
          case Self.Messages_Order is
             when By_Location =>
-               return Compare
-                 (Model, A, B,
-                  (Compare_In_Line_Column_Order'Access,
-                   Compare_In_Path_Order'Access));
+               return
+                 Compare
+                   (Model,
+                    A,
+                    B,
+                    (Compare_In_Line_Column_Order'Access,
+                     Compare_In_Path_Order'Access));
 
-            when By_Weight =>
-               return Compare
-                 (Model, A, B,
-                  (Compare_In_Weight_Order'Access,
-                   Compare_In_Line_Column_Order'Access,
-                   Compare_In_Path_Order'Access));
+            when By_Weight   =>
+               return
+                 Compare
+                   (Model,
+                    A,
+                    B,
+                    (Compare_In_Weight_Order'Access,
+                     Compare_In_Line_Column_Order'Access,
+                     Compare_In_Path_Order'Access));
          end case;
 
       else
@@ -366,9 +382,8 @@ package body GPS.Location_View.Listener is
    --------------------------------
 
    function Compare_In_Base_Name_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint
    is
       A_Name : constant Filesystem_String :=
         Get_File (Model, A, -File_Column).Base_Name;
@@ -392,9 +407,8 @@ package body GPS.Location_View.Listener is
    ----------------------------------
 
    function Compare_In_Line_Column_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint
    is
       A_Line   : constant Glib.Gint := Get_Int (Model, A, -Line_Column);
       A_Column : constant Glib.Gint := Get_Int (Model, A, -Column_Column);
@@ -422,9 +436,8 @@ package body GPS.Location_View.Listener is
    ---------------------------
 
    function Compare_In_Path_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint
    is
       A_Path    : constant Gtk_Tree_Path := Get_Path (Model, A);
       B_Path    : constant Gtk_Tree_Path := Get_Path (Model, B);
@@ -451,9 +464,8 @@ package body GPS.Location_View.Listener is
    -----------------------------
 
    function Compare_In_Weight_Order
-     (Model : Gtk_Tree_Model;
-      A     : Gtk_Tree_Iter;
-      B     : Gtk_Tree_Iter) return Glib.Gint
+     (Model : Gtk_Tree_Model; A : Gtk_Tree_Iter; B : Gtk_Tree_Iter)
+      return Glib.Gint
    is
       A_Weight : constant Glib.Gint := Get_Int (Model, A, -Weight_Column);
       B_Weight : constant Glib.Gint := Get_Int (Model, B, -Weight_Column);
@@ -493,7 +505,8 @@ package body GPS.Location_View.Listener is
    -- File_Added --
    ----------------
 
-   overriding procedure File_Added
+   overriding
+   procedure File_Added
      (Self     : not null access Locations_Listener;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
@@ -516,7 +529,8 @@ package body GPS.Location_View.Listener is
       GPS.Editors.GtkAda.Set_Mark (Mark, GPS.Editors.Nil_Editor_Mark);
 
       Set_And_Clear
-        (Gtk_Tree_Store (Self.Model), Iter,
+        (Gtk_Tree_Store (Self.Model),
+         Iter,
          (-Category_Column,
           -Weight_Column,
           -File_Column,
@@ -532,27 +546,30 @@ package body GPS.Location_View.Listener is
           -Number_Of_Children_Column,
           -Sort_Order_Hint_Column,
           -Message_Column),
-         (1 => As_String (Category),
-          2 => As_Int  (0),
-          3 => As_File (File),
-          4 => As_Int  (-1),
-          5 => As_Int  (-1),
-          6 => As_String
-            ((if File /= No_File
-             then String (File.Base_Name)
-             else "<unknown>")),
-          7 => As_String (String'("gps-emblem-file-unmodified")),
-          8 => As_String
-            ((if File /= No_File
-             then String (File.Base_Name)
-             else "&lt;unknown&gt;")),
-          9  => As_String  (String (File.Base_Name)),
+         (1  => As_String (Category),
+          2  => As_Int (0),
+          3  => As_File (File),
+          4  => As_Int (-1),
+          5  => As_Int (-1),
+          6  =>
+            As_String
+              ((if File /= No_File
+                then String (File.Base_Name)
+                else "<unknown>")),
+          7  => As_String (String'("gps-emblem-file-unmodified")),
+          8  =>
+            As_String
+              ((if File /= No_File
+                then String (File.Base_Name)
+                else "&lt;unknown&gt;")),
+          9  => As_String (String (File.Base_Name)),
           10 => Mark,
           11 => As_Pointer (System.Null_Address),
-          12 => As_String  (String (File.Base_Name)),
-          13 => As_Int     (0),
-          14 => As_Int (Self.Model.Get_Int
-            (Category_Iter, -Sort_Order_Hint_Column)),
+          12 => As_String (String (File.Base_Name)),
+          13 => As_Int (0),
+          14 =>
+            As_Int
+              (Self.Model.Get_Int (Category_Iter, -Sort_Order_Hint_Column)),
           15 => As_Pointer (System.Null_Address)));
    end File_Added;
 
@@ -560,7 +577,8 @@ package body GPS.Location_View.Listener is
    -- File_Removed --
    ------------------
 
-   overriding procedure File_Removed
+   overriding
+   procedure File_Removed
      (Self     : not null access Locations_Listener;
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File)
@@ -576,7 +594,7 @@ package body GPS.Location_View.Listener is
 
       for Index in reverse
         Self.Model.Removed_Rows.First_Index
-          .. Self.Model.Removed_Rows.Last_Index
+        .. Self.Model.Removed_Rows.Last_Index
       loop
          declare
             Path : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -599,8 +617,7 @@ package body GPS.Location_View.Listener is
    ----------------------------------
 
    function Find_Heaviest_In_Children_Of
-     (Model  : Classic_Tree_Model;
-      Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter
+     (Model : Classic_Tree_Model; Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
       function Weight (It : Gtk_Tree_Iter) return Gint;
       function Weight (It : Gtk_Tree_Iter) return Gint is
@@ -652,11 +669,12 @@ package body GPS.Location_View.Listener is
         or else File_Iter = Null_Iter
         or else Category_Iter = Null_Iter
       then
-         Find_Message (Self          => Self,
-                       Message       => Message,
-                       Category_Iter => Category_Iter,
-                       File_Iter     => File_Iter,
-                       Iter          => Message_Iter);
+         Find_Message
+           (Self          => Self,
+            Message       => Message,
+            Category_Iter => Category_Iter,
+            File_Iter     => File_Iter,
+            Iter          => Message_Iter);
       end if;
 
       Heaviest_Iter := Find_Heaviest_In_Children_Of (Self.Model, File_Iter);
@@ -664,8 +682,8 @@ package body GPS.Location_View.Listener is
          Copy_Background (Self.Model, Heaviest_Iter, File_Iter);
       end if;
 
-      Heaviest_Iter := Find_Heaviest_In_Children_Of
-        (Self.Model, Category_Iter);
+      Heaviest_Iter :=
+        Find_Heaviest_In_Children_Of (Self.Model, Category_Iter);
       if Heaviest_Iter /= Null_Iter then
          Copy_Background (Self.Model, Heaviest_Iter, Category_Iter);
       end if;
@@ -715,10 +733,8 @@ package body GPS.Location_View.Listener is
       if From = Null_Iter or else To = Null_Iter then
          return;
       end if;
-      Get_Value
-        (Gtk_Tree_Store (Model), From, -Background_Color_Column, Bg);
-      Set_Value
-        (Gtk_Tree_Store (Model), To, -Background_Color_Column, Bg);
+      Get_Value (Gtk_Tree_Store (Model), From, -Background_Color_Column, Bg);
+      Set_Value (Gtk_Tree_Store (Model), To, -Background_Color_Column, Bg);
       Glib.Values.Unset (Bg);
    end Copy_Background;
 
@@ -746,8 +762,10 @@ package body GPS.Location_View.Listener is
 
          --  whether this last node is what we are looking for
          if Iter /= Null_Iter
-           and then VSS.Strings.Conversions.To_Virtual_String
-             (Self.Model.Get_String (Iter, -Category_Column)) = Category
+           and then
+             VSS.Strings.Conversions.To_Virtual_String
+               (Self.Model.Get_String (Iter, -Category_Column))
+             = Category
          then
             return;
          end if;
@@ -756,7 +774,7 @@ package body GPS.Location_View.Listener is
          Path_Free (Self.Category);
          Path_Free (Self.File);
          Self.Category := Null_Gtk_Tree_Path;
-         Self.File     := Null_Gtk_Tree_Path;
+         Self.File := Null_Gtk_Tree_Path;
       end if;
 
       --  cached node is not what we needed, searching for it
@@ -764,7 +782,8 @@ package body GPS.Location_View.Listener is
 
       while Iter /= Null_Iter loop
          if VSS.Strings.Conversions.To_Virtual_String
-           (Self.Model.Get_String (Iter, -Category_Column)) = Category
+              (Self.Model.Get_String (Iter, -Category_Column))
+           = Category
          then
             Self.Category := Self.Model.Get_Path (Iter);
             return;
@@ -839,10 +858,7 @@ package body GPS.Location_View.Listener is
    begin
       if Message.Level = Primary then
          Self.Find_File
-           (Message.Get_Category,
-            Message.Get_File,
-            Category_Iter,
-            File_Iter);
+           (Message.Get_Category, Message.Get_File, Category_Iter, File_Iter);
          Parent_Iter := File_Iter;
 
       else
@@ -853,9 +869,10 @@ package body GPS.Location_View.Listener is
       Iter := Self.Model.Children (Parent_Iter);
 
       while Iter /= Null_Iter loop
-         exit when Self.Model.Get_Address (Iter, -Message_Column) =
-           Message_Conversions.To_Address
-             (Message_Conversions.Object_Pointer (Message));
+         exit when
+           Self.Model.Get_Address (Iter, -Message_Column)
+           = Message_Conversions.To_Address
+               (Message_Conversions.Object_Pointer (Message));
 
          Self.Model.Next (Iter);
       end loop;
@@ -878,17 +895,19 @@ package body GPS.Location_View.Listener is
    ----------------
 
    function Get_Markup
-     (Message  : not null access Abstract_Message'Class) return String
+     (Message : not null access Abstract_Message'Class) return String
    is
       Location : constant String :=
-        Image (Message.Get_Line)
-        & ':'
-        & Image (Natural (Message.Get_Column));
+        Image (Message.Get_Line) & ':' & Image (Natural (Message.Get_Column));
       Length   : constant Natural :=
         Integer'Max (0, Location_Padding - Location'Length);
 
    begin
-      return "<b>" & Location & "</b>" & (Length * ' ')
+      return
+        "<b>"
+        & Location
+        & "</b>"
+        & (Length * ' ')
         & To_String (Message.Get_Markup);
    end Get_Markup;
 
@@ -897,14 +916,12 @@ package body GPS.Location_View.Listener is
    -----------------
 
    function Get_Message
-     (Model  : Gtk_Tree_Model;
-      Iter   : Gtk_Tree_Iter;
-      Column : Glib.Gint) return Message_Access is
+     (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter; Column : Glib.Gint)
+      return Message_Access is
    begin
       return
         Message_Access
-          (Message_Conversions.To_Pointer
-             (Get_Address (Model, Iter, Column)));
+          (Message_Conversions.To_Pointer (Get_Address (Model, Iter, Column)));
    end Get_Message;
 
    ---------------
@@ -921,9 +938,8 @@ package body GPS.Location_View.Listener is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Object : out Classic_Tree_Model;
-      Kernel : Kernel_Handle) is
+   procedure Gtk_New (Object : out Classic_Tree_Model; Kernel : Kernel_Handle)
+   is
    begin
       Object := new Classic_Tree_Model_Record;
       Initialize (Object, Kernel);
@@ -934,8 +950,7 @@ package body GPS.Location_View.Listener is
    ----------------
 
    procedure Initialize
-     (Self   : access Classic_Tree_Model_Record'Class;
-      Kernel : Kernel_Handle) is
+     (Self : access Classic_Tree_Model_Record'Class; Kernel : Kernel_Handle) is
    begin
       Gtk.Tree_Store.Initialize (Self, Column_Types);
       Self.Kernel := Kernel;
@@ -949,21 +964,21 @@ package body GPS.Location_View.Listener is
    ------------------------
 
    procedure Insert_With_Values
-      (Tree_Store : not null access Gtk.Tree_Store.Gtk_Tree_Store_Record;
-       Iter       : out Gtk.Tree_Model.Gtk_Tree_Iter;
-       Parent     : Gtk.Tree_Model.Gtk_Tree_Iter;
-       Position   : Glib.Gint;
-       Columns    : Glib.Gint_Array;
-       Values     : Glib.Values.GValue_Array)
+     (Tree_Store : not null access Gtk.Tree_Store.Gtk_Tree_Store_Record;
+      Iter       : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Parent     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Position   : Glib.Gint;
+      Columns    : Glib.Gint_Array;
+      Values     : Glib.Values.GValue_Array)
    is
       procedure Internal
-         (Tree_Store : System.Address;
-          Iter       : out Gtk.Tree_Model.Gtk_Tree_Iter;
-          Parent     : System.Address;
-          Position   : Glib.Gint;
-          Columns    : not null access Glib.Gint;
-          Values     : not null access Glib.Values.GValue;
-          N_Values   : Glib.Gint);
+        (Tree_Store : System.Address;
+         Iter       : out Gtk.Tree_Model.Gtk_Tree_Iter;
+         Parent     : System.Address;
+         Position   : Glib.Gint;
+         Columns    : not null access Glib.Gint;
+         Values     : not null access Glib.Values.GValue;
+         N_Values   : Glib.Gint);
       pragma Import (C, Internal, "gtk_tree_store_insert_with_valuesv");
       Tmp_Iter : aliased Gtk.Tree_Model.Gtk_Tree_Iter;
    begin
@@ -982,7 +997,8 @@ package body GPS.Location_View.Listener is
    -- Message_Added --
    -------------------
 
-   overriding procedure Message_Added
+   overriding
+   procedure Message_Added
      (Self    : not null access Locations_Listener;
       Message : not null access Abstract_Message'Class)
    is
@@ -1026,10 +1042,7 @@ package body GPS.Location_View.Listener is
 
       else
          Self.Find_File
-           (Message.Get_Category,
-            Message.Get_File,
-            Category_Iter,
-            File_Iter);
+           (Message.Get_Category, Message.Get_File, Category_Iter, File_Iter);
          Parent_Iter := File_Iter;
       end if;
 
@@ -1038,7 +1051,7 @@ package body GPS.Location_View.Listener is
          VSS.Strings.Conversions.To_UTF_8_String (Message.Get_Category));
 
       case Message.Level is
-         when Primary =>
+         when Primary   =>
             Glib.Values.Init_Set_Int
               (Values (2),
                Glib.Gint
@@ -1058,9 +1071,9 @@ package body GPS.Location_View.Listener is
       end case;
 
       Values (3 .. 7) :=
-        (3 => As_File   (Message.Get_File),
-         4 => As_Int    (Glib.Gint (Message.Get_Line)),
-         5 => As_Int    (Glib.Gint (Message.Get_Column)),
+        (3 => As_File (Message.Get_File),
+         4 => As_Int (Glib.Gint (Message.Get_Line)),
+         5 => As_Int (Glib.Gint (Message.Get_Column)),
          6 => As_String (To_String (Message.Get_Text)),
          7 => As_String (String'("")));
 
@@ -1087,7 +1100,7 @@ package body GPS.Location_View.Listener is
       begin
          loop
             case M.Level is
-               when Primary =>
+               when Primary   =>
                   Markup := ASCII.LF & M.Get_Markup & Markup;
 
                   exit;
@@ -1103,8 +1116,10 @@ package body GPS.Location_View.Listener is
            VSS.Strings.Conversions.To_Unbounded_UTF_8_String (M.Get_Category)
            & ASCII.LF
            & String (M.Get_File.Base_Name)
-           & ":" & Image (M.Get_Line)
-           & ':' & Image (Integer (M.Get_Column))
+           & ":"
+           & Image (M.Get_Line)
+           & ':'
+           & Image (Integer (M.Get_Column))
            & To_String (Markup);
 
          Glib.Values.Init_Set_String (Values (9), To_String (Markup));
@@ -1114,26 +1129,31 @@ package body GPS.Location_View.Listener is
       GPS.Editors.GtkAda.Set_Mark (Values (10), Message.Get_Editor_Mark);
 
       Values (11 .. 16) :=
-        (11 => As_String
-           (if Message.Get_Action /= null
-            and then Message.Get_Action.Associated_Command /= null
-            and then Message.Get_Action.Image /= Null_Unbounded_String
-            then To_String (Message.Get_Action.Image)
-            else ""),
+        (11 =>
+           As_String
+             (if Message.Get_Action /= null
+                and then Message.Get_Action.Associated_Command /= null
+                and then Message.Get_Action.Image /= Null_Unbounded_String
+              then To_String (Message.Get_Action.Image)
+              else ""),
          12 => As_Pointer (To_Address (Message.Get_Action)),
-         13 => As_String
-           (if Message.Get_Action /= null
-            and then Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
-            then To_String (Message.Get_Action.Tooltip_Text)
-            else ""),
+         13 =>
+           As_String
+             (if Message.Get_Action /= null
+                and then
+                  Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
+              then To_String (Message.Get_Action.Tooltip_Text)
+              else ""),
          14 => As_Int (0),
-         15 => As_Int
-           (Sort_Order_Hint'Pos
+         15 =>
+           As_Int
+             (Sort_Order_Hint'Pos
                 (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
-                     (Message.Get_Category))),
+                   (Message.Get_Category))),
          --  XXX Can it be changed dynamically?
-         16 => As_Pointer
-           (Message_Conversions.To_Address
+         16 =>
+           As_Pointer
+             (Message_Conversions.To_Address
                 (Message_Conversions.Object_Pointer (Message))));
 
       Color := Message.Get_Background_Color;
@@ -1148,7 +1168,8 @@ package body GPS.Location_View.Listener is
         (Gtk.Tree_Store.Gtk_Tree_Store_Record (Self.Model.all)'Access,
          Iter,
          Parent_Iter,
-         -1, Glib.Gint_Array (Columns (1 .. Message_Last)),
+         -1,
+         Glib.Gint_Array (Columns (1 .. Message_Last)),
          Values (1 .. Message_Last));
 
       Unset (Values (1 .. Message_Last));
@@ -1158,8 +1179,8 @@ package body GPS.Location_View.Listener is
 
       if Message.Level = Primary then
 
-         Self.Model.Category_Messages_Count := Self.Model.Get_Int
-           (Category_Iter, -Number_Of_Children_Column) + 1;
+         Self.Model.Category_Messages_Count :=
+           Self.Model.Get_Int (Category_Iter, -Number_Of_Children_Column) + 1;
 
          Self.Model.Set
            (Category_Iter,
@@ -1175,8 +1196,10 @@ package body GPS.Location_View.Listener is
 
       if File_Last > 0 then
          Set_And_Clear
-           (Gtk_Tree_Store (Self.Model), File_Iter,
-            File_Columns (1 .. File_Last), File_Values (1 .. File_Last));
+           (Gtk_Tree_Store (Self.Model),
+            File_Iter,
+            File_Columns (1 .. File_Last),
+            File_Values (1 .. File_Last));
       end if;
 
       Update_Background_Color (Self, Message, Category_Iter, File_Iter, Iter);
@@ -1186,7 +1209,8 @@ package body GPS.Location_View.Listener is
    -- Message_Property_Changed --
    ------------------------------
 
-   overriding procedure Message_Property_Changed
+   overriding
+   procedure Message_Property_Changed
      (Self     : not null access Locations_Listener;
       Message  : not null access Abstract_Message'Class;
       Property : Message_Property_Type)
@@ -1200,30 +1224,32 @@ package body GPS.Location_View.Listener is
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
 
          Set_And_Clear
-           (Gtk_Tree_Store (Self.Model), Iter,
+           (Gtk_Tree_Store (Self.Model),
+            Iter,
             (-Icon_Name_Column,
              -Action_Command_Column,
              -Action_Tooltip_Column),
-            (1 => As_String
+            (1 =>
+               As_String
                  (if Message.Get_Action /= null
-                  and then Message.Get_Action.Associated_Command /= null
-                  and then Message.Get_Action.Image /= Null_Unbounded_String
+                    and then Message.Get_Action.Associated_Command /= null
+                    and then Message.Get_Action.Image /= Null_Unbounded_String
                   then To_String (Message.Get_Action.Image)
                   else ""),
              2 => As_Pointer (To_Address (Message.Get_Action)),
-             3 => As_String
-               (if Message.Get_Action /= null
-                and then
-                Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
-                then To_String (Message.Get_Action.Tooltip_Text)
-                else "")));
+             3 =>
+               As_String
+                 (if Message.Get_Action /= null
+                    and then
+                      Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
+                  then To_String (Message.Get_Action.Tooltip_Text)
+                  else "")));
 
       elsif Property = Highlighting_Property then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
          Gdk.RGBA.Set_Value (Bg, Message.Get_Background_Color);
          Set_Value
-           (Gtk_Tree_Store
-              (Self.Model), Iter, -Background_Color_Column, Bg);
+           (Gtk_Tree_Store (Self.Model), Iter, -Background_Color_Column, Bg);
          Glib.Values.Unset (Bg);
 
          Update_Background_Color
@@ -1232,7 +1258,8 @@ package body GPS.Location_View.Listener is
       elsif Property = Markup_Property then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
          Set_And_Clear
-           (Gtk_Tree_Store (Self.Model), Iter,
+           (Gtk_Tree_Store (Self.Model),
+            Iter,
             (1 => -Node_Markup_Column),
             (1 => As_String (Get_Markup (Message))));
       end if;
@@ -1242,7 +1269,8 @@ package body GPS.Location_View.Listener is
    -- Message_Removed --
    ---------------------
 
-   overriding procedure Message_Removed
+   overriding
+   procedure Message_Removed
      (Self    : not null access Locations_Listener;
       Message : not null access Abstract_Message'Class)
    is
@@ -1269,8 +1297,8 @@ package body GPS.Location_View.Listener is
       if Message.Level = Primary then
          --  Update message counters
 
-         Self.Model.Category_Messages_Count := Self.Model.Get_Int
-           (Category_Iter, -Number_Of_Children_Column) - 1;
+         Self.Model.Category_Messages_Count :=
+           Self.Model.Get_Int (Category_Iter, -Number_Of_Children_Column) - 1;
 
          Self.Model.Set
            (Category_Iter,
@@ -1295,8 +1323,9 @@ package body GPS.Location_View.Listener is
       if Self.Previouse_Messages_Count /= Self.Category_Messages_Count
         and then
           (Self.Category_Messages_Count >= Stop_Sorting_On_Count -- many
-           or else Self.Previouse_Messages_Count >
-             Self.Category_Messages_Count) -- when deleting
+           or else
+             Self.Previouse_Messages_Count
+             > Self.Category_Messages_Count) -- when deleting
       then
          Self.Previouse_Messages_Count := Self.Category_Messages_Count;
 
@@ -1345,51 +1374,38 @@ package body GPS.Location_View.Listener is
    -- Register --
    --------------
 
-   function Register
-     (Kernel : Kernel_Handle) return Locations_Listener_Access
+   function Register (Kernel : Kernel_Handle) return Locations_Listener_Access
    is
       Container  : constant not null GPS.Kernel.Messages_Container_Access :=
-                     Kernel.Get_Messages_Container;
+        Kernel.Get_Messages_Container;
       Success    : Boolean;
       Self       : Locations_Listener_Access;
       File_Added : Boolean;
 
    begin
       Column_Types :=
-        (Listener_Columns'Pos (Category_Column)           =>
-             Glib.GType_String,
-         Listener_Columns'Pos (Weight_Column)             =>
-             Glib.GType_Int,
+        (Listener_Columns'Pos (Category_Column)           => Glib.GType_String,
+         Listener_Columns'Pos (Weight_Column)             => Glib.GType_Int,
          Listener_Columns'Pos (File_Column)               =>
-             Get_Virtual_File_Type,
-         Listener_Columns'Pos (Line_Column)               =>
-             Glib.GType_Int,
-         Listener_Columns'Pos (Column_Column)             =>
-             Glib.GType_Int,
-         Listener_Columns'Pos (Text_Column)               =>
-             Glib.GType_String,
-         Listener_Columns'Pos (Node_Icon_Name_Column)     =>
-             Glib.GType_String,
-         Listener_Columns'Pos (Node_Markup_Column)        =>
-             Glib.GType_String,
-         Listener_Columns'Pos (Node_Tooltip_Column)       =>
-             Glib.GType_String,
+           Get_Virtual_File_Type,
+         Listener_Columns'Pos (Line_Column)               => Glib.GType_Int,
+         Listener_Columns'Pos (Column_Column)             => Glib.GType_Int,
+         Listener_Columns'Pos (Text_Column)               => Glib.GType_String,
+         Listener_Columns'Pos (Node_Icon_Name_Column)     => Glib.GType_String,
+         Listener_Columns'Pos (Node_Markup_Column)        => Glib.GType_String,
+         Listener_Columns'Pos (Node_Tooltip_Column)       => Glib.GType_String,
          Listener_Columns'Pos (Node_Mark_Column)          =>
-             GPS.Editors.GtkAda.Get_Editor_Mark_Type,
-         Listener_Columns'Pos (Icon_Name_Column)          =>
-             Glib.GType_String,
+           GPS.Editors.GtkAda.Get_Editor_Mark_Type,
+         Listener_Columns'Pos (Icon_Name_Column)          => Glib.GType_String,
          Listener_Columns'Pos (Action_Command_Column)     =>
-             Glib.GType_Pointer,
-         Listener_Columns'Pos (Action_Tooltip_Column)     =>
-             Glib.GType_String,
-         Listener_Columns'Pos (Number_Of_Children_Column) =>
-             Glib.GType_Int,
-         Listener_Columns'Pos (Sort_Order_Hint_Column)    =>
-             Glib.GType_Int,
+           Glib.GType_Pointer,
+         Listener_Columns'Pos (Action_Tooltip_Column)     => Glib.GType_String,
+         Listener_Columns'Pos (Number_Of_Children_Column) => Glib.GType_Int,
+         Listener_Columns'Pos (Sort_Order_Hint_Column)    => Glib.GType_Int,
          Listener_Columns'Pos (Message_Column)            =>
-             Glib.GType_Pointer,
+           Glib.GType_Pointer,
          Listener_Columns'Pos (Background_Color_Column)   =>
-             Gdk.RGBA.Get_Type);
+           Gdk.RGBA.Get_Type);
 
       Self := new Locations_Listener;
       Self.Kernel := Kernel;
@@ -1454,12 +1470,12 @@ package body GPS.Location_View.Listener is
    ----------------
 
    procedure Unregister
-     (Kernel : Kernel_Handle;
-      Self   : in out Locations_Listener_Access)
+     (Kernel : Kernel_Handle; Self : in out Locations_Listener_Access)
    is
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation
-          (Locations_Listener'Class, Locations_Listener_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Locations_Listener'Class,
+           Locations_Listener_Access);
 
    begin
       --  Unregister the listener

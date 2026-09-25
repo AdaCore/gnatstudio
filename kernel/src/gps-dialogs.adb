@@ -20,19 +20,19 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with Gdk.Event;             use Gdk.Event;
-with Glib.Object;           use Glib.Object;
-with Gtk;                   use Gtk;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Button;            use Gtk.Button;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Window;            use Gtk.Window;
-with Gtkada.Stock_Labels;   use Gtkada.Stock_Labels;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with Gdk.Event;           use Gdk.Event;
+with Glib.Object;         use Glib.Object;
+with Gtk;                 use Gtk;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Window;          use Gtk.Window;
+with Gtkada.Stock_Labels; use Gtkada.Stock_Labels;
 
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GPS.Main_Window;       use GPS.Main_Window;
+with GPS.Kernel.MDI;  use GPS.Kernel.MDI;
+with GPS.Main_Window; use GPS.Main_Window;
 
 package body GPS.Dialogs is
 
@@ -44,8 +44,8 @@ package body GPS.Dialogs is
    --  Called when Self is destroyed
 
    function On_GPS_Dialog_Focus_In
-     (Dialog : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event_Focus) return Boolean;
+     (Dialog : access Gtk_Widget_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean;
    --  Called when a dialog gets the focus. This updates the kernel context.
 
    type Browse_Button_Record is new Gtk_Button_Record with record
@@ -60,15 +60,13 @@ package body GPS.Dialogs is
    end record;
    type Browse_Button is access all Browse_Button_Record'Class;
 
-   procedure On_Browse_Button_Clicked
-     (Self : access Gtk_Button_Record'Class);
+   procedure On_Browse_Button_Clicked (Self : access Gtk_Button_Record'Class);
 
    ------------------------------
    -- On_Browse_Button_Clicked --
    ------------------------------
 
-   procedure On_Browse_Button_Clicked
-     (Self : access Gtk_Button_Record'Class)
+   procedure On_Browse_Button_Clicked (Self : access Gtk_Button_Record'Class)
    is
       Button : constant Browse_Button := Browse_Button (Self);
       Name   : constant Virtual_File :=
@@ -97,8 +95,8 @@ package body GPS.Dialogs is
    ----------------------------
 
    function On_GPS_Dialog_Focus_In
-     (Dialog : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event_Focus) return Boolean
+     (Dialog : access Gtk_Widget_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean
    is
       Self : constant GPS_Dialog := GPS_Dialog (Dialog);
       pragma Unreferenced (Event);
@@ -139,9 +137,8 @@ package body GPS.Dialogs is
       Default_Length : Glib.Gint := -1)
    is
       Win : constant Gtk_Window := Get_Current_Window (Kernel);
-      F   : constant Gtk_Dialog_Flags := Flags
-        or Destroy_With_Parent
-        or Use_Header_Bar_From_Settings (Win);
+      F   : constant Gtk_Dialog_Flags :=
+        Flags or Destroy_With_Parent or Use_Header_Bar_From_Settings (Win);
    begin
       Self.Kernel := Kernel;
 
@@ -231,8 +228,7 @@ package body GPS.Dialogs is
 
       else
          Ent.Set_Text
-           (Create_From_Base
-              (Base_Name => +Default_Name).Display_Full_Name);
+           (Create_From_Base (Base_Name => +Default_Name).Display_Full_Name);
       end if;
 
       Button := new Browse_Button_Record;
@@ -268,9 +264,9 @@ package body GPS.Dialogs is
       Button2_Active : access Boolean := null;
       Key_Check2     : Histories.History_Key := "") return String
    is
-      Dialog  : GPS_Dialog;
+      Dialog        : GPS_Dialog;
       Check, Check2 : Gtk_Check_Button;
-      Combo : Combo_Box;
+      Combo         : Combo_Box;
    begin
       Gtk_New
         (Dialog,
@@ -319,10 +315,10 @@ package body GPS.Dialogs is
       Message : VSS.Strings.Virtual_String;
       Value   : in out Enumerated_Type) return Boolean
    is
-      Dialog  : GPS_Dialog;
-      Combo   : Gtk_Combo_Box_Text;
-      Box     : Gtk_Box;
-      Label   : Gtk_Label;
+      Dialog : GPS_Dialog;
+      Combo  : Gtk_Combo_Box_Text;
+      Box    : Gtk_Box;
+      Label  : Gtk_Label;
 
    begin
       Gtk_New
@@ -365,8 +361,8 @@ package body GPS.Dialogs is
    ----------------------
 
    procedure On_Destroy_Combo (Self : access Gtk_Widget_Record'Class) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (History_Key, History_Key_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (History_Key, History_Key_Access);
       C : constant Combo_Box := Combo_Box (Self);
    begin
       Unchecked_Free (C.Key);
@@ -377,7 +373,7 @@ package body GPS.Dialogs is
    -------------------
 
    procedure Add_OK_Cancel (Self : not null access GPS_Dialog_Record'Class) is
-      Dummy  : Gtk_Widget;
+      Dummy : Gtk_Widget;
    begin
       Self.Add_Button (Stock_Ok, Gtk_Response_OK).Grab_Default;
       Dummy := Self.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
@@ -407,8 +403,7 @@ package body GPS.Dialogs is
    ---------------
 
    procedure Add_Label
-     (Self    : not null access GPS_Dialog_Record'Class;
-      Message : String)
+     (Self : not null access GPS_Dialog_Record'Class; Message : String)
    is
       Label : Gtk_Label;
    begin
@@ -455,9 +450,7 @@ package body GPS.Dialogs is
       end if;
 
       Allow_Duplicates
-        (Hist  => Self.Kernel.Get_History.all,
-         Key   => Key,
-         Allow => False);
+        (Hist => Self.Kernel.Get_History.all, Key => Key, Allow => False);
       Get_History (Self.Kernel.Get_History.all, Key, Result);
 
       return Result;
@@ -467,9 +460,7 @@ package body GPS.Dialogs is
    -- Get_Text --
    --------------
 
-   function Get_Text
-     (Self : not null access Combo_Box_Record) return String
-   is
+   function Get_Text (Self : not null access Combo_Box_Record) return String is
       S : constant String := Self.Get_Active_Text;
    begin
       Add_To_History
@@ -485,8 +476,7 @@ package body GPS.Dialogs is
    ----------------
 
    procedure Add_Choice
-     (Self : not null access Combo_Box_Record;
-      Choice : String) is
+     (Self : not null access Combo_Box_Record; Choice : String) is
    begin
       Self.Append_Text (Choice);
    end Add_Choice;

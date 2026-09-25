@@ -59,8 +59,8 @@ package Codefix.Text_Manager.Commands is
    -- Insert_Word_Cmd --
    ---------------------
 
-   type Insert_Word_Cmd
-     (Complexity : Fix_Complexity) is new Text_Command with private;
+   type Insert_Word_Cmd (Complexity : Fix_Complexity) is
+     new Text_Command with private;
 
    procedure Initialize
      (This            : in out Insert_Word_Cmd;
@@ -91,8 +91,8 @@ package Codefix.Text_Manager.Commands is
    -- Move_Word_Cmd  --
    --------------------
 
-   type Move_Word_Cmd (Complexity : Fix_Complexity)
-     is new Text_Command with private;
+   type Move_Word_Cmd (Complexity : Fix_Complexity) is
+     new Text_Command with private;
 
    procedure Initialize
      (This            : in out Move_Word_Cmd;
@@ -108,8 +108,7 @@ package Codefix.Text_Manager.Commands is
 
    overriding
    procedure Execute
-     (This         : Move_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class);
+     (This : Move_Word_Cmd; Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the word moved
 
    overriding
@@ -180,8 +179,7 @@ package Codefix.Text_Manager.Commands is
 
    overriding
    procedure Execute
-     (This         : Add_Line_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class);
+     (This : Add_Line_Cmd; Current_Text : in out Text_Navigator_Abstr'Class);
    --  Set an extract with the invertion add of the line
 
    ------------------------
@@ -282,8 +280,9 @@ private
       Remove_Empty_Line : Boolean;
    end record;
 
-   type Insert_Word_Cmd (Complexity : Fix_Complexity)
-     is new Text_Command (Complexity) with record
+   type Insert_Word_Cmd (Complexity : Fix_Complexity) is
+     new Text_Command (Complexity)
+   with record
       Word            : Word_Mark;
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified;
@@ -292,8 +291,8 @@ private
       After_Pattern   : Unbounded_String;
    end record;
 
-   type Move_Word_Cmd (Complexity : Fix_Complexity)
-     is new Text_Command (Complexity)
+   type Move_Word_Cmd (Complexity : Fix_Complexity) is
+     new Text_Command (Complexity)
    with record
       Step_Remove : Remove_Words_Cmd (Complexity);
       Step_Insert : Insert_Word_Cmd (Complexity);
@@ -311,8 +310,8 @@ private
    end record;
 
    type Add_Line_Cmd is new Text_Command with record
-      Line     : Unbounded_String;
-      Indent   : Boolean;
+      Line   : Unbounded_String;
+      Indent : Boolean;
    end record;
 
    type Wrap_Statement_Cmd is new Text_Command with record

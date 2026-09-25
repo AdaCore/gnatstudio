@@ -16,69 +16,70 @@
 ------------------------------------------------------------------------------
 
 with System;
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;
-with GNAT.Strings;               use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
-with Glib;                       use Glib;
+with Glib;        use Glib;
 with Glib.Glist;
-with Glib.Object;                use Glib.Object;
+with Glib.Object; use Glib.Object;
 
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Button;                 use Gtk.Button;
-with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Button;             use Gtk.Button;
+with Gtk.Check_Button;       use Gtk.Check_Button;
 with Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
-with Gtk.Dialog;                 use Gtk.Dialog;
-with Gtk.Editable;               use Gtk.Editable;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Event_Box;              use Gtk.Event_Box;
-with Gtk.Expander;               use Gtk.Expander;
-with Gtk.Frame;                  use Gtk.Frame;
-with Gtk.GEntry;                 use Gtk.GEntry;
+with Gtk.Combo_Box_Text;     use Gtk.Combo_Box_Text;
+with Gtk.Dialog;             use Gtk.Dialog;
+with Gtk.Editable;           use Gtk.Editable;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Event_Box;          use Gtk.Event_Box;
+with Gtk.Expander;           use Gtk.Expander;
+with Gtk.Frame;              use Gtk.Frame;
+with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Image;                  use Gtk.Image;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Paned;                  use Gtk.Paned;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Spin_Button;            use Gtk.Spin_Button;
-with Gtk.Style_Context;          use Gtk.Style_Context;
-with Gtk.Table;                  use Gtk.Table;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtk.Window;                 use Gtk.Window;
+with Gtk.Image;              use Gtk.Image;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Paned;              use Gtk.Paned;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Spin_Button;        use Gtk.Spin_Button;
+with Gtk.Style_Context;      use Gtk.Style_Context;
+with Gtk.Table;              use Gtk.Table;
+with Gtk.Text_Buffer;        use Gtk.Text_Buffer;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Text_Iter;          use Gtk.Text_Iter;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
 with Gtkada;
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.File_Selector;       use Gtkada.File_Selector;
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.Multiline_Entry;     use Gtkada.Multiline_Entry;
-with Gtkada.Stock_Labels;        use Gtkada.Stock_Labels;
+with Gtkada.Dialogs;         use Gtkada.Dialogs;
+with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtkada.Handlers;        use Gtkada.Handlers;
+with Gtkada.Multiline_Entry; use Gtkada.Multiline_Entry;
+with Gtkada.Stock_Labels;    use Gtkada.Stock_Labels;
 
-with Gexpect;                    use Gexpect;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Main_Window;            use GPS.Main_Window;
-with GUI_Utils;                  use GUI_Utils;
-with String_Utils;               use String_Utils;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with Gexpect;                use Gexpect;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Main_Window;        use GPS.Main_Window;
+with GUI_Utils;              use GUI_Utils;
+with String_Utils;           use String_Utils;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 
-with Pango.Enums;                use Pango.Enums;
-with Pango.Font;                 use Pango.Font;
+with Pango.Enums; use Pango.Enums;
+with Pango.Font;  use Pango.Font;
 
-with Remote.Db;                  use Remote, Remote.Db;
-with Remote_Module;              use Remote_Module;
+with Remote.Db;
+use Remote, Remote.Db;
+with Remote_Module; use Remote_Module;
 
 package body Remote.Config_Dialog is
 
@@ -95,13 +96,13 @@ package body Remote.Config_Dialog is
    Enter_Local_Path_String  : constant String := -"<enter local path here>";
    Enter_Remote_Path_String : constant String := -"<enter remote path here>";
 
-   Synchronisation_String : constant
-     array (Synchronisation_Type) of GNAT.OS_Lib.String_Access :=
-                              (Never          => new String'("Never"),
-                               On_Request     => new String'("Manually"),
-                               Always         => new String'("Always"),
-                               To_Local  => new String'("To local"),
-                               To_Remote => new String'("To remote"));
+   Synchronisation_String :
+     constant array (Synchronisation_Type) of GNAT.OS_Lib.String_Access :=
+       (Never      => new String'("Never"),
+        On_Request => new String'("Manually"),
+        Always     => new String'("Always"),
+        To_Local   => new String'("To local"),
+        To_Remote  => new String'("To remote"));
 
    Modified_Icon_Name : constant String := "vcs-modified-staged-unstaged";
 
@@ -138,8 +139,8 @@ package body Remote.Config_Dialog is
    --  CB function for Gtk.Tree_Model.Foreach, searching for the iter
    --  corresponding to the previously selected machine.
 
-   package Foreach is new Gtk.Tree_Model.Foreach_User_Data
-     (For_Each_Data_Access);
+   package Foreach is new
+     Gtk.Tree_Model.Foreach_User_Data (For_Each_Data_Access);
 
    package Path_Row_List is new Glib.Glist.Generic_List (Path_Row);
 
@@ -152,18 +153,13 @@ package body Remote.Config_Dialog is
    end record;
    type Paths_Widget is access all Paths_Widget_Record'Class;
 
-   procedure Gtk_New
-     (Widget      : out Paths_Widget;
-      Dialog      : Gtk_Dialog);
+   procedure Gtk_New (Widget : out Paths_Widget; Dialog : Gtk_Dialog);
 
-   procedure Set_Path_List
-     (Widget : Paths_Widget;
-      List   : Mount_Point_Array);
+   procedure Set_Path_List (Widget : Paths_Widget; List : Mount_Point_Array);
    --  Reset the widget and fills it with the path list
 
    function Get_Mount_Points
-     (Widget : Paths_Widget;
-      Host   : String) return Mount_Point_Array;
+     (Widget : Paths_Widget; Host : String) return Mount_Point_Array;
    --  Retrieve the mirror path list represented by the widget
 
    procedure Add_Path_Row
@@ -174,13 +170,10 @@ package body Remote.Config_Dialog is
       Synchro     : Synchronisation_Type := Synchronisation_Type'First);
    --  Add a new Path row to the Mirror_Path_Widget
 
-   procedure Remove_Path_Row
-     (Widget : Paths_Widget;
-      Row    : Path_Row);
+   procedure Remove_Path_Row (Widget : Paths_Widget; Row : Path_Row);
    --  Remove the row from widget
 
-   function Get_Mount_Point
-     (Row  : Path_Row; Host : String) return Mount_Point;
+   function Get_Mount_Point (Row : Path_Row; Host : String) return Mount_Point;
    --  Retrieve the mirror path represented by the widget
 
    procedure On_Path_Grab_Focus (Widget : access Gtk_Widget_Record'Class);
@@ -195,8 +188,7 @@ package body Remote.Config_Dialog is
    end record;
    type Path_Cb_Data_Access is access all Path_Cb_Data'Class;
 
-   package Path_Callback is new
-     Gtk.Handlers.Callback (Path_Cb_Data);
+   package Path_Callback is new Gtk.Handlers.Callback (Path_Cb_Data);
 
    procedure On_Remove_Path_Clicked (W : access Path_Cb_Data'Class);
    --  One of the Remove_Path button is clicked
@@ -249,22 +241,18 @@ package body Remote.Config_Dialog is
    --  Creates the server_list_editor dialog
 
    procedure Set_Machine
-     (Dialog   : access Server_List_Editor_Record'Class;
-      Nickname : String);
+     (Dialog : access Server_List_Editor_Record'Class; Nickname : String);
    --  Initialize the different fields of Dialog with the values of Machine.
 
    procedure Remove_Machine
-     (Dialog : access Server_List_Editor_Record'Class;
-      Nickname : String);
+     (Dialog : access Server_List_Editor_Record'Class; Nickname : String);
    --  Remove the machine 'Nickname' from Dialog.
 
-   procedure Select_Back
-     (Dialog : access Server_List_Editor_Record'Class);
+   procedure Select_Back (Dialog : access Server_List_Editor_Record'Class);
    --  Cancel the server selection change
 
    procedure On_Changed
-     (W                 : access Gtk_Widget_Record'Class;
-      Connection_Params : Boolean);
+     (W : access Gtk_Widget_Record'Class; Connection_Params : Boolean);
    --  Called when one of the entries has changed
    --  Connection_Params tells if connection configuration changed. If set, the
    --   machine cannot be browsed until 'Apply' is called.
@@ -273,12 +261,11 @@ package body Remote.Config_Dialog is
    --  Called when one of the entries has changed: this is used to display
    --  a warning to prevent unwanted recursive copies with rsync.
 
-   package Widget_Boolean_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Boolean);
+   package Widget_Boolean_Callback is new
+     Gtk.Handlers.User_Callback (Gtk_Widget_Record, Boolean);
 
    function Save_Current
-     (Dialog : Server_List_Editor;
-      Force  : Boolean) return Boolean;
+     (Dialog : Server_List_Editor; Force : Boolean) return Boolean;
    --  Saves the currently selected server.
 
    procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class);
@@ -297,17 +284,14 @@ package body Remote.Config_Dialog is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Widget : out Paths_Widget;
-      Dialog : Gtk_Dialog)
-   is
+   procedure Gtk_New (Widget : out Paths_Widget; Dialog : Gtk_Dialog) is
       Pix   : Gtk_Image;
       Label : Gtk_Label;
    begin
       Widget := new Paths_Widget_Record;
       Gtk.Frame.Initialize (Widget, -"Path Translations");
 
-      Widget.Dialog      := Dialog;
+      Widget.Dialog := Dialog;
 
       Gtk_New (Widget.Table, 1, 6, False);
       Add (Widget, Widget.Table);
@@ -327,19 +311,18 @@ package body Remote.Config_Dialog is
 
       Widget.List := Path_Row_List.Null_List;
       Widget_Callback.Object_Connect
-        (Widget.Add_Path_Button, Signal_Clicked,
-         On_Add_Path_Clicked'Access, Widget);
+        (Widget.Add_Path_Button,
+         Signal_Clicked,
+         On_Add_Path_Clicked'Access,
+         Widget);
    end Gtk_New;
 
    -------------------
    -- Set_Path_List --
    -------------------
 
-   procedure Set_Path_List
-     (Widget : Paths_Widget;
-      List   : Mount_Point_Array)
-   is
-      Row    : Path_Row;
+   procedure Set_Path_List (Widget : Paths_Widget; List : Mount_Point_Array) is
+      Row : Path_Row;
       use type Path_Row_List.Glist;
 
    begin
@@ -366,8 +349,15 @@ package body Remote.Config_Dialog is
          Widget.Nb_Rows := Widget.Nb_Rows + 1;
       end loop;
 
-      Attach (Widget.Table, Widget.Add_Path_Button,
-              3, 4, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
+      Attach
+        (Widget.Table,
+         Widget.Add_Path_Button,
+         3,
+         4,
+         Widget.Nb_Rows,
+         Widget.Nb_Rows + 1,
+         0,
+         0);
       Show_All (Widget.Table);
       Unref (Widget.Add_Path_Button);
    end Set_Path_List;
@@ -377,8 +367,7 @@ package body Remote.Config_Dialog is
    ----------------------
 
    function Get_Mount_Points
-     (Widget : Paths_Widget;
-      Host   : String) return Mount_Point_Array
+     (Widget : Paths_Widget; Host : String) return Mount_Point_Array
    is
       List : Path_Row_List.Glist;
       Row  : Path_Row;
@@ -388,8 +377,8 @@ package body Remote.Config_Dialog is
       List := Widget.List;
 
       declare
-         Mount_Points : Mount_Point_Array
-                          (1 .. Natural (Path_Row_List.Length (List)));
+         Mount_Points :
+           Mount_Point_Array (1 .. Natural (Path_Row_List.Length (List)));
          Idx          : Natural := 1;
       begin
 
@@ -397,7 +386,7 @@ package body Remote.Config_Dialog is
             Row := Path_Row_List.Get_Data (List);
             Mount_Points (Idx) := Get_Mount_Point (Row, Host);
             List := Path_Row_List.Next (List);
-            Idx  := Idx + 1;
+            Idx := Idx + 1;
          end loop;
 
          return Mount_Points;
@@ -422,15 +411,24 @@ package body Remote.Config_Dialog is
       Row := new Path_Row_Record;
 
       Gtk_New (Row.Local_Frame);
-      Attach (Widget.Table, Row.Local_Frame, 0, 1, Row_Number, Row_Number + 1,
-              Fill or Expand or Shrink, 0, 0, 2);
+      Attach
+        (Widget.Table,
+         Row.Local_Frame,
+         0,
+         1,
+         Row_Number,
+         Row_Number + 1,
+         Fill or Expand or Shrink,
+         0,
+         0,
+         2);
 
       Gtk_New_Hbox (Row.Local_Hbox, Spacing => 0);
       Add (Row.Local_Frame, Row.Local_Hbox);
 
       Gtk_New (Row.Local_Entry);
-      Set_Name (Row.Local_Entry,
-                "local path entry" & Guint'Image (Row_Number));
+      Set_Name
+        (Row.Local_Entry, "local path entry" & Guint'Image (Row_Number));
       Set_Width_Chars (Row.Local_Entry, 16);
       Pack_Start (Row.Local_Hbox, Row.Local_Entry, True, True);
       Set_Tooltip_Text (Row.Local_Entry, -("Enter here the local path"));
@@ -448,15 +446,24 @@ package body Remote.Config_Dialog is
          -"Use this button to select a local path with a file explorer");
 
       Gtk_New (Row.Remote_Frame);
-      Attach (Widget.Table, Row.Remote_Frame, 1, 2, Row_Number, Row_Number + 1,
-              Fill or Expand or Shrink, 0, 0, 2);
+      Attach
+        (Widget.Table,
+         Row.Remote_Frame,
+         1,
+         2,
+         Row_Number,
+         Row_Number + 1,
+         Fill or Expand or Shrink,
+         0,
+         0,
+         2);
 
       Gtk_New_Hbox (Row.Remote_Hbox, Spacing => 0);
       Add (Row.Remote_Frame, Row.Remote_Hbox);
 
       Gtk_New (Row.Remote_Entry);
-      Set_Name (Row.Remote_Entry,
-                "remote path entry" & Guint'Image (Row_Number));
+      Set_Name
+        (Row.Remote_Entry, "remote path entry" & Guint'Image (Row_Number));
       Set_Width_Chars (Row.Remote_Entry, 16);
       Pack_Start (Row.Remote_Hbox, Row.Remote_Entry, True, True);
       Set_Tooltip_Text (Row.Remote_Entry, -("Enter here the remote path"));
@@ -471,9 +478,9 @@ package body Remote.Config_Dialog is
       Pack_Start (Row.Remote_Hbox, Row.Remote_Browse_Button, False, False);
       Set_Tooltip_Text
         (Row.Remote_Browse_Button,
-         -("Use this button to select a remote path with a file explorer. " &
-           "Note that the machine configuration shall be properly set and " &
-           "applied"));
+         -("Use this button to select a remote path with a file explorer. "
+           & "Note that the machine configuration shall be properly set and "
+           & "applied"));
 
       Gtk_New (Row.Sync_Combo);
 
@@ -483,38 +490,60 @@ package body Remote.Config_Dialog is
 
       Row.Sync_Combo.Set_Active (Synchronisation_Type'Pos (Synchro));
 
-      Attach (Widget.Table, Row.Sync_Combo, 2, 3, Row_Number, Row_Number + 1,
-              0, 0, 0, 2);
+      Attach
+        (Widget.Table,
+         Row.Sync_Combo,
+         2,
+         3,
+         Row_Number,
+         Row_Number + 1,
+         0,
+         0,
+         0,
+         2);
       Set_Tooltip_Text
         (Row.Sync_Combo,
-         -("Five kinds of path synchronization can be set for each defined " &
-             "path:" & ASCII.LF &
-             "* Never: no synchronization is required from GNAT Studio, the" &
-             " paths are shared using an OS mechanism like NFS." & ASCII.LF &
-             "* Manually: synchronization is needed, but will only be " &
-             "performed manually using the remote view buttons." & ASCII.LF &
-             "* Always: the paths are kept synchronised by GNAT Studio" &
-             " before and after every remote action (e.g. build)." &
-             ASCII.LF &
-             "* To local/remote: The project's dependencies are" &
-             " synchronized once when a remote project is loaded or when a " &
-             "local project is set remote. They can be still manually " &
-             "synchronized using the Remote View."));
+         -("Five kinds of path synchronization can be set for each defined "
+           & "path:"
+           & ASCII.LF
+           & "* Never: no synchronization is required from GNAT Studio, the"
+           & " paths are shared using an OS mechanism like NFS."
+           & ASCII.LF
+           & "* Manually: synchronization is needed, but will only be "
+           & "performed manually using the remote view buttons."
+           & ASCII.LF
+           & "* Always: the paths are kept synchronised by GNAT Studio"
+           & " before and after every remote action (e.g. build)."
+           & ASCII.LF
+           & "* To local/remote: The project's dependencies are"
+           & " synchronized once when a remote project is loaded or when a "
+           & "local project is set remote. They can be still manually "
+           & "synchronized using the Remote View."));
 
       Gtk_New (Row.Remove_Button);
       Gtk_New_From_Icon_Name (Pix, "gps-remove-symbolic", Icon_Size_Menu);
       Add (Row.Remove_Button, Pix);
       Attach
-        (Widget.Table, Row.Remove_Button, 3, 4, Row_Number, Row_Number + 1,
-         0, 0, 0, 2);
+        (Widget.Table,
+         Row.Remove_Button,
+         3,
+         4,
+         Row_Number,
+         Row_Number + 1,
+         0,
+         0,
+         0,
+         2);
 
       Path_Row_List.Append (Widget.List, Row);
 
       if Local_Path = No_File then
          Set_Text (Row.Local_Entry, Enter_Local_Path_String);
          Widget_Callback.Object_Connect
-           (Row.Local_Entry, Signal_Grab_Focus,
-            On_Path_Grab_Focus'Access, Row.Local_Entry);
+           (Row.Local_Entry,
+            Signal_Grab_Focus,
+            On_Path_Grab_Focus'Access,
+            Row.Local_Entry);
       else
          Set_Text (Row.Local_Entry, Local_Path.Display_Full_Name);
       end if;
@@ -522,8 +551,10 @@ package body Remote.Config_Dialog is
       if Remote_Path = No_File then
          Set_Text (Row.Remote_Entry, Enter_Remote_Path_String);
          Widget_Callback.Object_Connect
-           (Row.Remote_Entry, Signal_Grab_Focus,
-            On_Path_Grab_Focus'Access, Row.Remote_Entry);
+           (Row.Remote_Entry,
+            Signal_Grab_Focus,
+            On_Path_Grab_Focus'Access,
+            Row.Remote_Entry);
       else
          Set_Text (Row.Remote_Entry, Remote_Path.Display_Full_Name);
       end if;
@@ -533,8 +564,8 @@ package body Remote.Config_Dialog is
          Iter : Gtk_Tree_Iter := Get_Iter_First (List);
       begin
          while Iter /= Null_Iter loop
-            if Get_String (List, Iter, 0) =
-              Synchronisation_String (Synchro).all
+            if Get_String (List, Iter, 0)
+              = Synchronisation_String (Synchro).all
             then
                Row.Sync_Combo.Set_Active_Iter (Iter);
                exit;
@@ -546,32 +577,45 @@ package body Remote.Config_Dialog is
 
       Data := new Path_Cb_Data;
       Data.Widget := Widget;
-      Data.Row    := Row;
+      Data.Row := Row;
 
       Widget_Boolean_Callback.Object_Connect
-        (Row.Local_Entry, Gtk.Editable.Signal_Changed,
-         On_Changed'Access, Widget.Dialog, False);
-      Gtk.Editable.On_Changed
-        (+Row.Local_Entry, On_Changed'Access);
+        (Row.Local_Entry,
+         Gtk.Editable.Signal_Changed,
+         On_Changed'Access,
+         Widget.Dialog,
+         False);
+      Gtk.Editable.On_Changed (+Row.Local_Entry, On_Changed'Access);
       Path_Callback.Object_Connect
-        (Row.Local_Browse_Button, Signal_Clicked,
-         On_Browse_Local'Access, Data);
+        (Row.Local_Browse_Button,
+         Signal_Clicked,
+         On_Browse_Local'Access,
+         Data);
 
       Widget_Boolean_Callback.Object_Connect
-        (Row.Remote_Entry, Gtk.Editable.Signal_Changed,
-         On_Changed'Access, Widget.Dialog, False);
-      Gtk.Editable.On_Changed
-        (+Row.Remote_Entry, On_Changed'Access);
+        (Row.Remote_Entry,
+         Gtk.Editable.Signal_Changed,
+         On_Changed'Access,
+         Widget.Dialog,
+         False);
+      Gtk.Editable.On_Changed (+Row.Remote_Entry, On_Changed'Access);
       Path_Callback.Object_Connect
-        (Row.Remote_Browse_Button, Signal_Clicked,
-         On_Browse_Remote'Access, Data);
+        (Row.Remote_Browse_Button,
+         Signal_Clicked,
+         On_Browse_Remote'Access,
+         Data);
 
       Widget_Boolean_Callback.Object_Connect
-        (Row.Sync_Combo, Gtk.Combo_Box.Signal_Changed,
-         On_Changed'Access, Widget.Dialog, False);
+        (Row.Sync_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         On_Changed'Access,
+         Widget.Dialog,
+         False);
       Path_Callback.Object_Connect
-        (Row.Remove_Button, Signal_Clicked,
-         On_Remove_Path_Clicked'Access, Data);
+        (Row.Remove_Button,
+         Signal_Clicked,
+         On_Remove_Path_Clicked'Access,
+         Data);
       Show_All (Widget.Table);
    end Add_Path_Row;
 
@@ -583,24 +627,21 @@ package body Remote.Config_Dialog is
       Gentry : constant Gtk_Entry := Gtk_Entry (Widget);
       Str    : constant String := Get_Text (Gentry);
    begin
-      if Str = Enter_Local_Path_String
-        or else Str = Enter_Remote_Path_String
+      if Str = Enter_Local_Path_String or else Str = Enter_Remote_Path_String
       then
          Set_Text (Gentry, "");
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Path_Grab_Focus;
 
    ---------------------
    -- Remove_Path_Row --
    ---------------------
 
-   procedure Remove_Path_Row
-     (Widget : Paths_Widget;
-      Row    : Path_Row)
-   is
+   procedure Remove_Path_Row (Widget : Paths_Widget; Row : Path_Row) is
    begin
       Remove (Widget.Table, Row.Local_Frame);
       Remove (Widget.Table, Row.Remote_Frame);
@@ -624,19 +665,17 @@ package body Remote.Config_Dialog is
       pragma Unreferenced (Dead);
 
    begin
-      if Local = Enter_Local_Path_String
-        or else Local = ""
-      then
-         Dead := GPS_Message_Dialog (-"Please enter a valid local path",
-                                 Error, Button_OK);
+      if Local = Enter_Local_Path_String or else Local = "" then
+         Dead :=
+           GPS_Message_Dialog
+             (-"Please enter a valid local path", Error, Button_OK);
          raise Invalid_Path;
       end if;
 
-      if Remote = Enter_Remote_Path_String
-        or else Remote = ""
-      then
-         Dead := GPS_Message_Dialog (-"Please enter a valid remote path",
-                                 Error, Button_OK);
+      if Remote = Enter_Remote_Path_String or else Remote = "" then
+         Dead :=
+           GPS_Message_Dialog
+             (-"Please enter a valid remote path", Error, Button_OK);
          raise Invalid_Path;
       end if;
 
@@ -644,23 +683,27 @@ package body Remote.Config_Dialog is
       Rem_Dir := Create_From_UTF8 (Remote, Host);
 
       if not Loc_Dir.Is_Absolute_Path then
-         Dead := GPS_Message_Dialog
-           (-"Local path " & Local & (-" needs to be an absolute path"),
-            Error, Button_OK);
+         Dead :=
+           GPS_Message_Dialog
+             (-"Local path " & Local & (-" needs to be an absolute path"),
+              Error,
+              Button_OK);
          raise Invalid_Path;
       end if;
 
       if not Rem_Dir.Is_Absolute_Path then
-         Dead := GPS_Message_Dialog
-           (-"Remote path " & Remote & (-" needs to be an absolute path"),
-            Error, Button_OK);
+         Dead :=
+           GPS_Message_Dialog
+             (-"Remote path " & Remote & (-" needs to be an absolute path"),
+              Error,
+              Button_OK);
          raise Invalid_Path;
       end if;
 
       declare
          Model    : Gtk_Tree_Model renames Row.Sync_Combo.Get_Model;
          Sync_Str : constant String :=
-                      Get_String (Model, Row.Sync_Combo.Get_Active_Iter, 0);
+           Get_String (Model, Row.Sync_Combo.Get_Active_Iter, 0);
       begin
          for J in Synchronisation_Type'Range loop
             if Sync_Str = Synchronisation_String (J).all then
@@ -671,16 +714,17 @@ package body Remote.Config_Dialog is
       end;
 
       if Active (Me) then
-         Trace (Me, "Get_Mount_Point : " &
-                Loc_Dir.Display_Full_Name & " - " &
-                Rem_Dir.Display_Full_Name & " - " &
-                Synchronisation_Type'Image (Sync));
+         Trace
+           (Me,
+            "Get_Mount_Point : "
+            & Loc_Dir.Display_Full_Name
+            & " - "
+            & Rem_Dir.Display_Full_Name
+            & " - "
+            & Synchronisation_Type'Image (Sync));
       end if;
 
-      return
-        (Local_Root  => Loc_Dir,
-         Remote_Root => Rem_Dir,
-         Sync        => Sync);
+      return (Local_Root => Loc_Dir, Remote_Root => Rem_Dir, Sync => Sync);
    end Get_Mount_Point;
 
    -------------------------
@@ -696,12 +740,20 @@ package body Remote.Config_Dialog is
       Add_Path_Row (Paths_Widget (W), Widget.Nb_Rows);
       Widget.Nb_Rows := Widget.Nb_Rows + 1;
 
-      Attach (Widget.Table, Widget.Add_Path_Button,
-              3, 4, Widget.Nb_Rows, Widget.Nb_Rows + 1, 0, 0);
+      Attach
+        (Widget.Table,
+         Widget.Add_Path_Button,
+         3,
+         4,
+         Widget.Nb_Rows,
+         Widget.Nb_Rows + 1,
+         0,
+         0);
       Show_All (Widget.Table);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Add_Path_Clicked;
 
    ----------------------------
@@ -714,7 +766,8 @@ package body Remote.Config_Dialog is
       On_Changed (W.Widget.Dialog, False);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Remove_Path_Clicked;
 
    ---------------------
@@ -722,8 +775,7 @@ package body Remote.Config_Dialog is
    ---------------------
 
    procedure On_Browse_Local (Widget : access Path_Cb_Data'Class) is
-      Current_Dir : constant String :=
-                      Get_Text (Widget.Row.Local_Entry);
+      Current_Dir : constant String := Get_Text (Widget.Row.Local_Entry);
       Start_Dir   : Virtual_File := No_File;
    begin
       if Current_Dir /= Enter_Local_Path_String then
@@ -736,10 +788,10 @@ package body Remote.Config_Dialog is
 
       declare
          Dir : constant GNATCOLL.VFS.Virtual_File :=
-                 Select_Directory
-                   (Base_Directory    => Start_Dir,
-                    Parent            => Gtk_Window (Widget.Widget.Dialog),
-                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
+           Select_Directory
+             (Base_Directory    => Start_Dir,
+              Parent            => Gtk_Window (Widget.Widget.Dialog),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
       begin
          if Dir /= No_File then
             Ensure_Directory (Dir);
@@ -754,11 +806,10 @@ package body Remote.Config_Dialog is
    ----------------------
 
    procedure On_Browse_Remote (Widget : access Path_Cb_Data'Class) is
-      Current_Dir : constant String :=
-                      Get_Text (Widget.Row.Remote_Entry);
+      Current_Dir : constant String := Get_Text (Widget.Row.Remote_Entry);
       Start_Dir   : Virtual_File := No_File;
       Dialog      : constant Server_List_Editor :=
-                      Server_List_Editor (Widget.Widget.Dialog);
+        Server_List_Editor (Widget.Widget.Dialog);
       Gtk_Resp    : Message_Dialog_Buttons;
       pragma Unreferenced (Gtk_Resp);
 
@@ -766,18 +817,22 @@ package body Remote.Config_Dialog is
       if Dialog.Selected_Machine = null then
          --  Should never happen... however, still preferable to catch
          --  this case !
-         Trace (Me, "Dialog.Selected_Machine null while calling " &
-                "On_Browse_Remote. This should never happen!");
+         Trace
+           (Me,
+            "Dialog.Selected_Machine null while calling "
+            & "On_Browse_Remote. This should never happen!");
 
          return;
       end if;
 
       if not Dialog.Applied then
-         Gtk_Resp := GPS_Message_Dialog
-           (-"Cannot browse the selected server until Apply button is pressed",
-            Dialog_Type => Error,
-            Buttons     => Button_OK,
-            Parent      => Gtk_Window (Widget.Widget.Get_Toplevel));
+         Gtk_Resp :=
+           GPS_Message_Dialog
+             (-"Cannot browse the selected server until Apply button"
+              & " is pressed",
+              Dialog_Type => Error,
+              Buttons     => Button_OK,
+              Parent      => Gtk_Window (Widget.Widget.Get_Toplevel));
          return;
       end if;
 
@@ -785,36 +840,36 @@ package body Remote.Config_Dialog is
       Start_Dir := Get_Current_Dir (Dialog.Selected_Machine.all);
 
       if not Is_Directory (Start_Dir) then
-         Gtk_Resp := GPS_Message_Dialog
-           (-"Could not establish communication with selected host",
-            Dialog_Type => Error,
-            Buttons     => Button_OK);
+         Gtk_Resp :=
+           GPS_Message_Dialog
+             (-"Could not establish communication with selected host",
+              Dialog_Type => Error,
+              Buttons     => Button_OK);
          return;
       end if;
 
       --  Determine Start directory
       if Current_Dir /= Enter_Remote_Path_String then
-         Start_Dir := Create_From_UTF8
-           (Full_Filename => Current_Dir,
-            Host          => Dialog.Selected_Machine.all);
+         Start_Dir :=
+           Create_From_UTF8
+             (Full_Filename => Current_Dir,
+              Host          => Dialog.Selected_Machine.all);
 
          if not Is_Directory (Start_Dir) then
-            Start_Dir :=
-              Get_Current_Dir (Dialog.Selected_Machine.all);
+            Start_Dir := Get_Current_Dir (Dialog.Selected_Machine.all);
          end if;
       end if;
 
       if Start_Dir = No_File then
-         Start_Dir := Get_Root
-           (Get_Current_Dir (Dialog.Selected_Machine.all));
+         Start_Dir := Get_Root (Get_Current_Dir (Dialog.Selected_Machine.all));
       end if;
 
       declare
          Dir : constant GNATCOLL.VFS.Virtual_File :=
-                 Select_Directory
-                   (Base_Directory    => Start_Dir,
-                    Parent            => Gtk_Window (Widget.Widget.Dialog),
-                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
+           Select_Directory
+             (Base_Directory    => Start_Dir,
+              Parent            => Gtk_Window (Widget.Widget.Dialog),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
       begin
          if Dir /= No_File then
             Set_Text (Widget.Row.Remote_Entry, Display_Full_Name (Dir));
@@ -842,7 +897,7 @@ package body Remote.Config_Dialog is
       Line_Nb      : Guint;
       VBox         : Gtk_Vbox;
       Machines     : constant GNAT.Strings.String_List :=
-                       Get_Database.Get_Servers;
+        Get_Database.Get_Servers;
       Shells       : GNAT.Strings.String_List := Get_Database.Get_Shells;
       Access_Tools : GNAT.Strings.String_List := Get_Database.Get_Access_Tools;
       Sync_Tools   : GNAT.Strings.String_List := Get_Database.Get_Sync_Tools;
@@ -854,7 +909,8 @@ package body Remote.Config_Dialog is
         (Dialog,
          -"Servers configuration",
          Get_Main_Window (Kernel),
-         Modal or Destroy_With_Parent
+         Modal
+         or Destroy_With_Parent
          or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
       Set_Default_Size_From_History (Dialog, "remote", Kernel, -1, 400);
@@ -874,28 +930,28 @@ package body Remote.Config_Dialog is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Add (Frame, Scrolled);
 
-      Dialog.Machine_Tree := Create_Tree_View
-        (Column_Types       => (Name_Col     => GType_String),
-         Column_Names       => (1 => new String'("Servers")),
-         Show_Column_Titles => True,
-         Selection_Mode     => Selection_Single,
-         Sortable_Columns   => True,
-         Initial_Sort_On    => 1,
-         Hide_Expander      => False);
+      Dialog.Machine_Tree :=
+        Create_Tree_View
+          (Column_Types       => (Name_Col => GType_String),
+           Column_Names       => (1 => new String'("Servers")),
+           Show_Column_Titles => True,
+           Selection_Mode     => Selection_Single,
+           Sortable_Columns   => True,
+           Initial_Sort_On    => 1,
+           Hide_Expander      => False);
       Set_Name (Dialog.Machine_Tree, "machine tree");
       Add (Scrolled, Dialog.Machine_Tree);
 
       --  Add/Restore/Remove buttons
       Gtk_New (Dialog.Add_Machine_Button, -"Add server");
       Set_Tooltip_Text
-        (Dialog.Add_Machine_Button,
-         -"Add a new server in the servers list");
+        (Dialog.Add_Machine_Button, -"Add a new server in the servers list");
       Pack_Start (VBox, Dialog.Add_Machine_Button, False, False);
       Gtk_New (Dialog.Restore_Button, -"Remove local changes");
       Set_Tooltip_Text
         (Dialog.Restore_Button,
-         -("Reinitialize the selected server's parameters to their " &
-             "default values"));
+         -("Reinitialize the selected server's parameters to their "
+           & "default values"));
       Pack_Start (VBox, Dialog.Restore_Button, False, False);
       Gtk_New (Dialog.Remove_Button, -"Remove server");
       Set_Tooltip_Text
@@ -914,35 +970,55 @@ package body Remote.Config_Dialog is
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
       Pack_Start (VBox, Scrolled);
 
-      Gtk_New (Dialog.Right_Table, Rows => 7, Columns => 2,
-               Homogeneous => False);
+      Gtk_New
+        (Dialog.Right_Table, Rows => 7, Columns => 2, Homogeneous => False);
       Add_With_Viewport (Scrolled, Dialog.Right_Table);
 
       Line_Nb := 0;
-      Create_Blue_Label (Dialog.Nickname_Label,
-                         Dialog.Nickname_Event);
-      Attach (Dialog.Right_Table, Dialog.Nickname_Event,
-              0, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 5, 5);
+      Create_Blue_Label (Dialog.Nickname_Label, Dialog.Nickname_Event);
+      Attach
+        (Dialog.Right_Table,
+         Dialog.Nickname_Event,
+         0,
+         2,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         5,
+         5);
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
       Set_Markup
         (Label, "<span foreground=""red"">*</span>" & (-" Network name:"));
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Right_Table, Label,
-              0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10);
+      Attach
+        (Dialog.Right_Table,
+         Label,
+         0,
+         1,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         10);
       Gtk_New (Dialog.Network_Name_Entry);
       Set_Name (Dialog.Network_Name_Entry, "network name entry");
-      Attach (Dialog.Right_Table, Dialog.Network_Name_Entry,
-              1, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Right_Table,
+         Dialog.Network_Name_Entry,
+         1,
+         2,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.Network_Name_Entry,
-         -("The network name is the name used to connect to this server via " &
-           "your network. It can be either an IP address, a host name of " &
-           "your local network, or a fully qualified network name."));
+         -("The network name is the name used to connect to this server via "
+           & "your network. It can be either an IP address, a host name of "
+           & "your local network, or a fully qualified network name."));
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
@@ -950,18 +1026,31 @@ package body Remote.Config_Dialog is
         (Label,
          "<span foreground=""red"">*</span>" & (-" Remote access tool:"));
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Right_Table, Label,
-              0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10);
+      Attach
+        (Dialog.Right_Table,
+         Label,
+         0,
+         1,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         10);
       Gtk_New (Dialog.Remote_Access_Combo);
       Set_Name (Dialog.Remote_Access_Combo, "remote access combo");
-      Attach (Dialog.Right_Table, Dialog.Remote_Access_Combo,
-              1, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Right_Table,
+         Dialog.Remote_Access_Combo,
+         1,
+         2,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.Remote_Access_Combo,
-         -("The remote access tool is the tool used to connect to this " &
-           "server."));
+         -("The remote access tool is the tool used to connect to this "
+           & "server."));
 
       for J of Access_Tools loop
          Dialog.Remote_Access_Combo.Append_Text (J.all);
@@ -973,20 +1062,25 @@ package body Remote.Config_Dialog is
             Button : Gtkada.Dialogs.Message_Dialog_Buttons;
             pragma Unreferenced (Button);
          begin
-            Button := GPS_Message_Dialog
-              (-("No suitable remote access tool could be found on your " &
-                 "system." & ASCII.LF &
-                 "A remote access tool is required to be able to use the " &
-                 "GNAT Studio remote features. Please install one of the" &
-                 " following tools (see the documentation for more " &
-                 "details):" & ASCII.LF &
-                 " - rlogin" & ASCII.LF &
-                 " - ssh" & ASCII.LF &
-                 " - telnet"),
-               Dialog_Type   => Gtkada.Dialogs.Error,
-               Buttons       => Gtkada.Dialogs.Button_OK,
-               Justification => Gtk.Enums.Justify_Left,
-               Parent        => Kernel.Get_Main_Window);
+            Button :=
+              GPS_Message_Dialog
+                (-("No suitable remote access tool could be found on your "
+                   & "system."
+                   & ASCII.LF
+                   & "A remote access tool is required to be able to use the "
+                   & "GNAT Studio remote features. Please install one of the"
+                   & " following tools (see the documentation for more "
+                   & "details):"
+                   & ASCII.LF
+                   & " - rlogin"
+                   & ASCII.LF
+                   & " - ssh"
+                   & ASCII.LF
+                   & " - telnet"),
+                 Dialog_Type   => Gtkada.Dialogs.Error,
+                 Buttons       => Gtkada.Dialogs.Button_OK,
+                 Justification => Gtk.Enums.Justify_Left,
+                 Parent        => Kernel.Get_Main_Window);
          end;
       end if;
 
@@ -994,18 +1088,31 @@ package body Remote.Config_Dialog is
       Gtk_New (Label);
       Set_Markup (Label, "<span foreground=""red"">*</span>" & (-" Shell:"));
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Right_Table, Label,
-              0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10);
+      Attach
+        (Dialog.Right_Table,
+         Label,
+         0,
+         1,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         10);
       Gtk_New (Dialog.Remote_Shell_Combo);
       Set_Name (Dialog.Remote_Shell_Combo, "remote shell combo");
-      Attach (Dialog.Right_Table, Dialog.Remote_Shell_Combo,
-              1, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Right_Table,
+         Dialog.Remote_Shell_Combo,
+         1,
+         2,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.Remote_Shell_Combo,
-         -"The shell tells GNAT Studio what shell runs on the" &
-           " remote server.");
+         -"The shell tells GNAT Studio what shell runs on the"
+         & " remote server.");
 
       for J of Shells loop
          Dialog.Remote_Shell_Combo.Append_Text (J.all);
@@ -1015,18 +1122,31 @@ package body Remote.Config_Dialog is
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Sync tool:");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Right_Table, Label,
-              0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10);
+      Attach
+        (Dialog.Right_Table,
+         Label,
+         0,
+         1,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         10);
       Gtk_New (Dialog.Remote_Sync_Combo);
       Set_Name (Dialog.Remote_Sync_Combo, "remote sync combo");
-      Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
-              1, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Right_Table,
+         Dialog.Remote_Sync_Combo,
+         1,
+         2,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.Remote_Sync_Combo,
-         -("The sync tool is used to synchronize remote and local " &
-           "filesystems, if these are not shared filesystems."));
+         -("The sync tool is used to synchronize remote and local "
+           & "filesystems, if these are not shared filesystems."));
 
       for J of Sync_Tools loop
          Dialog.Remote_Sync_Combo.Append_Text (J.all);
@@ -1036,8 +1156,16 @@ package body Remote.Config_Dialog is
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Extra init commands:");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Right_Table, Label, 0, 1, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10);
+      Attach
+        (Dialog.Right_Table,
+         Label,
+         0,
+         1,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         10);
 
       Gtk_New (Dialog.Init_Cmds_View);
       Set_Tooltip_Text
@@ -1056,81 +1184,111 @@ package body Remote.Config_Dialog is
 
       Gtk_New (Frame);
       Add (Frame, Dialog.Init_Cmds_View);
-      Attach (Dialog.Right_Table, Frame, 1, 2,
-              Line_Nb, Line_Nb + 1);
+      Attach (Dialog.Right_Table, Frame, 1, 2, Line_Nb, Line_Nb + 1);
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Dialog.Advanced_Pane, -"Advanced configuration");
-      Attach (Dialog.Right_Table, Dialog.Advanced_Pane,
-              0, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10, 10);
+      Attach
+        (Dialog.Right_Table,
+         Dialog.Advanced_Pane,
+         0,
+         2,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         10,
+         10);
 
-      Gtk_New (Dialog.Advanced_Table,
-               Rows => 5, Columns => 2, Homogeneous => False);
+      Gtk_New
+        (Dialog.Advanced_Table, Rows => 5, Columns => 2, Homogeneous => False);
       Dialog.Advanced_Pane.Add (Dialog.Advanced_Table);
 
       Gtk_New (Label, -"User name:");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Advanced_Table, Label, 0, 1, 0, 1,
-              Fill or Expand, 0, 10);
+      Attach (Dialog.Advanced_Table, Label, 0, 1, 0, 1, Fill or Expand, 0, 10);
       Gtk_New (Dialog.User_Name_Entry);
-      Attach (Dialog.Advanced_Table, Dialog.User_Name_Entry, 1, 2, 0, 1,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Advanced_Table,
+         Dialog.User_Name_Entry,
+         1,
+         2,
+         0,
+         1,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.User_Name_Entry,
-         -("The user name specifies the name used to connect to the " &
-             "server. If unspecified, the remote access tool will most of" &
-             " the time use your current login name. If not, and a user" &
-             " name is requested, GNAT Studio will prompt you for a user" &
-             " name when requested.)"));
+         -("The user name specifies the name used to connect to the "
+           & "server. If unspecified, the remote access tool will most of"
+           & " the time use your current login name. If not, and a user"
+           & " name is requested, GNAT Studio will prompt you for a user"
+           & " name when requested.)"));
 
       Gtk_New (Label, -"Timeout value (in s):");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Advanced_Table, Label, 0, 1, 1, 2,
-              Fill or Expand, 0, 10);
+      Attach (Dialog.Advanced_Table, Label, 0, 1, 1, 2, Fill or Expand, 0, 10);
       Gtk_New (Dialog.Timeout_Spin, 1.0, 50.0, 1.0);
       Set_Digits (Dialog.Timeout_Spin, 0);
-      Attach (Dialog.Advanced_Table, Dialog.Timeout_Spin, 1, 2, 1, 2,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Advanced_Table,
+         Dialog.Timeout_Spin,
+         1,
+         2,
+         1,
+         2,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.Timeout_Spin,
-         -("The timeout value is used to determine if a connection to a " &
-           "remote host is dead. All elementary operations performed on the " &
-           "remote host (i.e. operations that are normally almost immediate " &
-           "to perform) will use this timeout value. By default, this value " &
-           "is set to 10s. If you have a very slow network connection or a " &
-           "very overloaded server, set this timeout to a higher value."));
+         -("The timeout value is used to determine if a connection to a "
+           & "remote host is dead. All elementary operations performed on the "
+           & "remote host (i.e. operations that are normally almost immediate "
+           & "to perform) will use this timeout value. By default, this value "
+           & "is set to 10s. If you have a very slow network connection or a "
+           & "very overloaded server, set this timeout to a higher value."));
 
       Gtk_New (Label, -"Max number of connections:");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Advanced_Table, Label, 0, 1, 2, 3,
-              Fill or Expand, 0, 10);
+      Attach (Dialog.Advanced_Table, Label, 0, 1, 2, 3, Fill or Expand, 0, 10);
       Gtk_New (Dialog.Max_Nb_Connected_Spin, 1.0, 50.0, 1.0);
       Set_Digits (Dialog.Max_Nb_Connected_Spin, 0);
-      Attach (Dialog.Advanced_Table, Dialog.Max_Nb_Connected_Spin, 1, 2, 2, 3,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Advanced_Table,
+         Dialog.Max_Nb_Connected_Spin,
+         1,
+         2,
+         2,
+         3,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.Max_Nb_Connected_Spin,
-         -("The maximum number of connections determines the maximum " &
-             "number of simultaneous connections GNAT Studio is allowed to" &
-             " perform to this server. In fact, if you want to compile," &
-             " debug and execute at the same time on the machine," &
-             " GNAT Studio will need more that one " &
-             "connection to do this. The default value is 3."));
+         -("The maximum number of connections determines the maximum "
+           & "number of simultaneous connections GNAT Studio is allowed to"
+           & " perform to this server. In fact, if you want to compile,"
+           & " debug and execute at the same time on the machine,"
+           & " GNAT Studio will need more that one "
+           & "connection to do this. The default value is 3."));
 
       Gtk_New (Label, -"CR/LF Handling:");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4,
-              Fill or Expand, 0, 10);
+      Attach (Dialog.Advanced_Table, Label, 0, 1, 3, 4, Fill or Expand, 0, 10);
       Gtk_New (Dialog.Cr_Lf_Combo);
       Set_Name (Dialog.Cr_Lf_Combo, "crlf handling combo");
-      Attach (Dialog.Advanced_Table, Dialog.Cr_Lf_Combo,
-              1, 2, 3, 4,
-              Fill or Expand, 0);
+      Attach
+        (Dialog.Advanced_Table,
+         Dialog.Cr_Lf_Combo,
+         1,
+         2,
+         3,
+         4,
+         Fill or Expand,
+         0);
       Set_Tooltip_Text
         (Dialog.Cr_Lf_Combo,
-         -("Indicates what characters the remote host understands as line" &
-           " ending: LF, CR/LF, or automatically determine it."));
+         -("Indicates what characters the remote host understands as line"
+           & " ending: LF, CR/LF, or automatically determine it."));
 
       for J in Cr_Lf_Handling'Range loop
          Dialog.Cr_Lf_Combo.Append_Text
@@ -1139,81 +1297,122 @@ package body Remote.Config_Dialog is
 
       Gtk_New (Label, -"Debug console:");
       Set_Alignment (Label, 0.0, 0.5);
-      Attach (Dialog.Advanced_Table, Label, 0, 1, 4, 5,
-              Fill or Expand, 0, 10);
+      Attach (Dialog.Advanced_Table, Label, 0, 1, 4, 5, Fill or Expand, 0, 10);
       Gtk_New (Dialog.Debug_Button);
       Attach (Dialog.Advanced_Table, Dialog.Debug_Button, 1, 2, 4, 5, 0, 0);
       Set_Tooltip_Text
         (Dialog.Debug_Button,
-         -("The Debug console allow you to easily debug a remote connection." &
-           " If checked, it will open a console reporting all exchanges " &
-           "between GNAT Studio and the selected server."));
+         -("The Debug console allow you to easily debug a remote connection."
+           & " If checked, it will open a console reporting all exchanges "
+           & "between GNAT Studio and the selected server."));
 
       --  Remote paths configuration
       Line_Nb := Line_Nb + 1;
-      Gtk_New
-        (Dialog.Paths_List_Widget, Gtk_Dialog (Dialog));
-      Attach (Dialog.Right_Table, Dialog.Paths_List_Widget,
-              0, 2, Line_Nb, Line_Nb + 1,
-              Fill or Expand, 0, 10, 0);
+      Gtk_New (Dialog.Paths_List_Widget, Gtk_Dialog (Dialog));
+      Attach
+        (Dialog.Right_Table,
+         Dialog.Paths_List_Widget,
+         0,
+         2,
+         Line_Nb,
+         Line_Nb + 1,
+         Fill or Expand,
+         0,
+         10,
+         0);
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label);
       Set_Markup
         (Label,
-         "<span style=""italic"">" &
-         (-" Fields marked by an asterisk (") &
-         ("<span foreground=""red"">*</span>") &
-         (-") are mandatory") & "</span>");
+         "<span style=""italic"">"
+         & (-" Fields marked by an asterisk (")
+         & ("<span foreground=""red"">*</span>")
+         & (-") are mandatory")
+         & "</span>");
       Set_Alignment (Label, 0.0, 0.5);
       Pack_End (VBox, Label, False, False, Padding => 5);
 
       --  Callbacks connections
 
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.Network_Name_Entry, Gtk.Editable.Signal_Changed,
-         On_Changed'Access, Dialog, True);
+        (Dialog.Network_Name_Entry,
+         Gtk.Editable.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         True);
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.User_Name_Entry, Gtk.Editable.Signal_Changed,
-         On_Changed'Access, Dialog, True);
+        (Dialog.User_Name_Entry,
+         Gtk.Editable.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         True);
       Widget_Boolean_Callback.Object_Connect
         (Dialog.Remote_Access_Combo,
-         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, True);
+         Gtk.Combo_Box.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         True);
       Widget_Boolean_Callback.Object_Connect
         (Dialog.Remote_Shell_Combo,
-         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, True);
+         Gtk.Combo_Box.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         True);
       Widget_Boolean_Callback.Object_Connect
         (Dialog.Remote_Sync_Combo,
-         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, False);
+         Gtk.Combo_Box.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         False);
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.Max_Nb_Connected_Spin, Gtk.Editable.Signal_Changed,
-         On_Changed'Access, Dialog, False);
+        (Dialog.Max_Nb_Connected_Spin,
+         Gtk.Editable.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         False);
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.Timeout_Spin, Gtk.Editable.Signal_Changed,
-         On_Changed'Access, Dialog, True);
+        (Dialog.Timeout_Spin,
+         Gtk.Editable.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         True);
       Widget_Boolean_Callback.Object_Connect
-        (Get_Buffer (Dialog.Init_Cmds_View), Gtk.Text_Buffer.Signal_Changed,
-         On_Changed'Access, Dialog, False);
+        (Get_Buffer (Dialog.Init_Cmds_View),
+         Gtk.Text_Buffer.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         False);
       Widget_Boolean_Callback.Object_Connect
         (Dialog.Cr_Lf_Combo,
-         Gtk.Combo_Box.Signal_Changed, On_Changed'Access, Dialog, True);
+         Gtk.Combo_Box.Signal_Changed,
+         On_Changed'Access,
+         Dialog,
+         True);
       Widget_Boolean_Callback.Object_Connect
-        (Dialog.Debug_Button, Signal_Clicked,
-         On_Changed'Access, Dialog, False);
+        (Dialog.Debug_Button,
+         Signal_Clicked,
+         On_Changed'Access,
+         Dialog,
+         False);
       Widget_Callback.Object_Connect
         (Get_Selection (Dialog.Machine_Tree),
-         Gtk.Tree_Selection.Signal_Changed, On_Selection_Changed'Access,
+         Gtk.Tree_Selection.Signal_Changed,
+         On_Selection_Changed'Access,
          Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Add_Machine_Button, Signal_Clicked,
+        (Dialog.Add_Machine_Button,
+         Signal_Clicked,
          On_Add_Machine_Clicked'Access,
          Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Restore_Button, Signal_Clicked,
+        (Dialog.Restore_Button,
+         Signal_Clicked,
          On_Restore_Clicked'Access,
          Dialog);
       Widget_Callback.Object_Connect
-        (Dialog.Remove_Button, Signal_Clicked,
+        (Dialog.Remove_Button,
+         Signal_Clicked,
          On_Remove_Clicked'Access,
          Dialog);
 
@@ -1248,34 +1447,29 @@ package body Remote.Config_Dialog is
    -----------------
 
    procedure Set_Machine
-     (Dialog   : access Server_List_Editor_Record'Class;
-      Nickname : String)
+     (Dialog : access Server_List_Editor_Record'Class; Nickname : String)
    is
       Machine : Remote.Db.Machine_Type;
    begin
       if not Get_Database.Is_Configured (Nickname) then
          Machine := New_Machine (Dialog.Kernel, Nickname);
       else
-         Machine := Remote.Db.Machine_Type
-           (Get_Database.Get_Machine (Nickname).all);
+         Machine :=
+           Remote.Db.Machine_Type (Get_Database.Get_Machine (Nickname).all);
       end if;
 
       Set_Text (Dialog.Nickname_Label, Machine.Nickname);
       Dialog.Selected_Machine := new String'(Machine.Nickname);
 
-      Set_Text
-        (Dialog.Network_Name_Entry,
-         Machine.Network_Name);
-      Set_Text
-        (Dialog.User_Name_Entry,
-         Machine.User_Name);
+      Set_Text (Dialog.Network_Name_Entry, Machine.Network_Name);
+      Set_Text (Dialog.User_Name_Entry, Machine.User_Name);
 
       declare
          Model : Gtk_Tree_Model;
          Iter  : Gtk_Tree_Iter;
       begin
          Model := Dialog.Remote_Access_Combo.Get_Model;
-         Iter  := Get_Iter_First (Model);
+         Iter := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
             if Get_String (Model, Iter, 0) = Machine.Access_Tool then
@@ -1286,7 +1480,7 @@ package body Remote.Config_Dialog is
          end loop;
 
          Model := Dialog.Remote_Shell_Combo.Get_Model;
-         Iter  := Get_Iter_First (Model);
+         Iter := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
             if Get_String (Model, Iter, 0) = Machine.Shell then
@@ -1297,7 +1491,7 @@ package body Remote.Config_Dialog is
          end loop;
 
          Model := Dialog.Remote_Sync_Combo.Get_Model;
-         Iter  := Get_Iter_First (Model);
+         Iter := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
             if Get_String (Model, Iter, 0) = Machine.Sync_Tool then
@@ -1308,11 +1502,11 @@ package body Remote.Config_Dialog is
          end loop;
 
          Model := Dialog.Cr_Lf_Combo.Get_Model;
-         Iter  := Get_Iter_First (Model);
+         Iter := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Get_String (Model, Iter, 0) =
-              Ada.Characters.Handling.To_Lower (Machine.Cr_Lf'Img)
+            if Get_String (Model, Iter, 0)
+              = Ada.Characters.Handling.To_Lower (Machine.Cr_Lf'Img)
             then
                Dialog.Cr_Lf_Combo.Set_Active_Iter (Iter);
                exit;
@@ -1321,15 +1515,12 @@ package body Remote.Config_Dialog is
          end loop;
       end;
 
+      Set_Value (Dialog.Timeout_Spin, Gdouble (Machine.Timeout) / 1000.0);
       Set_Value
-        (Dialog.Timeout_Spin,
-         Gdouble (Machine.Timeout) / 1000.0);
-      Set_Value
-        (Dialog.Max_Nb_Connected_Spin,
-         Gdouble (Machine.Max_Nb_Connections));
+        (Dialog.Max_Nb_Connected_Spin, Gdouble (Machine.Max_Nb_Connections));
       declare
          Init_Cmds : constant GNAT.Strings.String_List :=
-                       Machine.Extra_Init_Commands;
+           Machine.Extra_Init_Commands;
       begin
          Set_Text (Dialog.Init_Cmds_View, "");
          for J in Init_Cmds'Range loop
@@ -1358,7 +1549,7 @@ package body Remote.Config_Dialog is
       pragma Unreferenced (Path);
    begin
       User_Data.The_Iter := Iter;
-      User_Data.Found    :=
+      User_Data.Found :=
         Get_String (Model, Iter, Name_Col) = User_Data.Nickname;
       return User_Data.Found;
    end For_Each;
@@ -1367,26 +1558,24 @@ package body Remote.Config_Dialog is
    -- Select_Back --
    -----------------
 
-   procedure Select_Back
-     (Dialog : access Server_List_Editor_Record'Class)
-   is
-      Model     : constant Gtk.Tree_Model.Gtk_Tree_Model :=
-                    Get_Model (Dialog.Machine_Tree);
+   procedure Select_Back (Dialog : access Server_List_Editor_Record'Class) is
+      Model : constant Gtk.Tree_Model.Gtk_Tree_Model :=
+        Get_Model (Dialog.Machine_Tree);
 
    begin
       if Dialog.Selected_Machine = null then
          return;
       end if;
 
-      Trace (Me, "Select back previous machine "
-             & Dialog.Selected_Machine.all);
+      Trace
+        (Me, "Select back previous machine " & Dialog.Selected_Machine.all);
 
       declare
-         Data      : aliased For_Each_Data :=
-                       (Nickname_Length => Dialog.Selected_Machine.all'Length,
-                        Nickname        => Dialog.Selected_Machine.all,
-                        The_Iter        => Gtk.Tree_Model.Null_Iter,
-                        Found           => False);
+         Data : aliased For_Each_Data :=
+           (Nickname_Length => Dialog.Selected_Machine.all'Length,
+            Nickname        => Dialog.Selected_Machine.all,
+            The_Iter        => Gtk.Tree_Model.Null_Iter,
+            Found           => False);
       begin
          Foreach.Foreach (Model, For_Each'Access, Data'Unchecked_Access);
          if Data.Found then
@@ -1401,8 +1590,7 @@ package body Remote.Config_Dialog is
    --------------------
 
    procedure Remove_Machine
-     (Dialog : access Server_List_Editor_Record'Class;
-      Nickname : String)
+     (Dialog : access Server_List_Editor_Record'Class; Nickname : String)
    is
       Model : constant Gtk_Tree_Model := Get_Model (Dialog.Machine_Tree);
       Iter  : Gtk_Tree_Iter;
@@ -1423,11 +1611,11 @@ package body Remote.Config_Dialog is
       Dialog.Modified := False;
 
       declare
-         Data      : aliased For_Each_Data :=
-                       (Nickname_Length => Nickname'Length,
-                        Nickname        => Nickname,
-                        The_Iter        => Gtk.Tree_Model.Null_Iter,
-                        Found           => False);
+         Data : aliased For_Each_Data :=
+           (Nickname_Length => Nickname'Length,
+            Nickname        => Nickname,
+            The_Iter        => Gtk.Tree_Model.Null_Iter,
+            Found           => False);
       begin
          Foreach.Foreach (Model, For_Each'Access, Data'Unchecked_Access);
 
@@ -1449,8 +1637,8 @@ package body Remote.Config_Dialog is
    -- On_Changed --
    ----------------
 
-   procedure On_Changed (W                 : access Gtk_Widget_Record'Class;
-                         Connection_Params : Boolean)
+   procedure On_Changed
+     (W : access Gtk_Widget_Record'Class; Connection_Params : Boolean)
    is
       Dialog : Server_List_Editor_Record renames
         Server_List_Editor_Record (W.all);
@@ -1465,8 +1653,7 @@ package body Remote.Config_Dialog is
    -- On_Changed --
    ----------------
 
-   procedure On_Changed (Self : Gtk_Editable)
-   is
+   procedure On_Changed (Self : Gtk_Editable) is
       Ent : constant Gtk_Entry := -Self;
    begin
       if Ent /= null then
@@ -1478,18 +1665,17 @@ package body Remote.Config_Dialog is
               or else Text (Text'Last) = '\'
             then
                Ent.Set_Icon_From_Icon_Name
-                 (Icon_Pos  => Gtk_Entry_Icon_Primary,
-                  Icon_Name => "");
+                 (Icon_Pos => Gtk_Entry_Icon_Primary, Icon_Name => "");
             else
                Ent.Set_Icon_From_Icon_Name
                  (Icon_Pos  => Gtk_Entry_Icon_Primary,
                   Icon_Name => Modified_Icon_Name);
                Ent.Set_Icon_Tooltip_Text
-                 (Icon_Pos  => Gtk_Entry_Icon_Primary,
-                  Tooltip   =>
+                 (Icon_Pos => Gtk_Entry_Icon_Primary,
+                  Tooltip  =>
                     "Warning: if you want to synchronize 2 directories then"
-                  & " the path must finish by a directory delimitor"
-                  & " ('/' or '\' depending on the platform)");
+                    & " the path must finish by a directory delimitor"
+                    & " ('/' or '\' depending on the platform)");
             end if;
          end;
       end if;
@@ -1500,8 +1686,7 @@ package body Remote.Config_Dialog is
    ------------------
 
    function Save_Current
-     (Dialog : Server_List_Editor;
-      Force  : Boolean) return Boolean
+     (Dialog : Server_List_Editor; Force : Boolean) return Boolean
    is
       Ret : Message_Dialog_Buttons;
 
@@ -1509,8 +1694,7 @@ package body Remote.Config_Dialog is
         (Buffer : Gtk_Text_Buffer) return GNAT.Strings.String_List;
       --  Retrieve the commands from the gtk_text_view
 
-      function Check_Fields
-        (Dialog : Server_List_Editor) return Boolean;
+      function Check_Fields (Dialog : Server_List_Editor) return Boolean;
       --  Check that the last selected machine has correctly been entered
 
       ----------------------
@@ -1562,9 +1746,7 @@ package body Remote.Config_Dialog is
       -- Check_Fields --
       ------------------
 
-      function Check_Fields
-        (Dialog : Server_List_Editor) return Boolean
-      is
+      function Check_Fields (Dialog : Server_List_Editor) return Boolean is
          Nickname         : constant String := Dialog.Selected_Machine.all;
          Has_Network_Name : Boolean;
          Has_Access_Name  : Boolean;
@@ -1574,18 +1756,18 @@ package body Remote.Config_Dialog is
 
       begin
          Has_Network_Name := Get_Text (Dialog.Network_Name_Entry) /= "";
-         Has_Access_Name  :=
-           Get_Active_Text (Dialog.Remote_Access_Combo) /= "";
-         Has_Shell_Name   :=
-           Get_Active_Text (Dialog.Remote_Shell_Combo) /= "";
+         Has_Access_Name := Get_Active_Text (Dialog.Remote_Access_Combo) /= "";
+         Has_Shell_Name := Get_Active_Text (Dialog.Remote_Shell_Combo) /= "";
 
          if not Has_Network_Name
            or else not Has_Access_Name
            or else not Has_Shell_Name
          then
-            Error_Str := Ada.Strings.Unbounded.To_Unbounded_String
-              (-"The following items are missing for server ") &
-               Nickname & ":";
+            Error_Str :=
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (-"The following items are missing for server ")
+              & Nickname
+              & ":";
 
             if not Has_Network_Name then
                Error_Str := Error_Str & ASCII.LF & (-"- Network name");
@@ -1599,11 +1781,12 @@ package body Remote.Config_Dialog is
                Error_Str := Error_Str & ASCII.LF & (-"- Shell");
             end if;
 
-            Ret := GPS_Message_Dialog
-              (Ada.Strings.Unbounded.To_String (Error_Str),
-               Dialog_Type => Error,
-               Buttons     => Button_OK,
-               Parent      => Gtk_Window (Dialog));
+            Ret :=
+              GPS_Message_Dialog
+                (Ada.Strings.Unbounded.To_String (Error_Str),
+                 Dialog_Type => Error,
+                 Buttons     => Button_OK,
+                 Parent      => Gtk_Window (Dialog));
 
             return False;
          end if;
@@ -1621,17 +1804,18 @@ package body Remote.Config_Dialog is
       Trace (Me, "Save " & Dialog.Selected_Machine.all);
 
       if not Force then
-         Ret := GPS_Message_Dialog
-           (-"The server " & Dialog.Selected_Machine.all &
-            (-" has been modified. Do you want to save it before proceeding to"
-               & " the next action ?"),
-            Dialog_Type => Confirmation,
-            Buttons     => Button_OK or Button_Cancel,
-            Parent      => Gtk_Window (Dialog));
+         Ret :=
+           GPS_Message_Dialog
+             (-"The server "
+              & Dialog.Selected_Machine.all
+              & (-" has been modified. Do you want to save it before "
+                 & "proceeding to the next action ?"),
+              Dialog_Type => Confirmation,
+              Buttons     => Button_OK or Button_Cancel,
+              Parent      => Gtk_Window (Dialog));
 
          if Ret = Button_Cancel then
-            if not Get_Database.Is_Configured
-              (Dialog.Selected_Machine.all)
+            if not Get_Database.Is_Configured (Dialog.Selected_Machine.all)
             then
                --  we don't want to save a non configured machine.
                --  Let's remove it ...
@@ -1647,37 +1831,37 @@ package body Remote.Config_Dialog is
       end if;
 
       if Get_Database.Is_Configured (Dialog.Selected_Machine.all) then
-         Trace (Me, "retrieving configured machine " &
-                Dialog.Selected_Machine.all & " for save");
+         Trace
+           (Me,
+            "retrieving configured machine "
+            & Dialog.Selected_Machine.all
+            & " for save");
          Machine := Get_Database.Get_Machine (Dialog.Selected_Machine.all);
       else
-         Trace (Me, "creating new machine " &
-                Dialog.Selected_Machine.all & " for save");
-         Machine := new Remote.Db.Machine_Type'
-           (New_Machine (Dialog.Kernel, Dialog.Selected_Machine.all));
+         Trace
+           (Me,
+            "creating new machine "
+            & Dialog.Selected_Machine.all
+            & " for save");
+         Machine :=
+           new Remote.Db.Machine_Type'
+             (New_Machine (Dialog.Kernel, Dialog.Selected_Machine.all));
       end if;
 
-      Machine.Set_Network_Name
-        (Get_Text (Dialog.Network_Name_Entry));
-      Machine.Set_Access_Tool
-        (Get_Active_Text (Dialog.Remote_Access_Combo));
-      Machine.Set_Shell
-        (Get_Active_Text (Dialog.Remote_Shell_Combo));
-      Machine.Set_Sync_Tool
-        (Get_Active_Text (Dialog.Remote_Sync_Combo));
+      Machine.Set_Network_Name (Get_Text (Dialog.Network_Name_Entry));
+      Machine.Set_Access_Tool (Get_Active_Text (Dialog.Remote_Access_Combo));
+      Machine.Set_Shell (Get_Active_Text (Dialog.Remote_Shell_Combo));
+      Machine.Set_Sync_Tool (Get_Active_Text (Dialog.Remote_Sync_Combo));
       Machine.Set_Extra_Init_Commands
         (Get_Command_List (Get_Buffer (Dialog.Init_Cmds_View)));
-      Machine.Set_User_Name
-        (Get_Text (Dialog.User_Name_Entry));
+      Machine.Set_User_Name (Get_Text (Dialog.User_Name_Entry));
       Machine.Set_Max_Nb_Connections
         (Integer (Get_Value_As_Int (Dialog.Max_Nb_Connected_Spin)));
       Machine.Set_Timeout
         (Integer (Get_Value_As_Int (Dialog.Timeout_Spin)) * 1000);
       Machine.Set_Cr_Lf
-        (Cr_Lf_Handling'Value
-           (Get_Active_Text (Dialog.Cr_Lf_Combo)));
-      Machine.Set_Use_Dbg
-        (Get_Active (Dialog.Debug_Button));
+        (Cr_Lf_Handling'Value (Get_Active_Text (Dialog.Cr_Lf_Combo)));
+      Machine.Set_Use_Dbg (Get_Active (Dialog.Debug_Button));
 
       Trace (Me, "Put machine into database.");
       Remote.Db.Add_Or_Replace (Get_Database, Machine);
@@ -1694,8 +1878,10 @@ package body Remote.Config_Dialog is
               (Dialog.Paths_List_Widget, Dialog.Selected_Machine.all));
       exception
          when Invalid_Path =>
-            Trace (Me, "Invalid path detected, selecting back " &
-                   Dialog.Selected_Machine.all);
+            Trace
+              (Me,
+               "Invalid path detected, selecting back "
+               & Dialog.Selected_Machine.all);
 
             return False;
       end;
@@ -1712,11 +1898,10 @@ package body Remote.Config_Dialog is
    --------------------------
 
    procedure On_Selection_Changed (W : access Gtk_Widget_Record'Class) is
-      Dialog    : constant Server_List_Editor :=
-        Server_List_Editor (W);
-      M         : Gtk_Tree_Model;
-      Model     : Gtk.Tree_Store.Gtk_Tree_Store;
-      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Dialog : constant Server_List_Editor := Server_List_Editor (W);
+      M      : Gtk_Tree_Model;
+      Model  : Gtk.Tree_Store.Gtk_Tree_Store;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
       Trace (Me, "on selection changed");
@@ -1746,8 +1931,8 @@ package body Remote.Config_Dialog is
             Nickname : constant String := Get_String (Model, Iter, Name_Col);
          begin
             if Active (Me) then
-               Trace (Me, "Setting dialog values for new selection " &
-                      Nickname);
+               Trace
+                 (Me, "Setting dialog values for new selection " & Nickname);
             end if;
 
             Set_Machine (Dialog, Nickname);
@@ -1786,7 +1971,8 @@ package body Remote.Config_Dialog is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Selection_Changed;
 
    ----------------------------
@@ -1794,11 +1980,11 @@ package body Remote.Config_Dialog is
    ----------------------------
 
    procedure On_Add_Machine_Clicked (W : access Gtk_Widget_Record'Class) is
-      Dialog   : Server_List_Editor_Record
-                   renames Server_List_Editor_Record (W.all);
-      Model    : Gtk_Tree_Store;
-      Iter     : Gtk_Tree_Iter := Null_Iter;
-      Ret      : Message_Dialog_Buttons;
+      Dialog : Server_List_Editor_Record renames
+        Server_List_Editor_Record (W.all);
+      Model  : Gtk_Tree_Store;
+      Iter   : Gtk_Tree_Iter := Null_Iter;
+      Ret    : Message_Dialog_Buttons;
       pragma Unreferenced (Ret);
 
    begin
@@ -1806,10 +1992,11 @@ package body Remote.Config_Dialog is
 
       if Save_Current (Server_List_Editor (W), False) then
          declare
-            Nickname : constant String := Query_User
-              (Parent => Gtk_Window (W),
-               Prompt => -"Please enter the new machine's nickname",
-               Password_Mode => False);
+            Nickname : constant String :=
+              Query_User
+                (Parent        => Gtk_Window (W),
+                 Prompt        => -"Please enter the new machine's nickname",
+                 Password_Mode => False);
 
          begin
             if Nickname = "" then
@@ -1817,12 +2004,13 @@ package body Remote.Config_Dialog is
             end if;
 
             if Get_Database.Is_Configured (Nickname) then
-               Ret := GPS_Message_Dialog
-                 (-("A server with that name already exists. Please chosse" &
-                    " another name."),
-                  Dialog_Type => Error,
-                  Buttons     => Button_OK,
-                  Parent      => Gtk_Window (W));
+               Ret :=
+                 GPS_Message_Dialog
+                   (-("A server with that name already exists. Please chosse"
+                      & " another name."),
+                    Dialog_Type => Error,
+                    Buttons     => Button_OK,
+                    Parent      => Gtk_Window (W));
                return;
             end if;
 
@@ -1862,7 +2050,7 @@ package body Remote.Config_Dialog is
       if Iter /= Null_Iter then
          declare
             Current_Selection : constant String :=
-                                  Get_String (Model, Iter, Name_Col);
+              Get_String (Model, Iter, Name_Col);
          begin
             if Active (Me) then
                Trace (Me, "Restoring " & Current_Selection);
@@ -1878,7 +2066,8 @@ package body Remote.Config_Dialog is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Restore_Clicked;
 
    -----------------------
@@ -1886,10 +2075,10 @@ package body Remote.Config_Dialog is
    -----------------------
 
    procedure On_Remove_Clicked (W : access Gtk_Widget_Record'Class) is
-      Dialog    : constant Server_List_Editor := Server_List_Editor (W);
-      Model     : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Ret       : Message_Dialog_Buttons;
+      Dialog : constant Server_List_Editor := Server_List_Editor (W);
+      Model  : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Ret    : Message_Dialog_Buttons;
 
    begin
       Get_Selected (Get_Selection (Dialog.Machine_Tree), Model, Iter);
@@ -1897,15 +2086,17 @@ package body Remote.Config_Dialog is
       if Iter /= Null_Iter then
          declare
             Current_Selection : constant String :=
-                                  Get_String (Model, Iter, Name_Col);
+              Get_String (Model, Iter, Name_Col);
          begin
-            Ret := GPS_Message_Dialog
-              ((-"Are you sure you want to remove server ") &
-               Current_Selection & " ?",
-               Dialog_Type => Confirmation,
-               Buttons     => Button_OK or Button_Cancel,
-               Title       => "Server removal confirmation",
-               Parent      => Gtk_Window (W.Get_Toplevel));
+            Ret :=
+              GPS_Message_Dialog
+                ((-"Are you sure you want to remove server ")
+                 & Current_Selection
+                 & " ?",
+                 Dialog_Type => Confirmation,
+                 Buttons     => Button_OK or Button_Cancel,
+                 Title       => "Server removal confirmation",
+                 Parent      => Gtk_Window (W.Get_Toplevel));
 
             if Ret = Button_Cancel then
                return;
@@ -1926,7 +2117,8 @@ package body Remote.Config_Dialog is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end On_Remove_Clicked;
 
    ---------------------------
@@ -1934,12 +2126,11 @@ package body Remote.Config_Dialog is
    ---------------------------
 
    procedure Configure_Server_List
-     (Kernel         : GPS.Kernel.Kernel_Handle;
-      Default_Server : String := "")
+     (Kernel : GPS.Kernel.Kernel_Handle; Default_Server : String := "")
    is
-      Dialog  : Server_List_Editor;
-      Resp    : Gtk_Response_Type;
-      Dead    : Boolean;
+      Dialog : Server_List_Editor;
+      Resp   : Gtk_Response_Type;
+      Dead   : Boolean;
       pragma Unreferenced (Dead);
 
    begin

@@ -68,8 +68,7 @@ package Ada_Semantic_Tree.Visibility is
      (Tree_To   : Construct_Tree;
       Path_To   : Construct_Tree_Iterator_Array;
       Tree_From : Construct_Tree;
-      Path_From : Construct_Tree_Iterator_Array)
-      return Location_Relation;
+      Path_From : Construct_Tree_Iterator_Array) return Location_Relation;
    --  Same as above, with pre-computed paths.
 
    function Is_Accessible
@@ -83,16 +82,16 @@ package Ada_Semantic_Tree.Visibility is
    --  with clases, or prefix.
 
    function Is_Visible_From_Clauses
-     (Entity         : Entity_Access;
-      From_Visiblity : Visibility_Context) return Entity_Access;
+     (Entity : Entity_Access; From_Visiblity : Visibility_Context)
+      return Entity_Access;
    --  Return the with or use clause from which the entity is visible if there
    --  is such a clause, according visibility given in parameter.
 
    type Clause_Iterator is private;
 
    function To_Clause_Iterator
-     (Visibility_Info : Visibility_Context;
-      Category        : Language_Category) return Clause_Iterator;
+     (Visibility_Info : Visibility_Context; Category : Language_Category)
+      return Clause_Iterator;
    --  Create a iterator looking at all the use clauses from the context given
    --  in parameter. Category can be either Cat_Use
    --  (retreiving all use clauses), Cat_With (retreiving all with clauses) or
@@ -115,8 +114,7 @@ package Ada_Semantic_Tree.Visibility is
    --  Computes the package name corresponding to the clause pointed by the
    --  iterator.
 
-   function Get_Generic_Context
-     (This : Clause_Iterator) return Instance_Info;
+   function Get_Generic_Context (This : Clause_Iterator) return Instance_Info;
    --  If this clause points to a generic instance, retreives the corresponding
    --  generic context.
 
@@ -127,8 +125,8 @@ package Ada_Semantic_Tree.Visibility is
 private
 
    type Clause_Iterator is record
-      Current   : Entity_Access;
-      Category  : Language_Category;
+      Current  : Entity_Access;
+      Category : Language_Category;
    end record;
 
 end Ada_Semantic_Tree.Visibility;

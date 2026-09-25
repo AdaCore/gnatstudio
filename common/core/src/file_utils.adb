@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with String_Utils;              use String_Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
+with String_Utils;   use String_Utils;
 with GNAT.OS_Lib;
-with UTF8_Utils;                use UTF8_Utils;
+with UTF8_Utils;     use UTF8_Utils;
 
 package body File_Utils is
 
@@ -37,27 +37,30 @@ package body File_Utils is
       while First <= Files'Last loop
          String_Utils.Skip_To_Char (Files, Last, ASCII.LF);
 
-         if First + 7 < Last
-           and then Files (First .. First + 7) = "file:///"
+         if First + 7 < Last and then Files (First .. First + 7) = "file:///"
          then
             --  if File in form like 'file:///C:/path'
             if First + 9 < Last and then Files (First + 9) = ':' then
                --  return C:/path
-               File := Create
-                 (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
-                  (URL_Decode (Files (First + 8 .. Last - 1)))));
+               File :=
+                 Create
+                   (+Locale_To_UTF8
+                       (GNAT.OS_Lib.Normalize_Pathname
+                          (URL_Decode (Files (First + 8 .. Last - 1)))));
             else
                --  otherwise get leading '/' into file name
-               File := Create
-                 (+Locale_To_UTF8 (GNAT.OS_Lib.Normalize_Pathname
-                  (URL_Decode (Files (First + 7 .. Last - 1)))));
+               File :=
+                 Create
+                   (+Locale_To_UTF8
+                       (GNAT.OS_Lib.Normalize_Pathname
+                          (URL_Decode (Files (First + 7 .. Last - 1)))));
             end if;
 
             Append (Result, File);
          end if;
 
          First := Last + 1;
-         Last  := First;
+         Last := First;
       end loop;
 
       return Result;

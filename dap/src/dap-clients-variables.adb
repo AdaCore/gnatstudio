@@ -15,15 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with VSS.Characters;
 with VSS.Strings.Conversions;
 with VSS.Strings.Cursors.Iterators.Characters;
-with VSS.Transformers.Casing;      use VSS.Transformers.Casing;
+with VSS.Transformers.Casing; use VSS.Transformers.Casing;
 
 with GPS.Kernel.Hooks;
-with GPS.Debuggers;                use GPS.Debuggers;
+with GPS.Debuggers; use GPS.Debuggers;
 
 with DAP.Clients.Variables.Scopes;
 with DAP.Clients.Variables.Variables;
@@ -38,24 +38,30 @@ package body DAP.Clients.Variables is
    Me : constant Trace_Handle := Create ("DAP.Clients.Variables", Off);
 
    type On_Debug_Process_Terminated is
-     new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
-   overriding procedure Execute
+     new GPS.Kernel.Hooks.Debugger_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self     : On_Debug_Process_Terminated;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
    --  Called when the process has terminated
 
    type On_Debug_Location_Changed is
-     new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
-   overriding procedure Execute
+     new GPS.Kernel.Hooks.Debugger_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self     : On_Debug_Location_Changed;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
    --  Called when the location of the debugger has changed
 
    type On_Debugger_State_Changed is
-     new GPS.Kernel.Hooks.Debugger_States_Hooks_Function with null record;
-   overriding procedure Execute
+     new GPS.Kernel.Hooks.Debugger_States_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self      : On_Debugger_State_Changed;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -80,7 +86,8 @@ package body DAP.Clients.Variables is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Debug_Process_Terminated;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
@@ -89,9 +96,7 @@ package body DAP.Clients.Variables is
       Client : constant DAP_Client_Access :=
         DAP_Visual_Debugger_Access (Debugger).Client;
    begin
-      if Client /= null
-        and then Client.Get_Variables /= null
-      then
+      if Client /= null and then Client.Get_Variables /= null then
          Client.Get_Variables.Clear;
       end if;
    end Execute;
@@ -100,7 +105,8 @@ package body DAP.Clients.Variables is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Debug_Location_Changed;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
@@ -109,9 +115,7 @@ package body DAP.Clients.Variables is
       Client : constant DAP_Client_Access :=
         DAP_Visual_Debugger_Access (Debugger).Client;
    begin
-      if Client /= null
-        and then Client.Get_Variables /= null
-      then
+      if Client /= null and then Client.Get_Variables /= null then
          Client.Get_Variables.Clear;
       end if;
    end Execute;
@@ -120,7 +124,8 @@ package body DAP.Clients.Variables is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self      : On_Debugger_State_Changed;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -145,12 +150,12 @@ package body DAP.Clients.Variables is
    procedure Free (Src : in out Request_Parameters) is
    begin
       case Src.Kind is
-         when View =>
+         when View         =>
             if Src.Path /= Null_Gtk_Tree_Path then
                Path_Free (Src.Path);
             end if;
 
-         when Python_API =>
+         when Python_API   =>
             GNATCOLL.Scripts.Free (Src.On_Result);
             Src.On_Result := null;
             GNATCOLL.Scripts.Free (Src.On_Error);
@@ -172,10 +177,10 @@ package body DAP.Clients.Variables is
    procedure Clear (Self : in out Variables_Holder) is
    begin
       Trace (Me, "Clear");
-      Self.Locals_Scope_Id    := 0;
-      Self.Globals_Scope_Id   := 0;
+      Self.Locals_Scope_Id := 0;
+      Self.Globals_Scope_Id := 0;
       Self.Arguments_Scope_Id := 0;
-      Self.Has_Scopes_Ids     := False;
+      Self.Has_Scopes_Ids := False;
       Self.Scopes.Clear;
    end Clear;
 
@@ -184,8 +189,7 @@ package body DAP.Clients.Variables is
    ----------------
 
    function Get_Scopes
-     (Self : in out Variables_Holder)
-      return Variables_References_Trees.Tree is
+     (Self : in out Variables_Holder) return Variables_References_Trees.Tree is
    begin
       return Self.Scopes;
    end Get_Scopes;
@@ -195,8 +199,7 @@ package body DAP.Clients.Variables is
    ------------------
 
    procedure Get_Variable
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters) is
+     (Self : in out Variables_Holder; Params : in out Request_Parameters) is
    begin
       if Self.Client.Is_Stopped then
          if not Self.Has_Scopes_Ids then
@@ -217,8 +220,7 @@ package body DAP.Clients.Variables is
    --------------
 
    procedure Value_Of
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters) is
+     (Self : in out Variables_Holder; Params : in out Request_Parameters) is
    begin
       if Self.Client.Is_Stopped then
          DAP.Clients.Variables.Evaluate.Send_Evaluate_Request
@@ -233,8 +235,7 @@ package body DAP.Clients.Variables is
    ------------------
 
    procedure Set_Variable
-     (Self   : in out Variables_Holder;
-      Params : Request_Parameters)
+     (Self : in out Variables_Holder; Params : Request_Parameters)
    is
       Cursor : Variables_References_Trees.Cursor := Self.Scopes.Root;
       Found  : Boolean;
@@ -268,9 +269,9 @@ package body DAP.Clients.Variables is
                   DAP.Clients.Variables.SetVariable.Send_Set_Variable_Request
                     (Self.Client,
                      (case Element (Cursor).Kind is
-                         when Locals => Self.Locals_Scope_Id,
-                         when Globals => Self.Globals_Scope_Id,
-                         when others => Self.Arguments_Scope_Id),
+                        when Locals  => Self.Locals_Scope_Id,
+                        when Globals => Self.Globals_Scope_Id,
+                        when others  => Self.Arguments_Scope_Id),
                      P);
 
                else
@@ -287,9 +288,7 @@ package body DAP.Clients.Variables is
    ------------------
 
    procedure Set_Variable
-     (Self  : in out Variables_Holder;
-      Name  : String;
-      Value : String)
+     (Self : in out Variables_Holder; Name : String; Value : String)
    is
       Empty_Holder : DAP.Modules.Variables.Items.Item_Holder;
    begin
@@ -307,8 +306,7 @@ package body DAP.Clients.Variables is
    ----------------------
 
    procedure On_Scopes_Result
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters)
+     (Self : in out Variables_Holder; Params : in out Request_Parameters)
    is
       Id : Integer;
    begin
@@ -345,8 +343,7 @@ package body DAP.Clients.Variables is
    ----------------
 
    function Find_By_Id
-     (Self : Variables_Holder;
-      Id   : Integer)
+     (Self : Variables_Holder; Id : Integer)
       return Variables_References_Trees.Cursor
    is
       ----------
@@ -403,8 +400,7 @@ package body DAP.Clients.Variables is
    ------------------
 
    procedure Find_By_Name
-     (Name   : Virtual_String;
-      Cursor : in out Variables_References_Trees.Cursor)
+     (Name : Virtual_String; Cursor : in out Variables_References_Trees.Cursor)
    is
       use type Ada.Containers.Count_Type;
       N       : constant Virtual_String := To_Lowercase.Transform (Name);
@@ -419,9 +415,9 @@ package body DAP.Clients.Variables is
       while Cursor /= Variables_References_Trees.No_Element loop
          Current := To_Lowercase.Transform (Element (Cursor).Data.name);
          if Current = N
-         --  for Globals GDB sends variables' names prepended by module's
-         --  name like `help_module.help_module_id` where actual variable's
-         --  name is `help_module_id`
+           --  for Globals GDB sends variables' names prepended by module's
+           --  name like `help_module.help_module_id` where actual variable's
+           --  name is `help_module_id`
            or else Current.Ends_With ("." & N)
          then
             return;
@@ -445,8 +441,9 @@ package body DAP.Clients.Variables is
 
       procedure Find (N : Virtual_String; First : Boolean);
       procedure Find (N : Virtual_String; First : Boolean) is
-         Pos            : VSS.Strings.Cursors.Iterators.Characters.
-           Character_Iterator := N.Before_First_Character;
+         Pos            :
+           VSS.Strings.Cursors.Iterators.Characters.Character_Iterator :=
+             N.Before_First_Character;
          Current_Cursor : Variables_References_Trees.Cursor :=
            First_Child (Cursor);
          Part           : Virtual_String;
@@ -458,19 +455,17 @@ package body DAP.Clients.Variables is
          end if;
 
          Main : loop
-            while Forward (Pos)
-              and then Element (Pos) /= '.'
-            loop
+            while Forward (Pos) and then Element (Pos) /= '.' loop
                Part.Append (Element (Pos));
             end loop;
 
             while Current_Cursor /= Variables_References_Trees.No_Element loop
-               Current := To_Lowercase.Transform
-                 (Element (Current_Cursor).Data.name);
+               Current :=
+                 To_Lowercase.Transform (Element (Current_Cursor).Data.name);
                if Current = Part
-               --  for Globals GDB sends variables' names prepended by module's
-               --  name like `help_module.help_module_id` where actual
-               --  variable's name is `help_module_id`
+                 --  for Globals GDB sends variables' names prepended by
+                 --  module's name like `help_module.help_module_id` where
+                 --  actual variable's name is `help_module_id`
                  or else (First and then Current.Ends_With ("." & Part))
                then
                   --  found `help_module.help_module_id` or `.help_module_id`
@@ -480,9 +475,7 @@ package body DAP.Clients.Variables is
                Next_Sibling (Current_Cursor);
             end loop;
 
-            if First
-              and then Has_Element (Pos)
-            then
+            if First and then Has_Element (Pos) then
                --  we did not find anything at the first pass but if we are
                --  looking for `help_module.help_module_id.value` and have
                --  `help_module.help_module_id` as the parent we can't stop
@@ -541,17 +534,18 @@ package body DAP.Clients.Variables is
    ---------------------------
 
    procedure On_Variables_Response
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters)
+     (Self : in out Variables_Holder; Params : in out Request_Parameters)
    is
       use type Ada.Containers.Count_Type;
       C     : Variables_References_Trees.Cursor := Self.Scopes.Root;
       Found : Boolean;
 
    begin
-      Trace (Me, "On_Variables_Response:" &
-               VSS.Strings.Conversions.To_UTF_8_String
-               (Params.Item.Info.Get_Full_Name));
+      Trace
+        (Me,
+         "On_Variables_Response:"
+         & VSS.Strings.Conversions.To_UTF_8_String
+             (Params.Item.Info.Get_Full_Name));
 
       Params.Item.Info.Find_DAP_Item (C, Found);
 
@@ -561,16 +555,18 @@ package body DAP.Clients.Variables is
          if not Params.Children then
             --  we need the variable itself, inform the view to add it
             case Params.Kind is
-               when View =>
+               when View         =>
                   DAP.Views.Variables.On_Variable_Loaded
                     (Self.Client, Params, C);
 
-               when Python_API =>
-                  Trace (Me, "Found:" &
-                           VSS.Strings.Conversions.To_UTF_8_String
-                           (Full_Name (C)) & " " &
-                           VSS.Strings.Conversions.To_UTF_8_String
-                           (Element (C).Data.value));
+               when Python_API   =>
+                  Trace
+                    (Me,
+                     "Found:"
+                     & VSS.Strings.Conversions.To_UTF_8_String (Full_Name (C))
+                     & " "
+                     & VSS.Strings.Conversions.To_UTF_8_String
+                         (Element (C).Data.value));
 
                   DAP.Modules.Scripts.Create_Debugger_Variable_For_Callback
                     (Callback => Params.On_Result,
@@ -595,16 +591,16 @@ package body DAP.Clients.Variables is
             else
                --  we already have children, inform the caller
                case Params.Kind is
-                  when View =>
+                  when View         =>
                      if Element (First_Child (C)).Data /= Empty_Variable then
                         DAP.Views.Variables.On_Children_Loaded
                           (Self.Client, Params, C);
                      end if;
 
-                  when Python_API =>
+                  when Python_API   =>
                      declare
-                        Vector : DAP.Modules.Scripts.
-                          Variable_Data_Vector.Vector;
+                        Vector :
+                          DAP.Modules.Scripts.Variable_Data_Vector.Vector;
                      begin
                         C := First_Child (C);
                         while C /= Variables_References_Trees.No_Element loop
@@ -616,11 +612,13 @@ package body DAP.Clients.Variables is
                            Next_Sibling (C);
                         end loop;
 
-                        DAP.Modules.Scripts.
-                          Create_Debugger_Variables_For_Callback
-                            (Callback => Params.On_Result,
-                             Client   => Self.Client,
-                             Data     => Vector);
+                        DAP
+                          .Modules
+                          .Scripts
+                          .Create_Debugger_Variables_For_Callback
+                             (Callback => Params.On_Result,
+                              Client   => Self.Client,
+                              Data     => Vector);
                      end;
 
                   when Set_Variable =>
@@ -634,12 +632,11 @@ package body DAP.Clients.Variables is
          else
             --  we need children but the variable does not have them
             if Params.Kind = Python_API then
-               DAP.Modules.Scripts.
-                 Create_Debugger_Variables_For_Callback
-                   (Callback => Params.On_Result,
-                    Client   => Self.Client,
-                    Data     => DAP.Modules.Scripts.
-                      Variable_Data_Vector.Empty_Vector);
+               DAP.Modules.Scripts.Create_Debugger_Variables_For_Callback
+                 (Callback => Params.On_Result,
+                  Client   => Self.Client,
+                  Data     =>
+                    DAP.Modules.Scripts.Variable_Data_Vector.Empty_Vector);
             end if;
 
             --  we are done with the variables, free the parameters
@@ -699,15 +696,14 @@ package body DAP.Clients.Variables is
    ---------------------------
 
    procedure On_Variable_Not_Found
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters) is
+     (Self : in out Variables_Holder; Params : in out Request_Parameters) is
    begin
       case Params.Kind is
-         when View =>
+         when View         =>
             --  inform the view
             DAP.Views.Variables.On_Variable_Not_Found (Self.Client, Params);
 
-         when Python_API =>
+         when Python_API   =>
             --  inform the Python side
             DAP.Modules.Scripts.Create_Debugger_No_Variable_For_Callback
               (Params);
@@ -724,8 +720,7 @@ package body DAP.Clients.Variables is
    ----------------------------------
 
    procedure On_Variable_Request_Rejected
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters) is
+     (Self : in out Variables_Holder; Params : in out Request_Parameters) is
    begin
       if Params.Kind = Python_API then
          --  inform the Python side
@@ -758,8 +753,7 @@ package body DAP.Clients.Variables is
       Result : VSS.Strings.Virtual_String;
       C      : Variables_References_Trees.Cursor := Cursor;
    begin
-      while C /= Variables_References_Trees.No_Element
-        and then not Is_Root (C)
+      while C /= Variables_References_Trees.No_Element and then not Is_Root (C)
       loop
          if Result = "" then
             Result := Element (C).Data.name;

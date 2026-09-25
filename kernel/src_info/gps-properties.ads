@@ -54,14 +54,14 @@ package GPS.Properties is
    --  from one session of GNAT Studio to the next, transparently.
 
    function Store
-     (Property : access Property_Record'Class)
-      return GNATCOLL.JSON.JSON_Value;
+     (Property : access Property_Record'Class) return GNATCOLL.JSON.JSON_Value;
    --  Result represents property as a JSON value.
    --  This function stores property's Tag and call Save (below)
 
    procedure Save
      (Property : access Property_Record;
-      Value    : in out GNATCOLL.JSON.JSON_Value) is abstract;
+      Value    : in out GNATCOLL.JSON.JSON_Value)
+   is abstract;
    --  This procedure intended to convert property's data in to JSON format.
 
    procedure Restore
@@ -73,8 +73,7 @@ package GPS.Properties is
    --  Calls Load if type is correct.
 
    procedure Load
-     (Property : in out Property_Record;
-      Value    : GNATCOLL.JSON.JSON_Value)
+     (Property : in out Property_Record; Value : GNATCOLL.JSON.JSON_Value)
    is abstract;
    --  This procedure intended to extracting property's data from JSON format.
 
@@ -163,8 +162,7 @@ package GPS.Properties is
    -- Convenience functions --
    ---------------------------
 
-   function To_String
-     (File : GNATCOLL.VFS.Virtual_File) return String;
+   function To_String (File : GNATCOLL.VFS.Virtual_File) return String;
    --  Return the file name associated with File
 
    function To_String (Prj : GNATCOLL.Projects.Project_Type) return String;
@@ -178,7 +176,7 @@ package GPS.Properties is
    --  Separator between resource name and property name in the key of htables
 
    type Property_Description is record
-      Value      : Property_Access;
+      Value : Property_Access;
       --  The actual value of the property. This may be null in order to
       --  represent not existing property.
 
@@ -192,8 +190,8 @@ package GPS.Properties is
 
    procedure Clear (Description : Property_Description_Access);
 
-   package Properties_Indefinite_Hashed_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package Properties_Indefinite_Hashed_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => String,
         Element_Type    => Property_Description_Access,
         Hash            => Ada.Strings.Hash,
@@ -222,8 +220,8 @@ package GPS.Properties is
    --  Set_Writer needs to be called before doing any of the operations
    --  that require the writer to be set. Kernel makes this setup on startup
 
-   type Writer_Record is
-     abstract new Ada.Finalization.Controlled with null record;
+   type Writer_Record is abstract new Ada.Finalization.Controlled
+   with null record;
    type Writer is access all Writer_Record'Class;
    --  Base class to manage properties database
 
@@ -232,20 +230,20 @@ package GPS.Properties is
       Key      : String;
       Name     : String;
       Property : out Property_Record'Class;
-      Found    : out Boolean) is abstract;
+      Found    : out Boolean)
+   is abstract;
 
    procedure Get_Values
      (Self     : not null access Writer_Record;
       Name     : String;
       Property : in out Property_Record'Class;
-      Callback : access procedure
-        (Key : String; Property : in out Property_Record'Class))
+      Callback :
+        access procedure
+          (Key : String; Property : in out Property_Record'Class))
    is abstract;
 
    procedure Remove
-     (Self : not null access Writer_Record;
-      Key  : String;
-      Name : String)
+     (Self : not null access Writer_Record; Key : String; Name : String)
    is abstract;
 
    procedure Set_Writer (Object : Writer);
@@ -253,29 +251,33 @@ package GPS.Properties is
 
 private
 
-   overriding procedure Destroy (Property : in out String_Property);
-   overriding procedure Save
+   overriding
+   procedure Destroy (Property : in out String_Property);
+   overriding
+   procedure Save
      (Property : access String_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
-     (Property : in out String_Property;
-      Value    : GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Load
+     (Property : in out String_Property; Value : GNATCOLL.JSON.JSON_Value);
    --  See inherited documentation
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Integer_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
-     (Property : in out Integer_Property;
-      Value    : GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Load
+     (Property : in out Integer_Property; Value : GNATCOLL.JSON.JSON_Value);
    --  See inherited documentation
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Boolean_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
-     (Property : in out Boolean_Property;
-      Value    : GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Load
+     (Property : in out Boolean_Property; Value : GNATCOLL.JSON.JSON_Value);
    --  See inherited documentation
 
 end GPS.Properties;

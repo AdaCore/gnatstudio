@@ -15,15 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Directories;           use Ada.Directories;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Directories;         use Ada.Directories;
 
 with GNAT.Case_Util;
-with GNAT.Directory_Operations; use GNAT, GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations;
+use GNAT, GNAT.Directory_Operations;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
 
 with Config;
 
@@ -77,9 +78,10 @@ package body OS_Utils is
    function Is_Cygwin_Path (Path : Filesystem_String) return Boolean is
       Cygdrive : constant Filesystem_String := "/cygdrive/";
    begin
-      return Path'Length > Cygdrive'Length + 1
+      return
+        Path'Length > Cygdrive'Length + 1
         and then
-      Path (Path'First .. Path'First + Cygdrive'Length - 1) = Cygdrive
+          Path (Path'First .. Path'First + Cygdrive'Length - 1) = Cygdrive
         and then Is_Letter (Path (Path'First + Cygdrive'Length))
         and then Path (Path'First + Cygdrive'Length + 1) = '/';
    end Is_Cygwin_Path;
@@ -89,8 +91,8 @@ package body OS_Utils is
    ---------------------
 
    function Format_Pathname
-     (Path  : Filesystem_String;
-      Style : Path_Style := System_Default) return Filesystem_String
+     (Path : Filesystem_String; Style : Path_Style := System_Default)
+      return Filesystem_String
    is
       use type Config.Host_Type;
 
@@ -109,8 +111,9 @@ package body OS_Utils is
          Cygdrive : constant String := "/cygdrive/";
       begin
          if Is_Cygwin_Path (Path) then
-            return +(Case_Util.To_Upper (Path (Path'First + Cygdrive'Length)) &
-              ":") & Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
+            return
+              +(Case_Util.To_Upper (Path (Path'First + Cygdrive'Length)) & ":")
+              & Path (Path'First + Cygdrive'Length + 1 .. Path'Last);
          else
             return Path;
          end if;
@@ -118,47 +121,52 @@ package body OS_Utils is
 
    begin
       case Style is
-         when UNIX =>
-            return Format_Pathname
-              (Path,
-               Directory_Operations.Path_Style'Val (Path_Style'Pos (Style)));
+         when UNIX           =>
+            return
+              Format_Pathname
+                (Path,
+                 Directory_Operations.Path_Style'Val (Path_Style'Pos (Style)));
 
          when System_Default =>
             if Config.Host = Config.Windows then
                --  If we are running on Windows, then make sure that a
                --  conversion to the System_Default does convert from Cygwin
                --  PATH.
-               return Format_Pathname
-                 (Cygwin_To_Dos (Path), Directory_Operations.DOS);
+               return
+                 Format_Pathname
+                   (Cygwin_To_Dos (Path), Directory_Operations.DOS);
 
             else
-               return Format_Pathname
-                 (Path,
-                  Directory_Operations.Path_Style'Val
-                    (Path_Style'Pos (Style)));
+               return
+                 Format_Pathname
+                   (Path,
+                    Directory_Operations.Path_Style'Val
+                      (Path_Style'Pos (Style)));
             end if;
 
-         when DOS =>
+         when DOS            =>
             declare
                Result : constant Filesystem_String := Cygwin_To_Dos (Path);
             begin
                return Format_Pathname (Result, Directory_Operations.DOS);
             end;
 
-         when Cygwin =>
+         when Cygwin         =>
             declare
                Result : constant Filesystem_String :=
-                          Format_Pathname (Path, Directory_Operations.UNIX);
+                 Format_Pathname (Path, Directory_Operations.UNIX);
             begin
                if Result'Length > 2
-                 and then (Result (Result'First) in 'A' .. 'Z'
-                           or else Result (Result'First) in 'a' .. 'z')
+                 and then
+                   (Result (Result'First) in 'A' .. 'Z'
+                    or else Result (Result'First) in 'a' .. 'z')
                  and then Result (Result'First + 1) = ':'
                  and then Result (Result'First + 2) = '/'
                then
-                  return +("/cygdrive/" &
-                    Case_Util.To_Upper (Result (Result'First))) &
-                    Result (Result'First + 2 .. Result'Last);
+                  return
+                    +("/cygdrive/"
+                      & Case_Util.To_Upper (Result (Result'First)))
+                    & Result (Result'First + 2 .. Result'Last);
                else
                   return Result;
                end if;
@@ -177,10 +185,7 @@ package body OS_Utils is
       use type Config.Host_Type;
 
       function Norm
-        (Dir    : String;
-         Name   : String;
-         Filter : Filter_Type)
-         return String;
+        (Dir : String; Name : String; Filter : Filter_Type) return String;
       --  Normalize Name using OS casing and do the same recusivelly for full
       --  pathname in Dir.
 
@@ -189,10 +194,7 @@ package body OS_Utils is
       ----------
 
       function Norm
-        (Dir    : String;
-         Name   : String;
-         Filter : Filter_Type)
-         return String
+        (Dir : String; Name : String; Filter : Filter_Type) return String
       is
          L_Name  : String := Name;
          Search  : Search_Type;
@@ -230,20 +232,23 @@ package body OS_Utils is
 
                   if Dir'Length = 3 then
                      if Dir (Dir'First + 1 .. Dir'First + 2) = ":\" then
-                        return Compose
-                          (Case_Util.To_Upper (Dir (Dir'First)) & ":\",
-                           Simple_Name (Entries));
+                        return
+                          Compose
+                            (Case_Util.To_Upper (Dir (Dir'First)) & ":\",
+                             Simple_Name (Entries));
 
                      else
                         return Compose (Dir, Simple_Name (Entries));
                      end if;
 
                   else
-                     return Compose
-                       (Norm (Containing_Directory (Dir),
-                              Simple_Name (Dir),
-                              (Directory => True, others => False)),
-                        Simple_Name (Entries));
+                     return
+                       Compose
+                         (Norm
+                            (Containing_Directory (Dir),
+                             Simple_Name (Dir),
+                             (Directory => True, others => False)),
+                          Simple_Name (Entries));
                   end if;
                end if;
             end;
@@ -256,12 +261,13 @@ package body OS_Utils is
 
    begin
       if Config.Host = Config.Windows
-        and then (Is_Regular_File (Full_Name)
-                  or else Is_Directory (Full_Name))
+        and then (Is_Regular_File (Full_Name) or else Is_Directory (Full_Name))
       then
-         return +Norm
-           (Ada.Directories.Full_Name (Containing_Directory (+Full_Name)),
-            Simple_Name (+Full_Name), (others => True));
+         return
+           +Norm
+              (Ada.Directories.Full_Name (Containing_Directory (+Full_Name)),
+               Simple_Name (+Full_Name),
+               (others => True));
       else
          return Full_Name;
       end if;

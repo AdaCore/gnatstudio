@@ -22,11 +22,7 @@ with GNATCOLL.VFS;
 package Remote is
 
    type Server_Type is
-     (GPS_Server,
-      Build_Server,
-      Execution_Server,
-      Debug_Server,
-      Tools_Server);
+     (GPS_Server, Build_Server, Execution_Server, Debug_Server, Tools_Server);
    --  GPS_Server is always the local server
    --  Tools_Server is a special value pointing to Build_Server in the
    --   general case, but is the local server when the dual compilation
@@ -35,12 +31,10 @@ package Remote is
    Local_Nickname         : String renames GNATCOLL.VFS.Local_Host;
    Display_Local_Nickname : constant String := "(local)";
 
-   subtype Distant_Server_Type is Server_Type
-     range Build_Server .. Debug_Server;
+   subtype Distant_Server_Type is
+     Server_Type range Build_Server .. Debug_Server;
 
-   procedure Assign
-     (Server   : Distant_Server_Type;
-      Nickname : String);
+   procedure Assign (Server : Distant_Server_Type; Nickname : String);
 
    function Is_Local (Server : Server_Type) return Boolean;
    --  Tell is the server is the localhost

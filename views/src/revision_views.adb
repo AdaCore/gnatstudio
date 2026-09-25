@@ -20,49 +20,49 @@ with Ada.Strings.Maps;           use Ada.Strings.Maps;
 with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
-with GNAT.Regpat;                use GNAT.Regpat;
-with GNAT.Strings;               use GNAT.Strings;
+with GNAT.Regpat;  use GNAT.Regpat;
+with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with GNATCOLL.Utils;   use GNATCOLL.Utils;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
-with Glib;                       use Glib;
-with Glib_Values_Utils;          use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.RGBA;                   use Gdk.RGBA;
-with Gdk.Event;                  use Gdk.Event;
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Cell_Layout;            use Gtk.Cell_Layout;
-with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
+with Gdk.RGBA;             use Gdk.RGBA;
+with Gdk.Event;            use Gdk.Event;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Cell_Layout;      use Gtk.Cell_Layout;
+with Gtk.Cell_Renderer;    use Gtk.Cell_Renderer;
 use Gtk.Cell_Renderer.Cell_Renderer_List;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_Model_Sort;        use Gtk.Tree_Model_Sort;
-with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
-with Gtk.Tree_Sortable;          use Gtk.Tree_Sortable;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Scrolled_Window;  use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_Model_Sort;  use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
+with Gtk.Tree_Sortable;    use Gtk.Tree_Sortable;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
+with Gtk.Tree_View;        use Gtk.Tree_View;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtkada.MDI;           use Gtkada.MDI;
 
 with Generic_Views;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GUI_Utils;                  use GUI_Utils;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Contexts;   use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
+with GUI_Utils;             use GUI_Utils;
 with String_Hash;
 with String_List_Utils;
-with String_Utils;               use String_Utils;
-with Glib_String_Utils;          use Glib_String_Utils;
+with String_Utils;          use String_Utils;
+with Glib_String_Utils;     use Glib_String_Utils;
 
 package body Revision_Views is
    Me : constant Trace_Handle := Create ("GPS.VIEWS.REVISIONS");
@@ -124,10 +124,10 @@ package body Revision_Views is
    end record;
 
    type Revision_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Revision_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
 
    Revision_View_Module_ID : Module_ID;
 
@@ -164,12 +164,12 @@ package body Revision_Views is
    --  Handle shell commands
 
    function Open_Revision_View
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Revision_View;
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+      return Revision_View;
    --  Open the Revision Browser associated with File, create it if needed
 
-   function "+"
-     (Str : String) return Unbounded_String renames To_Unbounded_String;
+   function "+" (Str : String) return Unbounded_String
+   renames To_Unbounded_String;
 
    procedure Add_Log_If_Not_Present
      (View : Revision_View; Log : Log_Data; Expand : Boolean);
@@ -185,8 +185,8 @@ package body Revision_Views is
    --  worth the work for now as it is ok for CVS and Subversion.
 
    function Find_Revision
-     (View : access Revision_View_Record'Class;
-      Log  : Log_Data) return Gtk_Tree_Iter;
+     (View : access Revision_View_Record'Class; Log : Log_Data)
+      return Gtk_Tree_Iter;
    --  Returns the revision if already in the browser, null otherwise
 
    procedure Fill_Info
@@ -196,8 +196,8 @@ package body Revision_Views is
    --  Fill Iter information using Log
 
    function Get_Data_From_Iter
-     (View : access Revision_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Line_Data;
+     (View : access Revision_View_Record'Class; Iter : Gtk_Tree_Iter)
+      return Line_Data;
    --  Get the Data at Iter
 
    function Sort_On_Date
@@ -241,7 +241,7 @@ package body Revision_Views is
       Rev_1        : constant String := Nth_Arg (Data, 2);
       Rev_2        : constant String := Nth_Arg (Data, 3);
       View         : constant Revision_View :=
-                       Open_Revision_View (Kernel, File);
+        Open_Revision_View (Kernel, File);
       Log_1, Log_2 : Log_Data;
    begin
       Log_1.Revision := +Rev_1;
@@ -249,7 +249,8 @@ package body Revision_Views is
 
       Add_Link_If_Not_Present (View, Log_1, Log_2);
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Add_Link_Command_Handler;
 
    -----------------------------
@@ -263,16 +264,17 @@ package body Revision_Views is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       File   : constant Virtual_File := Create (Nth_Arg (Data, 1));
       Log    : constant Log_Data :=
-                 (Revision => +Nth_Arg (Data, 2),
-                  Author   => +Nth_Arg (Data, 3),
-                  Date     => +Nth_Arg (Data, 4),
-                  Log      => +Unprotect (Nth_Arg (Data, 5)));
+        (Revision => +Nth_Arg (Data, 2),
+         Author   => +Nth_Arg (Data, 3),
+         Date     => +Nth_Arg (Data, 4),
+         Log      => +Unprotect (Nth_Arg (Data, 5)));
       Expand : constant Boolean := Nth_Arg (Data, 6, False);
       View   : constant Revision_View := Open_Revision_View (Kernel, File);
    begin
       Add_Log_If_Not_Present (View, Log, Expand);
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Add_Log_Command_Handler;
 
    ----------------------------------
@@ -285,8 +287,7 @@ package body Revision_Views is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       File   : constant Virtual_File := Create (Nth_Arg (Data, 1));
-      View   : constant Revision_View :=
-                 Open_Revision_View (Kernel, File);
+      View   : constant Revision_View := Open_Revision_View (Kernel, File);
       Rev    : constant String := Nth_Arg (Data, 2);
       Sym    : constant String := Nth_Arg (Data, 3);
       Key    : constant String := +Full_Name (File, True) & "$" & Rev;
@@ -298,7 +299,8 @@ package body Revision_Views is
 
       String_Hash_Table.Set (View.Syms, Key, List);
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Add_Revision_Command_Handler;
 
    -----------------------------
@@ -335,7 +337,7 @@ package body Revision_Views is
             --  No more output
             null;
 
-         when Branch =>
+         when Branch     =>
             --  A branch, back track and reparent all nodes until an orphan is
             --  found. This node is the end of the current parsed branch.
 
@@ -371,7 +373,7 @@ package body Revision_Views is
 
             View.Mode := Filter_Out;
 
-         when Link =>
+         when Link       =>
             --  Add link information
 
             if Rev_1 /= Null_Iter and then Rev_2 /= Null_Iter then
@@ -431,8 +433,12 @@ package body Revision_Views is
                Tmp := Expand_Row (View.Tree, Path, Open_All => True);
             end if;
             Scroll_To_Cell
-              (View.Tree, Path, null,
-               Use_Align => True, Row_Align => 0.5, Col_Align => 0.0);
+              (View.Tree,
+               Path,
+               null,
+               Use_Align => True,
+               Row_Align => 0.5,
+               Col_Align => 0.0);
             Path_Free (Path);
          end;
 
@@ -453,25 +459,27 @@ package body Revision_Views is
    is
       pragma Unreferenced (Command);
       File : constant Virtual_File := Create (Nth_Arg (Data, 1));
-      View : constant Revision_View := BT.Get
-        (Revision_View_Module (Revision_View_Module_ID.all).Table,
-         +Base_Name (File));
+      View : constant Revision_View :=
+        BT.Get
+          (Revision_View_Module (Revision_View_Module_ID.all).Table,
+           +Base_Name (File));
    begin
       if View /= null then
          Destroy (View);
       end if;
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Clear_View_Command_Handler;
 
    -------------------
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Revision_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       procedure Get_Parent_Revision_Node (Iter : in out Gtk_Tree_Iter);
       --  Return the revision for Iter's parent
@@ -489,7 +497,7 @@ package body Revision_Views is
          Look_For_Revision : while Iter /= Null_Iter loop
             declare
                Rev : constant String :=
-                       Get_String (Model, Iter, Rev_Info_Column);
+                 Get_String (Model, Iter, Rev_Info_Column);
             begin
                exit Look_For_Revision when Rev /= "";
                Iter := Parent (Model, Iter);
@@ -497,10 +505,10 @@ package body Revision_Views is
          end loop Look_For_Revision;
       end Get_Parent_Revision_Node;
 
-      Iter  : Gtk_Tree_Iter;
-      Rev   : Unbounded_String;
-      O_Rev : Unbounded_String;
-      Tag   : Unbounded_String;
+      Iter    : Gtk_Tree_Iter;
+      Rev     : Unbounded_String;
+      O_Rev   : Unbounded_String;
+      Tag     : Unbounded_String;
       Context : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
@@ -509,9 +517,10 @@ package body Revision_Views is
       if Event /= null then
          Iter := Find_Iter_For_Event (V.Tree, Event);
       else
-         Get_Selected (Selection => Get_Selection (V.Tree),
-                       Model     => Dummy_Model,
-                       Iter      => Iter);
+         Get_Selected
+           (Selection => Get_Selection (V.Tree),
+            Model     => Dummy_Model,
+            Iter      => Iter);
       end if;
 
       if Iter = Null_Iter then
@@ -533,14 +542,15 @@ package body Revision_Views is
                Tag := To_Unbounded_String (R);
 
                Get_Parent_Revision_Node (Iter);
-               Rev := To_Unbounded_String
-                 (Get_String (Model, Iter, Rev_Info_Column));
+               Rev :=
+                 To_Unbounded_String
+                   (Get_String (Model, Iter, Rev_Info_Column));
             end if;
 
          else
             Get_Parent_Revision_Node (Iter);
-            Rev := To_Unbounded_String
-              (Get_String (Model, Iter, Rev_Info_Column));
+            Rev :=
+              To_Unbounded_String (Get_String (Model, Iter, Rev_Info_Column));
          end if;
       end;
 
@@ -549,8 +559,8 @@ package body Revision_Views is
       Next (Model, Iter);
 
       if Iter /= Null_Iter then
-         O_Rev := To_Unbounded_String
-           (Get_String (Model, Iter, Rev_Info_Column));
+         O_Rev :=
+           To_Unbounded_String (Get_String (Model, Iter, Rev_Info_Column));
       end if;
 
       Set_File_Information
@@ -573,9 +583,7 @@ package body Revision_Views is
    begin
       View := new Revision_View_Record;
       Initialize (View, Kernel);
-      Setup_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => View.Tree);
+      Setup_Contextual_Menu (Kernel => Kernel, Event_On_Widget => View.Tree);
       return View;
    end Create_Revision_View;
 
@@ -602,16 +610,16 @@ package body Revision_Views is
 
       Append (-Store, Child, Iter);
       Set_And_Clear
-        (-Store, Child, (Color_Column, Info_Column),
-         (As_RGBA (Null_RGBA),
-          As_String (To_String (Line.Log.Log))));
+        (-Store,
+         Child,
+         (Color_Column, Info_Column),
+         (As_RGBA (Null_RGBA), As_String (To_String (Line.Log.Log))));
 
       --  Tags & Branches
 
       declare
          Rev   : constant String := To_String (Line.Log.Revision);
-         Key   : constant String :=
-                   +Full_Name (View.File, True) & "$" & Rev;
+         Key   : constant String := +Full_Name (View.File, True) & "$" & Rev;
          List  : SL.Vector;
          First : Boolean := True;
       begin
@@ -624,9 +632,10 @@ package body Revision_Views is
                Append (-Store, Child, Iter);
 
                Set_And_Clear
-                 (-Store, Child, (Info_Column, Rev_Info_Column),
-                  (As_String ("tag: " & Item),
-                   As_String (Item)));
+                 (-Store,
+                  Child,
+                  (Info_Column, Rev_Info_Column),
+                  (As_String ("tag: " & Item), As_String (Item)));
 
                if First then
                   Append (Info, Item);
@@ -641,17 +650,24 @@ package body Revision_Views is
       end;
 
       Set_And_Clear
-        (-Store, Iter,
-         (Revision_Column, Author_Column, Info_Column, Date_Column, Log_Column,
-          Link_Column, Rev_Info_Column, Color_Column),
-         (1 => As_String  (To_String (Line.Log.Revision)),
-          2 => As_String  (To_String (Line.Log.Author)),
-          3 => As_String  (To_String (Info)),
-          4 => As_String  (To_String (Line.Log.Date)),
-          5 => As_String  (To_String (Line.Log.Log)),
+        (-Store,
+         Iter,
+         (Revision_Column,
+          Author_Column,
+          Info_Column,
+          Date_Column,
+          Log_Column,
+          Link_Column,
+          Rev_Info_Column,
+          Color_Column),
+         (1 => As_String (To_String (Line.Log.Revision)),
+          2 => As_String (To_String (Line.Log.Author)),
+          3 => As_String (To_String (Info)),
+          4 => As_String (To_String (Line.Log.Date)),
+          5 => As_String (To_String (Line.Log.Log)),
           6 => As_Boolean (Line.Link),
-          7 => As_String  (To_String (Line.Log.Revision)),
-          8 => As_RGBA    (View.Root_Color)));
+          7 => As_String (To_String (Line.Log.Revision)),
+          8 => As_RGBA (View.Root_Color)));
    end Fill_Info;
 
    ------------------------
@@ -659,8 +675,8 @@ package body Revision_Views is
    ------------------------
 
    function Get_Data_From_Iter
-     (View : access Revision_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Line_Data
+     (View : access Revision_View_Record'Class; Iter : Gtk_Tree_Iter)
+      return Line_Data
    is
       Model : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
       Store : constant Gtk_Tree_Model := Get_Model (Model);
@@ -741,13 +757,14 @@ package body Revision_Views is
          end Month_Number;
 
          Day_Number : constant String :=
-                        "0" & Date (M (2).First .. M (2).Last);
+           "0" & Date (M (2).First .. M (2).Last);
       begin
          return
            --  Year
            Date (M (4).First .. M (4).Last)
            --  Month and Day numbers
-           & Month_Number & Day_Number (Day_Number'Last - 1 .. Day_Number'Last)
+           & Month_Number
+           & Day_Number (Day_Number'Last - 1 .. Day_Number'Last)
            --  Time
            & Date (M (3).First .. M (3).Last);
       end Canonical;
@@ -757,7 +774,7 @@ package body Revision_Views is
       Rev_A   : constant String := Get_String (Model, A, Date_Column);
       Rev_B   : constant String := Get_String (Model, B, Date_Column);
       Regexp  : constant String :=
-                  "(\D\D\D) (\d+) (\d\d:\d\d:\d\d) (\d\d\d\d).*";
+        "(\D\D\D) (\d+) (\d\d:\d\d:\d\d) (\d\d\d\d).*";
       Matcher : constant Pattern_Matcher := Compile (Regexp);
       MA, MB  : Match_Array (0 .. 4);
 
@@ -828,8 +845,7 @@ package body Revision_Views is
       elsif Is_Subset (To_Set (Rev_A), Number_Set)
         and then Is_Subset (To_Set (Rev_B), Number_Set)
       then
-         for K in
-           1 .. Natural'Max (Count (Rev_A, "."), Count (Rev_B, "."))
+         for K in 1 .. Natural'Max (Count (Rev_A, "."), Count (Rev_B, "."))
          loop
             declare
                N_A : constant Integer := Get_Number (Rev_A, K);
@@ -875,14 +891,15 @@ package body Revision_Views is
          Add_Attribute
            (Get_Column (View.Tree, Col),
             Cell_Renderer_List.Get_Data (List),
-            "foreground_rgba", Color_Column);
+            "foreground_rgba",
+            Color_Column);
          Cell_Renderer_List.Free (List);
       end Set_Attribute;
 
-      Names   : GNAT.Strings.String_List :=
-                  (1 => new String'(-"Revision"),
-                   2 => new String'(-"Author"),
-                   3 => new String'(-"Date / Log"));
+      Names    : GNAT.Strings.String_List :=
+        (1 => new String'(-"Revision"),
+         2 => new String'(-"Author"),
+         3 => new String'(-"Date / Log"));
       Scrolled : Gtk_Scrolled_Window;
       Success  : Boolean;
 
@@ -895,11 +912,12 @@ package body Revision_Views is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      View.Tree := Create_Tree_View
-        (Column_Types       => Column_Types,
-         Column_Names       => Names,
-         Show_Column_Titles => True,
-         Sortable_Columns   => True);
+      View.Tree :=
+        Create_Tree_View
+          (Column_Types       => Column_Types,
+           Column_Names       => Names,
+           Show_Column_Titles => True,
+           Sortable_Columns   => True);
 
       --  Adjust model to have a user defined sorting
 
@@ -943,8 +961,8 @@ package body Revision_Views is
    -------------------
 
    function Find_Revision
-     (View : access Revision_View_Record'Class;
-      Log  : Log_Data) return Gtk_Tree_Iter
+     (View : access Revision_View_Record'Class; Log : Log_Data)
+      return Gtk_Tree_Iter
    is
       Model  : constant Gtk_Tree_Model_Sort := -Get_Model (View.Tree);
       Store  : constant Gtk_Tree_Model := Get_Model (Model);
@@ -985,8 +1003,8 @@ package body Revision_Views is
    ------------------------
 
    function Open_Revision_View
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Revision_View
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+      return Revision_View
    is
       B_Name : constant String := +Base_Name (File);
       Title  : constant String := "Revision View - " & B_Name;
@@ -994,9 +1012,9 @@ package body Revision_Views is
       Child  : GPS_MDI_Child;
 
    begin
-      View := BT.Get
-        (Revision_View_Module (Revision_View_Module_ID.all).Table,
-         B_Name);
+      View :=
+        BT.Get
+          (Revision_View_Module (Revision_View_Module_ID.all).Table, B_Name);
 
       if View = null then
          View := Create_Revision_View (Kernel);
@@ -1009,11 +1027,12 @@ package body Revision_Views is
 
          Child := new Revision_Child_Record;
          GPS.Kernel.MDI.Initialize
-           (Child, View,
-            Kernel         => Kernel,
-            Focus_Widget   => Gtk_Widget (View.Tree),
-            Group          => Group_Consoles,
-            Module         => Revision_View_Module_ID);
+           (Child,
+            View,
+            Kernel       => Kernel,
+            Focus_Widget => Gtk_Widget (View.Tree),
+            Group        => Group_Consoles,
+            Module       => Revision_View_Module_ID);
          View.Child := Child;
          Set_Name (View.Tree, -Title);
          Set_Title (Child, -Title);
@@ -1058,7 +1077,8 @@ package body Revision_Views is
          Priority    => Default_Priority);
 
       Register_Command
-        (Kernel, "add_log",
+        (Kernel,
+         "add_log",
          Handler       => Add_Log_Command_Handler'Access,
          Minimum_Args  => 5,
          Maximum_Args  => 6,
@@ -1066,7 +1086,8 @@ package body Revision_Views is
          Static_Method => True);
 
       Register_Command
-        (Kernel, "clear_view",
+        (Kernel,
+         "clear_view",
          Handler       => Clear_View_Command_Handler'Access,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
@@ -1074,7 +1095,8 @@ package body Revision_Views is
          Static_Method => True);
 
       Register_Command
-        (Kernel, "add_link",
+        (Kernel,
+         "add_link",
          Handler       => Add_Link_Command_Handler'Access,
          Minimum_Args  => 3,
          Maximum_Args  => 3,
@@ -1082,7 +1104,8 @@ package body Revision_Views is
          Static_Method => True);
 
       Register_Command
-        (Kernel, "add_revision",
+        (Kernel,
+         "add_revision",
          Handler       => Add_Revision_Command_Handler'Access,
          Minimum_Args  => 3,
          Maximum_Args  => 3,

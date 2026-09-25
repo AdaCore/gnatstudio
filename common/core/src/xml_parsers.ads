@@ -31,7 +31,7 @@ package XML_Parsers is
 
    procedure Parse_Buffer
      (Buffer     : String;
-      From_File  : Filesystem_String  := "<input>";
+      From_File  : Filesystem_String := "<input>";
       Start_Line : Natural := 1;
       Tree       : out XML_Utils.Node_Ptr;
       Error      : out GNAT.Strings.String_Access);

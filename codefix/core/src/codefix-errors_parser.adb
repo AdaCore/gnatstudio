@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Codefix.Errors_Parser is
 
@@ -61,10 +61,7 @@ package body Codefix.Errors_Parser is
             end if;
          exception
             when E : Codefix_Panic | Obsolescent_Fix =>
-               Trace
-                 (Handle => Me,
-                  E      => E,
-                  Msg    => "Cannot propose a fix.");
+               Trace (Handle => Me, E => E, Msg => "Cannot propose a fix.");
          end;
 
          exit when Success;
@@ -97,7 +94,7 @@ package body Codefix.Errors_Parser is
 
    procedure Free (Data : in out Ptr_Parser) is
       procedure Delete is new
-         Ada.Unchecked_Deallocation (Error_Parser'Class, Ptr_Parser);
+        Ada.Unchecked_Deallocation (Error_Parser'Class, Ptr_Parser);
    begin
       Free (Data.all);
       Delete (Data);
@@ -139,12 +136,7 @@ package body Codefix.Errors_Parser is
             Match (This.Matcher (J).all, Get_Message (Message), Matches);
             if Matches (0) /= No_Match then
                Fix
-                 (This,
-                  Current_Text,
-                  Message_It,
-                  Options,
-                  Solutions,
-                  Matches);
+                 (This, Current_Text, Message_It, Options, Solutions, Matches);
 
                Success := True;
                return;

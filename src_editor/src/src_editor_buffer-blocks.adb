@@ -17,8 +17,8 @@
 
 with GNAT.Regpat;
 
-with Glib.Unicode;      use Glib.Unicode;
-with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Glib.Unicode;  use Glib.Unicode;
+with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 with Language;          use Language;
 with Src_Editor_Buffer.Line_Information;
@@ -32,8 +32,8 @@ package body Src_Editor_Buffer.Blocks is
    use Src_Editor_Buffer.Line_Information;
 
    function Is_Block_Already_Folded
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Natural) return Boolean;
+     (Buffer : access Source_Buffer_Record'Class; Start_Line : Natural)
+      return Boolean;
    --  Return True if the block at Start_Line is folded
 
    -----------------------------
@@ -41,8 +41,8 @@ package body Src_Editor_Buffer.Blocks is
    -----------------------------
 
    function Is_Block_Already_Folded
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Line : Natural) return Boolean is
+     (Buffer : access Source_Buffer_Record'Class; Start_Line : Natural)
+      return Boolean is
    begin
       for Block of Buffer.Folded_Blocks loop
          if Block.Start_Mark.Element.Line = Start_Line then
@@ -57,8 +57,7 @@ package body Src_Editor_Buffer.Blocks is
    --------------------
 
    procedure Compute_Blocks
-     (Buffer    : access Source_Buffer_Record'Class;
-      Immediate : Boolean) is
+     (Buffer : access Source_Buffer_Record'Class; Immediate : Boolean) is
    begin
       if not Buffer.Block_Folding.Block_Folding then
          --  Folding is not allowed
@@ -82,9 +81,7 @@ package body Src_Editor_Buffer.Blocks is
          return;
       end if;
 
-      if not Immediate
-        and then not Buffer.Get_Tree.Is_Ready
-      then
+      if not Immediate and then not Buffer.Get_Tree.Is_Ready then
          return;
       end if;
 
@@ -101,8 +98,8 @@ package body Src_Editor_Buffer.Blocks is
       Remove_Block_Folding_Commands (Buffer, False);
 
       declare
-         Current : Semantic_Tree_Iterator'Class
-           := Buffer.Get_Tree.Root_Iterator;
+         Current : Semantic_Tree_Iterator'Class :=
+           Buffer.Get_Tree.Root_Iterator;
       begin
          while Has_Element (Current) loop
             declare
@@ -116,21 +113,23 @@ package body Src_Editor_Buffer.Blocks is
                then
                   --  Do nothing if the block is already folded
 
-                  if not Is_Block_Already_Folded
-                    (Buffer, Node.Sloc_Start.Line)
+                  if not Is_Block_Already_Folded (Buffer, Node.Sloc_Start.Line)
                   then
                      declare
                         Command     : Hide_Editable_Lines_Command;
                         Buffer_Line : Buffer_Line_Type;
                      begin
-                        Buffer_Line := Get_Buffer_Line
-                          (Buffer, Editable_Line_Type (Node.Sloc_Start.Line));
+                        Buffer_Line :=
+                          Get_Buffer_Line
+                            (Buffer,
+                             Editable_Line_Type (Node.Sloc_Start.Line));
 
                         if Buffer_Line /= 0 then
-                           Command        := new Hide_Editable_Lines_Type;
+                           Command := new Hide_Editable_Lines_Type;
                            Command.Buffer := Source_Buffer (Buffer);
-                           Command.Number := Editable_Line_Type
-                             (Node.Sloc_End.Line - Node.Sloc_Start.Line);
+                           Command.Number :=
+                             Editable_Line_Type
+                               (Node.Sloc_End.Line - Node.Sloc_Start.Line);
 
                            Add_Block_Command
                              (Buffer        => Buffer,
@@ -169,25 +168,25 @@ package body Src_Editor_Buffer.Blocks is
       -----------
 
       function Match (First, Last : Editable_Line_Type) return Boolean is
-         Text : constant String := To_String
-           (Buffer.Get_Text (First, 1, Last, No_Index));
+         Text : constant String :=
+           To_String (Buffer.Get_Text (First, 1, Last, No_Index));
       begin
-         return (Fold_Comment_Reg1.Get_Pref /= ""
-             and then GNAT.Regpat.Match (Fold_Comment_Reg1.Get_Pref, Text))
-           or else (Fold_Comment_Reg2.Get_Pref /= ""
-                    and then GNAT.Regpat.Match
-                      (Fold_Comment_Reg2.Get_Pref, Text))
-           or else (Fold_Comment_Reg3.Get_Pref /= ""
-                    and then GNAT.Regpat.Match
-                      (Fold_Comment_Reg3.Get_Pref, Text));
+         return
+           (Fold_Comment_Reg1.Get_Pref /= ""
+            and then GNAT.Regpat.Match (Fold_Comment_Reg1.Get_Pref, Text))
+           or else
+             (Fold_Comment_Reg2.Get_Pref /= ""
+              and then GNAT.Regpat.Match (Fold_Comment_Reg2.Get_Pref, Text))
+           or else
+             (Fold_Comment_Reg3.Get_Pref /= ""
+              and then GNAT.Regpat.Match (Fold_Comment_Reg3.Get_Pref, Text));
       end Match;
 
    begin
       Remove_Block_Folding_Commands (Buffer, False);
 
       for Block of Blocks loop
-         if not Is_Block_Already_Folded
-           (Buffer, Natural (Block.First_Line))
+         if not Is_Block_Already_Folded (Buffer, Natural (Block.First_Line))
          then
             declare
                Command     : Hide_Editable_Lines_Command;
@@ -197,7 +196,7 @@ package body Src_Editor_Buffer.Blocks is
                Buffer_Line := Get_Buffer_Line (Buffer, Block.First_Line);
 
                if Buffer_Line /= 0 then
-                  Command        := new Hide_Editable_Lines_Type;
+                  Command := new Hide_Editable_Lines_Type;
                   Command.Buffer := Source_Buffer (Buffer);
                   Command.Number := Block.Last_Line - Block.First_Line;
 
@@ -210,26 +209,31 @@ package body Src_Editor_Buffer.Blocks is
 
                   if not Buffer.Auto_Folded then
                      case Block.Kind is
-                     when Imports =>
-                        if Fold_With_Use_Blocks.Get_Pref /= 0
-                          and then Integer (Command.Number) >=
-                          Fold_With_Use_Blocks.Get_Pref
-                        then
-                           Dummy := Fold_Unfold_Line
-                             (Buffer, Block.First_Line, True);
-                        end if;
+                        when Imports =>
+                           if Fold_With_Use_Blocks.Get_Pref /= 0
+                             and then
+                               Integer (Command.Number)
+                               >= Fold_With_Use_Blocks.Get_Pref
+                           then
+                              Dummy :=
+                                Fold_Unfold_Line
+                                  (Buffer, Block.First_Line, True);
+                           end if;
 
-                     when Comment =>
-                        if (Autofold_Comment_Blocks.Get_Pref /= 0
-                            and then Integer (Command.Number) >=
-                              Autofold_Comment_Blocks.Get_Pref)
-                          or else Match (Block.First_Line, Block.Last_Line)
-                        then
-                           Dummy := Fold_Unfold_Line
-                             (Buffer, Block.First_Line, True);
-                        end if;
-                     when others =>
-                        null;
+                        when Comment =>
+                           if (Autofold_Comment_Blocks.Get_Pref /= 0
+                               and then
+                                 Integer (Command.Number)
+                                 >= Autofold_Comment_Blocks.Get_Pref)
+                             or else Match (Block.First_Line, Block.Last_Line)
+                           then
+                              Dummy :=
+                                Fold_Unfold_Line
+                                  (Buffer, Block.First_Line, True);
+                           end if;
+
+                        when others  =>
+                           null;
                      end case;
                   end if;
                end if;
@@ -246,17 +250,14 @@ package body Src_Editor_Buffer.Blocks is
    -----------------------------
 
    procedure Calculate_Screen_Offset
-     (Buffer : access Source_Buffer_Record'Class;
-      Block  : in out Block_Record)
+     (Buffer : access Source_Buffer_Record'Class; Block : in out Block_Record)
    is
       Iter      : Gtk_Text_Iter;
       Line, Col : Gint;
       Result    : Boolean;
 
    begin
-      if Block.Stored_Offset /= 0
-        and then Blocks_Are_Exact (Buffer)
-      then
+      if Block.Stored_Offset /= 0 and then Blocks_Are_Exact (Buffer) then
          return;
       end if;
 
@@ -266,7 +267,8 @@ package body Src_Editor_Buffer.Blocks is
       Get_Iter_At_Line_Offset
         (Buffer,
          Iter,
-         Gint (Get_Buffer_Line (Buffer, Block.First_Line) - 1), 0);
+         Gint (Get_Buffer_Line (Buffer, Block.First_Line) - 1),
+         0);
 
       while Is_Space (Get_Char (Iter)) and then not Ends_Line (Iter) loop
          Forward_Char (Iter, Result);

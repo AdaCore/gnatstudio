@@ -28,9 +28,7 @@ package DAP.Requests.StepIn is
         DAP.Tools.StepInRequest'
           (seq       => 0,
            arguments =>
-             (granularity  =>
-                (Is_Set => True,
-                 Value  => DAP.Tools.Enum.line),
+             (granularity  => (Is_Set => True, Value => DAP.Tools.Enum.line),
               threadId     => 0,
               singleThread => False,
               targetId     => (Is_Set => False)));
@@ -38,11 +36,13 @@ package DAP.Requests.StepIn is
 
    type Step_In_DAP_Request_Access is access all Step_In_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Step_In_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Step_In_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -53,14 +53,14 @@ package DAP.Requests.StepIn is
      (Self        : in out Step_In_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.StepInResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Step_In_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Step_In_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Step_In_DAP_Request)
-      return String is ("stepIn");
+   overriding
+   function Method (Self : in out Step_In_DAP_Request) return String
+   is ("stepIn");
 
 end DAP.Requests.StepIn;

@@ -23,8 +23,8 @@ with LAL.Semantic_Trees;
 
 package LAL.Core_Module is
 
-   type LAL_Module_Id_Record is
-     new GPS.Core_Kernels.Abstract_Module_Record with record
+   type LAL_Module_Id_Record is new GPS.Core_Kernels.Abstract_Module_Record
+   with record
       Kernel        : GPS.Core_Kernels.Core_Kernel;
       Context       : Libadalang.Analysis.Analysis_Context;
       Unit_Provider : aliased LAL.Unit_Providers.Unit_Provider;
@@ -32,9 +32,9 @@ package LAL.Core_Module is
 
    type LAL_Module_Id is access all LAL_Module_Id_Record'Class;
 
-   not overriding procedure Reset_Context
-     (Self    : in out LAL_Module_Id_Record;
-      Charset : String);
+   not overriding
+   procedure Reset_Context
+     (Self : in out LAL_Module_Id_Record; Charset : String);
    --  Recreate LAL context, use Charset by default
 
    function Get_Current_Analysis_Context

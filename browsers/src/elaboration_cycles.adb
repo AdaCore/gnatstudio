@@ -71,26 +71,37 @@ package body Elaboration_Cycles is
       case Reason is
          when Withed                       =>
             return "withed";
+
          when Pragma_Elaborate             =>
             return "pragma Elaborate";
+
          when Pragma_Elaborate_All         =>
             return "pragma Elaborate_All";
+
          when Elaborate_All_Desirable      =>
             return "Elaborate_All desirable";
+
          when Elaborate_Desirable          =>
             return "Elaborate desirable";
+
          when Specification_First          =>
             return "specification first";
+
          when Pragma_Elaborate_All_Closure =>
             return "in the closure of pragma Elaborate_All";
+
          when Pragma_Elaborate_Closure     =>
             return "in the closure of pragma Elaborate";
+
          when Elaborate_Body_Subject       =>
             return "subject to pragma Elaborate_Body";
+
          when Elaborate_Body_Closure       =>
             return "in the closure of pragma Elaborate_Body";
+
          when F_Switch_Forced              =>
             return "forced by -f switch";
+
          when Invokes_Construct            =>
             return "invokes a construct at elaboration time";
       end case;
@@ -172,11 +183,7 @@ package body Elaboration_Cycles is
    -- Create_Link --
    -----------------
 
-   function Create_Link
-     (Unit : String;
-      Kind : Link_Kind)
-      return Link
-   is
+   function Create_Link (Unit : String; Kind : Link_Kind) return Link is
    begin
       return (To_Unbounded_String (Unit), Kind);
    end Create_Link;
@@ -186,16 +193,15 @@ package body Elaboration_Cycles is
    -----------------------
 
    function Create_Dependency
-     (Before_Unit : String;
-      After_Unit  : String;
-      Reason      : Dependency_Reason)
+     (Before_Unit : String; After_Unit : String; Reason : Dependency_Reason)
       return Dependency is
    begin
-      return (Before_Unit    => To_Unbounded_String (Before_Unit),
-              After_Unit     => To_Unbounded_String (After_Unit),
-              Reason         => Reason,
-              Elaborate_Body => False,
-              Links          => <>);
+      return
+        (Before_Unit    => To_Unbounded_String (Before_Unit),
+         After_Unit     => To_Unbounded_String (After_Unit),
+         Reason         => Reason,
+         Elaborate_Body => False,
+         Links          => <>);
    end Create_Dependency;
 
 end Elaboration_Cycles;

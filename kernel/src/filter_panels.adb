@@ -15,30 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;             use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 with Interfaces.C.Strings;
 with System;
 
 with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 
-with Glib.Object;              use Glib.Object;
+with Glib.Object; use Glib.Object;
 with Glib.Values;
 
-with Gdk.Event;                use Gdk.Event;
-with Gtk.GEntry;               use Gtk.GEntry;
+with Gdk.Event;               use Gdk.Event;
+with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Main;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Search_Entry;         use Gtk.Search_Entry;
-with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Search_Entry;        use Gtk.Search_Entry;
+with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 
-with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GUI_Utils;                use GUI_Utils;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GUI_Utils;              use GUI_Utils;
 
 package body Filter_Panels is
 
@@ -64,23 +64,20 @@ package body Filter_Panels is
    procedure Report_Filter_Changed_Internal
      (Object : access GObject_Record'Class);
    procedure Report_Filter_Changed
-     (Object : access GObject_Record'Class;
-      Params : Glib.Values.GValues);
+     (Object : access GObject_Record'Class; Params : Glib.Values.GValues);
 
-   procedure Debounce_Mode_Changed
-     (Object : access GObject_Record'Class);
+   procedure Debounce_Mode_Changed (Object : access GObject_Record'Class);
 
    procedure On_Destroy_Filter (Self : access GObject_Record'Class);
    --  Called when a filter panel is destroyed
 
    procedure On_Pattern_Config_Menu
-     (Self : access GObject_Record'Class;
-      Pos  : Gtk_Entry_Icon_Position);
+     (Self : access GObject_Record'Class; Pos : Gtk_Entry_Icon_Position);
    --  Creates the popup menu to configure the filter settings.
 
    function On_Filter_Focus_Out
-     (Filter : access GObject_Record'Class;
-      Event  : Gdk_Event_Focus) return Boolean;
+     (Filter : access GObject_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean;
    --  Called when the focus leaves the filter field, to update the history.
 
    type Recent_Entry_Item_Record is new Gtk_Menu_Item_Record with record
@@ -120,13 +117,14 @@ package body Filter_Panels is
       use Ada.Strings.Unbounded;
    begin
       if Self.Data_Pattern /= Null_Unbounded_String then
-         return Build
-           (Pattern         => To_String (Self.Data_Pattern),
-            Case_Sensitive  => Self.Data_Case_Sensitive,
-            Whole_Word      => Self.Data_Whole_Word,
-            Negate          => Self.Data_Negate,
-            Kind            => Self.Data_Kind,
-            Allow_Highlight => False);
+         return
+           Build
+             (Pattern         => To_String (Self.Data_Pattern),
+              Case_Sensitive  => Self.Data_Case_Sensitive,
+              Whole_Word      => Self.Data_Whole_Word,
+              Negate          => Self.Data_Negate,
+              Kind            => Self.Data_Kind,
+              Allow_Highlight => False);
       end if;
       return null;
    end Get_Filter_Pattern;
@@ -151,8 +149,7 @@ package body Filter_Panels is
    ----------------------
 
    function Get_Focus_Widget
-     (Self : not null access Filter_Panel_Record'Class)
-      return Gtk_Widget is
+     (Self : not null access Filter_Panel_Record'Class) return Gtk_Widget is
    begin
       return Gtk_Widget (Self.Pattern);
    end Get_Focus_Widget;
@@ -191,8 +188,8 @@ package body Filter_Panels is
       Sep : Gtk_Separator_Menu_Item;
    begin
       Self.History_Prefix := new String'(String (Hist_Prefix));
-      Self.Kernel         := Kernel;
-      Self.Options        := Options;
+      Self.Kernel := Kernel;
+      Self.Options := Options;
 
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Tool_Item.Get_Type,
@@ -226,22 +223,21 @@ package body Filter_Panels is
       Self.Pattern.Set_Tooltip_Markup
         (Tooltip
          & (if (Options and Has_Negate) /= 0
-           then ASCII.LF & "Start with <b>not:</b> to invert the filter"
-           else "")
+            then ASCII.LF & "Start with <b>not:</b> to invert the filter"
+            else "")
          & (if (Options and Has_Debounce) /= 0
-           then
-             (ASCII.LF
-              & "Press ENTER to apply the filter when 'react to enter' "
-              & "option is enabled")
-           else
-             (if (Options and Debounce) /= 0
-              then ASCII.LF & "Press ENTER to apply the filter"
-              else "")));
+            then
+              (ASCII.LF
+               & "Press ENTER to apply the filter when 'react to enter' "
+               & "option is enabled")
+            else
+              (if (Options and Debounce) /= 0
+               then ASCII.LF & "Press ENTER to apply the filter"
+               else "")));
 
       if Options /= 0 then
          Self.Pattern.Set_Icon_From_Icon_Name
-           (Gtk_Entry_Icon_Primary,
-            "gps-search-and-menu-symbolic");
+           (Gtk_Entry_Icon_Primary, "gps-search-and-menu-symbolic");
          Self.Pattern.Set_Icon_Activatable (Gtk_Entry_Icon_Primary, True);
          Self.Pattern.Set_Icon_Sensitive (Gtk_Entry_Icon_Primary, True);
          Self.Pattern.On_Icon_Release (On_Pattern_Config_Menu'Access, Self);
@@ -256,11 +252,15 @@ package body Filter_Panels is
          Self.Pattern_Config_Menu.Add (Self.Full_Text);
 
          if (Options and Has_Regexp) /= 0 then
-            Gtk_New (Self.Regexp, Label => Get_Label (Regexp),
-                     Group => Self.Full_Text.Get_Group);
-            Associate (Get_History (Self.Kernel).all,
-                       Hist_Prefix & "-filter-is-regexp",
-                       Self.Regexp, Default => False);
+            Gtk_New
+              (Self.Regexp,
+               Label => Get_Label (Regexp),
+               Group => Self.Full_Text.Get_Group);
+            Associate
+              (Get_History (Self.Kernel).all,
+               Hist_Prefix & "-filter-is-regexp",
+               Self.Regexp,
+               Default => False);
             Self.Regexp.Set_Tooltip_Text
               ("Whether filter is a regular expression");
             Self.Regexp.On_Toggled
@@ -269,11 +269,15 @@ package body Filter_Panels is
          end if;
 
          if (Options and Has_Approximate) /= 0 then
-            Gtk_New (Self.Approximate, Label => Get_Label (Approximate),
-                     Group => Self.Full_Text.Get_Group);
-            Associate (Get_History (Self.Kernel).all,
-                       Hist_Prefix & "-filter-approximate",
-                       Self.Approximate, Default => False);
+            Gtk_New
+              (Self.Approximate,
+               Label => Get_Label (Approximate),
+               Group => Self.Full_Text.Get_Group);
+            Associate
+              (Get_History (Self.Kernel).all,
+               Hist_Prefix & "-filter-approximate",
+               Self.Approximate,
+               Default => False);
             Self.Approximate.Set_Tooltip_Text
               ("Matching allows some errors (e.g. extra or missing text)");
             Self.Approximate.On_Toggled
@@ -282,11 +286,15 @@ package body Filter_Panels is
          end if;
 
          if (Options and Has_Fuzzy) /= 0 then
-            Gtk_New (Self.Fuzzy, Label => Get_Label (Fuzzy),
-                     Group => Self.Full_Text.Get_Group);
-            Associate (Get_History (Self.Kernel).all,
-                       Hist_Prefix & "-filter-fuzzy",
-                       Self.Fuzzy, Default => False);
+            Gtk_New
+              (Self.Fuzzy,
+               Label => Get_Label (Fuzzy),
+               Group => Self.Full_Text.Get_Group);
+            Associate
+              (Get_History (Self.Kernel).all,
+               Hist_Prefix & "-filter-fuzzy",
+               Self.Fuzzy,
+               Default => False);
             Self.Fuzzy.Set_Tooltip_Text ("Matching allows missing characters");
             Self.Fuzzy.On_Toggled
               (Report_Filter_Changed_Internal'Access, Self);
@@ -298,9 +306,11 @@ package body Filter_Panels is
 
          if (Options and Has_Negate) /= 0 then
             Gtk_New (Self.Negate, "Invert filter");
-            Associate (Get_History (Self.Kernel).all,
-                       Hist_Prefix & "-filter-negate",
-                       Self.Negate, Default => False);
+            Associate
+              (Get_History (Self.Kernel).all,
+               Hist_Prefix & "-filter-negate",
+               Self.Negate,
+               Default => False);
             Self.Negate.Set_Tooltip_Text
               ("invert filter : hide matching items");
             Self.Negate.On_Toggled
@@ -310,9 +320,11 @@ package body Filter_Panels is
 
          if (Options and Has_Whole_Word) /= 0 then
             Gtk_New (Self.Whole_Word, "Whole word");
-            Associate (Get_History (Self.Kernel).all,
-                       Hist_Prefix & "-filter-whole-word",
-                       Self.Whole_Word, Default => False);
+            Associate
+              (Get_History (Self.Kernel).all,
+               Hist_Prefix & "-filter-whole-word",
+               Self.Whole_Word,
+               Default => False);
             Self.Whole_Word.Set_Tooltip_Text ("Match whole words only");
             Self.Whole_Word.On_Toggled
               (Report_Filter_Changed_Internal'Access, Self);
@@ -321,9 +333,11 @@ package body Filter_Panels is
 
          if (Options and Has_Case_Sensitive) /= 0 then
             Gtk_New (Self.Case_Sensitive, "Case sensitive");
-            Associate (Get_History (Self.Kernel).all,
-                       Hist_Prefix & "-filter-case-sensitive",
-                       Self.Case_Sensitive, Default => False);
+            Associate
+              (Get_History (Self.Kernel).all,
+               Hist_Prefix & "-filter-case-sensitive",
+               Self.Case_Sensitive,
+               Default => False);
             Self.Case_Sensitive.Set_Tooltip_Text ("Case sensitive search");
             Self.Case_Sensitive.On_Toggled
               (Report_Filter_Changed_Internal'Access, Self);
@@ -332,39 +346,48 @@ package body Filter_Panels is
 
          if (Options and Has_Debounce) /= 0 then
             Gtk_New (Self.Debounce_Mode, "React on enter");
-            Associate (Get_History (Self.Kernel).all,
-                       Hist_Prefix & "-filter-react-enter",
-                       Self.Debounce_Mode, Default => False);
+            Associate
+              (Get_History (Self.Kernel).all,
+               Hist_Prefix & "-filter-react-enter",
+               Self.Debounce_Mode,
+               Default => False);
             Self.Debounce_Mode.Set_Tooltip_Text
               ("Filtering is only activated after pressing enter");
-            Self.Debounce_Mode.On_Toggled
-              (Debounce_Mode_Changed'Access, Self);
+            Self.Debounce_Mode.On_Toggled (Debounce_Mode_Changed'Access, Self);
             Self.Pattern_Config_Menu.Add (Self.Debounce_Mode);
          end if;
 
          if (Options and Has_Debounce) /= 0 then
             --  When Has_Debounce => ignore Debounce
             if Self.Debounce_Mode.Get_Active then
-               Self.Activate_Id := Object_Callback.Object_Connect
-                 (Widget      => Self.Pattern,
-                  Name        => Gtk.GEntry.Signal_Activate,
-                  Cb          => Report_Filter_Changed'Access,
-                  Slot_Object => Self);
+               Self.Activate_Id :=
+                 Object_Callback.Object_Connect
+                   (Widget      => Self.Pattern,
+                    Name        => Gtk.GEntry.Signal_Activate,
+                    Cb          => Report_Filter_Changed'Access,
+                    Slot_Object => Self);
             else
-               Self.Search_Changed_Id := Object_Callback.Object_Connect
-                 (Self.Pattern, Signal_Search_Changed,
-                  Report_Filter_Changed'Access, Self);
+               Self.Search_Changed_Id :=
+                 Object_Callback.Object_Connect
+                   (Self.Pattern,
+                    Signal_Search_Changed,
+                    Report_Filter_Changed'Access,
+                    Self);
             end if;
          elsif (Options and Debounce) /= 0 then
-            Self.Activate_Id := Object_Callback.Object_Connect
-              (Widget      => Self.Pattern,
-               Name        => Gtk.GEntry.Signal_Activate,
-               Cb          => Report_Filter_Changed'Access,
-               Slot_Object => Self);
+            Self.Activate_Id :=
+              Object_Callback.Object_Connect
+                (Widget      => Self.Pattern,
+                 Name        => Gtk.GEntry.Signal_Activate,
+                 Cb          => Report_Filter_Changed'Access,
+                 Slot_Object => Self);
          else
-            Self.Search_Changed_Id := Object_Callback.Object_Connect
-              (Self.Pattern, Signal_Search_Changed,
-               Report_Filter_Changed'Access, Self);
+            Self.Search_Changed_Id :=
+              Object_Callback.Object_Connect
+                (Self.Pattern,
+                 Signal_Search_Changed,
+                 Report_Filter_Changed'Access,
+                 Self);
          end if;
 
          Self.Update_Recent_Entries;
@@ -400,8 +423,8 @@ package body Filter_Panels is
    -------------------------
 
    function On_Filter_Focus_Out
-     (Filter : access GObject_Record'Class;
-      Event  : Gdk_Event_Focus) return Boolean
+     (Filter : access GObject_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean
    is
       pragma Unreferenced (Event);
       F       : constant Filter_Panel := Filter_Panel (Filter);
@@ -421,8 +444,7 @@ package body Filter_Panels is
    -- On_Recent_Item_Activate --
    -----------------------------
 
-   procedure On_Recent_Item_Activate
-     (Item : access Gtk_Menu_Item_Record'Class)
+   procedure On_Recent_Item_Activate (Item : access Gtk_Menu_Item_Record'Class)
    is
       Self : constant Recent_Entry_Item := Recent_Entry_Item (Item);
    begin
@@ -452,8 +474,7 @@ package body Filter_Panels is
    ----------------------------
 
    procedure On_Pattern_Config_Menu
-      (Self : access GObject_Record'Class;
-       Pos  : Gtk_Entry_Icon_Position)
+     (Self : access GObject_Record'Class; Pos : Gtk_Entry_Icon_Position)
    is
       pragma Unreferenced (Pos);  --  unreliable with gtk+ 3.8
       use Glib;
@@ -481,9 +502,7 @@ package body Filter_Panels is
       end Func;
 
    begin
-      if Panel.Pattern.Get_Icon_Position (Event) =
-        Gtk_Entry_Icon_Primary
-      then
+      if Panel.Pattern.Get_Icon_Position (Event) = Gtk_Entry_Icon_Primary then
          Panel.Pattern_Config_Menu.Show_All;
          Panel.Pattern_Config_Menu.Popup (Func => Func'Unrestricted_Access);
       end if;
@@ -494,8 +513,7 @@ package body Filter_Panels is
    ---------------------------
 
    procedure Report_Filter_Changed
-     (Object : access GObject_Record'Class;
-      Params : Glib.Values.GValues)
+     (Object : access GObject_Record'Class; Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
    begin
@@ -512,8 +530,7 @@ package body Filter_Panels is
       Self : constant Filter_Panel := Filter_Panel (Object);
    begin
       Self.Store_Filter_Data;
-      Widget_Callback.Emit_By_Name
-        (Self, Signal_Filter_Changed);
+      Widget_Callback.Emit_By_Name (Self, Signal_Filter_Changed);
       Filter_View_Changed_Hook.Run (Self.Kernel);
    end Report_Filter_Changed_Internal;
 
@@ -521,21 +538,25 @@ package body Filter_Panels is
    -- Debounce_Mode_Changed --
    ---------------------------
 
-   procedure Debounce_Mode_Changed
-     (Object : access GObject_Record'Class)
-   is
+   procedure Debounce_Mode_Changed (Object : access GObject_Record'Class) is
       Self : constant Filter_Panel := Filter_Panel (Object);
    begin
       if Self.Debounce_Mode.Get_Active then
          Gtk.Handlers.Disconnect (Self.Pattern, Self.Search_Changed_Id);
-         Self.Activate_Id := Object_Callback.Object_Connect
-           (Self.Pattern, Gtk.GEntry.Signal_Activate,
-            Report_Filter_Changed'Access, Self);
+         Self.Activate_Id :=
+           Object_Callback.Object_Connect
+             (Self.Pattern,
+              Gtk.GEntry.Signal_Activate,
+              Report_Filter_Changed'Access,
+              Self);
       else
          Gtk.Handlers.Disconnect (Self.Pattern, Self.Activate_Id);
-         Self.Search_Changed_Id := Object_Callback.Object_Connect
-           (Self.Pattern, Signal_Search_Changed,
-            Report_Filter_Changed'Access, Self);
+         Self.Search_Changed_Id :=
+           Object_Callback.Object_Connect
+             (Self.Pattern,
+              Signal_Search_Changed,
+              Report_Filter_Changed'Access,
+              Self);
       end if;
       Report_Filter_Changed_Internal (Self);
    end Debounce_Mode_Changed;
@@ -545,8 +566,7 @@ package body Filter_Panels is
    ----------------
 
    procedure Set_Filter
-     (Self : not null access Filter_Panel_Record;
-      Text : String) is
+     (Self : not null access Filter_Panel_Record; Text : String) is
    begin
       Self.Pattern.Set_Text (Text);
       if (Self.Options and Debounce) /= 0
@@ -581,29 +601,28 @@ package body Filter_Panels is
         Self.Case_Sensitive /= null and then Self.Case_Sensitive.Get_Active;
       Text           : constant String := Self.Pattern.Get_Text;
       Kind           : constant Search_Kind :=
-        (if Regexp then
-            GPS.Search.Regexp
-         elsif Approximate then
-            GPS.Search.Approximate
-         elsif Fuzzy then
-            GPS.Search.Fuzzy
-         else
-            GPS.Search.Full_Text);
+        (if Regexp
+         then GPS.Search.Regexp
+         elsif Approximate
+         then GPS.Search.Approximate
+         elsif Fuzzy
+         then GPS.Search.Fuzzy
+         else GPS.Search.Full_Text);
 
    begin
       if Text /= "" then
-         Self.Data_Whole_Word     := Whole;
+         Self.Data_Whole_Word := Whole;
          Self.Data_Case_Sensitive := Case_Sensitive;
-         Self.Data_Kind           := Kind;
+         Self.Data_Kind := Kind;
 
          if Starts_With (Text, "not:") then
-            Self.Data_Pattern := To_Unbounded_String
-              (Text (Text'First + 4 .. Text'Last));
+            Self.Data_Pattern :=
+              To_Unbounded_String (Text (Text'First + 4 .. Text'Last));
             Self.Data_Negate := True;
 
          else
             Self.Data_Pattern := To_Unbounded_String (Text);
-            Self.Data_Negate  := Negate;
+            Self.Data_Negate := Negate;
          end if;
       else
          Self.Data_Pattern := Null_Unbounded_String;
@@ -626,7 +645,7 @@ package body Filter_Panels is
 
       function Is_Recent_Entry
         (W : access Gtk_Widget_Record'Class) return Boolean
-        is (W.all in Recent_Entry_Item_Record'Class);
+      is (W.all in Recent_Entry_Item_Record'Class);
       --  Whether W is a menu item for a recent search
 
    begin
@@ -637,9 +656,7 @@ package body Filter_Panels is
          Key      => Key,
          Key_Type => Strings);
       Set_Max_Length
-        (Hist     => Panel.Kernel.Get_History.all,
-         Key      => Key,
-         Num      => 5);
+        (Hist => Panel.Kernel.Get_History.all, Key => Key, Num => 5);
 
       --  Remove all existing menu entries
 
@@ -653,15 +670,22 @@ package body Filter_Panels is
 
       if Add /= null then
          case Add.Get_Kind is
-            when Full_Text   => Prefix := 'f';
-            when Regexp      => Prefix := 'r';
-            when Fuzzy       => Prefix := 'y';
-            when Approximate => Prefix := 'a';
+            when Full_Text   =>
+               Prefix := 'f';
+
+            when Regexp      =>
+               Prefix := 'r';
+
+            when Fuzzy       =>
+               Prefix := 'y';
+
+            when Approximate =>
+               Prefix := 'a';
          end case;
 
          Add_To_History
-           (Hist  => Panel.Kernel.Get_History.all,
-            Key   => Key,
+           (Hist      => Panel.Kernel.Get_History.all,
+            Key       => Key,
             New_Entry =>
               VSS.Strings.Conversions.To_Virtual_String
                 (Prefix
@@ -693,16 +717,23 @@ package body Filter_Panels is
                Item := new Recent_Entry_Item_Record;
 
                case V (V'First) is
-                  when 'r' => Item.Kind := Regexp;
-                  when 'y' => Item.Kind := Fuzzy;
-                  when 'a' => Item.Kind := Approximate;
-                  when others => Item.Kind := Full_Text;
+                  when 'r'    =>
+                     Item.Kind := Regexp;
+
+                  when 'y'    =>
+                     Item.Kind := Fuzzy;
+
+                  when 'a'    =>
+                     Item.Kind := Approximate;
+
+                  when others =>
+                     Item.Kind := Full_Text;
                end case;
 
-               Item.Invert     := V (V'First + 1) = '-';
+               Item.Invert := V (V'First + 1) = '-';
                Item.Whole_Word := V (V'First + 2) = 'w';
-               Item.Pattern    := new String'(V (V'First + 3 .. V'Last));
-               Item.Panel      := Panel;
+               Item.Pattern := new String'(V (V'First + 3 .. V'Last));
+               Item.Panel := Panel;
 
                Gtk.Menu_Item.Initialize (Item, Item.Pattern.all);
                Item.On_Destroy (On_Destroy_Recent_Item'Access);

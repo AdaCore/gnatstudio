@@ -17,7 +17,7 @@
 
 with GNAT.Expect;
 with Interactive_Consoles;
-with Remote;                 use Remote;
+with Remote;             use Remote;
 with GNATCOLL.VFS;
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
@@ -28,15 +28,15 @@ package GPS.Kernel.Remote is
    --  Register the module into the list
 
    procedure Synchronize
-     (Kernel         : Kernel_Handle;
-      From           : Server_Type;
-      To             : Server_Type;
-      Blocking       : Boolean;
-      Print_Command  : Boolean;
-      Print_Output   : Boolean;
-      Force          : Boolean;
-      Queue_Id       : String  := "";
-      File           : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
+     (Kernel        : Kernel_Handle;
+      From          : Server_Type;
+      To            : Server_Type;
+      Blocking      : Boolean;
+      Print_Command : Boolean;
+      Print_Output  : Boolean;
+      Force         : Boolean;
+      Queue_Id      : String := "";
+      File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Perform a file system synchronisation between From and To.
    --  If Blocking is set, the call is synchronous. Else an asynchronous
    --  command is used.
@@ -51,28 +51,28 @@ package GPS.Kernel.Remote is
    --  If File is an actual file, then only this file will be synchronized
 
    procedure Synchronize
-     (Kernel         : Kernel_Handle;
-      From           : String;
-      To             : String;
-      Blocking       : Boolean;
-      Print_Command  : Boolean;
-      Print_Output   : Boolean;
-      Force          : Boolean;
-      Queue_Id       : String  := "";
-      File           : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
+     (Kernel        : Kernel_Handle;
+      From          : String;
+      To            : String;
+      Blocking      : Boolean;
+      Print_Command : Boolean;
+      Print_Output  : Boolean;
+      Force         : Boolean;
+      Queue_Id      : String := "";
+      File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File);
    --  Same as above, with From and To servers identified by their nickname
 
    procedure Spawn
-     (Kernel            : Kernel_Handle;
-      Arguments         : Arg_List;
-      Server            : Server_Type;
-      Pd                : out GNAT.Expect.Process_Descriptor_Access;
-      Success           : out Boolean;
-      Use_Ext_Terminal  : Boolean := False;
-      Console           : Interactive_Consoles.Interactive_Console := null;
-      Show_Command      : Boolean := True;
-      Directory         : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Use_Pipes         : Boolean := True);
+     (Kernel           : Kernel_Handle;
+      Arguments        : Arg_List;
+      Server           : Server_Type;
+      Pd               : out GNAT.Expect.Process_Descriptor_Access;
+      Success          : out Boolean;
+      Use_Ext_Terminal : Boolean := False;
+      Console          : Interactive_Consoles.Interactive_Console := null;
+      Show_Command     : Boolean := True;
+      Directory        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Use_Pipes        : Boolean := True);
    --  Launch given arguments on Server. Returns a valid Process
    --  descriptor and success set to true upon success.
    --  See remote.ads for explanations on Server values, in particular
@@ -107,9 +107,7 @@ package GPS.Kernel.Remote is
    procedure Set_Default_Remote_Settings;
    --  Set the current remote settings as default for the current project
 
-   function Check_Exec
-     (Server : Server_Type;
-      Exec   : String) return String;
+   function Check_Exec (Server : Server_Type; Exec : String) return String;
    --  Check that executable is on the path, and return the full path if
    --  found, return null otherwise.
 

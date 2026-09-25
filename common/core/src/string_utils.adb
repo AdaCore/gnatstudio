@@ -15,25 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Characters.Handling;                    use Ada.Characters.Handling;
 with Ada.Characters.Wide_Wide_Latin_1;
-with Ada.Containers;                    use Ada.Containers;
+with Ada.Containers;                             use Ada.Containers;
 with Ada.Float_Text_IO;
 with Ada.Strings.Hash;
 with Ada.Strings.Fixed;
-with Ada.Strings.Maps;                  use Ada.Strings.Maps;
+with Ada.Strings.Maps;                           use Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
-with Ada.Wide_Wide_Characters.Handling; use Ada.Wide_Wide_Characters.Handling;
+with Ada.Wide_Wide_Characters.Handling;
+use Ada.Wide_Wide_Characters.Handling;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
-with Case_Handling;                     use Case_Handling;
+with Case_Handling; use Case_Handling;
 
-with GNAT.Strings;                      use GNAT.Strings;
+with GNAT.Strings;   use GNAT.Strings;
 with GNATCOLL.Scripts.Utils;
-with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
-with UTF8_Utils;                        use UTF8_Utils;
+with UTF8_Utils; use UTF8_Utils;
 
 package body String_Utils is
 
@@ -63,15 +64,15 @@ package body String_Utils is
    -----------------
 
    function Blank_Slice
-     (Count     : Integer;
-      Use_Tabs  : Boolean := False;
-      Tab_Width : Positive := 8) return String is
+     (Count : Integer; Use_Tabs : Boolean := False; Tab_Width : Positive := 8)
+      return String is
    begin
       if Count <= 0 then
          return "";
       elsif Use_Tabs then
-         return (1 .. Count / Tab_Width => ASCII.HT) &
-           (1 .. Count mod Tab_Width => ' ');
+         return
+           (1 .. Count / Tab_Width => ASCII.HT)
+           & (1 .. Count mod Tab_Width => ' ');
       else
          return (1 .. Count => ' ');
       end if;
@@ -91,31 +92,19 @@ package body String_Utils is
    begin
       if Bytes_F < 1024.0 then
          Ada.Float_Text_IO.Put
-           (Bytes_S,
-            Item  => Bytes_F,
-            Aft   => Aft,
-            Exp   => Exp);
+           (Bytes_S, Item => Bytes_F, Aft => Aft, Exp => Exp);
          Unit := To_Unbounded_String ("B");
       elsif Bytes_F < 1048576.0 then
          Ada.Float_Text_IO.Put
-           (Bytes_S,
-            Item  => Bytes_F / 1024.0,
-            Aft   => Aft,
-            Exp   => Exp);
+           (Bytes_S, Item => Bytes_F / 1024.0, Aft => Aft, Exp => Exp);
          Unit := To_Unbounded_String ("KB");
       elsif Bytes_F < 1073741824.0 then
          Ada.Float_Text_IO.Put
-           (Bytes_S,
-            Item => Bytes_F / 1048576.0,
-            Aft  => Aft,
-            Exp  => Exp);
+           (Bytes_S, Item => Bytes_F / 1048576.0, Aft => Aft, Exp => Exp);
          Unit := To_Unbounded_String ("MB");
       else
          Ada.Float_Text_IO.Put
-           (Bytes_S,
-            Item => Bytes_F / 1073741824.0,
-            Aft  => Aft,
-            Exp  => Exp);
+           (Bytes_S, Item => Bytes_F / 1073741824.0, Aft => Aft, Exp => Exp);
          Unit := To_Unbounded_String ("GB");
       end if;
 
@@ -140,8 +129,7 @@ package body String_Utils is
    -- Format_Title --
    ------------------
 
-   function Format_Title (Title : String) return String
-   is
+   function Format_Title (Title : String) return String is
       Translation : constant Character_Mapping := To_Mapping ("_", " ");
    begin
       return Ada.Strings.Fixed.Translate (Mixed_Case (Title), Translation);
@@ -151,8 +139,7 @@ package body String_Utils is
    -- Smart_Sort --
    ----------------
 
-   function Smart_Sort (S1, S2 : String) return Boolean
-   is
+   function Smart_Sort (S1, S2 : String) return Boolean is
       Index_1 : Natural;
       Value_1 : Integer;
       Char_1  : Character;
@@ -179,8 +166,7 @@ package body String_Utils is
          Is_Neg : in out Boolean;
          Index  : in out Natural;
          Char   : out Character;
-         Value  : out Integer)
-      is
+         Value  : out Integer) is
       begin
          Char := Character'Val (0);
          Value := 0;
@@ -262,9 +248,7 @@ package body String_Utils is
    --------------------------
 
    function Get_Surrounding_Line
-     (Str    : String;
-      Start  : Natural;
-      Finish : Natural) return String
+     (Str : String; Start : Natural; Finish : Natural) return String
    is
       Line_Start  : Natural;
       Line_Finish : Natural;
@@ -286,20 +270,16 @@ package body String_Utils is
    -- First_Word_Start --
    ----------------------
 
-   function First_Word_Start (Str : String; P : Natural) return Natural
-   is
+   function First_Word_Start (Str : String; P : Natural) return Natural is
       Start : Natural := P;
    begin
-      while Start >= Str'First
-        and then Str (Start) /= ASCII.LF
-      loop
+      while Start >= Str'First and then Str (Start) /= ASCII.LF loop
          Start := Start - 1;
       end loop;
 
       Start := Start + 1;
       while Start <= P
-        and then (Str (Start) = ' '
-                  or else Str (Start) = ASCII.HT)
+        and then (Str (Start) = ' ' or else Str (Start) = ASCII.HT)
       loop
          Start := Start + 1;
       end loop;
@@ -312,9 +292,7 @@ package body String_Utils is
    -------------------
 
    procedure Skip_To_Blank
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1) is
+     (Type_Str : String; Index : in out Natural; Step : Integer := 1) is
    begin
       while Index in Type_Str'First .. Type_Str'Last
         and then Type_Str (Index) /= ' '
@@ -331,14 +309,13 @@ package body String_Utils is
    --------------
 
    function Is_Blank
-     (C                 : Character;
-      Include_New_Lines : Boolean := True)
-      return Boolean is
+     (C : Character; Include_New_Lines : Boolean := True) return Boolean is
    begin
-      return C = ' '
+      return
+        C = ' '
         or else C = ASCII.HT
-        or else (Include_New_Lines
-                 and then (C = ASCII.CR or else C = ASCII.LF));
+        or else
+          (Include_New_Lines and then (C = ASCII.CR or else C = ASCII.LF));
    end Is_Blank;
 
    -------------------
@@ -364,10 +341,10 @@ package body String_Utils is
          if Natural (Index) <= Buffer'Last
            and then Buffer (Natural (Index)) = ASCII.HT
          then
-            Columns := Columns +
-              Visible_Column_Type
-                (Tab_Width -
-                     ((Positive (Columns) - 1) mod Tab_Width));
+            Columns :=
+              Columns
+              + Visible_Column_Type
+                  (Tab_Width - ((Positive (Columns) - 1) mod Tab_Width));
          else
             Columns := Columns + 1;
          end if;
@@ -397,10 +374,10 @@ package body String_Utils is
          if Natural (Index) <= Length (Buffer)
            and then Element (Buffer, Natural (Index)) = ASCII.HT
          then
-            Columns := Columns +
-              Visible_Column_Type
-                (Tab_Width -
-                     ((Positive (Columns) - 1) mod Tab_Width));
+            Columns :=
+              Columns
+              + Visible_Column_Type
+                  (Tab_Width - ((Positive (Columns) - 1) mod Tab_Width));
          else
             Columns := Columns + 1;
          end if;
@@ -414,10 +391,8 @@ package body String_Utils is
    ---------------
 
    procedure Next_Line
-     (Buffer  : String;
-      P       : Natural;
-      Next    : out Natural;
-      Success : out Boolean) is
+     (Buffer : String; P : Natural; Next : out Natural; Success : out Boolean)
+   is
    begin
       for J in P .. Buffer'Last - 1 loop
          if Buffer (J) = ASCII.LF then
@@ -428,16 +403,14 @@ package body String_Utils is
       end loop;
 
       Success := False;
-      Next    := Buffer'Last;
+      Next := Buffer'Last;
    end Next_Line;
 
    ---------------------
    -- Skip_Hexa_Digit --
    ---------------------
 
-   procedure Skip_Hexa_Digit
-     (Type_Str : String;
-      Index    : in out Natural) is
+   procedure Skip_Hexa_Digit (Type_Str : String; Index : in out Natural) is
    begin
       --  skips initial 0x if present
 
@@ -496,9 +469,7 @@ package body String_Utils is
    ---------------
 
    procedure Parse_Num
-     (Type_Str : String;
-      Index    : in out Natural;
-      Result   : out Long_Integer)
+     (Type_Str : String; Index : in out Natural; Result : out Long_Integer)
    is
       Tmp_Index : constant Natural := Index;
    begin
@@ -508,9 +479,7 @@ package body String_Utils is
          Index := Index + 1;
       end if;
 
-      while Index <= Type_Str'Last
-        and then Type_Str (Index) in '0' .. '9'
-      loop
+      while Index <= Type_Str'Last and then Type_Str (Index) in '0' .. '9' loop
          Index := Index + 1;
       end loop;
 
@@ -532,11 +501,10 @@ package body String_Utils is
    ----------------
 
    function Looking_At
-     (Type_Str  : String;
-      Index     : Natural;
-      Substring : String) return Boolean is
+     (Type_Str : String; Index : Natural; Substring : String) return Boolean is
    begin
-      return Index + Substring'Length - 1 <= Type_Str'Last
+      return
+        Index + Substring'Length - 1 <= Type_Str'Last
         and then Type_Str (Index .. Index + Substring'Length - 1) = Substring;
    end Looking_At;
 
@@ -551,9 +519,7 @@ package body String_Utils is
       Str_Last          : out Natural;
       Backslash_Special : Boolean := True)
    is
-      procedure Parse_Next_Char
-        (Index : in out Natural;
-         Char  : out Character);
+      procedure Parse_Next_Char (Index : in out Natural; Char : out Character);
       --  Parse the character pointed to by Index, including special characters
 
       In_String : Boolean;
@@ -562,9 +528,7 @@ package body String_Utils is
       -- Parse_Next_Char --
       ---------------------
 
-      procedure Parse_Next_Char
-        (Index : in out Natural;
-         Char  : out Character)
+      procedure Parse_Next_Char (Index : in out Natural; Char : out Character)
       is
          Int : Natural;
       begin
@@ -575,9 +539,10 @@ package body String_Utils is
          if Index + 4 <= Type_Str'Last
            and then Type_Str (Index) = '['
            and then Type_Str (Index + 1) = '"'
-           and then (Type_Str (Index + 2 .. Index + 4) = """""]"
-                     or else Type_Str (Index + 2) in '0' .. '9'
-                     or else Type_Str (Index + 2) in 'a' .. 'f')
+           and then
+             (Type_Str (Index + 2 .. Index + 4) = """""]"
+              or else Type_Str (Index + 2) in '0' .. '9'
+              or else Type_Str (Index + 2) in 'a' .. 'f')
          then
             if Type_Str (Index + 2) = '"' then
                Index := Index + 5;
@@ -585,22 +550,32 @@ package body String_Utils is
 
             else
                if Type_Str (Index + 2) in 'a' .. 'f' then
-                  Int := 16 * (Character'Pos (Type_Str (Index + 2))
-                               - Character'Pos ('a') + 10);
+                  Int :=
+                    16
+                    * (Character'Pos (Type_Str (Index + 2))
+                       - Character'Pos ('a')
+                       + 10);
                else
-                  Int := 16 * (Character'Pos (Type_Str (Index + 2))
-                               - Character'Pos ('0'));
+                  Int :=
+                    16
+                    * (Character'Pos (Type_Str (Index + 2))
+                       - Character'Pos ('0'));
                end if;
 
                if Type_Str (Index + 3) in 'a' .. 'f' then
-                  Int := Int + Character'Pos (Type_Str (Index + 3))
-                    - Character'Pos ('a') + 10;
+                  Int :=
+                    Int
+                    + Character'Pos (Type_Str (Index + 3))
+                    - Character'Pos ('a')
+                    + 10;
                else
-                  Int := Int + Character'Pos (Type_Str (Index + 3))
+                  Int :=
+                    Int
+                    + Character'Pos (Type_Str (Index + 3))
                     - Character'Pos ('0');
                end if;
 
-               Char  := Character'Val (Int);
+               Char := Character'Val (Int);
                Index := Index + 6;
             end if;
 
@@ -612,12 +587,13 @@ package body String_Utils is
          end if;
       end Parse_Next_Char;
 
-      S_Index   : Natural := Str'First;
-      Char      : Character;
-      Num       : Long_Integer;
-      Last      : Natural;
+      S_Index : Natural := Str'First;
+      Char    : Character;
+      Num     : Long_Integer;
+      Last    : Natural;
 
-   begin  --  Parse_Cst_String
+   begin
+      --  Parse_Cst_String
       if Str'Length = 0 then
          Last := Natural'Last;
       else
@@ -639,7 +615,7 @@ package body String_Utils is
         and then Type_Str (Index) /= ASCII.LF
       loop
          case Type_Str (Index) is
-            when '"' =>
+            when '"'       =>
                --  Handling of Ada-style strings:   A""double quote
                if In_String
                  and then Index < Type_Str'Last
@@ -662,12 +638,12 @@ package body String_Utils is
                     and then Type_Str (Index) /= ','
                   then
                      Index := Index + 1;
-                     Str_Last  := S_Index - 1;
+                     Str_Last := S_Index - 1;
                      return;
                   end if;
                end if;
 
-            when ''' =>
+            when '''       =>
                if In_String then
                   if Str'Length /= 0 then
                      Str (S_Index) := ''';
@@ -691,10 +667,11 @@ package body String_Utils is
                      Parse_Num (Type_Str, Index, Num);
 
                      if Str'Length /= 0 then
-                        Str (S_Index ..
-                               Natural'Min
-                                 (S_Index + Integer (Num) - 1,
-                                  Last)) :=
+                        Str
+                          (S_Index
+                           ..
+                             Natural'Min
+                               (S_Index + Integer (Num) - 1, Last)) :=
                           (others => Char);
                      end if;
 
@@ -706,7 +683,7 @@ package body String_Utils is
                   end if;
                end if;
 
-            when '\' =>
+            when '\'       =>
                if Backslash_Special then
                   if Str'Length /= 0 then
                      Str (S_Index) := Type_Str (Index + 1);
@@ -736,18 +713,19 @@ package body String_Utils is
 
                elsif Type_Str (Index) = ','
                  and then
-                 (Index >= Type_Str'Last - 1
-                  or else (Type_Str (Index + 2) /= '''
-                           and then Type_Str (Index + 2) /= '"'))
+                   (Index >= Type_Str'Last - 1
+                    or else
+                      (Type_Str (Index + 2) /= '''
+                       and then Type_Str (Index + 2) /= '"'))
                then
                   Index := Index + 1;
-                  Str_Last  := S_Index - 1;
+                  Str_Last := S_Index - 1;
                   return;
                end if;
 
                Index := Index + 1;
 
-            when others =>
+            when others    =>
                Parse_Next_Char (Index, Char);
 
                if Str'Length /= 0 then
@@ -759,7 +737,7 @@ package body String_Utils is
       end loop;
 
       Index := Index + 1;
-      Str_Last  := S_Index - 1;
+      Str_Last := S_Index - 1;
    end Parse_Cst_String;
 
    -----------------------
@@ -788,17 +766,14 @@ package body String_Utils is
    ---------------
 
    procedure Skip_Word
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1)
+     (Type_Str : String; Index : in out Natural; Step : Integer := 1)
    is
       Initial : constant Natural := Index;
    begin
       while Index <= Type_Str'Last
         and then Index >= Type_Str'First
-        and then (Is_Alphanumeric (Type_Str (Index))
-                  or else
-                  Type_Str (Index) = '_')
+        and then
+          (Is_Alphanumeric (Type_Str (Index)) or else Type_Str (Index) = '_')
       loop
          Index := Index + Step;
       end loop;
@@ -815,19 +790,16 @@ package body String_Utils is
    --------------------
 
    procedure Skip_CPP_Token
-     (Type_Str : String;
-      Index    : in out Natural;
-      Step     : Integer := 1)
+     (Type_Str : String; Index : in out Natural; Step : Integer := 1)
    is
       Initial : constant Natural := Index;
    begin
       while Index <= Type_Str'Last
         and then Index >= Type_Str'First
-        and then (Is_Alphanumeric (Type_Str (Index))
-                  or else
-                  Type_Str (Index) = '_'
-                  or else
-                  Type_Str (Index) = '.')
+        and then
+          (Is_Alphanumeric (Type_Str (Index))
+           or else Type_Str (Index) = '_'
+           or else Type_Str (Index) = '.')
       loop
          Index := Index + Step;
       end loop;
@@ -850,14 +822,14 @@ package body String_Utils is
    is
       Result : String (S'Range);
       Len    : Positive := Result'First;
-      Blank  : Boolean  := False;
+      Blank  : Boolean := False;
 
-      Max    : Natural;
+      Max  : Natural;
       --  Max if the position of the last character to be returned
-      Cut    : Boolean := False;
+      Cut  : Boolean := False;
       --  Cut set to true if string was cut before the end at Max characters
-      Char   : Natural := S'First;
-      Next   : Natural := Char;
+      Char : Natural := S'First;
+      Next : Natural := Char;
    begin
 
       if Max_Length = Positive'Last then
@@ -873,8 +845,10 @@ package body String_Utils is
             Next := S'Last + 1;
          end if;
 
-         if S (Char) = ASCII.LF or else S (Char) = ASCII.CR
-           or else S (Char) = ASCII.HT or else S (Char) = ' '
+         if S (Char) = ASCII.LF
+           or else S (Char) = ASCII.CR
+           or else S (Char) = ASCII.HT
+           or else S (Char) = ' '
          then
             if not Blank then
                Result (Len) := ' ';
@@ -907,8 +881,7 @@ package body String_Utils is
    ------------
 
    function Krunch
-     (S                 : String;
-      Max_String_Length : Positive := 20) return String
+     (S : String; Max_String_Length : Positive := 20) return String
    is
       Ellipsis : constant Wide_Wide_Character :=
         Wide_Wide_Character'Val (8230);
@@ -922,15 +895,15 @@ package body String_Utils is
       end if;
 
       if Max_String_Length <= 3 then
-         return Encode
-           (Image (Image'First .. Image'First + Max_String_Length - 1));
+         return
+           Encode (Image (Image'First .. Image'First + Max_String_Length - 1));
       else
          declare
             Half   : constant Positive := (Max_String_Length - 1) / 2;
             Result : constant Wide_Wide_String :=
-              Image (Image'First .. Image'First + Half - 1) &
-              Ellipsis &
-              Image (Image'Last - Half + 1 .. Image'Last);
+              Image (Image'First .. Image'First + Half - 1)
+              & Ellipsis
+              & Image (Image'Last - Half + 1 .. Image'Last);
          begin
             return Encode (Result);
          end;
@@ -942,9 +915,7 @@ package body String_Utils is
    --------------
 
    procedure Strip_CR
-     (Text     : in out String;
-      Last     : out Integer;
-      CR_Found : out Boolean)
+     (Text : in out String; Last : out Integer; CR_Found : out Boolean)
    is
       pragma Suppress (All_Checks);
 
@@ -991,10 +962,10 @@ package body String_Utils is
    ----------------------
 
    procedure Strip_CR_And_NUL
-     (Text      : in out String;
-      Last      : out Integer;
-      CR_Found  : out Boolean;
-      NUL_Found : out Boolean;
+     (Text                 : in out String;
+      Last                 : out Integer;
+      CR_Found             : out Boolean;
+      NUL_Found            : out Boolean;
       Trailing_Space_Found : out Boolean)
    is
       pragma Suppress (All_Checks);
@@ -1036,7 +1007,8 @@ package body String_Utils is
       case Text (J) is
          when ASCII.NUL | ASCII.CR =>
             Last := J - 1;
-         when others =>
+
+         when others               =>
             Last := J;
 
             if Last_Is_Space then
@@ -1048,15 +1020,18 @@ package body String_Utils is
 
       for Index in J + 1 .. Text'Last loop
          case Text (Index) is
-            when ASCII.NUL =>
+            when ASCII.NUL      =>
                NUL_Found := True;
-            when ASCII.CR  =>
+
+            when ASCII.CR       =>
                CR_Found := True;
+
             when ASCII.HT | ' ' =>
                Last_Is_Space := True;
                Last := Last + 1;
                Text (Last) := Text (Index);
-            when ASCII.LF =>
+
+            when ASCII.LF       =>
                if Last_Is_Space then
                   Trailing_Space_Found := True;
                   Last_Is_Space := False;
@@ -1064,7 +1039,8 @@ package body String_Utils is
 
                Last := Last + 1;
                Text (Last) := Text (Index);
-            when others =>
+
+            when others         =>
                Last_Is_Space := False;
                Last := Last + 1;
                Text (Last) := Text (Index);
@@ -1097,9 +1073,7 @@ package body String_Utils is
    -- Do_Tab_Expansion --
    ----------------------
 
-   function Do_Tab_Expansion
-     (Text     : String;
-      Tab_Size : Positive) return String
+   function Do_Tab_Expansion (Text : String; Tab_Size : Positive) return String
    is
       Num_Tabs : Natural := 0;
       Col      : Integer := 1;
@@ -1142,7 +1116,7 @@ package body String_Utils is
                         Col := Col + 1;
                      end if;
 
-                  when others =>
+                  when others   =>
                      S (S_Index) := Text (K);
                      S_Index := S_Index + 1;
                      Col := Col + 1;
@@ -1215,7 +1189,8 @@ package body String_Utils is
 
    function Is_Blank (Char : Wide_Wide_Character) return Boolean is
    begin
-      return Char = Ada.Characters.Wide_Wide_Latin_1.Space
+      return
+        Char = Ada.Characters.Wide_Wide_Latin_1.Space
         or else Char = Ada.Characters.Wide_Wide_Latin_1.HT;
    end Is_Blank;
 
@@ -1229,7 +1204,7 @@ package body String_Utils is
          when '<' | '=' | '>' | '+' | '-' | '*' | '/' | '&' =>
             return True;
 
-         when others =>
+         when others                                        =>
             return False;
       end case;
    end Is_Operator_Letter;
@@ -1241,15 +1216,10 @@ package body String_Utils is
       end if;
 
       case Char is
-         when '<'
-              | '/'
-              | '\'
-              | '>'
-              | '"'
-              | ' ' =>
+         when '<' | '/' | '\' | '>' | '"' | ' ' =>
             return False;
 
-         when others =>
+         when others                            =>
             return True;
       end case;
    end Is_File_Letter;
@@ -1274,11 +1244,10 @@ package body String_Utils is
    ------------
 
    procedure Append
-     (List  : in out GNAT.Strings.String_List_Access;
-      Item  : String)
+     (List : in out GNAT.Strings.String_List_Access; Item : String)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (String_List, String_List_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (String_List, String_List_Access);
       L : String_List_Access := List;
    begin
       if List = null then
@@ -1295,16 +1264,17 @@ package body String_Utils is
    -- To_String --
    ---------------
 
-   function To_String
-     (Args : GNAT.Strings.String_List) return String is
+   function To_String (Args : GNAT.Strings.String_List) return String is
    begin
       if Args'Length = 0 then
          return "";
       elsif Args'Length = 1 then
          return Args (Args'First).all;
       else
-         return Args (Args'First).all & " " &
-                To_String (Args (Args'First + 1 .. Args'Last));
+         return
+           Args (Args'First).all
+           & " "
+           & To_String (Args (Args'First + 1 .. Args'Last));
       end if;
    end To_String;
 
@@ -1368,10 +1338,7 @@ package body String_Utils is
 
    function Unquote (S : String) return String is
    begin
-      if S'Length > 1
-        and then S (S'First) = '"'
-        and then S (S'Last) = '"'
-      then
+      if S'Length > 1 and then S (S'First) = '"' and then S (S'Last) = '"' then
          return S (S'First + 1 .. S'Last - 1);
       else
          return S;
@@ -1484,8 +1451,8 @@ package body String_Utils is
    function Hash (Key : String) return Header_Num is
       Tmp : constant Ada.Containers.Hash_Type := Ada.Strings.Hash (Key);
    begin
-      return Header_Num'First +
-               Header_Num'Base (Tmp mod Header_Num'Range_Length);
+      return
+        Header_Num'First + Header_Num'Base (Tmp mod Header_Num'Range_Length);
    end Hash;
 
    ---------------------------
@@ -1494,10 +1461,12 @@ package body String_Utils is
 
    function Has_Include_Directive (Str : String) return Boolean is
    begin
-      return Str'Length > 11
+      return
+        Str'Length > 11
         and then Str (Str'First) = '#'
-        and then Ada.Strings.Fixed.Index
-          (Str (Str'First + 1 .. Str'Last), "include") /= 0;
+        and then
+          Ada.Strings.Fixed.Index (Str (Str'First + 1 .. Str'Last), "include")
+          /= 0;
    end Has_Include_Directive;
 
    -------------------------
@@ -1519,9 +1488,7 @@ package body String_Utils is
    -------------------
 
    function Wrap_At_Words
-     (S     : String;
-      Limit : Integer := 80)
-      return Unbounded_String
+     (S : String; Limit : Integer := 80) return Unbounded_String
    is
       Res        : Unbounded_String;
       Last_Index : Integer := S'First;

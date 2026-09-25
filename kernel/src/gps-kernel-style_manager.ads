@@ -49,8 +49,8 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Hash;
 
-with Gdk.RGBA;            use Gdk.RGBA;
-with Gtk.Text_Tag;        use Gtk.Text_Tag;
+with Gdk.RGBA;     use Gdk.RGBA;
+with Gtk.Text_Tag; use Gtk.Text_Tag;
 
 with Default_Preferences; use Default_Preferences;
 
@@ -66,9 +66,10 @@ package GPS.Kernel.Style_Manager is
    type Style_Record is private;
    type Style_Access is access Style_Record;
 
-   package Style_Vector is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Style_Access);
+   package Style_Vector is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Style_Access);
 
    No_Style : constant Style_Access;
 
@@ -116,7 +117,7 @@ package GPS.Kernel.Style_Manager is
 
    function Get_Style_Manager
      (Handle : Kernel_Handle)
-     return not null access Style_Manager_Record'Class;
+      return not null access Style_Manager_Record'Class;
    --  Retrieve the color manager from the kernel.
 
    procedure Set_Style_Manager
@@ -147,8 +148,8 @@ package GPS.Kernel.Style_Manager is
    --  Raise Key_Not_Found if the key was not found in the manager.
 
    function Get_Color_Preference
-     (Style      : Style_Access;
-      Background : Boolean := True) return Color_Preference;
+     (Style : Style_Access; Background : Boolean := True)
+      return Color_Preference;
    --  Return the color preference associated with the given style or null
    --  when the style is not associated to a color preference.
 
@@ -215,9 +216,9 @@ package GPS.Kernel.Style_Manager is
    --  Keys set from Formulas
 
    function Create_From_Style
-     (Self   : Style_Manager_Record;
-      Key    : Style_Key;
-      Style  : Style_Key;
+     (Self                    : Style_Manager_Record;
+      Key                     : Style_Key;
+      Style                   : Style_Key;
       Shade_Or_Lighten_Amount : Gdouble) return Style_Access;
    --  Create an entry for Key in the manager.
 
@@ -238,8 +239,7 @@ package GPS.Kernel.Style_Manager is
    --  Returns the key contained in Self, and create it if it is not found.
 
    function List_Styles
-     (Self : Style_Manager_Record)
-      return Style_Vector.Vector;
+     (Self : Style_Manager_Record) return Style_Vector.Vector;
    --  Return the list of registered styles
 
    ------------------------------
@@ -268,12 +268,13 @@ private
    type Source_Type is (From_Preference, From_Formula, From_Override);
 
    type Key_Access is access Style_Key;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Style_Key, Key_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Style_Key, Key_Access);
 
-   package Tag_Vector is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Gtk_Text_Tag);
+   package Tag_Vector is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Gtk_Text_Tag);
 
    -------------
    -- Sources --
@@ -285,18 +286,17 @@ private
    type Source_Access is access all Root_Source'Class;
 
    function Depends_On_Pref
-     (Source : Root_Source;
-      Pref   : access Preference_Record'Class)
-      return Boolean is abstract;
+     (Source : Root_Source; Pref : access Preference_Record'Class)
+      return Boolean
+   is abstract;
    --  Return True IFF the source is a derivative of Pref.
 
-   procedure Apply
-     (Source : Root_Source;
-      Style  : in out Style_Record) is abstract;
+   procedure Apply (Source : Root_Source; Style : in out Style_Record)
+   is abstract;
    --  Apply the effects of Source to Style
 
-   function Parent_Style
-     (Source : Root_Source) return Style_Access is abstract;
+   function Parent_Style (Source : Root_Source) return Style_Access
+   is abstract;
    --  Get current parent style or null
 
    ------------
@@ -306,7 +306,7 @@ private
    --  The definition of styles.
 
    type Style_Record is record
-      Name   : Key_Access;
+      Name : Key_Access;
       --  This cannot be null
 
       Source : Source_Access;
@@ -329,13 +329,13 @@ private
       Self_Background : Gdk_RGBA := Null_RGBA;
       --  Background that is set explicitly for the style
 
-      Variant         : Variant_Enum := Default;
-      Self_Variant    : Default_Preferences.Optional_Variant_Enum :=
+      Variant      : Variant_Enum := Default;
+      Self_Variant : Default_Preferences.Optional_Variant_Enum :=
         (Is_Set => False);
       --  Variant that is set explicitly for the style
 
-      Underline       : Underline_Enum := None;
-      Self_Underline  : Default_Preferences.Optional_Underline_Enum :=
+      Underline      : Underline_Enum := None;
+      Self_Underline : Default_Preferences.Optional_Underline_Enum :=
         (Is_Set => False);
       --  Underline that is set explicitly for the style
 
@@ -343,8 +343,8 @@ private
       Self_Underline_Color : Gdk_RGBA := Null_RGBA;
       --  Underline_Color is set explicitly for the style
 
-      Strikethrough         : Boolean := False;
-      Self_Strikethrough    : GNATCOLL.Tribooleans.Triboolean :=
+      Strikethrough      : Boolean := False;
+      Self_Strikethrough : GNATCOLL.Tribooleans.Triboolean :=
         GNATCOLL.Tribooleans.Indeterminate;
       --  Strikethrough that is set explicitly for the style
 
@@ -352,7 +352,7 @@ private
       Self_Strikethrough_Color : Gdk_RGBA := Null_RGBA;
       --  Strikethrough_Color is set explicitly for the style
 
-      Priority   : Natural := Priority_None;
+      Priority : Natural := Priority_None;
 
       Icon        : Key_Access := null;
       In_Speedbar : Boolean := False;
@@ -361,11 +361,12 @@ private
    procedure Override_Source (Style : Style_Access);
    --  Override source when self properties are changed explicitly
 
-   package Style_Map is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Style_Key,
-      Element_Type    => Style_Access,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
+   package Style_Map is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => Style_Key,
+        Element_Type    => Style_Access,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
    --  ??? We could probably find a more efficient container for this
    --  if we need.
 
@@ -375,27 +376,28 @@ private
       Variants : Map_Access := new Style_Map.Map;
    end record;
 
-   No_Style : constant Style_Access := new Style_Record'
-     (Name                     => new String'(""),
-      Source                   => null,
-      Tags                     => <>,
-      Children                 => <>,
-      Foreground               => Null_RGBA,
-      Self_Foreground          => Null_RGBA,
-      Background               => Null_RGBA,
-      Self_Background          => Null_RGBA,
-      Variant                  => Default,
-      Self_Variant             => (Is_Set => False),
-      Underline                => None,
-      Self_Underline           => (Is_Set => False),
-      Underline_Color          => Null_RGBA,
-      Self_Underline_Color     => Null_RGBA,
-      Strikethrough            => False,
-      Self_Strikethrough       => GNATCOLL.Tribooleans.Indeterminate,
-      Strikethrough_Color      => Null_RGBA,
-      Self_Strikethrough_Color => Null_RGBA,
-      Priority                 => Priority_None,
-      Icon                     => null,
-      In_Speedbar              => False);
+   No_Style : constant Style_Access :=
+     new Style_Record'
+       (Name                     => new String'(""),
+        Source                   => null,
+        Tags                     => <>,
+        Children                 => <>,
+        Foreground               => Null_RGBA,
+        Self_Foreground          => Null_RGBA,
+        Background               => Null_RGBA,
+        Self_Background          => Null_RGBA,
+        Variant                  => Default,
+        Self_Variant             => (Is_Set => False),
+        Underline                => None,
+        Self_Underline           => (Is_Set => False),
+        Underline_Color          => Null_RGBA,
+        Self_Underline_Color     => Null_RGBA,
+        Strikethrough            => False,
+        Self_Strikethrough       => GNATCOLL.Tribooleans.Indeterminate,
+        Strikethrough_Color      => Null_RGBA,
+        Self_Strikethrough_Color => Null_RGBA,
+        Priority                 => Priority_None,
+        Icon                     => null,
+        In_Speedbar              => False);
 
 end GPS.Kernel.Style_Manager;

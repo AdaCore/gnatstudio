@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                   use Glib;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
+with Glib;           use Glib;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 package body GVD.Variables.Types.Repeats is
 
@@ -24,7 +24,8 @@ package body GVD.Variables.Types.Repeats is
    -- Clone --
    -----------
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Repeat_Type;
       Item : not null GVD_Generic_Type_Access) is
    begin
@@ -41,8 +42,8 @@ package body GVD.Variables.Types.Repeats is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Self : not null access GVD_Repeat_Type) is
+   overriding
+   procedure Free (Self : not null access GVD_Repeat_Type) is
    begin
       Self.Value := Empty_GVD_Type_Holder;
       GVD_Generic_Type (Self.all).Free;
@@ -53,8 +54,7 @@ package body GVD.Variables.Types.Repeats is
    --------------------
 
    function Get_Repeat_Num
-     (Self : not null access GVD_Repeat_Type)
-      return Integer is
+     (Self : not null access GVD_Repeat_Type) return Integer is
    begin
       return Self.Repeat_Num;
    end Get_Repeat_Num;
@@ -63,23 +63,26 @@ package body GVD.Variables.Types.Repeats is
    -- Get_Simple_Value --
    ----------------------
 
-   overriding function Get_Simple_Value
+   overriding
+   function Get_Simple_Value
      (Self : not null access GVD_Repeat_Type) return String is
    begin
       return
         (if Self.Value.Data = null
          then ""
          else Self.Value.Get_Type.Get_Simple_Value)
-        & " <" & Image (Self.Repeat_Num, Min_Width => 0) & " times>";
+        & " <"
+        & Image (Self.Repeat_Num, Min_Width => 0)
+        & " times>";
    end Get_Simple_Value;
 
    -------------------
    -- Get_Type_Name --
    -------------------
 
-   overriding function Get_Type_Name
-     (Self : not null access GVD_Repeat_Type)
-      return String is
+   overriding
+   function Get_Type_Name
+     (Self : not null access GVD_Repeat_Type) return String is
    begin
       --  So that we display  "(record) <repeat 11 times>", and not
       --  "() <repeat 11 times>".  The latter requires one extra level of
@@ -96,8 +99,7 @@ package body GVD.Variables.Types.Repeats is
    ---------------
 
    function Get_Value
-     (Self : not null access GVD_Repeat_Type)
-      return GVD_Type_Holder is
+     (Self : not null access GVD_Repeat_Type) return GVD_Type_Holder is
    begin
       return Self.Value;
    end Get_Value;
@@ -108,9 +110,7 @@ package body GVD.Variables.Types.Repeats is
 
    function New_Repeat_Type return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
-        new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Repeat_Type);
+        new GVD_Type_Holder_Data'(Count => 1, Instance => new GVD_Repeat_Type);
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_Repeat_Type;
@@ -119,11 +119,11 @@ package body GVD.Variables.Types.Repeats is
    -- Replace --
    -------------
 
-   overriding function Replace
+   overriding
+   function Replace
      (Self         : not null access GVD_Repeat_Type;
       Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class)
-      return GVD_Type_Holder'Class is
+      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class is
    begin
       if Self.Value.Data = Current.Data then
          Self.Value := GVD_Type_Holder (Replace_With);
@@ -138,8 +138,7 @@ package body GVD.Variables.Types.Repeats is
    --------------------
 
    procedure Set_Repeat_Num
-     (Self : not null access GVD_Repeat_Type;
-      Num  : Integer) is
+     (Self : not null access GVD_Repeat_Type; Num : Integer) is
    begin
       Self.Repeat_Num := Num;
    end Set_Repeat_Num;
@@ -149,8 +148,7 @@ package body GVD.Variables.Types.Repeats is
    ---------------
 
    procedure Set_Value
-     (Self  : not null access GVD_Repeat_Type;
-      Value : GVD_Type_Holder) is
+     (Self : not null access GVD_Repeat_Type; Value : GVD_Type_Holder) is
    begin
       Self.Valid := True;
       Self.Value := Value;
@@ -160,7 +158,8 @@ package body GVD.Variables.Types.Repeats is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self : not null access GVD_Repeat_Type) return Generic_Iterator'Class is
    begin
       --  No child ? Return an iterator that does nothing
@@ -177,16 +176,18 @@ package body GVD.Variables.Types.Repeats is
    -- Structurally_Equivalent --
    -----------------------------
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Repeat_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Repeat_Type; Item : GVD_Type_Holder'Class)
       return Boolean is
    begin
-      return Item.Data /= null
+      return
+        Item.Data /= null
         and then Item.Data.Instance /= null
         and then Item.Data.Instance.all in GVD_Repeat_Type'Class
-        and then Self.Value.Data.Instance.Structurally_Equivalent
-          (GVD_Repeat_Type_Access (Item.Data.Instance).Value);
+        and then
+          Self.Value.Data.Instance.Structurally_Equivalent
+            (GVD_Repeat_Type_Access (Item.Data.Instance).Value);
    end Structurally_Equivalent;
 
 end GVD.Variables.Types.Repeats;

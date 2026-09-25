@@ -18,57 +18,57 @@
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with VSS.Strings.Conversions;
 
 with Gtk.Handlers;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtk.Menu;      use Gtk.Menu;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Widget;    use Gtk.Widget;
+with Gtk.Window;    use Gtk.Window;
+with Gtkada.MDI;    use Gtkada.MDI;
 
-with Projects;                  use Projects;
+with Projects; use Projects;
 
-with Commands;                    use Commands;
-with Commands.Interactive;        use Commands.Interactive;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Switches_Chooser;            use Switches_Chooser;
 
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Search;         use GPS.Kernel.Search;
-with GPS.Main_Window;           use GPS.Main_Window;
-with GPS.Search;                use GPS.Search;
-with GPS.Search.GUI;            use GPS.Search.GUI;
-with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;      use GPS.Kernel.Messages;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Kernel.Search;        use GPS.Kernel.Search;
+with GPS.Main_Window;          use GPS.Main_Window;
+with GPS.Search;               use GPS.Search;
+with GPS.Search.GUI;           use GPS.Search.GUI;
+with GUI_Utils;                use GUI_Utils;
+with String_Utils;             use String_Utils;
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
 with GNATCOLL.Arg_Lists;
 
 with Builder_Facility_Module.Scripts;
-with Build_Command_Manager;     use Build_Command_Manager;
+with Build_Command_Manager; use Build_Command_Manager;
 
-with Interactive_Consoles;      use Interactive_Consoles;
-with Commands.Builder;          use Commands.Builder;
-with XML_Utils;                 use XML_Utils;
+with Interactive_Consoles; use Interactive_Consoles;
+with Commands.Builder;     use Commands.Builder;
+with XML_Utils;            use XML_Utils;
 
-with GPS.Tools_Output;          use GPS.Tools_Output;
+with GPS.Tools_Output; use GPS.Tools_Output;
 
 with Build_Command_Manager.Console_Writers;
 with Build_Command_Manager.Location_Parsers;
@@ -83,15 +83,13 @@ with GPS.Core_Kernels;
 
 package body Builder_Facility_Module is
 
-   Me          : constant Trace_Handle :=
-     Create ("GPS.BUILD.BUILDER_FACILITY_MODULE");
+   Me : constant Trace_Handle := Create ("GPS.BUILD.BUILDER_FACILITY_MODULE");
 
    Modes_Trace : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.Builder_Modes",
-             GNATCOLL.Traces.Off);
+     Create ("GPS.INTERNAL.Builder_Modes", GNATCOLL.Traces.Off);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-      (Any_Type, Any_Type_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Any_Type, Any_Type_Access);
 
    type Target_And_Main is record
       Target       : Unbounded_String;
@@ -99,8 +97,8 @@ package body Builder_Facility_Module is
       Main_Project : Project_Type;
    end record;
 
-   package String_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Target_And_Main);
+   package String_Callback is new
+     Gtk.Handlers.User_Callback (Gtk_Widget_Record, Target_And_Main);
 
    type Model_And_Target_XML is record
       Model_Name : Unbounded_String;
@@ -108,13 +106,12 @@ package body Builder_Facility_Module is
       From_User  : Boolean;
    end record;
 
-   package Target_XML_List is new Ada.Containers.Doubly_Linked_Lists
-     (Model_And_Target_XML);
+   package Target_XML_List is new
+     Ada.Containers.Doubly_Linked_Lists (Model_And_Target_XML);
 
    use Target_XML_List;
 
-   type Builder_Module_ID_Record is
-     new GPS.Kernel.Modules.Module_ID_Record
+   type Builder_Module_ID_Record is new GPS.Kernel.Modules.Module_ID_Record
    with record
       Registry : Build_Config_Registry_Access;
 
@@ -151,24 +148,27 @@ package body Builder_Facility_Module is
       Location_Parser  : aliased Location_Parsers.Output_Parser_Fabric;
       Build_Hook       : aliased End_Of_Build.Output_Parser_Fabric;
 
-      Builder          : aliased Builder_Context_Record;
+      Builder : aliased Builder_Context_Record;
    end record;
 
    type Builder_Module_ID_Access is access all Builder_Module_ID_Record'Class;
    --  Data stored with the module id
 
-   overriding procedure Destroy (Module : in out Builder_Module_ID_Record);
+   overriding
+   procedure Destroy (Module : in out Builder_Module_ID_Record);
 
    Builder_Module_ID : Builder_Module_ID_Access;
 
    type Builder_Contextual is new Submenu_Factory_Record with null record;
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Builder : access Builder_Contextual;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    type Run_Contextual is new Submenu_Factory_Record with null record;
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Builder : access Run_Contextual;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -178,45 +178,49 @@ package body Builder_Facility_Module is
    ---------------
 
    type Target_Cursor_Access is access all Target_Cursor;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-      (Target_Cursor, Target_Cursor_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Target_Cursor, Target_Cursor_Access);
 
    type Builder_Search_Provider is new Kernel_Search_Provider with record
-      Pattern : Search_Pattern_Access;
-      Iter    : Target_Cursor_Access;
-      Mains   : Any_Type_Access;
+      Pattern      : Search_Pattern_Access;
+      Iter         : Target_Cursor_Access;
+      Mains        : Any_Type_Access;
       Current_Main : Integer;
    end record;
-   overriding procedure Free (Self : in out Builder_Search_Provider);
-   overriding procedure Set_Pattern
-      (Self     : not null access Builder_Search_Provider;
-       Pattern  : not null access GPS.Search.Search_Pattern'Class;
-       Limit    : Natural := Natural'Last);
-   overriding procedure Next
-      (Self     : not null access Builder_Search_Provider;
-       Result   : out GPS.Search.Search_Result_Access;
-       Has_Next : out Boolean);
-   overriding function Display_Name
-      (Self     : not null access Builder_Search_Provider) return String
-      is (Provider_Builds);
-   overriding function Documentation
-      (Self     : not null access Builder_Search_Provider) return String;
-   overriding function Complete_Suffix
-     (Self      : not null access Builder_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String;
+   overriding
+   procedure Free (Self : in out Builder_Search_Provider);
+   overriding
+   procedure Set_Pattern
+     (Self    : not null access Builder_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last);
+   overriding
+   procedure Next
+     (Self     : not null access Builder_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean);
+   overriding
+   function Display_Name
+     (Self : not null access Builder_Search_Provider) return String
+   is (Provider_Builds);
+   overriding
+   function Documentation
+     (Self : not null access Builder_Search_Provider) return String;
+   overriding
+   function Complete_Suffix
+     (Self    : not null access Builder_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class) return String;
 
-   procedure Setup
-      (Self : not null access Builder_Search_Provider'Class);
+   procedure Setup (Self : not null access Builder_Search_Provider'Class);
    --  Preparate internal data for the current target
 
    type Builder_Search_Result is new Kernel_Search_Result with record
       Target : Target_Access;
       Main   : Virtual_File;
    end record;
-   overriding procedure Execute
-      (Self       : not null access Builder_Search_Result;
-       Give_Focus : Boolean);
+   overriding
+   procedure Execute
+     (Self : not null access Builder_Search_Result; Give_Focus : Boolean);
 
    -----------------------
    -- Local subprograms --
@@ -229,37 +233,40 @@ package body Builder_Facility_Module is
    --  Utility function to get the kernel
 
    type Targets_Settings_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Targets_Settings_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Launch the build manager
 
    type Modes_Settings_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Modes_Settings_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Launch the mode manager
 
    type Shadow_Console_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Shadow_Console_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Launch the shadow console
 
-   type Background_Builds_Console_Command
-      is new Interactive_Command with null record;
-   overriding function Execute
+   type Background_Builds_Console_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Background_Builds_Console_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open the background console
 
    procedure Auxiliary_Console
-     (Kernel     : Kernel_Handle;
-      Background : Boolean;
-      Shadow     : Boolean);
+     (Kernel : Kernel_Handle; Background : Boolean; Shadow : Boolean);
    --  Code factorization between On_Shadow_Console and On_Background_Console
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Builder_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -282,20 +289,21 @@ package body Builder_Facility_Module is
    --  file.
 
    procedure On_Button_Or_Menu_Click
-     (Widget : access Gtk_Widget_Record'Class;
-      Data   : Target_And_Main);
+     (Widget : access Gtk_Widget_Record'Class; Data : Target_And_Main);
    --  Called when a user clicks on a toolbar button.
    --  Name is the name of the target corresponding to that button.
 
    type On_File_Saved is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been saved
 
    type On_Buffer_Modified is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Buffer_Modified;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -319,37 +327,41 @@ package body Builder_Facility_Module is
    --  Category.
 
    type On_Compilation_Starting is new Compilation_Hooks_Function
-      with null record;
-   overriding function Execute
-      (Self            : On_Compilation_Starting;
-       Kernel          : not null access Kernel_Handle_Record'Class;
-       Category        : String;
-       Quiet           : Boolean;
-       Shadow          : Boolean;
-       Background      : Boolean;
-       Preserve_Output : Boolean) return Boolean;
+   with null record;
+   overriding
+   function Execute
+     (Self            : On_Compilation_Starting;
+      Kernel          : not null access Kernel_Handle_Record'Class;
+      Category        : String;
+      Quiet           : Boolean;
+      Shadow          : Boolean;
+      Background      : Boolean;
+      Preserve_Output : Boolean) return Boolean;
    --  Called when the compilation is starting
 
    type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
-      with null record;
-   overriding procedure Execute
-      (Self   : On_Compilation_Finished;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Category, Target, Mode : String;
-       Shadow, Background : Boolean;
-       Status : Integer;
-       Cmd : GNATCOLL.Arg_Lists.Arg_List);
+   with null record;
+   overriding
+   procedure Execute
+     (Self                   : On_Compilation_Finished;
+      Kernel                 : not null access Kernel_Handle_Record'Class;
+      Category, Target, Mode : String;
+      Shadow, Background     : Boolean;
+      Status                 : Integer;
+      Cmd                    : GNATCOLL.Arg_Lists.Arg_List);
    --  Called when the compilation has ended
 
    type On_GPS_Started is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_GPS_Started;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when GNAT Studio is starting
 
-   type On_Before_Exit is
-     new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
-   overriding function Execute
+   type On_Before_Exit is new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function
+   with null record;
+   overriding
+   function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean;
@@ -357,22 +369,25 @@ package body Builder_Facility_Module is
    --  corresponding XML file.
 
    type On_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
 
    type On_Compute_Targets is new String_Return_Any_Hooks_Function
-      with null record;
-   overriding function Execute
-      (Self   : On_Compute_Targets;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Kind   : String) return GNATCOLL.Any_Types.Any_Type;
+   with null record;
+   overriding
+   function Execute
+     (Self   : On_Compute_Targets;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Kind   : String) return GNATCOLL.Any_Types.Any_Type;
    --  Called when computing build targets
 
    type On_Build_Mode_Changed is new String_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Build_Mode_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Mode   : String);
@@ -383,8 +398,7 @@ package body Builder_Facility_Module is
    --  Target.
 
    procedure Execute_Switch_Filters_For_Target
-     (Target      : not null Target_Access;
-      Before_Save : Boolean := False);
+     (Target : not null Target_Access; Before_Save : Boolean := False);
    --  Execute the filters associated with the target's switches, hiding
    --  the switches that are not valid in the current context.
    --
@@ -404,22 +418,23 @@ package body Builder_Facility_Module is
 
    type Contextual_Menu_Type is (Build_Targets, Run_Targets);
    procedure Append_To_Contextual_Menu
-     (Menu_Type   : Contextual_Menu_Type;
-      Context     : Selection_Context;
-      Menu        : access Gtk.Menu.Gtk_Menu_Record'Class);
+     (Menu_Type : Contextual_Menu_Type;
+      Context   : Selection_Context;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    -------------------------------
    -- Append_To_Contextual_Menu --
    -------------------------------
 
    procedure Append_To_Contextual_Menu
-     (Menu_Type   : Contextual_Menu_Type;
-      Context     : Selection_Context;
-      Menu        : access Gtk.Menu.Gtk_Menu_Record'Class)
+     (Menu_Type : Contextual_Menu_Type;
+      Context   : Selection_Context;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context);
       For_Files   : constant Boolean := Has_File_Information (Context);
-      For_Project : constant Boolean := Has_Project_Information (Context)
+      For_Project : constant Boolean :=
+        Has_Project_Information (Context)
         and then not For_Files
         and then not Has_Directory_Information (Context);
 
@@ -441,20 +456,20 @@ package body Builder_Facility_Module is
 
          if Targets /= Null_Unbounded_String then
             declare
-               Mains  : Any_Type :=
-                  Compute_Build_Targets_Hook.Run
-                     (Get_Kernel, Str => To_String (Targets));
+               Mains : Any_Type :=
+                 Compute_Build_Targets_Hook.Run
+                   (Get_Kernel, Str => To_String (Targets));
             begin
                for J in 1 .. Mains.Length loop
                   if Mains.List (J).Length /= 0 then
                      declare
                         Display : constant String :=
-                                    Mains.List (J).Tuple (1).Str;
+                          Mains.List (J).Tuple (1).Str;
                         Full    : constant String :=
-                                    Mains.List (J).Tuple (2).Str;
+                          Mains.List (J).Tuple (2).Str;
                         Prj     : constant Project_Type :=
-                                    Kernel.Get_Project_Tree.Project_From_Name
-                                      (Mains.List (J).Tuple (3).Str);
+                          Kernel.Get_Project_Tree.Project_From_Name
+                            (Mains.List (J).Tuple (3).Str);
 
                      begin
                         if not Has_Project_Information (Context)
@@ -465,11 +480,13 @@ package body Builder_Facility_Module is
                              (Mitem, Get_Name (T) & ": " & Display);
                            Prepend (Menu, Mitem);
                            String_Callback.Connect
-                             (Mitem, Signal_Activate,
+                             (Mitem,
+                              Signal_Activate,
                               On_Button_Or_Menu_Click'Access,
-                              (Target => To_Unbounded_String (Get_Name (T)),
+                              (Target       =>
+                                 To_Unbounded_String (Get_Name (T)),
                                Main_Project => Prj,
-                               Main => Create (+Full)));
+                               Main         => Create (+Full)));
                         end if;
                      end;
                   end if;
@@ -483,7 +500,8 @@ package body Builder_Facility_Module is
             Prepend (Menu, Mitem);
 
             String_Callback.Connect
-              (Mitem, Signal_Activate,
+              (Mitem,
+               Signal_Activate,
                On_Button_Or_Menu_Click'Access,
                (Target       => To_Unbounded_String (Get_Name (T)),
                 Main_Project => No_Project,
@@ -519,7 +537,8 @@ package body Builder_Facility_Module is
    -- Append_To_Menu --
    --------------------
 
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Builder : access Builder_Contextual;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
@@ -534,7 +553,8 @@ package body Builder_Facility_Module is
    -- Append_To_Menu --
    --------------------
 
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Builder : access Run_Contextual;
       Context : Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
@@ -549,7 +569,8 @@ package body Builder_Facility_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
+   overriding
+   procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
       if Builder_Module_ID /= null
         and then not Module.Get_Kernel.Is_In_Destruction
@@ -565,8 +586,7 @@ package body Builder_Facility_Module is
    -- Add_Action_And_Menu_For_Target --
    ------------------------------------
 
-   procedure Add_Action_And_Menu_For_Target
-     (Target : not null Target_Access)
+   procedure Add_Action_And_Menu_For_Target (Target : not null Target_Access)
    is
       Kernel       : constant Kernel_Handle := Get_Kernel;
       C            : Build_Command_Access;
@@ -575,9 +595,10 @@ package body Builder_Facility_Module is
       Category     : constant String := Get_Category (Target);
       For_Learning : constant Boolean := Is_For_Learning (Target);
       Targets      : constant Unbounded_String :=
-                       Get_Properties (Target).Target_Type;
+        Get_Properties (Target).Target_Type;
 
-      Toplevel_Menu : constant Boolean := Category (Category'First) = '_'
+      Toplevel_Menu : constant Boolean :=
+        Category (Category'First) = '_'
         and then Category (Category'Last) = '_';
 
       Cat_Path : constant String :=
@@ -616,15 +637,16 @@ package body Builder_Facility_Module is
          --  names, but not otherwise.
       begin
          Unregister_Action
-            (Kernel, Action_Name, Remove_Menus_And_Toolbars => True);
+           (Kernel, Action_Name, Remove_Menus_And_Toolbars => True);
 
-         Register_Action (Kernel      => Kernel,
-                          Name        => Action_Name,
-                          Command     => Command,
-                          Description => Description,
-                          Icon_Name   => Get_Icon_Name (Target),
-                          Category     => -"Build",
-                          For_Learning => For_Learning);
+         Register_Action
+           (Kernel       => Kernel,
+            Name         => Action_Name,
+            Command      => Command,
+            Description  => Description,
+            Icon_Name    => Get_Icon_Name (Target),
+            Category     => -"Build",
+            For_Learning => For_Learning);
          Builder_Module_ID.Actions.Append (Action_Name);
 
          --  Do nothing is the target is not supposed to be shown in the menu
@@ -637,17 +659,19 @@ package body Builder_Facility_Module is
                  Cat_Path
                  & (if not Show_Project_In_Menu or else Project = No_Project
                     then ""
-                    else Escape_Menu_Name
-                      (Escape_Underscore (Project.Name)) & '/')
+                    else
+                      Escape_Menu_Name (Escape_Underscore (Project.Name))
+                      & '/')
                  & Escape_Menu_Name
-                 ((if Mnemonics
-                  then Menu_Name else Escape_Underscore (Menu_Name)));
+                     ((if Mnemonics
+                       then Menu_Name
+                       else Escape_Underscore (Menu_Name)));
             begin
                Register_Menu
                  (Kernel,
-                  Path          => Path,
-                  Action        => Action_Name,
-                  Ref_Item      => "Project");
+                  Path     => Path,
+                  Action   => Action_Name,
+                  Ref_Item => "Project");
                Update_Menus_And_Buttons (Get_Kernel);
             end;
          end if;
@@ -657,13 +681,13 @@ package body Builder_Facility_Module is
            and then Get_Properties (Target).Visible
          then
             Register_Button
-               (Kernel    => Get_Kernel,
-                Action    => Action_Name,
-                Label     => Button_Label,
-                Toolbar   => "main",
-                Section   => "build",
-                Group     => (if Multiple_Mains then N else ""),
-                Hide      => True);   --  when action is not found
+              (Kernel  => Get_Kernel,
+               Action  => Action_Name,
+               Label   => Button_Label,
+               Toolbar => "main",
+               Section => "build",
+               Group   => (if Multiple_Mains then N else ""),
+               Hide    => True);   --  when action is not found
             Update_Menus_And_Buttons (Get_Kernel);
          end if;
       end Replace_Action;
@@ -673,32 +697,34 @@ package body Builder_Facility_Module is
          --  Register the "build main number x"-like actions
 
          declare
-            Mains  : Any_Type :=
-               Compute_Build_Targets_Hook.Run (Kernel, To_String (Targets));
-            D      : Dialog_Mode;
-            Main   : Virtual_File;
+            Mains                : Any_Type :=
+              Compute_Build_Targets_Hook.Run (Kernel, To_String (Targets));
+            D                    : Dialog_Mode;
+            Main                 : Virtual_File;
             Show_Project_In_Menu : constant Boolean :=
               Group_Mains_Into_Projects (Kernel, Mains.Length);
 
          begin
-            if Mains.Length > 0
-              and then Mains.T /= List_Type
-            then
+            if Mains.Length > 0 and then Mains.T /= List_Type then
                Insert
                  (Kernel,
-                  (-"The command for determining the target type of target " &
-                   To_String (Targets) & (-" returned a ") & Mains.T'Img
-                     & (-("but should return a LIST_TYPE "
-                       & " (containing a pair display_name/full_name)"))),
+                  (-"The command for determining the target type of target "
+                   & To_String (Targets)
+                   & (-" returned a ")
+                   & Mains.T'Img
+                   & (-("but should return a LIST_TYPE "
+                        & " (containing a pair display_name/full_name)"))),
                   Mode => Error);
 
             else
                case Get_Properties (Target).Launch_Mode is
                   when Manually | On_File_Save | In_Background =>
                      D := Default;
-                  when Manually_With_Dialog =>
+
+                  when Manually_With_Dialog                    =>
                      D := Force_Dialog;
-                  when Manually_With_No_Dialog =>
+
+                  when Manually_With_No_Dialog                 =>
                      D := Force_No_Dialog;
                end case;
 
@@ -707,14 +733,15 @@ package body Builder_Facility_Module is
 
                for J in 1 .. Mains.Length loop
                   if Mains.List (J).Length /= 0 then
-                     Main :=  Create (+Mains.List (J).Tuple (2).Str);
-                     Create (Item        => M,
-                             Builder     => Builder_Module_ID.Builder'Access,
-                             Target_Name => N,
-                             Target_Type => To_String (Targets),
-                             Main        => J,
-                             Quiet       => False,
-                             Dialog      => D);
+                     Main := Create (+Mains.List (J).Tuple (2).Str);
+                     Create
+                       (Item        => M,
+                        Builder     => Builder_Module_ID.Builder'Access,
+                        Target_Name => N,
+                        Target_Type => To_String (Targets),
+                        Main        => J,
+                        Quiet       => False,
+                        Dialog      => D);
                      Replace_Action
                        (Main                 => Main,
                         Project              =>
@@ -756,9 +783,13 @@ package body Builder_Facility_Module is
 
       else
          Create
-           (C, Builder_Module_ID.Builder'Access, N,
-            Main => No_File, Main_Project => No_Project,
-            Quiet => False, Dialog => Default);
+           (C,
+            Builder_Module_ID.Builder'Access,
+            N,
+            Main         => No_File,
+            Main_Project => No_Project,
+            Quiet        => False,
+            Dialog       => Default);
          Replace_Action
            (Main                 => No_File,
             Project              => No_Project,
@@ -778,19 +809,16 @@ package body Builder_Facility_Module is
    ---------------------------------------
 
    procedure Execute_Switch_Filters_For_Target
-     (Target      : not null Target_Access;
-      Before_Save : Boolean := False)
+     (Target : not null Target_Access; Before_Save : Boolean := False)
    is
       Kernel             : constant Kernel_Handle :=
-                             Builder_Module_ID.Get_Kernel;
+        Builder_Module_ID.Get_Kernel;
       Target_Model_Name  : constant String := Get_Model (Target);
       Target_Model       : constant Target_Model_Access :=
-                             Get_Model_By_Name
-                               (Builder_Module_ID.Registry,
-                                Target_Model_Name);
+        Get_Model_By_Name (Builder_Module_ID.Registry, Target_Model_Name);
       Switches_Config    : Switches_Editor_Config;
       Context            : constant Selection_Context :=
-                             Kernel.Get_Current_Context;
+        Kernel.Get_Current_Context;
       Cursor             : Switch_Filter_Cursor;
       Filter_Description : Switch_Filter_Description;
       Filter             : Action_Filter;
@@ -813,8 +841,9 @@ package body Builder_Facility_Module is
          Filter_Description := Element (Cursor);
 
          --  Retrieve the actual filter from its name
-         Filter := Lookup_Filter
-           (Builder_Module_ID.Get_Kernel, Filter_Description.Get_Name);
+         Filter :=
+           Lookup_Filter
+             (Builder_Module_ID.Get_Kernel, Filter_Description.Get_Name);
 
          --  If a filter has been found for this name, run it and apply the
          --  result on the model's switches configuration and on the target's
@@ -831,8 +860,11 @@ package body Builder_Facility_Module is
          else
             Trace
               (Me,
-               "'" & Get_Name (Target) & "' target: '"
-               & Get_Name (Filter_Description) & "' filter not found for '"
+               "'"
+               & Get_Name (Target)
+               & "' target: '"
+               & Get_Name (Filter_Description)
+               & "' filter not found for '"
                & Get_Label (Get_Switch (Switches_Config, Filter_Description))
                & "' switch");
          end if;
@@ -959,26 +991,22 @@ package body Builder_Facility_Module is
          end if;
       end if;
 
-      if Clear_Locations
-        and then not Background
-      then
+      if Clear_Locations and then not Background then
          --  Do not remove previous results when compile one file
          --  to save messages from other files
-         if Force_File = No_File
-           or else not Preserve_Messages.Get_Pref
-         then
+         if Force_File = No_File or else not Preserve_Messages.Get_Pref then
             Get_Messages_Container (Kernel).Remove_Category
               (Category, Builder_Message_Flags);
 
          else
             --  If not a quiet command try to clear the spec messages
 
-            Unit_Part := File_Info'Class
-              (Kernel.Get_Project_Tree.Info_Set
-                 (Force_File).First_Element).Unit_Part;
+            Unit_Part :=
+              File_Info'Class
+                (Kernel.Get_Project_Tree.Info_Set (Force_File).First_Element)
+                .Unit_Part;
 
-            if (Unit_Part = Unit_Body
-              or else Unit_Part = Unit_Separate)
+            if (Unit_Part = Unit_Body or else Unit_Part = Unit_Separate)
               and then not Quiet
             then
                Spec_File := Kernel.Get_Project_Tree.Other_File (Force_File);
@@ -1002,7 +1030,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_GPS_Started;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1015,7 +1044,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean
@@ -1031,14 +1061,15 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-      (Self            : On_Compilation_Starting;
-       Kernel          : not null access Kernel_Handle_Record'Class;
-       Category        : String;
-       Quiet           : Boolean;
-       Shadow          : Boolean;
-       Background      : Boolean;
-       Preserve_Output : Boolean) return Boolean
+   overriding
+   function Execute
+     (Self            : On_Compilation_Starting;
+      Kernel          : not null access Kernel_Handle_Record'Class;
+      Category        : String;
+      Quiet           : Boolean;
+      Shadow          : Boolean;
+      Background      : Boolean;
+      Preserve_Output : Boolean) return Boolean
    is
       pragma Unreferenced (Self);
    begin
@@ -1064,9 +1095,9 @@ package body Builder_Facility_Module is
          Category        =>
            VSS.Strings.Conversions.To_Virtual_String (Category),
          Clear_Console   =>
-            not Preserve_Output
-              and then not Quiet
-              and then (Shadow or else Builder_Module_ID.Build_Count = 0),
+           not Preserve_Output
+           and then not Quiet
+           and then (Shadow or else Builder_Module_ID.Build_Count = 0),
          Clear_Locations => Builder_Module_ID.Build_Count = 0,
          Shadow          => Shadow,
          Background      => Background,
@@ -1081,7 +1112,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1095,13 +1127,14 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Compilation_Finished;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self                   : On_Compilation_Finished;
+      Kernel                 : not null access Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
-      Shadow, Background : Boolean;
-      Status : Integer;
-      Cmd : GNATCOLL.Arg_Lists.Arg_List)
+      Shadow, Background     : Boolean;
+      Status                 : Integer;
+      Cmd                    : GNATCOLL.Arg_Lists.Arg_List)
    is
       pragma Unreferenced (Self, Kernel, Category, Target, Mode, Shadow);
       pragma Unreferenced (Background, Status, Cmd);
@@ -1115,24 +1148,26 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-      (Self   : On_Compute_Targets;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       Kind   : String) return GNATCOLL.Any_Types.Any_Type
+   overriding
+   function Execute
+     (Self   : On_Compute_Targets;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Kind   : String) return GNATCOLL.Any_Types.Any_Type
    is
       pragma Unreferenced (Self);
    begin
       if Kind = "main" then
          declare
             Mains  : constant Project_And_Main_Vector :=
-               Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
+              Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
             Result : Any_Type (List_Type, Integer (Mains.Length));
          begin
             for J in Mains.First_Index .. Mains.Last_Index loop
                declare
-                  Base : constant String := Mains (J).Main.Display_Base_Name;
-                  Full : constant String := +Mains (J).Main.Full_Name;
-                  P_Name : constant String :=
+                  Base         : constant String :=
+                    Mains (J).Main.Display_Base_Name;
+                  Full         : constant String := +Mains (J).Main.Full_Name;
+                  P_Name       : constant String :=
                     +Mains (J).Project_Path.Full_Name;
                   Display_Name : constant Any_Type :=
                     (String_Type, Base'Length, Base);
@@ -1141,11 +1176,14 @@ package body Builder_Facility_Module is
                   Project_Name : constant Any_Type :=
                     (String_Type, P_Name'Length, P_Name);
                begin
-                  Result.List (1 + J - Mains.First_Index) := new Any_Type'
-                    ((Tuple_Type, 3,
-                     Tuple => (1 => new Any_Type'(Display_Name),
-                               2 => new Any_Type'(Full_Name),
-                               3 => new Any_Type'(Project_Name))));
+                  Result.List (1 + J - Mains.First_Index) :=
+                    new Any_Type'
+                      ((Tuple_Type,
+                        3,
+                        Tuple =>
+                          (1 => new Any_Type'(Display_Name),
+                           2 => new Any_Type'(Full_Name),
+                           3 => new Any_Type'(Project_Name))));
                end;
             end loop;
 
@@ -1155,7 +1193,7 @@ package body Builder_Facility_Module is
       elsif Kind = "executable" then
          declare
             Mains  : constant Project_And_Main_Vector :=
-               Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
+              Get_Mains (Get_Registry (Kernel_Handle (Kernel)));
             Result : Any_Type (List_Type, Integer (Mains.Length));
          begin
             for J in Mains.First_Index .. Mains.Last_Index loop
@@ -1167,50 +1205,63 @@ package body Builder_Facility_Module is
                   Trace
                     (Me,
                      (-"Could not find the project for """
-                      & Mains (J).Main.Display_Full_Name & """"));
+                      & Mains (J).Main.Display_Full_Name
+                      & """"));
 
                   return Empty_Any_Type;
                elsif Executables_Directory (Get_Project (Mains (J)))
                  = GNATCOLL.VFS.No_File
                then
-                  Log (-"Project """ & Get_Project (Mains (J)).Name
-                       & """ has no exec_dir", Error);
+                  Log
+                    (-"Project """
+                     & Get_Project (Mains (J)).Name
+                     & """ has no exec_dir",
+                     Error);
                   return Empty_Any_Type;
                else
                   declare
-                     P    : constant Project_Type := Get_Project (Mains (J));
+                     P              : constant Project_Type :=
+                       Get_Project (Mains (J));
                      Is_Native      : constant Boolean :=
                        P.Get_Target = "native"
                        or else P.Target_Same_As_Host
                        or else P.Get_Target = "";
-                     Include_Suffix : constant Boolean := Is_Native
-                       or else P.Attribute_Value
-                         (Attribute =>
-                            Build ("Builder", "Executable_Suffix")) /= "";
-                     Exec : constant Virtual_File :=
+                     Include_Suffix : constant Boolean :=
+                       Is_Native
+                       or else
+                         P.Attribute_Value
+                           (Attribute =>
+                              Build ("Builder", "Executable_Suffix"))
+                         /= "";
+                     Exec           : constant Virtual_File :=
                        Create_From_Dir
                          (Executables_Directory (P),
                           P.Executable_Name
                             (File           => Mains (J).Main.Full_Name,
                              Include_Suffix => Include_Suffix));
-                     Base : constant String :=
+                     Base           : constant String :=
                        String (Exec.Base_Name (Suffix => Exec.File_Extension));
                      --  Strip executable suffix if any.
-                     Full : constant String := String (Exec.Full_Name.all);
-                     P_Name : constant String := +P.Project_Path.Full_Name;
-                     Display_Name : constant Any_Type :=
+                     Full           : constant String :=
+                       String (Exec.Full_Name.all);
+                     P_Name         : constant String :=
+                       +P.Project_Path.Full_Name;
+                     Display_Name   : constant Any_Type :=
                        (String_Type, Base'Length, Base);
-                     Full_Name    : constant Any_Type :=
+                     Full_Name      : constant Any_Type :=
                        (String_Type, Full'Length, Full);
-                     Project_Name : constant Any_Type :=
+                     Project_Name   : constant Any_Type :=
                        (String_Type, P_Name'Length, P_Name);
 
                   begin
-                     Result.List (1 + J - Mains.First_Index) := new Any_Type'
-                       ((Tuple_Type, 3,
-                        Tuple => (1 => new Any_Type'(Display_Name),
-                                  2 => new Any_Type'(Full_Name),
-                                  3 => new Any_Type'(Project_Name))));
+                     Result.List (1 + J - Mains.First_Index) :=
+                       new Any_Type'
+                         ((Tuple_Type,
+                           3,
+                           Tuple =>
+                             (1 => new Any_Type'(Display_Name),
+                              2 => new Any_Type'(Full_Name),
+                              3 => new Any_Type'(Project_Name))));
                   end;
                end if;
             end loop;
@@ -1277,9 +1328,7 @@ package body Builder_Facility_Module is
       --  a build operation, do not build in response to this save, as this
       --  would mean multiple builds (most likely of the same file) in
       --  parallel.
-      if Saved
-        and then Builder_Module_ID.Prevent_Save_Reentry
-      then
+      if Saved and then Builder_Module_ID.Prevent_Save_Reentry then
          return;
       end if;
 
@@ -1287,9 +1336,7 @@ package body Builder_Facility_Module is
          --  If there is a category in the locations view that contains the
          --  build errors, do not launch a background build.
 
-         if Has_Category
-           (Get_Messages_Container (Kernel), Error_Category)
-         then
+         if Has_Category (Get_Messages_Container (Kernel), Error_Category) then
             return;
          end if;
       end if;
@@ -1319,23 +1366,26 @@ package body Builder_Facility_Module is
          exit when T = null;
 
          if (Saved and then Get_Properties (T).Launch_Mode = On_File_Save)
-           or else (not Saved
-                    and then Get_Properties (T).Launch_Mode = In_Background)
+           or else
+             (not Saved
+              and then Get_Properties (T).Launch_Mode = In_Background)
          then
-            Launch_Target (Builder      => Builder_Module_ID.Builder'Access,
-                           Target_Name  => Get_Name (T),
-                           Mode_Name    => "",
-                           Force_File   => File,
-                           Extra_Args   => null,
-                           Quiet        => True,
-                           Synchronous  => False,
-                           Background   => Background,
-                           Dialog       => Default,
-                           Via_Menu     => False,
-                           Main_Project => No_Project,
-                           Main         => No_File);
-            --  ??? Should we attempt to compute which is the "relevant" main
-            --  in On_File_Save mode?
+            Launch_Target
+              (Builder      => Builder_Module_ID.Builder'Access,
+               Target_Name  => Get_Name (T),
+               Mode_Name    => "",
+               Force_File   => File,
+               Extra_Args   => null,
+               Quiet        => True,
+               Synchronous  => False,
+               Background   => Background,
+               Dialog       => Default,
+               Via_Menu     => False,
+               Main_Project => No_Project,
+               Main         => No_File);
+         --  ??? Should we attempt to compute which is the "relevant" main
+         --  in On_File_Save mode?
+
          end if;
          Next (C);
       end loop;
@@ -1345,7 +1395,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1371,7 +1422,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Buffer_Modified;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1385,10 +1437,7 @@ package body Builder_Facility_Module is
    -- Attempt_Target_Register --
    -----------------------------
 
-   procedure Attempt_Target_Register
-     (XML       : Node_Ptr;
-      From_User : Boolean)
-   is
+   procedure Attempt_Target_Register (XML : Node_Ptr; From_User : Boolean) is
       Model_Name : Unbounded_String;
       T          : Target_Access;
 
@@ -1405,8 +1454,8 @@ package body Builder_Facility_Module is
       if Is_Registered_Model (Builder_Module_ID.Registry, Model_Name) then
          --  The model is registered: add the target immediately
 
-         T := Load_Target_From_XML
-           (Builder_Module_ID.Registry, XML, From_User);
+         T :=
+           Load_Target_From_XML (Builder_Module_ID.Registry, XML, From_User);
 
          --  The target might already be registered, if we are calling this
          --  with Allow_Update (for example when a target coming from the
@@ -1418,9 +1467,11 @@ package body Builder_Facility_Module is
 
          if T /= null
            and then not Builder_Module_ID.Actions.Contains (Get_Name (T))
-           and then (Length (Get_Properties (T).Target_Type) = 0
-                     or else not Builder_Module_ID.Actions.Contains
-                       (Get_Name (T) & (-" Number 1")))
+           and then
+             (Length (Get_Properties (T).Target_Type) = 0
+              or else
+                not Builder_Module_ID.Actions.Contains
+                      (Get_Name (T) & (-" Number 1")))
          then
             Add_Action_And_Menu_For_Target (T);
          end if;
@@ -1448,10 +1499,12 @@ package body Builder_Facility_Module is
       Message : constant String := (-"Build facility: ") & M;
    begin
       case Mode is
-         when Info =>
+         when Info  =>
             Insert (Kernel, Message, Mode => Info);
+
          when Error =>
             Insert (Kernel, Message, Mode => Error);
+
          when Trace =>
             Trace (Me, Message);
       end case;
@@ -1471,8 +1524,7 @@ package body Builder_Facility_Module is
    -----------------------------
 
    procedure On_Button_Or_Menu_Click
-     (Widget : access Gtk_Widget_Record'Class;
-      Data   : Target_And_Main)
+     (Widget : access Gtk_Widget_Record'Class; Data : Target_And_Main)
    is
       pragma Unreferenced (Widget);
    begin
@@ -1498,11 +1550,10 @@ package body Builder_Facility_Module is
    -- Clear_Menu_And_Toolbar_For_Target --
    ---------------------------------------
 
-   procedure Clear_Menu_And_Toolbar_For_Target (Target : Target_Access)
-   is
+   procedure Clear_Menu_And_Toolbar_For_Target (Target : Target_Access) is
       Action_Name : constant String := Get_Name (Target);
-      Position    : Action_Lists.Cursor := Builder_Module_ID.Actions.Find
-        (Action_Name);
+      Position    : Action_Lists.Cursor :=
+        Builder_Module_ID.Actions.Find (Action_Name);
    begin
       if Action_Lists.Has_Element (Position) then
          Unregister_Action
@@ -1536,7 +1587,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Targets_Settings_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1544,11 +1596,12 @@ package body Builder_Facility_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Success : Boolean;
    begin
-      Success := Execute_Action
-           (Kernel,
-            Action               => "open Preferences",
-            Synchronous          => True,
-            Error_Msg_In_Console => True);
+      Success :=
+        Execute_Action
+          (Kernel,
+           Action               => "open Preferences",
+           Synchronous          => True,
+           Error_Msg_In_Console => True);
 
       Kernel.Get_Preferences.Get_Editor.Display_Page
         (Page_Name => Builder_Facility_Module.GUI.Build_Targets_Page_Name);
@@ -1560,7 +1613,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Modes_Settings_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1600,26 +1654,28 @@ package body Builder_Facility_Module is
    -----------------------
 
    procedure Auxiliary_Console
-     (Kernel     : Kernel_Handle;
-      Background : Boolean;
-      Shadow     : Boolean)
+     (Kernel : Kernel_Handle; Background : Boolean; Shadow : Boolean)
    is
-      Console : Interactive_Console := Get_Build_Console
-        (Kernel, True, False, False);
+      Console : Interactive_Console :=
+        Get_Build_Console (Kernel, True, False, False);
 
       C : Target_Outputs.Cursor;
    begin
       if Console = null then
          Console := Get_Build_Console (Kernel, Shadow, Background, True);
 
-         C := Builder_Module_ID.Builder.Clear_All_Build_Output
-           (Shadow, Background);
+         C :=
+           Builder_Module_ID.Builder.Clear_All_Build_Output
+             (Shadow, Background);
 
          while Target_Outputs.Has_Element (C) loop
-            Insert (Console,
-                    "***" & To_String (Target_Outputs.Key (C))
-                    & "***" & ASCII.LF
-                    & To_String (Target_Outputs.Element (C)));
+            Insert
+              (Console,
+               "***"
+               & To_String (Target_Outputs.Key (C))
+               & "***"
+               & ASCII.LF
+               & To_String (Target_Outputs.Element (C)));
             Target_Outputs.Next (C);
          end loop;
 
@@ -1632,7 +1688,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Shadow_Console_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1647,7 +1704,8 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Background_Builds_Console_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1662,7 +1720,8 @@ package body Builder_Facility_Module is
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Builder_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -1692,12 +1751,11 @@ package body Builder_Facility_Module is
          --  unknown model.
          while Has_Element (C) loop
             if Is_Registered_Model
-              (Registry => Builder_Module_ID.Registry,
-               Name     => Element (C).Model_Name)
+                 (Registry => Builder_Module_ID.Registry,
+                  Name     => Element (C).Model_Name)
             then
                Attempt_Target_Register
-                 (XML       => Element (C).XML,
-                  From_User => Element (C).From_User);
+                 (XML => Element (C).XML, From_User => Element (C).From_User);
 
                --  Free memory
                declare
@@ -1717,8 +1775,8 @@ package body Builder_Facility_Module is
 
       elsif Node.Tag.all = "builder-mode" then
          declare
-            Mode       : constant Mode_Record := Load_Mode_From_XML
-               (Builder_Module_ID.Registry, Node);
+            Mode   : constant Mode_Record :=
+              Load_Mode_From_XML (Builder_Module_ID.Registry, Node);
             Kernel : constant Kernel_Handle := Builder_Module_ID.Get_Kernel;
          begin
             if Mode.Name = Get_Build_Mode (Kernel) then
@@ -1738,7 +1796,7 @@ package body Builder_Facility_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      P       : Kernel_Search_Provider_Access;
+      P : Kernel_Search_Provider_Access;
    begin
       Builder_Module_ID := new Builder_Module_ID_Record;
 
@@ -1768,24 +1826,31 @@ package body Builder_Facility_Module is
       --  Register the menus
 
       Register_Action
-        (Kernel, "Build open targets settings", new Targets_Settings_Command,
+        (Kernel,
+         "Build open targets settings",
+         new Targets_Settings_Command,
          Description => -"Open the Build Targets settings dialog");
 
       if Active (Modes_Trace) then
          Register_Action
-           (Kernel, "Build open modes settings", new Modes_Settings_Command,
+           (Kernel,
+            "Build open modes settings",
+            new Modes_Settings_Command,
             Description => -"Open the Modes Targets settings dialog");
       end if;
 
       Register_Action
-        (Kernel, "open Auxiliary Builds", new Shadow_Console_Command,
-         Category => -"Views",
+        (Kernel,
+         "open Auxiliary Builds",
+         new Shadow_Console_Command,
+         Category    => -"Views",
          Description => -"Open the Auxiliary Builds console");
 
       Register_Action
-        (Kernel, "open Background Builds",
+        (Kernel,
+         "open Background Builds",
          new Background_Builds_Console_Command,
-         Category => -"Views",
+         Category    => -"Views",
          Description => -"Open the Background Builds console");
 
       Register_Contextual_Submenu
@@ -1840,8 +1905,7 @@ package body Builder_Facility_Module is
       declare
          Progress_Pattern : constant String :=
            "completed ([0-9]+) out of ([0-9]+) \(([^\n]*)%\)\.\.\.\r?\n";
-         Phase_Pattern    : constant String :=
-           "phase ([^\n]*)\.\.\.\r?\n";
+         Phase_Pattern    : constant String := "phase ([^\n]*)\.\.\.\r?\n";
          --  ??? This is configurable in some cases (from XML for instance),
          --  so we should not have a hard coded regexp here.
          --  ??? For progress pattern indecies of matching groups for current
@@ -1862,8 +1926,8 @@ package body Builder_Facility_Module is
    -- Registry --
    --------------
 
-   function Registry
-     return Build_Configurations.Build_Config_Registry_Access is
+   function Registry return Build_Configurations.Build_Config_Registry_Access
+   is
    begin
       return Builder_Module_ID.Registry;
    end Registry;
@@ -1913,18 +1977,19 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Build_Mode_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Mode   : String)
    is
       pragma Unreferenced (Self);
-      Reg  : Project_Registry renames
-               Project_Registry (Get_Registry (Kernel).all);
+      Reg : Project_Registry renames
+        Project_Registry (Get_Registry (Kernel).all);
    begin
       if Contains_Mode (Registry, To_Unbounded_String (Mode))
-         and then Reg.Environment.Object_Subdir /=
-            Get_Mode_Subdir (Registry, Mode)
+        and then
+          Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode)
       then
          Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
          Recompute_View (Get_Kernel);
@@ -1935,10 +2000,11 @@ package body Builder_Facility_Module is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
-      (Self     : not null access Builder_Search_Provider;
-       Pattern  : not null access GPS.Search.Search_Pattern'Class;
-       Limit    : Natural := Natural'Last)
+   overriding
+   procedure Set_Pattern
+     (Self    : not null access Builder_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last)
    is
       pragma Unreferenced (Limit);
    begin
@@ -1946,8 +2012,8 @@ package body Builder_Facility_Module is
 
       Unchecked_Free (Self.Iter);
 
-      Self.Iter := new Target_Cursor'
-         (Get_First_Target (Builder_Module_ID.Registry));
+      Self.Iter :=
+        new Target_Cursor'(Get_First_Target (Builder_Module_ID.Registry));
       Setup (Self);
    end Set_Pattern;
 
@@ -1955,9 +2021,7 @@ package body Builder_Facility_Module is
    -- Setup --
    -----------
 
-   procedure Setup
-      (Self : not null access Builder_Search_Provider'Class)
-   is
+   procedure Setup (Self : not null access Builder_Search_Provider'Class) is
       T : constant Target_Access := Get_Target (Self.Iter.all);
    begin
       if Self.Mains /= null then
@@ -1968,11 +2032,12 @@ package body Builder_Facility_Module is
       if T /= null then
          declare
             Targets : constant Unbounded_String :=
-               Get_Properties (T).Target_Type;
+              Get_Properties (T).Target_Type;
          begin
-            Self.Mains := new Any_Type'
-               (Compute_Build_Targets_Hook.Run
-                  (Self.Kernel, To_String (Targets)));
+            Self.Mains :=
+              new Any_Type'
+                (Compute_Build_Targets_Hook.Run
+                   (Self.Kernel, To_String (Targets)));
             Self.Current_Main := 1;
          end;
       else
@@ -1985,10 +2050,11 @@ package body Builder_Facility_Module is
    -- Next --
    ----------
 
-   overriding procedure Next
-      (Self     : not null access Builder_Search_Provider;
-       Result   : out GPS.Search.Search_Result_Access;
-       Has_Next : out Boolean)
+   overriding
+   procedure Next
+     (Self     : not null access Builder_Search_Provider;
+      Result   : out GPS.Search.Search_Result_Access;
+      Has_Next : out Boolean)
    is
       T : constant Target_Access := Get_Target (Self.Iter.all);
       C : Search_Context;
@@ -2001,24 +2067,26 @@ package body Builder_Facility_Module is
          if Self.Current_Main < Self.Mains.Length then
             declare
                Main : constant Virtual_File :=
-                  Create (+Self.Mains.List (Self.Current_Main).Tuple (2).Str);
+                 Create (+Self.Mains.List (Self.Current_Main).Tuple (2).Str);
                Name : constant String :=
-                  Get_Name (T) & " " & Main.Display_Base_Name;
+                 Get_Name (T) & " " & Main.Display_Base_Name;
             begin
                C := Self.Pattern.Start (Name);
                if C /= GPS.Search.No_Match then
-                  Result := new Builder_Search_Result'
-                    (Kernel   => Self.Kernel,
-                     Provider => Self,
-                     Score   => C.Score,
-                     Short   => new String'
-                       (Self.Pattern.Highlight_Match (Name, Context => C)),
-                     Long    => null,
-                     Id      =>
-                       VSS.Strings.Conversions.To_Virtual_String
-                         ("build-" & Name),
-                     Main    => Main,
-                     Target  => T);
+                  Result :=
+                    new Builder_Search_Result'
+                      (Kernel   => Self.Kernel,
+                       Provider => Self,
+                       Score    => C.Score,
+                       Short    =>
+                         new String'
+                           (Self.Pattern.Highlight_Match (Name, Context => C)),
+                       Long     => null,
+                       Id       =>
+                         VSS.Strings.Conversions.To_Virtual_String
+                           ("build-" & Name),
+                       Main     => Main,
+                       Target   => T);
                   Self.Adjust_Score (Result);
                end if;
             end;
@@ -2039,10 +2107,10 @@ package body Builder_Facility_Module is
    -- Complete_Suffix --
    ---------------------
 
-   overriding function Complete_Suffix
-     (Self      : not null access Builder_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String
+   overriding
+   function Complete_Suffix
+     (Self    : not null access Builder_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class) return String
    is
       Suffix      : Unbounded_String;
       Suffix_Last : Natural := 0;
@@ -2058,9 +2126,9 @@ package body Builder_Facility_Module is
          if Self.Current_Main < Self.Mains.Length then
             declare
                Main : constant Virtual_File :=
-                  Create (+Self.Mains.List (Self.Current_Main).Tuple (2).Str);
+                 Create (+Self.Mains.List (Self.Current_Main).Tuple (2).Str);
                Name : constant String :=
-                  Get_Name (T) & " " & Main.Display_Base_Name;
+                 Get_Name (T) & " " & Main.Display_Base_Name;
             begin
                C := Self.Pattern.Start (Name);
                if C /= GPS.Search.No_Match then
@@ -2084,7 +2152,8 @@ package body Builder_Facility_Module is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Builder_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Builder_Search_Provider) is
    begin
       if Self.Mains /= null then
          Free (Self.Mains.all);
@@ -2100,8 +2169,9 @@ package body Builder_Facility_Module is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
-      (Self     : not null access Builder_Search_Provider) return String
+   overriding
+   function Documentation
+     (Self : not null access Builder_Search_Provider) return String
    is
       pragma Unreferenced (Self);
    begin
@@ -2112,22 +2182,23 @@ package body Builder_Facility_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self       : not null access Builder_Search_Result;
-       Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Builder_Search_Result; Give_Focus : Boolean)
    is
-      C : aliased Build_Command;
+      C      : aliased Build_Command;
       Result : Command_Return_Type;
       pragma Unreferenced (Result, Give_Focus);
    begin
       C.Builder := Builder;
       C.Target_Name := To_Unbounded_String (Get_Name (Self.Target));
-      C.Main    := Self.Main;
-      C.Dialog  := Build_Command_Utils.Default;
-      C.Quiet   := False;
-      Result := C.Execute
-        (Context => Create_Null_Context
-           (New_Context (Kernel => Self.Kernel)));
+      C.Main := Self.Main;
+      C.Dialog := Build_Command_Utils.Default;
+      C.Quiet := False;
+      Result :=
+        C.Execute
+          (Context =>
+             Create_Null_Context (New_Context (Kernel => Self.Kernel)));
    end Execute;
 
 end Builder_Facility_Module;

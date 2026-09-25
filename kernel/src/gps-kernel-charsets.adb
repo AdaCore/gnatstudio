@@ -16,14 +16,14 @@
 ------------------------------------------------------------------------------
 
 with Ada.Streams;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
-with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.Widget;         use Gtk.Widget;
 
 with VSS.Characters.Latin;
 with VSS.Characters.Punctuations;
@@ -31,10 +31,10 @@ with VSS.Strings.Character_Iterators;
 with VSS.Strings.Converters.Decoders;
 with VSS.Strings.Conversions;
 
-with GPS.Properties;             use GPS.Properties;
-with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
-with GPS.Intl;                   use GPS.Intl;
-with String_Utils;               use String_Utils;
+with GPS.Properties;        use GPS.Properties;
+with GPS.Kernel.Properties; use GPS.Kernel.Properties;
+with GPS.Intl;              use GPS.Intl;
+with String_Utils;          use String_Utils;
 
 package body GPS.Kernel.Charsets is
 
@@ -45,15 +45,15 @@ package body GPS.Kernel.Charsets is
    Default_Charset : Charset_Preference;
    --  Preference that defines the default charset to use when opening files
 
-   Me              : constant Trace_Handle := Create
-     ("GPS.INTERNAL.CHARSETS", Default => Off);
+   Me : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.CHARSETS", Default => Off);
 
    type Charset_Description is record
       Name        : GNAT.Strings.String_Access;
       Description : GNAT.Strings.String_Access;
    end record;
-   type Charset_Description_Array
-     is array (Natural range <>) of Charset_Description;
+   type Charset_Description_Array is
+     array (Natural range <>) of Charset_Description;
 
    Charsets : constant Charset_Description_Array :=
      ((Name        => new String'("ISO-8859-1"),
@@ -97,8 +97,8 @@ package body GPS.Kernel.Charsets is
       --  Errors should be reported but not to stop decoding of the following
       --  data
       Process_BOM   => True);
-      --  Byte-Order-Mark at the beginning of the data should be ignored if
-      --  present
+   --  Byte-Order-Mark at the beginning of the data should be ignored if
+   --  present
    --  Default flags for the text decoder.
 
    procedure Charset_Changed
@@ -115,8 +115,7 @@ package body GPS.Kernel.Charsets is
    ---------------------
 
    procedure Charset_Changed
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference)
+     (Combo : access GObject_Record'Class; Data : Manager_Preference)
    is
       Value : constant String := Get_Active_Text (Gtk_Combo_Box_Text (Combo));
    begin
@@ -135,8 +134,8 @@ package body GPS.Kernel.Charsets is
    --------------------------
 
    function Create_Charset_Combo
-     (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
+     (File : GNATCOLL.VFS.Virtual_File; Default : String := "")
+      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
    is
       function Get_Default_Charset_Name return String;
       Combo : Gtk_Combo_Box_Text;
@@ -196,9 +195,10 @@ package body GPS.Kernel.Charsets is
    -- Edit --
    ----------
 
-   overriding function Edit
-     (Pref               : access Charset_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Charset_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
       Value    : constant String := Pref.Get_Pref;
@@ -222,7 +222,8 @@ package body GPS.Kernel.Charsets is
       end if;
 
       Preference_Handlers.Object_Connect
-        (Combo, Gtk.Combo_Box.Signal_Changed,
+        (Combo,
+         Gtk.Combo_Box.Signal_Changed,
          Charset_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
          Slot_Object => Combo,
@@ -238,11 +239,10 @@ package body GPS.Kernel.Charsets is
    ------------
 
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Default                   : String)
-      return Charset_Preference
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Default          : String) return Charset_Preference
    is
       Result : constant Charset_Preference := new Charset_Preference_Record;
    begin
@@ -256,31 +256,32 @@ package body GPS.Kernel.Charsets is
    -- Register_Preferences --
    --------------------------
 
-   procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class)
+   is
    begin
-      Default_Charset := Create
-        (Get_Preferences (Kernel),
-         Name    => "General-Charset",
-         Label   => -"Character set",
-         Path    => -"General:Charsets",
-         Doc     =>
-           -("Character set to load and save files. GNAT Studio uses unicode"
-             & " internally and needs to convert appropriately."),
-         Default => "ISO-8859-1");
+      Default_Charset :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "General-Charset",
+           Label   => -"Character set",
+           Path    => -"General:Charsets",
+           Doc     =>
+             -("Character set to load and save files. GNAT Studio uses unicode"
+               & " internally and needs to convert appropriately."),
+           Default => "ISO-8859-1");
    end Register_Preferences;
 
    ----------------------------
    -- Update_On_Pref_Changed --
    ----------------------------
 
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Charset_Preference_Record;
       Widget : access GObject_Record'Class) is
    begin
       Set_Text
-        (Gtk_Entry
-           (Gtk_Combo_Box_Text (Widget).Get_Child), Pref.Get_Pref);
+        (Gtk_Entry (Gtk_Combo_Box_Text (Widget).Get_Child), Pref.Get_Pref);
    end Update_On_Pref_Changed;
 
    -------------------------
@@ -328,8 +329,9 @@ package body GPS.Kernel.Charsets is
    ----------------------
 
    procedure Set_File_Charset
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File; Charset : String := "") is
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Charset : String := "") is
    begin
       if Charset = "" then
          Remove_Property (Kernel, File, "charset");
@@ -361,12 +363,13 @@ package body GPS.Kernel.Charsets is
    begin
       Trace (Me, "Reading file: " & File.Display_Full_Name);
 
-      Props := (Invalid_UTF8          => False,
-                CR_Found              => False,
-                NUL_Found             => False,
-                Trailing_Spaces_Found => False,
-                Trailing_Lines_Found  => False,
-                Bidirectional_Unicode => False);
+      Props :=
+        (Invalid_UTF8          => False,
+         CR_Found              => False,
+         NUL_Found             => False,
+         Trailing_Spaces_Found => False,
+         Trailing_Lines_Found  => False,
+         Bidirectional_Unicode => False);
 
       Contents := File.Read_File;
 
@@ -379,13 +382,20 @@ package body GPS.Kernel.Charsets is
       end if;
 
       Strip_CR_And_NUL
-        (Contents.all, Last,
-         Props.CR_Found, Props.NUL_Found, Props.Trailing_Spaces_Found);
+        (Contents.all,
+         Last,
+         Props.CR_Found,
+         Props.NUL_Found,
+         Props.Trailing_Spaces_Found);
 
       declare
-         Buffer  : constant Ada.Streams.Stream_Element_Array
-           (1 .. Ada.Streams.Stream_Element_Offset (Last - Contents'First + 1))
-             with Import, Address => Contents.all'Address;
+         Buffer  :
+           constant Ada.Streams.Stream_Element_Array
+                      (1
+                       ..
+                         Ada.Streams.Stream_Element_Offset
+                           (Last - Contents'First + 1))
+         with Import, Address => Contents.all'Address;
          Decoder : VSS.Strings.Converters.Decoders.Virtual_String_Decoder;
          Aux     : VSS.Strings.Virtual_String;
 
@@ -395,7 +405,7 @@ package body GPS.Kernel.Charsets is
          Decoder.Initialize (Charset, Decoder_Flags);
 
          if Decoder.Is_Valid then
-            Text               := Decoder.Decode (Buffer);
+            Text := Decoder.Decode (Buffer);
             Props.Invalid_UTF8 := Decoder.Has_Error;
          end if;
 
@@ -411,7 +421,7 @@ package body GPS.Kernel.Charsets is
                --  not supported, thus Text is empty, so use text decoded by
                --  "utf-8" decoder even if there are errors.
 
-               Text               := Aux;
+               Text := Aux;
                Props.Invalid_UTF8 := Decoder.Has_Error;
             end if;
          end if;
@@ -470,14 +480,13 @@ package body GPS.Kernel.Charsets is
                      | Left_To_Right_Isolate
                      | Right_To_Left_Isolate
                      | First_Strong_Isolate
-                     | Pop_Directional_Isolate
-                     =>
+                     | Pop_Directional_Isolate =>
                      --  Some of Unicode bidirectional override characters
                      --  is present in the text.
 
                      Props.Bidirectional_Unicode := True;
 
-                  when others =>
+                  when others                  =>
                      null;
                end case;
             end loop;
@@ -514,17 +523,18 @@ package body GPS.Kernel.Charsets is
       --      'Separator, Paragraph'
 
       return
-        Item in
-            VSS.Characters.Virtual_Character'Val (16#09#)
-          | VSS.Characters.Virtual_Character'Val (16#0A#)
-          | VSS.Characters.Virtual_Character'Val (16#0B#)
-          | VSS.Characters.Virtual_Character'Val (16#0C#)
-          | VSS.Characters.Virtual_Character'Val (16#0D#)
-          | VSS.Characters.Virtual_Character'Val (16#85#)
-        or VSS.Characters.Get_General_Category (Item) in
-            VSS.Characters.Space_Separator
-          | VSS.Characters.Line_Separator
-          | VSS.Characters.Paragraph_Separator;
+        Item
+        in VSS.Characters.Virtual_Character'Val (16#09#)
+         | VSS.Characters.Virtual_Character'Val (16#0A#)
+         | VSS.Characters.Virtual_Character'Val (16#0B#)
+         | VSS.Characters.Virtual_Character'Val (16#0C#)
+         | VSS.Characters.Virtual_Character'Val (16#0D#)
+         | VSS.Characters.Virtual_Character'Val (16#85#)
+        or
+          VSS.Characters.Get_General_Category (Item)
+          in VSS.Characters.Space_Separator
+           | VSS.Characters.Line_Separator
+           | VSS.Characters.Paragraph_Separator;
    end Is_Ada_Separator;
 
 end GPS.Kernel.Charsets;

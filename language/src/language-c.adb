@@ -17,11 +17,11 @@
 
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
-with GNAT.Regpat;       use GNAT.Regpat;
-with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNAT.Regpat;    use GNAT.Regpat;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
-with String_Utils;      use String_Utils;
-with C_Analyzer;        use C_Analyzer;
+with String_Utils; use String_Utils;
+with C_Analyzer;   use C_Analyzer;
 
 package body Language.C is
 
@@ -34,61 +34,63 @@ package body Language.C is
    Keywords_List : aliased Pattern_Matcher := Compile (Keywords_Regexp);
 
    The_Keywords : constant GNAT.Strings.String_List :=
-                    (1  => new String'("auto"),
-                     2  => new String'("break"),
-                     3  => new String'("case"),
-                     4  => new String'("const"),
-                     5  => new String'("continue"),
-                     6  => new String'("char"),
-                     7  => new String'("default"),
-                     8  => new String'("do"),
-                     9  => new String'("double"),
-                     10  => new String'("else"),
-                     11  => new String'("enum"),
-                     12  => new String'("extern"),
-                     13  => new String'("float"),
-                     14  => new String'("for"),
-                     15  => new String'("goto"),
-                     16  => new String'("if"),
-                     17  => new String'("int"),
-                     18  => new String'("inline"),
-                     19  => new String'("long"),
-                     20  => new String'("register"),
-                     21  => new String'("restrict"),
-                     22  => new String'("return"),
-                     23  => new String'("short"),
-                     24  => new String'("signed"),
-                     25  => new String'("sizeof"),
-                     26  => new String'("static"),
-                     27  => new String'("struct"),
-                     28  => new String'("switch"),
-                     29  => new String'("union"),
-                     30  => new String'("unsigned"),
-                     31  => new String'("void"),
-                     32  => new String'("volatile"),
-                     33  => new String'("while"),
-                     34  => new String'("typedef"));
+     (1  => new String'("auto"),
+      2  => new String'("break"),
+      3  => new String'("case"),
+      4  => new String'("const"),
+      5  => new String'("continue"),
+      6  => new String'("char"),
+      7  => new String'("default"),
+      8  => new String'("do"),
+      9  => new String'("double"),
+      10 => new String'("else"),
+      11 => new String'("enum"),
+      12 => new String'("extern"),
+      13 => new String'("float"),
+      14 => new String'("for"),
+      15 => new String'("goto"),
+      16 => new String'("if"),
+      17 => new String'("int"),
+      18 => new String'("inline"),
+      19 => new String'("long"),
+      20 => new String'("register"),
+      21 => new String'("restrict"),
+      22 => new String'("return"),
+      23 => new String'("short"),
+      24 => new String'("signed"),
+      25 => new String'("sizeof"),
+      26 => new String'("static"),
+      27 => new String'("struct"),
+      28 => new String'("switch"),
+      29 => new String'("union"),
+      30 => new String'("unsigned"),
+      31 => new String'("void"),
+      32 => new String'("volatile"),
+      33 => new String'("while"),
+      34 => new String'("typedef"));
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
-       ("^\w+\s*"                         --  type specs; there can be no
+       ("^\w+\s*"
+        --  type specs; there can be no
         & "([\w_*]+\s+)?"                 --  more than 3 tokens, right?
         & "([\w_*]+\s+)?"
         & "([*&]+\s*)?"                   --  pointer
         & "(\(\*\s*)?([\w_]+[a-z][\w_]*)\s*\)?"
-                                          --  subprogram name or access to subp
+        --  subprogram name or access to subp
         & "(\s[\w_]+\s*\()?"              --  handling of macros, as in
-                                          --  "void pa_exit PARAMS ((int))"
+        --  "void pa_exit PARAMS ((int))"
         & "\([^(]",
         Multiple_Lines);
 
    C_Explorer_Categories : constant Explorer_Categories :=
-     (1 => (Category       => Cat_Function,
-            Category_Name  => GNATCOLL.Symbols.No_Symbol,
-            Regexp         => Subprogram_RE'Access,
-            Position_Index => 5,
-            End_Index      => 0,
-            Make_Entry     => null));
+     (1 =>
+        (Category       => Cat_Function,
+         Category_Name  => GNATCOLL.Symbols.No_Symbol,
+         Regexp         => Subprogram_RE'Access,
+         Position_Index => 5,
+         End_Index      => 0,
+         Make_Entry     => null));
 
    C_Completion_Trigger_Chars : constant Wide_Wide_Character_Set :=
      To_Set (".(>");
@@ -98,29 +100,33 @@ package body Language.C is
    -- Is_Simple_Type --
    --------------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access C_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
    begin
-      return    Str = "int"
+      return
+        Str = "int"
         or else Str = "char"
         or else Str = "float"
         or else Str = "double"
         or else Str = "long"
         or else Str = "short"
 
-         --  "unsigned int", "unsigned char"
-        or else (Str'Length >= 9
-                 and then Str (Str'First .. Str'First + 8) = "unsigned ")
+        --  "unsigned int", "unsigned char"
+        or else
+          (Str'Length >= 9
+           and then Str (Str'First .. Str'First + 8) = "unsigned ")
 
-         --  "long int", "long unsigned int"
-        or else (Str'Length >= 5
-                 and then Str (Str'First .. Str'First + 4) = "long ")
+        --  "long int", "long unsigned int"
+        or else
+          (Str'Length >= 5 and then Str (Str'First .. Str'First + 4) = "long ")
 
-         --  "short int", "short unsigned int"
-        or else (Str'Length >= 6
-                 and then Str (Str'First .. Str'First + 5) = "short ")
+        --  "short int", "short unsigned int"
+        or else
+          (Str'Length >= 6
+           and then Str (Str'First .. Str'First + 5) = "short ")
 
         or else Str = "void";
    end Is_Simple_Type;
@@ -129,9 +135,9 @@ package body Language.C is
    -- Dereference_Name --
    ----------------------
 
-   overriding function Dereference_Name
-     (Lang : access C_Language;
-      Name : String) return String
+   overriding
+   function Dereference_Name
+     (Lang : access C_Language; Name : String) return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -142,10 +148,9 @@ package body Language.C is
    -- Array_Item_Name --
    ---------------------
 
-   overriding function Array_Item_Name
-     (Lang  : access C_Language;
-      Name  : String;
-      Index : String) return String
+   overriding
+   function Array_Item_Name
+     (Lang : access C_Language; Name : String; Index : String) return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -156,10 +161,9 @@ package body Language.C is
    -- Record_Field_Name --
    -----------------------
 
-   overriding function Record_Field_Name
-     (Lang  : access C_Language;
-      Name  : String;
-      Field : String) return String
+   overriding
+   function Record_Field_Name
+     (Lang : access C_Language; Name : String; Field : String) return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -175,9 +179,8 @@ package body Language.C is
    -- Scope_Separator --
    ---------------------
 
-   overriding function Scope_Separator
-     (Lang : access C_Language) return String
-   is
+   overriding
+   function Scope_Separator (Lang : access C_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "::";
@@ -187,7 +190,8 @@ package body Language.C is
    -- Explorer_Regexps --
    ----------------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access C_Language) return Explorer_Categories
    is
       pragma Unreferenced (Lang);
@@ -199,15 +203,15 @@ package body Language.C is
    -- Keywords --
    --------------
 
-   overriding function Keywords
-     (Lang : access C_Language) return Strings.String_Access
-   is
+   overriding
+   function Keywords (Lang : access C_Language) return Strings.String_Access is
       pragma Unreferenced (Lang);
    begin
       return Keywords_Regexp'Access;
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access C_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -215,8 +219,8 @@ package body Language.C is
       return Keywords_List'Access;
    end Keywords;
 
-   overriding function Keywords
-     (Lang : access C_Language) return GNAT.Strings.String_List
+   overriding
+   function Keywords (Lang : access C_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
    begin
@@ -227,21 +231,23 @@ package body Language.C is
    -- Get_Language_Context --
    --------------------------
 
-   C_Context             : aliased Language_Context :=
-     (Syntax => (Comment_Start                 => new String'("/*"),
-                 Comment_End                   => new String'("*/"),
-                 New_Line_Comment_Start        => new String'("//"),
-                 New_Line_Comment_Start_Regexp => null),
-      String_Delimiter              => '"',
-      Quote_Character               => '\',
-      Constant_Character            => ''',
-      Can_Indent                    => True,
-      Syntax_Highlighting           => False,
-      Case_Sensitive                => True,
-      Accurate_Xref                 => False,
-      Use_Semicolon                 => True);
+   C_Context : aliased Language_Context :=
+     (Syntax              =>
+        (Comment_Start                 => new String'("/*"),
+         Comment_End                   => new String'("*/"),
+         New_Line_Comment_Start        => new String'("//"),
+         New_Line_Comment_Start_Regexp => null),
+      String_Delimiter    => '"',
+      Quote_Character     => '\',
+      Constant_Character  => ''',
+      Can_Indent          => True,
+      Syntax_Highlighting => False,
+      Case_Sensitive      => True,
+      Accurate_Xref       => False,
+      Use_Semicolon       => True);
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access C_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -253,7 +259,8 @@ package body Language.C is
    -- Completion_Trigger_Character_Set --
    --------------------------------------
 
-   overriding function Completion_Trigger_Character_Set
+   overriding
+   function Completion_Trigger_Character_Set
      (Lang : access C_Language) return Wide_Wide_Character_Set is
    begin
       return C_Completion_Trigger_Chars;
@@ -263,7 +270,8 @@ package body Language.C is
    -- Is_Foldable_Block --
    -----------------------
 
-   overriding function Is_Foldable_Block
+   overriding
+   function Is_Foldable_Block
      (Lang : access C_Language; Cat : Language_Category) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -275,7 +283,8 @@ package body Language.C is
    -- Parse_Constructs --
    ----------------------
 
-   overriding procedure Parse_Constructs
+   overriding
+   procedure Parse_Constructs
      (Lang   : access C_Language;
       File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
@@ -297,10 +306,9 @@ package body Language.C is
    -- Parse_Entities --
    --------------------
 
-   overriding procedure Parse_Entities
-     (Lang     : access C_Language;
-      Buffer   : String;
-      Callback : Entity_Callback) is
+   overriding
+   procedure Parse_Entities
+     (Lang : access C_Language; Buffer : String; Callback : Entity_Callback) is
    begin
       Analyze_C_Source
         (Buffer        => Buffer,
@@ -314,7 +322,8 @@ package body Language.C is
    -- Format_Buffer --
    -------------------
 
-   overriding procedure Format_Buffer
+   overriding
+   procedure Format_Buffer
      (Lang                : access C_Language;
       Buffer              : String;
       Replace             : Replace_Text_Callback;
@@ -322,26 +331,21 @@ package body Language.C is
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
-      Is_Optional_Keyword : access function (S : String)
-                                             return Boolean := null)
+      Is_Optional_Keyword : access function (S : String) return Boolean :=
+        null)
    is
       pragma Unreferenced (Case_Exceptions, Is_Optional_Keyword);
    begin
       Analyze_C_Source
-        (Buffer,
-         Lang.Symbols,
-         Indent_Params,
-         True,
-         From,
-         To,
-         Replace);
+        (Buffer, Lang.Symbols, Indent_Params, True, From, To, Replace);
    end Format_Buffer;
 
    ------------------
    -- Comment_Line --
    ------------------
 
-   overriding function Comment_Line
+   overriding
+   function Comment_Line
      (Lang    : access C_Language;
       Line    : String;
       Comment : Boolean := True;
@@ -389,20 +393,22 @@ package body Language.C is
                return "/* " & Line & " */";
             end if;
          end;
-      else  --  Uncomment
+      else
+         --  Uncomment
          for Index in Line'First .. Line'Last - 1 loop
             if Line (Index .. Index + 1) = "//" then
                --  Single line comment
 
-               if Index + 3 <= Line'Last and then
-                 Line (Index .. Index + 3) = "//  "
+               if Index + 3 <= Line'Last
+                 and then Line (Index .. Index + 3) = "//  "
                then
                   if Clean then
                      Index_Start := Index + 4;
                      Skip_Blanks (Line, Index_Start);
                      return Line (Index_Start .. Line'Last);
                   end if;
-                  return Line (Line'First .. Index - 1)
+                  return
+                    Line (Line'First .. Index - 1)
                     & Line (Index + 4 .. Line'Last);
                elsif Index + 2 <= Line'Last
                  and then Line (Index .. Index + 2) = "// "
@@ -412,7 +418,8 @@ package body Language.C is
                      Skip_Blanks (Line, Index_Start);
                      return Line (Index_Start .. Line'Last);
                   end if;
-                  return Line (Line'First .. Index - 1)
+                  return
+                    Line (Line'First .. Index - 1)
                     & Line (Index + 3 .. Line'Last);
                else
                   return Line (Index + 2 .. Line'Last);
@@ -451,11 +458,13 @@ package body Language.C is
                   end if;
 
                   if Index_Last + 1 < Line'Last then
-                     return Line (Line'First .. Index_Start - 1)
+                     return
+                       Line (Line'First .. Index_Start - 1)
                        & Line (After_Start .. Before_Last)
                        & Line (Index_Last + 2 .. Line'Last);
                   else
-                     return Line (Line'First .. Index_Start - 1)
+                     return
+                       Line (Line'First .. Index_Start - 1)
                        & Line (After_Start .. Before_Last);
                   end if;
                else
@@ -483,7 +492,8 @@ package body Language.C is
                   Skip_Blanks (Line, Index_Start);
                end if;
 
-               return Line (Index_Start .. Index - 1)
+               return
+                 Line (Index_Start .. Index - 1)
                  & Line (Index + 2 .. Line'Last);
             end if;
          end loop;
@@ -502,7 +512,8 @@ package body Language.C is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name (Lang : access C_Language) return String is
+   overriding
+   function Get_Name (Lang : access C_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "c";
@@ -512,7 +523,8 @@ package body Language.C is
    -- Entities_Indexed --
    ----------------------
 
-   overriding function Entities_Indexed (Self : C_Language) return Boolean is
+   overriding
+   function Entities_Indexed (Self : C_Language) return Boolean is
       pragma Unreferenced (Self);
    begin
       return True;

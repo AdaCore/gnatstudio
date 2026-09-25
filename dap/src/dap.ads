@@ -25,8 +25,8 @@ package DAP is
    type Client_Id_Type is new Natural;
    --  Used to count started debuggers and identify instances
 
-   subtype Valid_Client_Id_Type is Client_Id_Type
-     range 1 .. Client_Id_Type'Last;
+   subtype Valid_Client_Id_Type is
+     Client_Id_Type range 1 .. Client_Id_Type'Last;
    --  Valid range for real instance identifier
 
    No_Client : constant Client_Id_Type := 0;

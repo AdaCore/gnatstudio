@@ -26,8 +26,8 @@ package body GPS.Editors.Line_Information is
    ----------------------
 
    function Get_Display_Type
-     (Line_Info : Line_Information_Record)
-      return Line_Information_Display_Type is
+     (Line_Info : Line_Information_Record) return Line_Information_Display_Type
+   is
    begin
       if Line_Info.Message.Is_Empty then
          return On_Side_Area;
@@ -49,17 +49,19 @@ package body GPS.Editors.Line_Information is
       if X.Associated_Command /= null then
          Unref (X.Associated_Command);
       end if;
-      X.Text         := Ada.Strings.Unbounded.Null_Unbounded_String;
+      X.Text := Ada.Strings.Unbounded.Null_Unbounded_String;
       X.Tooltip_Text := Ada.Strings.Unbounded.Null_Unbounded_String;
-      X.Image        := Ada.Strings.Unbounded.Null_Unbounded_String;
+      X.Image := Ada.Strings.Unbounded.Null_Unbounded_String;
    end Free;
 
    ----------
    -- Free --
    ----------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Information_Record, Line_Information_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Line_Information_Record,
+        Line_Information_Access);
 
    procedure Free (Info : in out Line_Information_Access) is
    begin
@@ -82,9 +84,8 @@ package body GPS.Editors.Line_Information is
       Column_Id  : String := "";
       Info       : Line_Information_Data := null)
    is
-      Mark     : constant Editor_Mark'Class :=
-        This.Add_Special_Line
-          (Start_Line, Text, Style, Name, Column_Id, Info);
+      Mark : constant Editor_Mark'Class :=
+        This.Add_Special_Line (Start_Line, Text, Style, Name, Column_Id, Info);
       pragma Unreferenced (Mark);
    begin
       null;

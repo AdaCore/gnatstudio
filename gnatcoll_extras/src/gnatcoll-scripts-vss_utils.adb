@@ -73,26 +73,28 @@ package body GNATCOLL.Scripts.VSS_Utils is
       end if;
 
       if VSS.Implementation.Python3.PyBytes_AsStringAndSize
-        (Bytes, Pointer, Size) /= 0
+           (Bytes, Pointer, Size)
+        /= 0
       then
          raise Program_Error;
-         --  Should never happen
+      --  Should never happen
+
       end if;
 
       declare
          Manager :
            VSS.Implementation.Text_Storages.Python.Python_Text_Storage :=
              (others => <>)
-           with Address => Text.Manager'Address;
+         with Address => Text.Manager'Address;
       begin
          Manager.Initialize (Text.Storage_Address, Bytes);
-         Text.Size   :=
+         Text.Size :=
            VSS.Unicode.UTF8_Code_Unit_Offset
              (VSS.Implementation.Python3.PyBytes_Size (Bytes));
          Text.Length :=
            VSS.Implementation.Strings.Character_Count
              (VSS.Implementation.Python3.PyUnicode_GetLength (Object));
-         Text.Flags  := 1;
+         Text.Flags := 1;
       end;
    end Initialize;
 
@@ -101,9 +103,9 @@ package body GNATCOLL.Scripts.VSS_Utils is
    -------------
 
    function Nth_Arg
-     (Data : GNATCOLL.Scripts.Python.Python_Callback_Data'Class;
-      N    : Positive; Success : out Boolean)
-      return VSS.Strings.Virtual_String
+     (Data    : GNATCOLL.Scripts.Python.Python_Callback_Data'Class;
+      N       : Positive;
+      Success : out Boolean) return VSS.Strings.Virtual_String
    is
       Item : GNATCOLL.Python.PyObject;
 
@@ -118,8 +120,7 @@ package body GNATCOLL.Scripts.VSS_Utils is
       if GNATCOLL.Python.PyUnicode_Check (Item) then
          return Result : VSS.Strings.Virtual_String do
             Initialize
-              (VSS.Strings.Internals.Data_Access_Variable (Result).all,
-               Item);
+              (VSS.Strings.Internals.Data_Access_Variable (Result).all, Item);
          end return;
 
       else
@@ -133,18 +134,19 @@ package body GNATCOLL.Scripts.VSS_Utils is
    -------------
 
    function Nth_Arg
-     (Data : Callback_Data'Class;
-      N    : Positive) return VSS.Strings.Virtual_String
+     (Data : Callback_Data'Class; N : Positive)
+      return VSS.Strings.Virtual_String
    is
       Success : Boolean;
 
    begin
       if Data in GNATCOLL.Scripts.Python.Python_Callback_Data'Class then
-         return Result : constant VSS.Strings.Virtual_String :=
-           Nth_Arg
-             (GNATCOLL.Scripts.Python.Python_Callback_Data'Class (Data),
-              N,
-              Success)
+         return
+            Result : constant VSS.Strings.Virtual_String :=
+              Nth_Arg
+                (GNATCOLL.Scripts.Python.Python_Callback_Data'Class (Data),
+                 N,
+                 Success)
          do
             if not Success then
                raise No_Such_Parameter with N'Img;
@@ -165,8 +167,8 @@ package body GNATCOLL.Scripts.VSS_Utils is
    function PyUnicode_FromStringAndSize
      (Str : VSS.Strings.Virtual_String) return GNATCOLL.Python.PyObject
    is
-      Text : VSS.Implementation.UTF8_Strings.UTF8_String_Data
-        renames VSS.Strings.Internals.Data_Access_Constant (Str).all;
+      Text : VSS.Implementation.UTF8_Strings.UTF8_String_Data renames
+        VSS.Strings.Internals.Data_Access_Constant (Str).all;
 
    begin
       if VSS.Implementation.UTF8_Strings.Is_Empty (Text) then
@@ -176,13 +178,12 @@ package body GNATCOLL.Scripts.VSS_Utils is
       else
          declare
             D : VSS.Implementation.Interfaces_C.UTF8_Code_Unit_Constant_Access
-              with Import, Address => Text.Storage_Address'Address;
+            with Import, Address => Text.Storage_Address'Address;
 
          begin
             return
               VSS.Implementation.Python3.PyUnicode_FromStringAndSize
-                (D,
-                 VSS.Implementation.Python3.Py_ssize_t (Text.Size));
+                (D, VSS.Implementation.Python3.Py_ssize_t (Text.Size));
          end;
       end if;
    end PyUnicode_FromStringAndSize;
@@ -212,8 +213,7 @@ package body GNATCOLL.Scripts.VSS_Utils is
    ----------------------
 
    procedure Set_Return_Value
-     (Data  : in out Callback_Data'Class;
-      Value : VSS.Strings.Virtual_String) is
+     (Data : in out Callback_Data'Class; Value : VSS.Strings.Virtual_String) is
    begin
       if Data in GNATCOLL.Scripts.Python.Python_Callback_Data'Class then
          declare

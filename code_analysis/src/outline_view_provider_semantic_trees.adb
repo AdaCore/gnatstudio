@@ -15,21 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;      use Ada.Calendar;
+with Ada.Calendar; use Ada.Calendar;
 
-with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Symbols; use GNATCOLL.Symbols;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
 with VSS.Strings.Conversions;
 
-with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 
 with Basic_Types;
-with Language;          use Language;
-with Language.Abstract_Language_Tree;
-use Language.Abstract_Language_Tree;
-with Outline_View;      use Outline_View;
+with Language;                        use Language;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Outline_View;                    use Outline_View;
 
 package body Outline_View_Provider_Semantic_Trees is
 
@@ -40,20 +39,21 @@ package body Outline_View_Provider_Semantic_Trees is
    end record;
    type Semantic_Provider_Access is access all Semantic_Provider;
 
-   overriding procedure Start_Fill
-     (Self : access Semantic_Provider; File : Virtual_File);
+   overriding
+   procedure Start_Fill (Self : access Semantic_Provider; File : Virtual_File);
 
-   overriding procedure Stop_Fill (Self : access Semantic_Provider) is null;
+   overriding
+   procedure Stop_Fill (Self : access Semantic_Provider) is null;
 
-   overriding function Support_Language
-     (Self : access Semantic_Provider;
-      Lang : Language_Access)
-      return Boolean;
+   overriding
+   function Support_Language
+     (Self : access Semantic_Provider; Lang : Language_Access) return Boolean;
 
    type On_Semantic_Tree_Updated is new File_Hooks_Function with record
       Provider : Semantic_Provider_Access;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Semantic_Tree_Updated;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
@@ -62,8 +62,9 @@ package body Outline_View_Provider_Semantic_Trees is
    -- Start_Fill --
    ----------------
 
-   overriding procedure Start_Fill
-     (Self : access Semantic_Provider; File : Virtual_File) is
+   overriding
+   procedure Start_Fill (Self : access Semantic_Provider; File : Virtual_File)
+   is
    begin
       if File /= No_File then
          declare
@@ -89,10 +90,9 @@ package body Outline_View_Provider_Semantic_Trees is
    -- Support_Language --
    ----------------------
 
-   overriding function Support_Language
-     (Self : access Semantic_Provider;
-      Lang : Language_Access)
-      return Boolean
+   overriding
+   function Support_Language
+     (Self : access Semantic_Provider; Lang : Language_Access) return Boolean
    is
       pragma Unreferenced (Self, Lang);
    begin
@@ -103,7 +103,8 @@ package body Outline_View_Provider_Semantic_Trees is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Semantic_Tree_Updated;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File)
@@ -197,14 +198,13 @@ package body Outline_View_Provider_Semantic_Trees is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module (Kernel : Kernel_Handle)
-   is
+   procedure Register_Module (Kernel : Kernel_Handle) is
       Provider : constant Semantic_Provider_Access :=
         new Semantic_Provider'(Kernel => Kernel);
    begin
       Semantic_Tree_Updated_Hook.Add
-        (new On_Semantic_Tree_Updated'(
-         File_Hooks_Function with Provider => Provider));
+        (new On_Semantic_Tree_Updated'
+           (File_Hooks_Function with Provider => Provider));
       Outline_View.Set_Default_Provider (Outline_Provider_Access (Provider));
    end Register_Module;
 

@@ -16,70 +16,71 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers;
-with Ada.Strings.Maps.Constants;            use Ada.Strings.Maps.Constants;
+with Ada.Strings.Maps.Constants; use Ada.Strings.Maps.Constants;
 
 with Gdk.RGBA;
-with Glib;                                  use Glib;
-with Glib.Values;                           use Glib.Values;
-with Glib_Values_Utils;                     use Glib_Values_Utils;
-with Gtk.Box;                               use Gtk.Box;
-with Gtk.Cell_Renderer_Pixbuf;              use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Progress;            use Gtk.Cell_Renderer_Progress;
-with Gtk.Cell_Renderer_Text;                use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                             use Gtk.Enums;
-with Pango.Layout;                          use Pango.Layout;
+with Glib;                       use Glib;
+with Glib.Values;                use Glib.Values;
+with Glib_Values_Utils;          use Glib_Values_Utils;
+with Gtk.Box;                    use Gtk.Box;
+with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Progress; use Gtk.Cell_Renderer_Progress;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                  use Gtk.Enums;
+with Pango.Layout;               use Pango.Layout;
 
-with Default_Preferences;                   use Default_Preferences;
-with Dialog_Utils;                          use Dialog_Utils;
-with GPS.Kernel.Preferences;                use GPS.Kernel.Preferences;
-with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
-with String_Utils;                          use String_Utils;
-with Filter_Panels;                         use Filter_Panels;
+with Default_Preferences;    use Default_Preferences;
+with Dialog_Utils;           use Dialog_Utils;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with String_Utils;           use String_Utils;
+with Filter_Panels;          use Filter_Panels;
 
 package body Memory_Usage_Views is
 
    Flash_Memory_Icon_Name : constant String := "gps-flash-memory-symbolic";
    --  Name of the icon representing flash memory
 
-   RAM_Memory_Icon_Name   : constant String := "gps-ram-memory-symbolic";
+   RAM_Memory_Icon_Name : constant String := "gps-ram-memory-symbolic";
    --  Name of the icon representing RAM memory
 
-   Icon_Column            : constant := 0;
+   Icon_Column : constant := 0;
    --  Column containing the name of the memory icon to display.
 
-   Name_Column            : constant := 1;
+   Name_Column : constant := 1;
    --  Column containing the name of the memory section.
 
-   Percentage_Column      : constant := 2;
+   Percentage_Column : constant := 2;
    --  Column containing the percentage of used memory for the given section.
 
    Percentage_Text_Column : constant := 3;
    --  Column containing the percentage in a text form so that it can be
    --  displayed in the progress bar.
 
-   Origin_Column          : constant := 4;
+   Origin_Column : constant := 4;
    --  Column containing the origin address of a given memory region/section
 
-   Bg_Color_Column        : constant := 5;
+   Bg_Color_Column : constant := 5;
    --  Column containing the background color of a given row in the memory
    --  usage tree view.
 
-   Name_Column_Min_Width  : constant := 100;
+   Name_Column_Min_Width : constant := 100;
    --  Minimum width of the name column
 
    Column_Types : constant GType_Array :=
-                    (Icon_Column            => GType_String,
-                     Name_Column            => GType_String,
-                     Percentage_Column      => GType_Int,
-                     Percentage_Text_Column => GType_String,
-                     Origin_Column          => GType_String,
-                     Bg_Color_Column        => Gdk.RGBA.Get_Type);
+     (Icon_Column            => GType_String,
+      Name_Column            => GType_String,
+      Percentage_Column      => GType_Int,
+      Percentage_Text_Column => GType_String,
+      Origin_Column          => GType_String,
+      Bg_Color_Column        => Gdk.RGBA.Get_Type);
 
    Show_Addresses : Boolean_Preference;
    --  Show the origin addresses in the memory usage tree view
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -88,14 +89,15 @@ package body Memory_Usage_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
       pragma Unreferenced (Self);
-      View : constant Memory_Usage_View := Memory_Usage_View
-        (Memory_Usage_MDI_Views.Retrieve_View (Kernel));
+      View : constant Memory_Usage_View :=
+        Memory_Usage_View (Memory_Usage_MDI_Views.Retrieve_View (Kernel));
    begin
       if View /= null and then Pref /= null then
          View.Col_Addresses.Set_Visible (Show_Addresses.Get_Pref);
@@ -106,8 +108,7 @@ package body Memory_Usage_Views is
    -- On_Init --
    -------------
 
-   procedure On_Init
-     (Self : not null access Memory_Usage_View_Record'Class) is
+   procedure On_Init (Self : not null access Memory_Usage_View_Record'Class) is
       pragma Unreferenced (Self);
    begin
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
@@ -130,9 +131,7 @@ package body Memory_Usage_Views is
      (Self : not null access Memory_Usage_Tree_View_Record'Class;
       Row  : Gtk_Tree_Iter) return String is
    begin
-      return Get_String_From_Iter
-        (Tree_Model => +Self.Model,
-         Iter       => Row);
+      return Get_String_From_Iter (Tree_Model => +Self.Model, Iter => Row);
    end Get_ID;
 
    -------------
@@ -146,8 +145,8 @@ package body Memory_Usage_Views is
       use Ada.Containers;
 
       Dummy        : constant Expansions.Detached_Model :=
-                       Expansions.Detach_Model_From_View
-                         (Self.Memory_Tree, Save_Expansion => True);
+        Expansions.Detach_Model_From_View
+          (Self.Memory_Tree, Save_Expansion => True);
       Region_Iter  : Gtk_Tree_Iter;
       Section_Iter : Gtk_Tree_Iter;
       Module_Iter  : Gtk_Tree_Iter;
@@ -179,9 +178,11 @@ package body Memory_Usage_Views is
       function Get_Icon_Name
         (Memory_Region_Name : Unbounded_String) return String is
       begin
-         if Index (Memory_Region_Name,
-                   Pattern => "RAM",
-                   Mapping => Ada.Strings.Maps.Constants.Upper_Case_Map) /= 0
+         if Index
+              (Memory_Region_Name,
+               Pattern => "RAM",
+               Mapping => Ada.Strings.Maps.Constants.Upper_Case_Map)
+           /= 0
          then
             return RAM_Memory_Icon_Name;
          else
@@ -222,12 +223,13 @@ package body Memory_Usage_Views is
             Values =>
               (Name_Column            => As_String (Name),
                Percentage_Column      => As_Int (Percent),
-               Percentage_Text_Column => As_String
-                 (Format_Bytes (Used_Size) & " / "
-                  & (if Length = Float'Last then
-                       "unknown"
-                    else
-                       Format_Bytes (Length))),
+               Percentage_Text_Column =>
+                 As_String
+                   (Format_Bytes (Used_Size)
+                    & " / "
+                    & (if Length = Float'Last
+                       then "unknown"
+                       else Format_Bytes (Length))),
                Origin_Column          => As_String (Origin)));
 
          --  Display the row in red if the memory usage percentage is higher
@@ -252,13 +254,19 @@ package body Memory_Usage_Views is
         (Module : Module_Description) return String is
       begin
          if Module.Lib_File = No_File then
-            return Module.Obj_File.Display_Base_Name & ASCII.LF
+            return
+              Module.Obj_File.Display_Base_Name
+              & ASCII.LF
               & "<span foreground=""#8c8c8c"" size=""x-small"">"
-              & Module.Obj_File.Display_Full_Name & "</span>";
+              & Module.Obj_File.Display_Full_Name
+              & "</span>";
          else
-            return Module.Obj_File.Display_Base_Name & ASCII.LF
+            return
+              Module.Obj_File.Display_Base_Name
+              & ASCII.LF
               & "<span foreground=""#8c8c8c"" size=""x-small"">"
-              & Module.Lib_File.Display_Full_Name & "</span>";
+              & Module.Lib_File.Display_Full_Name
+              & "</span>";
          end if;
       end Get_Markup_For_Module;
 
@@ -434,21 +442,21 @@ package body Memory_Usage_Views is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Memory_Usage_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access Memory_Usage_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu
-        (Menu   => Menu,
-         Kernel => View.Kernel,
-         Pref   => Show_Addresses);
+        (Menu => Menu, Kernel => View.Kernel, Pref => Show_Addresses);
    end Create_Menu;
 
    --------------------
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Memory_Usage_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
@@ -466,7 +474,8 @@ package body Memory_Usage_Views is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Memory_Usage_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access) is
    begin
@@ -479,7 +488,8 @@ package body Memory_Usage_Views is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self       : not null access Memory_Usage_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean is
    begin
@@ -503,10 +513,11 @@ package body Memory_Usage_Views is
    procedure Register_Module
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Show_Addresses := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("memory-usage-view-show-addresses",
-         Default => False,
-         Label   => "Show addresses");
+      Show_Addresses :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("memory-usage-view-show-addresses",
+           Default => False,
+           Label   => "Show addresses");
    end Register_Module;
 
 end Memory_Usage_Views;

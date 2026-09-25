@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.RGBA;                 use Gdk.RGBA;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with Gdk.RGBA;    use Gdk.RGBA;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
 
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
@@ -39,14 +39,16 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Style  : String := "";
       Number : Natural := 1) return Editor_Mark'Class is
    begin
-      return Add_Special_Line
-        (This       => Buffer,
-         Start_Line => Integer (Pos),
-         Text       => (1 .. Number - 1 => ASCII.LF),
-         Style      => Get_Style_Manager (Kernel_Handle (Kernel)).Get (Style),
-         Name       => "",
-         Column_Id  => "",
-         Info       => null);
+      return
+        Add_Special_Line
+          (This       => Buffer,
+           Start_Line => Integer (Pos),
+           Text       => (1 .. Number - 1 => ASCII.LF),
+           Style      =>
+             Get_Style_Manager (Kernel_Handle (Kernel)).Get (Style),
+           Name       => "",
+           Column_Id  => "",
+           Info       => null);
    end Add_Line;
 
    ------------------------
@@ -61,7 +63,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Buffer : constant Editor_Buffer'Class := Mark.Location (False).Buffer;
    begin
       Remove_Special_Lines
-         (GPS_Editor_Buffer'Class (Buffer), Mark, Integer'Last);
+        (GPS_Editor_Buffer'Class (Buffer), Mark, Integer'Last);
    end Remove_Blank_Lines;
 
    ----------
@@ -172,13 +174,13 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Start_C : Integer := -1;
       End_C   : Integer := -1)
    is
-      CL : Arg_List;
+      CL                   : Arg_List;
       Args_Highlight_Range : GNAT.OS_Lib.Argument_List :=
-                               (1 => new String'(+Full_Name (File)),
-                                2 => new String'(Style),
-                                3 => new String'(Image (Line)),
-                                4 => new String'("-1"),
-                                5 => new String'("-1"));
+        (1 => new String'(+Full_Name (File)),
+         2 => new String'(Style),
+         3 => new String'(Image (Line)),
+         4 => new String'("-1"),
+         5 => new String'("-1"));
 
    begin
       CL := Create ("Editor.highlight_range");
@@ -193,7 +195,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
             Append_Argument (CL, "-1", One_Arg);
          end if;
 
-         if End_C >= 0  and then Start_C >= 0 then
+         if End_C >= 0 and then Start_C >= 0 then
             Append_Argument (CL, Image (End_C), One_Arg);
          else
             Append_Argument (CL, "-1", One_Arg);
@@ -211,12 +213,12 @@ package body Vdiff2_Module.Utils.Shell_Command is
    procedure Register_Highlighting
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      CL : Arg_List;
-      Default_Color      : constant String  := Side_Default_Color.Get_Pref;
-      Append_Color       : constant String  := Side_Append_Color.Get_Pref;
-      Remove_Color       : constant String  := Side_Remove_Color.Get_Pref;
-      Change_Color       : constant String  := Side_Change_Color.Get_Pref;
-      Change_Fine_Color  : constant String  :=
+      CL                : Arg_List;
+      Default_Color     : constant String := Side_Default_Color.Get_Pref;
+      Append_Color      : constant String := Side_Append_Color.Get_Pref;
+      Remove_Color      : constant String := Side_Remove_Color.Get_Pref;
+      Change_Color      : constant String := Side_Change_Color.Get_Pref;
+      Change_Fine_Color : constant String :=
         To_String (Shade_Or_Lighten (Side_Change_Color.Get_Pref));
 
    begin
@@ -338,7 +340,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
             Append_Argument (CL, "-1", One_Arg);
          end if;
 
-         if End_C >= 0  and then Start_C >= 0 then
+         if End_C >= 0 and then Start_C >= 0 then
             Append_Argument (CL, Image (End_C), One_Arg);
          else
             Append_Argument (CL, "-1", One_Arg);

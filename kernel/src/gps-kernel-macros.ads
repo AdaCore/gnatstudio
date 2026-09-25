@@ -72,28 +72,50 @@ package GPS.Kernel.Macros is
 private
    LF  : constant Character := ASCII.LF;
    Doc : constant String :=
-      Shared_Macros.Doc & LF
-      & LF & "Current Context Information" & LF
-      & "%d       directory (of current file,...)" & LF
-      & "%dk      krunched directory" & LF
-      & "%e       entity name" & LF
-      & "%ef      entity name, with indicator if xref is not up-to-date" & LF
-      & "%s       entity name (if available) or current selection" & LF
-      & "%S       entity name, current selection or current expression" & LF
-      & "%l       line number" & LF
-      & "%c       column number" & LF
-      & "%a       category of current message (in Locations window)" & LF
-      & "%i       name of importing project (in Project view)" & LF
-      & "%ts      short title for the current window" & LF
-      & "%tl      long title for the current window" & LF
+     Shared_Macros.Doc
+     & LF
+     & LF
+     & "Current Context Information"
+     & LF
+     & "%d       directory (of current file,...)"
+     & LF
+     & "%dk      krunched directory"
+     & LF
+     & "%e       entity name"
+     & LF
+     & "%ef      entity name, with indicator if xref is not up-to-date"
+     & LF
+     & "%s       entity name (if available) or current selection"
+     & LF
+     & "%S       entity name, current selection or current expression"
+     & LF
+     & "%l       line number"
+     & LF
+     & "%c       column number"
+     & LF
+     & "%a       category of current message (in Locations window)"
+     & LF
+     & "%i       name of importing project (in Project view)"
+     & LF
+     & "%ts      short title for the current window"
+     & LF
+     & "%tl      long title for the current window"
+     & LF
 
-      & LF & "System Information" & LF
-      & "%rbl     name of the remote build host (or 'localhost')" & LF
-      & "%GS      user's directory to store GNAT Studio settings" & LF
-      & "%system_bin_dir GNAT Studio install prefix" & LF
-      & "%gnat    name of the GNAT driver to use" & LF
-      & "%target  switch --target= to pass to various tools" & LF
-      & "%(env:X) value of an enviroment variable with name X";
+     & LF
+     & "System Information"
+     & LF
+     & "%rbl     name of the remote build host (or 'localhost')"
+     & LF
+     & "%GS      user's directory to store GNAT Studio settings"
+     & LF
+     & "%system_bin_dir GNAT Studio install prefix"
+     & LF
+     & "%gnat    name of the GNAT driver to use"
+     & LF
+     & "%target  switch --target= to pass to various tools"
+     & LF
+     & "%(env:X) value of an enviroment variable with name X";
 
    type Requirements is record
       File        : Boolean := False;
@@ -112,11 +134,12 @@ private
    type Macro_Filter_Record is new GPS.Kernel.Action_Filter_Record with record
       Requires : Requirements;
    end record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Macro_Filter_Record;
-      Context : Selection_Context) return Boolean;
-   overriding function Get_Debug_Name
-     (Filter  : access Macro_Filter_Record) return String;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Macro_Filter_Record; Context : Selection_Context)
+      return Boolean;
+   overriding
+   function Get_Debug_Name (Filter : access Macro_Filter_Record) return String;
    --  See doc for inherited subprogram
 
 end GPS.Kernel.Macros;

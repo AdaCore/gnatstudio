@@ -25,18 +25,18 @@ package DAP.Requests.Scopes is
 
    type Scopes_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.ScopesRequest :=
-        DAP.Tools.ScopesRequest'
-          (seq       => 0,
-           arguments => <>);
+        DAP.Tools.ScopesRequest'(seq => 0, arguments => <>);
    end record;
 
    type Scopes_DAP_Request_Access is access all Scopes_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Scopes_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Scopes_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -47,14 +47,14 @@ package DAP.Requests.Scopes is
      (Self        : in out Scopes_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ScopesResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Scopes_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Scopes_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Scopes_DAP_Request)
-      return String is ("scopes");
+   overriding
+   function Method (Self : in out Scopes_DAP_Request) return String
+   is ("scopes");
 
 end DAP.Requests.Scopes;

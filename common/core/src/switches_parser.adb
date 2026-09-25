@@ -18,9 +18,9 @@
 with XML_Utils; use XML_Utils;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with String_Utils; use String_Utils;
+with String_Utils;            use String_Utils;
 
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Switches_Parser is
    Me : constant Trace_Handle := Create ("GPS.COMMON.SWITCHES");
@@ -54,9 +54,8 @@ package body Switches_Parser is
       --  Size of the grid for this tool.
 
       Char        : constant String :=
-                      Get_Attribute_S (Node, "switch_char", "-");
-      Default_Sep : constant String :=
-                      Get_Attribute_S (Node, "separator", "");
+        Get_Attribute_S (Node, "switch_char", "-");
+      Default_Sep : constant String := Get_Attribute_S (Node, "separator", "");
 
       Scrolled_Window   : Boolean;
       Show_Command_Line : Boolean;
@@ -71,16 +70,16 @@ package body Switches_Parser is
       --  Return the tip attribute if it exists, or the value of the tip
       --  child, or an empty string.
 
-      procedure Process_Title_Node      (N : Node_Ptr; Popup : Popup_Index);
-      procedure Process_Check_Node      (N : Node_Ptr; Popup : Popup_Index);
-      procedure Process_Spin_Node       (N : Node_Ptr; Popup : Popup_Index);
-      procedure Process_Field_Node      (N : Node_Ptr; Popup : Popup_Index);
-      procedure Process_Radio_Node      (N : Node_Ptr; Popup : Popup_Index);
-      procedure Process_Combo_Node      (N : Node_Ptr; Popup : Popup_Index);
-      procedure Process_Popup_Node      (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Title_Node (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Check_Node (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Spin_Node (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Field_Node (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Radio_Node (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Combo_Node (N : Node_Ptr; Popup : Popup_Index);
+      procedure Process_Popup_Node (N : Node_Ptr; Popup : Popup_Index);
       procedure Process_Dependency_Node (N : Node_Ptr);
       procedure Process_Default_Value_Dependency_Node (N : Node_Ptr);
-      procedure Process_Expansion_Node  (N : Node_Ptr);
+      procedure Process_Expansion_Node (N : Node_Ptr);
       procedure Process_Hidden_Node (N : Node_Ptr);
       --  Process a child node (resp. <title>, <check>, <spin>, <radio>,
       --  <combo>, <popup>, <dependency>, <expansion>, <hidden>)
@@ -92,9 +91,7 @@ package body Switches_Parser is
       --  Return the contents of all the <radio-entry> and
       --  <combo-entry> nodes of Parent.
 
-      procedure Parse_Popup_Or_Main
-        (N     : Node_Ptr;
-         Popup : Popup_Index);
+      procedure Parse_Popup_Or_Main (N : Node_Ptr; Popup : Popup_Index);
       --  Parse the subnodes of <switches>
 
       procedure Log_Error (S : String);
@@ -115,8 +112,8 @@ package body Switches_Parser is
             if Is_Blank (Switch (S)) then
                Log_Error
                  (-("Attribute switch cannot contain spaces. Use the separator"
-                  & " attribute if you need to separate the switch and its"
-                  & " argument"));
+                    & " attribute if you need to separate the switch and its"
+                    & " argument"));
                return True;
             end if;
          end loop;
@@ -127,14 +124,13 @@ package body Switches_Parser is
       -- Coordinates_From_Node --
       ---------------------------
 
-      procedure Coordinates_From_Node
-        (N : Node_Ptr; Line, Col : out Natural)
+      procedure Coordinates_From_Node (N : Node_Ptr; Line, Col : out Natural)
       is
       begin
          Line := Safe_Value (Get_Attribute_S (N, "line", "1"));
          Lines := Integer'Max (Lines, Line);
 
-         Col  := Safe_Value (Get_Attribute_S (N, "column", "1"));
+         Col := Safe_Value (Get_Attribute_S (N, "column", "1"));
          Columns := Integer'Max (Columns, Col);
       end Coordinates_From_Node;
 
@@ -145,9 +141,9 @@ package body Switches_Parser is
       procedure Process_Title_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
          Line_Span : constant Integer :=
-                       Safe_Value (Get_Attribute_S (N, "line-span", "1"));
+           Safe_Value (Get_Attribute_S (N, "line-span", "1"));
          Col_Span  : constant Integer :=
-                       Safe_Value (Get_Attribute_S (N, "column-span", "1"));
+           Safe_Value (Get_Attribute_S (N, "column-span", "1"));
       begin
          Coordinates_From_Node (N, Line, Col);
          Set_Frame_Title
@@ -175,9 +171,9 @@ package body Switches_Parser is
       begin
          if Master_Switch = "" or else Slave_Switch = "" then
             Log_Error
-              (-("Invalid <default-value-dependency> node in custom file," &
-                     " attributes master-switch and slave-switch must be " &
-                     "specified."));
+              (-("Invalid <default-value-dependency> node in custom file,"
+                 & " attributes master-switch and slave-switch must be "
+                 & "specified."));
             return;
          end if;
 
@@ -215,7 +211,7 @@ package body Switches_Parser is
          then
             Log_Error
               (-("Invalid <dependency> node in custom file,"
-               & " all attributes must be specified."));
+                 & " all attributes must be specified."));
             return;
          end if;
 
@@ -232,7 +228,7 @@ package body Switches_Parser is
             if Config = null then
                Log_Error
                  (-("<dependency> node in custom file references"
-                  & " unknown tool: ")
+                    & " unknown tool: ")
                   & Master_Page);
                return;
             end if;
@@ -254,8 +250,7 @@ package body Switches_Parser is
       -------------------------------
 
       procedure Process_Radio_Entry_Nodes
-        (Parent : Node_Ptr;
-         Radio  : Radio_Switch)
+        (Parent : Node_Ptr; Radio : Radio_Switch)
       is
          N : Node_Ptr := Parent.Child;
       begin
@@ -269,7 +264,7 @@ package body Switches_Parser is
                   if Label = "" then
                      Log_Error
                        (-("Invalid <radio-entry> node in custom file,"
-                        & " requires a label and a switch attributes"));
+                          & " requires a label and a switch attributes"));
                      return;
                   end if;
 
@@ -325,7 +320,7 @@ package body Switches_Parser is
                   if Label = "" or else Value = "" then
                      Log_Error
                        (-("Invalid <combo-entry> node in custom file,"
-                        & " requires a label and a switch attributes"));
+                          & " requires a label and a switch attributes"));
                      return Buttons (1 .. 0);
                   end if;
 
@@ -356,16 +351,17 @@ package body Switches_Parser is
          if Label = "" then
             Log_Error
               (-("Invalid <radio> node in custom file,"
-               & " requires a label attribute"));
+                 & " requires a label attribute"));
          end if;
 
-         R := Add_Radio
-           (Config => Current_Tool_Config,
-            Label  => Label,
-            Tip    => Tip,
-            Line   => Line,
-            Column => Col,
-            Popup  => Popup);
+         R :=
+           Add_Radio
+             (Config => Current_Tool_Config,
+              Label  => Label,
+              Tip    => Tip,
+              Line   => Line,
+              Column => Col,
+              Popup  => Popup);
          Process_Radio_Entry_Nodes (N, R);
       end Process_Radio_Node;
 
@@ -374,33 +370,32 @@ package body Switches_Parser is
       ------------------------
 
       procedure Process_Popup_Node (N : Node_Ptr; Popup : Popup_Index) is
-         Line, Col : Natural;
-         Label     : constant String := Get_Attribute_S (N, "label");
-         Pop       : Popup_Index;
-         Saved_Lines : constant Integer := Lines;
+         Line, Col     : Natural;
+         Label         : constant String := Get_Attribute_S (N, "label");
+         Pop           : Popup_Index;
+         Saved_Lines   : constant Integer := Lines;
          Saved_Columns : constant Integer := Columns;
       begin
          Coordinates_From_Node (N, Line, Col);
          if Label = "" then
             Log_Error
               (-("Invalid <popup> node in custom file,"
-               & " requires a label attributes"));
+                 & " requires a label attributes"));
             return;
          end if;
 
          Lines := 1;
          Columns := 1;
 
-         Pop := Add_Popup
-           (Config  => Current_Tool_Config,
-            Label   => Label,
-            Line    => Line,
-            Column  => Col,
-            Popup   => Popup);
+         Pop :=
+           Add_Popup
+             (Config => Current_Tool_Config,
+              Label  => Label,
+              Line   => Line,
+              Column => Col,
+              Popup  => Popup);
 
-         Parse_Popup_Or_Main
-           (N     => N,
-            Popup => Pop);
+         Parse_Popup_Or_Main (N => N, Popup => Pop);
 
          Current_Tool_Config.Set_Size (Lines, Columns, For_Popup => Pop);
          Lines := Saved_Lines;
@@ -422,7 +417,7 @@ package body Switches_Parser is
          if Switch = "" then
             Log_Error
               (-("Invalid <combo> node in custom file, requires"
-               & " a switch attributes"));
+                 & " a switch attributes"));
             return;
          end if;
 
@@ -456,8 +451,9 @@ package body Switches_Parser is
 
       begin
          if Switch = "" then
-            Log_Error (-("Invalid <hidden> node in custom file,"
-                       & " 'switch' attribute is required"));
+            Log_Error
+              (-("Invalid <hidden> node in custom file,"
+                 & " 'switch' attribute is required"));
             return;
          end if;
 
@@ -486,7 +482,7 @@ package body Switches_Parser is
          if Label = "" or else Switch = "" then
             Log_Error
               (-("Invalid <field> node in custom file, requires"
-               & " a label and a switch attributes"));
+                 & " a label and a switch attributes"));
             return;
          end if;
 
@@ -518,7 +514,7 @@ package body Switches_Parser is
       -- Process_Spin_Node --
       -----------------------
 
-      procedure Process_Spin_Node  (N : Node_Ptr; Popup : Popup_Index) is
+      procedure Process_Spin_Node (N : Node_Ptr; Popup : Popup_Index) is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute_S (N, "label");
          Switch    : constant String := Get_Attribute_S (N, "switch");
@@ -529,7 +525,7 @@ package body Switches_Parser is
          if Label = "" or else Switch = "" then
             Log_Error
               (-("Invalid <spin> node in custom file, requires"
-               & " a label and a switch attributes"));
+                 & " a label and a switch attributes"));
             return;
          end if;
 
@@ -564,11 +560,10 @@ package body Switches_Parser is
          Switch        : constant String := Get_Attribute_S (N, "switch");
          Filter        : constant String := Get_Attribute_S (N, "filter");
          Active_State  : constant String :=
-                           Get_Attribute_S (N, "active", "on");
-         Switch_Unset  : constant String :=
-                           Get_Attribute_S (N, "switch-off");
+           Get_Attribute_S (N, "active", "on");
+         Switch_Unset  : constant String := Get_Attribute_S (N, "switch-off");
          Default       : constant String :=
-                           To_Lower (Get_Attribute_S (N, "default", "off"));
+           To_Lower (Get_Attribute_S (N, "default", "off"));
          Default_State : Boolean;
          Active        : Boolean;
       begin
@@ -577,7 +572,7 @@ package body Switches_Parser is
          if Label = "" or else Switch = "" then
             Log_Error
               (-("Invalid <check> node in custom file, requires"
-               & " a label and a switch attributes"));
+                 & " a label and a switch attributes"));
             return;
          end if;
 
@@ -585,20 +580,17 @@ package body Switches_Parser is
             return;
          end if;
 
-         if Default = "off"
-           or else Default = "false"
-         then
+         if Default = "off" or else Default = "false" then
             Default_State := False;
-         elsif Default = "on"
-           or else Default = "true"
-         then
+         elsif Default = "on" or else Default = "true" then
             Default_State := True;
          else
             Log_Error
-              (-("Invalid <switch> node in custom file: the " &
-               """default"" attribute can only take the values " &
-               "'on', 'true', 'off' or 'false'. " &
-               "The value found is: ") & Default);
+              (-("Invalid <switch> node in custom file: the "
+                 & """default"" attribute can only take the values "
+                 & "'on', 'true', 'off' or 'false'. "
+                 & "The value found is: ")
+               & Default);
             return;
          end if;
 
@@ -608,10 +600,11 @@ package body Switches_Parser is
             Active := True;
          else
             Log_Error
-              (-("Invalid <switch> node in custom file: the " &
-               """active"" attribute can only take the values " &
-               "'on', 'off'. " &
-               "The value found is: ") & Default);
+              (-("Invalid <switch> node in custom file: the "
+                 & """active"" attribute can only take the values "
+                 & "'on', 'off'. "
+                 & "The value found is: ")
+               & Default);
             return;
          end if;
 
@@ -664,7 +657,7 @@ package body Switches_Parser is
          if Switch = "" then
             Log_Error
               (-("Invalid <expansion> node in custom file, requires"
-               & " a switch attributes"));
+                 & " a switch attributes"));
             return;
          end if;
 
@@ -675,7 +668,7 @@ package body Switches_Parser is
          if Alias = "" then
             Define_Prefix (Current_Tool_Config, Prefix => Switch);
          else
-            Define_Alias  (Current_Tool_Config, Switch, Alias);
+            Define_Alias (Current_Tool_Config, Switch, Alias);
          end if;
       end Process_Expansion_Node;
 
@@ -683,10 +676,7 @@ package body Switches_Parser is
       -- Parse_Popup_Or_Main --
       -------------------------
 
-      procedure Parse_Popup_Or_Main
-        (N     : Node_Ptr;
-         Popup : Popup_Index)
-      is
+      procedure Parse_Popup_Or_Main (N : Node_Ptr; Popup : Popup_Index) is
          N2 : Node_Ptr := N.Child;
       begin
          while N2 /= null loop
@@ -715,8 +705,7 @@ package body Switches_Parser is
                Process_Hidden_Node (N2);
             else
                Log_Error
-                 (-"Invalid xml tag child for <switches>: "
-                  & N2.Tag.all);
+                 (-"Invalid xml tag child for <switches>: " & N2.Tag.all);
             end if;
 
             N2 := N2.Next;
@@ -733,13 +722,15 @@ package body Switches_Parser is
          end loop;
 
       exception
-         when E : others => Trace (Me, E);
+         when E : others =>
+            Trace (Me, E);
       end Parse_Popup_Or_Main;
 
    begin
       begin
-         Scrolled_Window := Boolean'Value
-           (Get_Attribute_S (Node, "use_scrolled_window", "false"));
+         Scrolled_Window :=
+           Boolean'Value
+             (Get_Attribute_S (Node, "use_scrolled_window", "false"));
       exception
          when Constraint_Error =>
             Log_Error
@@ -749,8 +740,8 @@ package body Switches_Parser is
       end;
 
       begin
-         Show_Command_Line := Boolean'Value
-           (Get_Attribute_S (Node, "show_command_line", "true"));
+         Show_Command_Line :=
+           Boolean'Value (Get_Attribute_S (Node, "show_command_line", "true"));
       exception
          when Constraint_Error =>
             Log_Error
@@ -759,12 +750,13 @@ package body Switches_Parser is
             Show_Command_Line := True;
       end;
 
-      Current_Tool_Config := Create
-        (Default_Separator => Default_Sep,
-         Switch_Char       => Char (Char'First),
-         Scrolled_Window   => Scrolled_Window,
-         Show_Command_Line => Show_Command_Line,
-         Sections          => Get_Attribute_S (Node, "sections"));
+      Current_Tool_Config :=
+        Create
+          (Default_Separator => Default_Sep,
+           Switch_Char       => Char (Char'First),
+           Scrolled_Window   => Scrolled_Window,
+           Show_Command_Line => Show_Command_Line,
+           Sections          => Get_Attribute_S (Node, "sections"));
 
       Parse_Popup_Or_Main (Node, Main_Window);
 

@@ -25,9 +25,8 @@ with Vdiff2_Command;       use Vdiff2_Command;
 
 package Vdiff2_Command_Block is
 
-   type Handler_Action is access procedure
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head);
+   type Handler_Action is
+     access procedure (Kernel : Kernel_Handle; Diff : access Diff_Head);
    --  Is an access for the action executed by an Diff_Command_block
 
    type Diff_Command_Block is new Diff_Command with record
@@ -44,42 +43,37 @@ package Vdiff2_Command_Block is
    --  Create a command with all required information
 
    procedure Unchecked_Execute
-     (Command : access Diff_Command_Block;
-      Diff    : access Diff_Head);
+     (Command : access Diff_Command_Block; Diff : access Diff_Head);
    --  Execute the command Command without control of existence in diff list
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Block;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Block) return Command_Return_Type;
    --  Execute the command Command
    --  Search in the global List of Diff the current diff and apply Action on
    --  it
 
    procedure Reload_Difference
-     (Kernel : Kernel_Handle;
-      Item   : access Diff_Head);
+     (Kernel : Kernel_Handle; Item : access Diff_Head);
    --  Remove the highlighting, recalculate differences and show difference
 
    procedure Remove_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head);
+     (Kernel : Kernel_Handle; Diff : access Diff_Head);
    --  Remove the highlighting, and free the memory associated with Diff_list
 
    procedure Close_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head);
+     (Kernel : Kernel_Handle; Diff : access Diff_Head);
    --  Close the current difference
 
    procedure Unhighlight_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head);
+     (Kernel : Kernel_Handle; Diff : access Diff_Head);
    --  Remove the highlighting from all file of diff
 
-   procedure Change_Ref_File
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head);
+   procedure Change_Ref_File (Kernel : Kernel_Handle; Diff : access Diff_Head);
 
 end Vdiff2_Command_Block;

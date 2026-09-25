@@ -19,7 +19,7 @@
 --  facility module. GUI independent commands only.
 --  See Builder_Facility_Module for a global description.
 
-with GPS.Core_Kernels;           use GPS.Core_Kernels;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package Commands.Builder.Scripts is
 

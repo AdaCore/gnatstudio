@@ -52,11 +52,11 @@ package Commands is
       Activity : Progress_Activity := Unknown;
       --  The current activity type
 
-      Current  : Natural := 0;
+      Current : Natural := 0;
       --  The current progress indicator. When Current = Total, the command
       --  is assumed to be finished.
 
-      Total    : Natural := 1;
+      Total : Natural := 1;
       --  The total progress indicator
    end record;
 
@@ -65,29 +65,24 @@ package Commands is
    --  command.
 
    function Get_Label (Self : access Root_Command) return String
-     is (Root_Command'Class (Self.all).Name);
+   is (Root_Command'Class (Self.all).Name);
    --  Return text of label to be used in UI. Label may be changed at any time.
 
-   procedure Set_Label
-     (Command : in out Root_Command;
-      To      : String) is null;
+   procedure Set_Label (Command : in out Root_Command; To : String) is null;
    --  Sets text of the label when derived type supports it. Do nothing by
    --  default.
 
    function Get_Idle_Label (Command : access Root_Command) return String;
    --  Return the text to be displayed when the Command is idle/waiting
 
-   procedure Set_Idle_Label
-     (Command : access Root_Command;
-      To      : String);
+   procedure Set_Idle_Label (Command : access Root_Command; To : String);
    --  Sets text of the idle label.
 
    function Progress (Command : access Root_Command) return Progress_Record;
    --  Return the current progress of the command
 
    procedure Set_Progress
-     (Command  : access Root_Command;
-      Progress : Progress_Record);
+     (Command : access Root_Command; Progress : Progress_Record);
    --  Set the progress of Command
 
    procedure Interrupt (Command : in out Root_Command) is null;
@@ -103,10 +98,10 @@ package Commands is
       Execute_Again
       --  The command should be executed again as soon as possible. This value
       --  might also means that the command has never been executed.
-      );
+     );
 
-   function Execute
-     (Command : access Root_Command) return Command_Return_Type is abstract;
+   function Execute (Command : access Root_Command) return Command_Return_Type
+   is abstract;
    --  Executes Command. Return value indicates whether the operation was
    --  successful.
    --  IMPORTANT: every implementation for Execute must guarantee
@@ -130,7 +125,7 @@ package Commands is
    procedure Give_Up_Ownership (X : in out Root_Command) is null;
    --  Only free memory allocated by Ada associated to X.
 
-   procedure Ref   (Command : access Root_Command'Class);
+   procedure Ref (Command : access Root_Command'Class);
    procedure Unref (Command : in out Command_Access);
    --  This temporarily prevent freeing the command because it might still be
    --  in use (in particular this is used for global commands used in actions
@@ -152,8 +147,7 @@ package Commands is
    -------------------------
 
    procedure Launch_Synchronous
-     (Command : access Root_Command'Class;
-      Wait    : Duration := 0.0);
+     (Command : access Root_Command'Class; Wait : Duration := 0.0);
    --  Launch Command then return.
    --  If Wait is non-null, delay Wait milliseconds between each execution.
    --  This can be used when the command executes an external process, to give
@@ -220,8 +214,7 @@ package Commands is
    procedure End_Group (Q : Command_Queue);
    --  Ends grouping of commands
 
-   type Group_Block is limited private
-     with Warnings => Off;
+   type Group_Block is limited private with Warnings => Off;
    --  Deactivate warnings so we can use it as a declare block guard without
    --  using it.
 
@@ -247,8 +240,7 @@ package Commands is
    --  New_Group or Current_Group.
 
    procedure Enqueue
-     (Queue         : Command_Queue;
-      Action        : access Root_Command'Class);
+     (Queue : Command_Queue; Action : access Root_Command'Class);
    --  Adds Action to the Queue, and start executing the command immediately
    --  if the queue is empty, or after all commands already in the queue.
    --  The execution is by default synchronous, ie this call will only return
@@ -281,9 +273,7 @@ package Commands is
    --  the Queue are empty.
 
    procedure Add_Queue_Change_Hook
-     (Queue      : Command_Queue;
-      Command    : Command_Access;
-      Identifier : String);
+     (Queue : Command_Queue; Command : Command_Access; Identifier : String);
    --  Set a command that will be executed every time the state of the queue
    --  changes.
    --  Command queue change hooks are associated to an identifier.
@@ -301,26 +291,21 @@ package Commands is
    --  These functions are useful for debugging purposes, but should not be
    --  called in production.
 
-   function Debug_Get_Undo_Queue
-     (Q : Command_Queue) return Command_Lists.List;
+   function Debug_Get_Undo_Queue (Q : Command_Queue) return Command_Lists.List;
    --  Return the undo queue
 
-   function Debug_Get_Redo_Queue
-     (Q : Command_Queue) return Command_Lists.List;
+   function Debug_Get_Redo_Queue (Q : Command_Queue) return Command_Lists.List;
    --  Return the redo queue
 
-   function Debug_Get_Group
-     (C : Command_Access) return Natural;
+   function Debug_Get_Group (C : Command_Access) return Natural;
    --  Return the command's action group
 
 private
 
-   function Get_Previous_Command (Queue : Command_Queue)
-     return Command_Access;
+   function Get_Previous_Command (Queue : Command_Queue) return Command_Access;
    --  Return the previous command that was executed
 
-   function Get_Next_Command (Queue : Command_Queue)
-     return Command_Access;
+   function Get_Next_Command (Queue : Command_Queue) return Command_Access;
    --  Return the next command to be executed
 
    procedure Execute (Command : access Root_Command);
@@ -328,11 +313,9 @@ private
    --  return any value.
 
    procedure Command_Finished_Status
-     (Action  : access Root_Command'Class;
-      Success : in out Boolean);
+     (Action : access Root_Command'Class; Success : in out Boolean);
    procedure Command_Finished
-     (Action  : access Root_Command'Class;
-      Success : Boolean);
+     (Action : access Root_Command'Class; Success : Boolean);
    --  This procedure should be called every time the execution of a Command
    --  ends. This starts the execution of the next Command in Action.Queue.
    --  Action is the Action that has just finished. Success indicates
@@ -351,35 +334,35 @@ private
       Stored_Status       : Boolean := True;
       --  Status stored for a group fail set of actions
 
-      The_Queue           : Command_Lists.List;
+      The_Queue : Command_Lists.List;
 
-      Undo_Queue          : Command_Lists.List;
+      Undo_Queue : Command_Lists.List;
       --  This contains the actions that have already been done,
       --  in reverse chronological order (ie, most ancient actions are
       --  at the end of the queue, recent actions are prepended at the
       --  beginning).
 
-      Redo_Queue          : Command_Lists.List;
+      Redo_Queue : Command_Lists.List;
       --  This contains the actions that have been done and undone.
       --  (Again, most recent additions to this queue are at its
       --  beginning).
 
-      Queue_Change_Hook   : Identifier_And_Command_List.List;
+      Queue_Change_Hook : Identifier_And_Command_List.List;
       --  These are the actions that will be executed every time the state
       --  of the queue changes.
 
-      Position            : Integer := 0;
+      Position : Integer := 0;
       --  The position in the queue.
       --  Equal to 0 when the queue is empty, 1 is added every time a command
       --  from this queue is executed, and 1 is substracted every time a
       --  command from this queue is undone.
 
-      Group_Level         : Natural := 0;
+      Group_Level : Natural := 0;
       --  Indicates the current group level. 0 indicates that the commands
       --  are independant, >0 indicates that the commands being added to the
       --  queue are part of a group.
 
-      Current_Group_Number     : Natural := 0;
+      Current_Group_Number : Natural := 0;
       --  Indicates the number of the current group. This is used to
       --  distinguish between possible consecutive groups.
    end record;
@@ -387,9 +370,10 @@ private
    procedure Free_Queue (Q : in out Queue_Internal);
    --  Free memory associated to Q
 
-   package Command_Queues is new GNATCOLL.Refcount.Shared_Pointers
-     (Element_Type => Queue_Internal,
-      Release      => Free_Queue);
+   package Command_Queues is new
+     GNATCOLL.Refcount.Shared_Pointers
+       (Element_Type => Queue_Internal,
+        Release      => Free_Queue);
 
    type Command_Queue is record
       Ref : Command_Queues.Ref;
@@ -408,25 +392,25 @@ private
    --  it will go to the Undo_Queue and become Done again, and so on.
 
    type Root_Command is abstract tagged limited record
-      Queue              : Command_Queue;
-      Mode               : Command_Mode := Normal;
-      Group_Fail         : Boolean := False;
+      Queue      : Command_Queue;
+      Mode       : Command_Mode := Normal;
+      Group_Fail : Boolean := False;
 
-      Progress           : Progress_Record;
+      Progress : Progress_Record;
       --  The current progress of the command
 
-      Ref_Count          : Natural := 1;
+      Ref_Count : Natural := 1;
       --  Used to indicate that the command is currently being used
       --  and should not be freed. A command can only be freed when this is 0.
       --  Some global commands used in menus and actions have this increased
       --  by one, and some uses of commands might temporarily increase this
       --  count.
 
-      Group              : Natural := 0;
+      Group : Natural := 0;
       --  The group the command belongs to. 0 indicates that the command does
       --  not correspond to a group.
 
-      Idle_Label         : Ada.Strings.Unbounded.Unbounded_String;
+      Idle_Label : Ada.Strings.Unbounded.Unbounded_String;
       --  Label to display when the command is waiting/idle.
    end record;
 
@@ -439,9 +423,10 @@ private
       --  Whether to increment the group counter at creation and finalization
       --  of this block.
 
-      Already_Left       : Boolean := False;
+      Already_Left : Boolean := False;
       --  Whether we have already finalized this block
    end record;
-   overriding procedure Finalize (Self : in out Group_Block);
+   overriding
+   procedure Finalize (Self : in out Group_Block);
 
 end Commands;

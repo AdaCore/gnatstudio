@@ -25,18 +25,18 @@ package DAP.Requests.Cancel is
 
    type Cancel_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.CancelRequest :=
-        DAP.Tools.CancelRequest'
-          (seq       => 0,
-           arguments => (Is_Set => False));
+        DAP.Tools.CancelRequest'(seq => 0, arguments => (Is_Set => False));
    end record;
 
    type Cancel_DAP_Request_Access is access all Cancel_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Cancel_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Cancel_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -47,14 +47,14 @@ package DAP.Requests.Cancel is
      (Self        : in out Cancel_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.CancelResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Cancel_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Cancel_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Cancel_DAP_Request)
-      return String is ("cancel");
+   overriding
+   function Method (Self : in out Cancel_DAP_Request) return String
+   is ("cancel");
 
 end DAP.Requests.Cancel;

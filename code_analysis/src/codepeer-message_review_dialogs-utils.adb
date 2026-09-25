@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib_Values_Utils;      use Glib_Values_Utils;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Tree_Model;
-with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
 
 package body CodePeer.Message_Review_Dialogs.Utils is
 
@@ -46,9 +46,10 @@ package body CodePeer.Message_Review_Dialogs.Utils is
       begin
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
          Set_All_And_Clear
-           (Store, Iter,
+           (Store,
+            Iter,
             (0 => As_String (Image (Status)),
-             1 => As_Int    (Glib.Gint (Status.Id))));
+             1 => As_Int (Glib.Gint (Status.Id))));
 
          if Status.Name = Active_Status then
             Result.Set_Active_Iter (Iter);
@@ -63,10 +64,7 @@ package body CodePeer.Message_Review_Dialogs.Utils is
       Gtk.Cell_Layout.Pack_Start
         (Gtk.Combo_Box."+" (Result), Text_Renderer, True);
       Gtk.Cell_Layout.Add_Attribute
-        (Gtk.Combo_Box."+" (Result),
-         Text_Renderer,
-         "text",
-         0);
+        (Gtk.Combo_Box."+" (Result), Text_Renderer, "text", 0);
 
       for Status of Audit_Statuses loop
          Set_Status (Status.all);

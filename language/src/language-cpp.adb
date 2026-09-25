@@ -26,7 +26,7 @@ package body Language.Cpp is
    --  Return true if Word is a CPP keyword
 
    Keywords_Regexp : aliased constant String :=
-     --  the C subset
+   --  the C subset
      "^(auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)"
      & "|f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)"
      & "|s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)"
@@ -143,45 +143,49 @@ package body Language.Cpp is
         Multiple_Lines);
 
    function Make_Entry_Class
-     (Str     : String;
-      Matched : Match_Array) return String;
+     (Str : String; Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for classes.
    --  See the description of Explorer_Categories for more information.
 
    Cpp_Explorer_Categories : constant Explorer_Categories (1 .. 2) :=
-     (1 => (Category       => Cat_Class,
-            Category_Name  => GNATCOLL.Symbols.No_Symbol,
-            Regexp         => Classes_RE'Access,
-            Position_Index => 2,
-            End_Index      => 0,
-            Make_Entry     => Make_Entry_Class'Access),
-      2 => (Category       => Cat_Method,
-            Category_Name  => GNATCOLL.Symbols.No_Symbol,
-            Regexp         => Methods_RE'Access,
-            Position_Index => 5,
-            End_Index      => 0,
-            Make_Entry     => null));
+     (1 =>
+        (Category       => Cat_Class,
+         Category_Name  => GNATCOLL.Symbols.No_Symbol,
+         Regexp         => Classes_RE'Access,
+         Position_Index => 2,
+         End_Index      => 0,
+         Make_Entry     => Make_Entry_Class'Access),
+      2 =>
+        (Category       => Cat_Method,
+         Category_Name  => GNATCOLL.Symbols.No_Symbol,
+         Regexp         => Methods_RE'Access,
+         Position_Index => 5,
+         End_Index      => 0,
+         Make_Entry     => null));
 
    ----------------------
    -- Make_Entry_Class --
    ----------------------
 
    function Make_Entry_Class
-     (Str      : String;
-      Matched  : Match_Array) return String is
+     (Str : String; Matched : Match_Array) return String is
    begin
-      return Str (Matched (1).First .. Matched (1).Last)
-        & " " & Str (Matched (2).First .. Matched (2).Last);
+      return
+        Str (Matched (1).First .. Matched (1).Last)
+        & " "
+        & Str (Matched (2).First .. Matched (2).Last);
    end Make_Entry_Class;
 
    ----------------------
    -- Explorer_Regexps --
    ----------------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access Cpp_Language) return Explorer_Categories is
    begin
-      return Explorer_Regexps (C_Language (Lang.all)'Access)
+      return
+        Explorer_Regexps (C_Language (Lang.all)'Access)
         & Cpp_Explorer_Categories;
    end Explorer_Regexps;
 
@@ -189,7 +193,8 @@ package body Language.Cpp is
    -- Keywords --
    --------------
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Cpp_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
@@ -201,21 +206,23 @@ package body Language.Cpp is
    -- Get_Language_Context --
    --------------------------
 
-   Cpp_Context             : aliased Language_Context :=
-     (Syntax => (Comment_Start                 => new String'("/*"),
-                 Comment_End                   => new String'("*/"),
-                 New_Line_Comment_Start        => new String'("//"),
-                 New_Line_Comment_Start_Regexp => null),
-      String_Delimiter              => '"',
-      Quote_Character               => '\',
-      Constant_Character            => ''',
-      Can_Indent                    => True,
-      Syntax_Highlighting           => True,
-      Case_Sensitive                => True,
-      Accurate_Xref                 => False,
-      Use_Semicolon                 => True);
+   Cpp_Context : aliased Language_Context :=
+     (Syntax              =>
+        (Comment_Start                 => new String'("/*"),
+         Comment_End                   => new String'("*/"),
+         New_Line_Comment_Start        => new String'("//"),
+         New_Line_Comment_Start_Regexp => null),
+      String_Delimiter    => '"',
+      Quote_Character     => '\',
+      Constant_Character  => ''',
+      Can_Indent          => True,
+      Syntax_Highlighting => True,
+      Case_Sensitive      => True,
+      Accurate_Xref       => False,
+      Use_Semicolon       => True);
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Cpp_Language) return Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -242,10 +249,10 @@ package body Language.Cpp is
    -- Parse_Entities --
    --------------------
 
-   overriding procedure Parse_Entities
-     (Lang     : access Cpp_Language;
-      Buffer   : String;
-      Callback : Entity_Callback) is
+   overriding
+   procedure Parse_Entities
+     (Lang : access Cpp_Language; Buffer : String; Callback : Entity_Callback)
+   is
    begin
       Analyze_C_Source
         (Buffer        => Buffer,
@@ -260,7 +267,8 @@ package body Language.Cpp is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name (Lang : access Cpp_Language) return String is
+   overriding
+   function Get_Name (Lang : access Cpp_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "c++";
@@ -270,7 +278,8 @@ package body Language.Cpp is
    -- Entities_Indexed --
    ----------------------
 
-   overriding function Entities_Indexed (Self : Cpp_Language) return Boolean is
+   overriding
+   function Entities_Indexed (Self : Cpp_Language) return Boolean is
       pragma Unreferenced (Self);
    begin
       return True;
@@ -286,14 +295,13 @@ package body Language.Cpp is
       Buffer       : UTF8_String;
       Start_Offset : String_Index_Type;
       End_Offset   : String_Index_Type := 0;
-      Callback     : access procedure (Token : Token_Record;
-                                       Stop : in out Boolean))
+      Callback     :
+        access procedure (Token : Token_Record; Stop : in out Boolean))
    is
       pragma Unreferenced (Lang);
 
       Lowest : constant String_Index_Type :=
-                 String_Index_Type'Max
-                   (End_Offset, String_Index_Type (Buffer'First));
+        String_Index_Type'Max (End_Offset, String_Index_Type (Buffer'First));
       Index  : String_Index_Type := Start_Offset;
       Ch     : Character;
       Line   : Natural;
@@ -327,18 +335,18 @@ package body Language.Cpp is
                Word_Begin := Index;
             end if;
 
-            Ch   := ' ';
+            Ch := ' ';
             Stop := True;
             return;
          end if;
 
          Index := Index - 1;
-         Ch    := Buffer (Natural (Index));
+         Ch := Buffer (Natural (Index));
          Word_Begin := Index;
 
          if Ch = ASCII.LF then
             Line := Line + 1;
-            Ch   := ' ';
+            Ch := ' ';
 
             if Skip_Comment_Lines then
                Skip_Comment_Line;
@@ -354,27 +362,21 @@ package body Language.Cpp is
       -----------------------
 
       procedure Skip_Comment_Line is
-         Saved_Stop       : constant Boolean           := Stop;
+         Saved_Stop       : constant Boolean := Stop;
          Saved_Index      : constant String_Index_Type := Index;
-         Saved_Ch         : constant Character         := Ch;
-         Saved_Line       : constant Natural           := Line;
+         Saved_Ch         : constant Character := Ch;
+         Saved_Line       : constant Natural := Line;
          Saved_Word_Begin : constant String_Index_Type := Word_Begin;
 
       begin
-         while not Stop
-           and then Line = Saved_Line
-           and then Ch /= '/'
-         loop
+         while not Stop and then Line = Saved_Line and then Ch /= '/' loop
             --  At this stage we don't want to skip consecutive comment lines
             --  Otherwise we displace the scanning cursor too much.
 
             Prev_Char (Skip_Comment_Lines => False);
          end loop;
 
-         if not Stop
-           and then Line = Saved_Line
-           and then Ch = '/'
-         then
+         if not Stop and then Line = Saved_Line and then Ch = '/' then
             Prev_Char;
 
             if Ch = '/' then
@@ -384,10 +386,10 @@ package body Language.Cpp is
             end if;
          end if;
 
-         Stop       := Saved_Stop;
-         Index      := Saved_Index;
-         Ch         := Saved_Ch;
-         Line       := Saved_Line;
+         Stop := Saved_Stop;
+         Index := Saved_Index;
+         Ch := Saved_Ch;
+         Line := Saved_Line;
          Word_Begin := Saved_Word_Begin;
       end Skip_Comment_Line;
 
@@ -442,11 +444,11 @@ package body Language.Cpp is
          Tok_End := Index;
 
          case Ch is
-            when '+' =>
+            when '+'    =>
                Prev_Char;
 
                case Ch is
-                  when '+' =>
+                  when '+'    =>
                      Token := Tok_Increment;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
@@ -458,11 +460,11 @@ package body Language.Cpp is
                      return;
                end case;
 
-            when '-' =>
+            when '-'    =>
                Prev_Char;
 
                case Ch is
-                  when '-' =>
+                  when '-'    =>
                      Token := Tok_Decrement;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
@@ -474,117 +476,117 @@ package body Language.Cpp is
                      return;
                end case;
 
-            when '*' =>
+            when '*'    =>
                Prev_Char;
                Token := Tok_Asterisk;
                Tok_Begin := Word_Begin + 1;
                return;
 
-            when '/' =>
+            when '/'    =>
                Prev_Char;
                Token := Tok_Slash;
                Tok_Begin := Word_Begin + 1;
                return;
 
-            when '%' =>
+            when '%'    =>
                Prev_Char;
                Token := Tok_Modulus;
                Tok_Begin := Word_Begin + 1;
                return;
 
-            when '=' =>
+            when '='    =>
                Prev_Char;
 
                case Ch is
-                  when '=' =>
+                  when '='    =>
                      Token := Tok_Equal;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '!' =>
+                  when '!'    =>
                      Token := Tok_Not_Equal;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '>' =>
+                  when '>'    =>
                      Prev_Char;
 
                      case Ch is
-                     when '>' =>
-                        Token := Tok_Bit_Right_Assign;
-                        Tok_Begin := Word_Begin;
-                        Prev_Char;
-                        return;
+                        when '>'    =>
+                           Token := Tok_Bit_Right_Assign;
+                           Tok_Begin := Word_Begin;
+                           Prev_Char;
+                           return;
 
-                     when others =>
-                        Token := Tok_Greater_Or_Eq;
-                        Tok_Begin := Word_Begin;
-                        Prev_Char;
-                        return;
+                        when others =>
+                           Token := Tok_Greater_Or_Eq;
+                           Tok_Begin := Word_Begin;
+                           Prev_Char;
+                           return;
                      end case;
 
-                  when '<' =>
+                  when '<'    =>
                      Prev_Char;
 
                      case Ch is
-                     when '<' =>
-                        Token := Tok_Bit_Less_Assign;
-                        Tok_Begin := Word_Begin;
-                        Prev_Char;
-                        return;
+                        when '<'    =>
+                           Token := Tok_Bit_Less_Assign;
+                           Tok_Begin := Word_Begin;
+                           Prev_Char;
+                           return;
 
-                     when others =>
-                        Token := Tok_Less_Or_Eq;
-                        Tok_Begin := Word_Begin;
-                        Prev_Char;
-                        return;
+                        when others =>
+                           Token := Tok_Less_Or_Eq;
+                           Tok_Begin := Word_Begin;
+                           Prev_Char;
+                           return;
                      end case;
 
-                  when '+' =>
+                  when '+'    =>
                      Token := Tok_Add_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '-' =>
+                  when '-'    =>
                      Token := Tok_Sub_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '*' =>
+                  when '*'    =>
                      Token := Tok_Mul_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '/' =>
+                  when '/'    =>
                      Token := Tok_Div_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '%' =>
+                  when '%'    =>
                      Token := Tok_Mod_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '&' =>
+                  when '&'    =>
                      Token := Tok_Bit_And_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '|' =>
+                  when '|'    =>
                      Token := Tok_Bit_Or_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '^' =>
+                  when '^'    =>
                      Token := Tok_Bit_Xor_Assign;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
@@ -596,11 +598,11 @@ package body Language.Cpp is
                      return;
                end case;
 
-            when '&' =>
+            when '&'    =>
                Prev_Char;
 
                case Ch is
-                  when '&' =>
+                  when '&'    =>
                      Token := Tok_And;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
@@ -612,11 +614,11 @@ package body Language.Cpp is
                      return;
                end case;
 
-            when '|' =>
+            when '|'    =>
                Prev_Char;
 
                case Ch is
-                  when '|' =>
+                  when '|'    =>
                      Token := Tok_Or;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
@@ -628,61 +630,61 @@ package body Language.Cpp is
                      return;
                end case;
 
-            when '.' =>
+            when '.'    =>
                Token := Tok_Dot;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when ',' =>
+            when ','    =>
                Token := Tok_Comma;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when '?' =>
+            when '?'    =>
                Token := Tok_Question;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when '(' =>
+            when '('    =>
                Token := Tok_Left_Paren;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when ')' =>
+            when ')'    =>
                Token := Tok_Right_Paren;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when '[' =>
+            when '['    =>
                Token := Tok_Left_Sq_Bracket;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when ']' =>
+            when ']'    =>
                Token := Tok_Right_Sq_Bracket;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when '{' =>
+            when '{'    =>
                Token := Tok_Block_Begin;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when '}' =>
+            when '}'    =>
                Token := Tok_Block_End;
                Tok_Begin := Word_Begin;
                Prev_Char;
                return;
 
-            when '"' =>
+            when '"'    =>
                Prev_Char;
                while not Stop and then Ch /= '"' loop
                   Prev_Char;
@@ -694,11 +696,11 @@ package body Language.Cpp is
                Prev_Char;
                return;
 
-            when '<' =>
+            when '<'    =>
                Prev_Char;
 
                case Ch is
-                  when '<' =>
+                  when '<'    =>
                      Token := Tok_Bitwise_Left;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
@@ -710,17 +712,17 @@ package body Language.Cpp is
                      return;
                end case;
 
-            when '>' =>
+            when '>'    =>
                Prev_Char;
 
                case Ch is
-                  when '-' =>
+                  when '-'    =>
                      Token := Tok_Dereference;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
                      return;
 
-                  when '>' =>
+                  when '>'    =>
                      Token := Tok_Bitwise_Right;
                      Tok_Begin := Word_Begin;
                      Prev_Char;
@@ -732,7 +734,7 @@ package body Language.Cpp is
                      return;
                end case;
 
-            when ':' =>
+            when ':'    =>
                Prev_Char;
 
                if Ch = ':' then
@@ -746,19 +748,19 @@ package body Language.Cpp is
                   return;
                end if;
 
-            when '!' =>
+            when '!'    =>
                Prev_Char;
                Token := Tok_Negation;
                Tok_Begin := Word_Begin + 1;
                return;
 
-            when '~' =>
+            when '~'    =>
                Prev_Char;
                Token := Tok_Bitwise_Not;
                Tok_Begin := Word_Begin + 1;
                return;
 
-            when '^' =>
+            when '^'    =>
                Prev_Char;
                Token := Tok_Bitwise_Xor;
                Tok_Begin := Word_Begin + 1;
@@ -773,10 +775,7 @@ package body Language.Cpp is
             Suffix_Found : Boolean := False;
 
          begin
-            if Suffix = 'L'
-              or else Suffix = 'U'
-              or else Suffix = 'F'
-            then
+            if Suffix = 'L' or else Suffix = 'U' or else Suffix = 'F' then
                Suffix_Found := True;
                Prev_Char;
             end if;
@@ -799,19 +798,14 @@ package body Language.Cpp is
                      return;
                   end if;
 
-               elsif not Is_Alphanumeric (Ch)
-                 and then Ch /= '_'
-               then
+               elsif not Is_Alphanumeric (Ch) and then Ch /= '_' then
                   Tok_Begin := Word_Begin + 1;
                   Token := Tok_Literal_Number;
                   return;
                end if;
             end if;
 
-            if Suffix_Found
-              or else Is_Alphanumeric (Ch)
-              or else Ch = '_'
-            then
+            if Suffix_Found or else Is_Alphanumeric (Ch) or else Ch = '_' then
                while not Stop
                  and then
                    (Is_Alphanumeric (Ch) or else Ch = '_' or else Ch = '#')
@@ -841,7 +835,7 @@ package body Language.Cpp is
          Prev_Char;
       end Scan;
 
-   --  Start of processing for Parse_Tokens_Backwards
+      --  Start of processing for Parse_Tokens_Backwards
 
    begin
       if Index not in Lowest .. String_Index_Type (Buffer'Last) then
@@ -850,9 +844,9 @@ package body Language.Cpp is
 
       --  Initialize the low level
 
-      Index      := Start_Offset + 1;
-      Ch         := ' ';
-      Line       := 1;
+      Index := Start_Offset + 1;
+      Ch := ' ';
+      Line := 1;
       Word_Begin := Index;
 
       --  Initialize the automaton

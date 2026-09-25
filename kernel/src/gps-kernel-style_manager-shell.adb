@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with Gdk.RGBA;                 use Gdk.RGBA;
-with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with Gdk.RGBA;           use Gdk.RGBA;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 package body GPS.Kernel.Style_Manager.Shell is
 
@@ -27,8 +27,8 @@ package body GPS.Kernel.Style_Manager.Shell is
    Class       : constant String := "Style";
    Style_Class : Class_Type;
 
-   Name_Cst       : aliased constant String := "name";
-   Create_Cst     : aliased constant String := "create";
+   Name_Cst   : aliased constant String := "name";
+   Create_Cst : aliased constant String := "create";
 
    type Style_Property_Record is new Instance_Property_Record with record
       Style : GPS.Kernel.Style_Manager.Style_Access;
@@ -48,8 +48,7 @@ package body GPS.Kernel.Style_Manager.Shell is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the Style commands
 
-   procedure Accessors
-     (Data : in out Callback_Data'Class; Command : String);
+   procedure Accessors (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the simple Style commands which simply access the fields
    --  of a Style or run parameterless commands
 
@@ -58,12 +57,10 @@ package body GPS.Kernel.Style_Manager.Shell is
    --------------
 
    procedure Set_Data
-     (Instance : Class_Instance;
-      Style    : GPS.Kernel.Style_Manager.Style_Access) is
+     (Instance : Class_Instance; Style : GPS.Kernel.Style_Manager.Style_Access)
+   is
    begin
-      Set_Data (Instance, Class,
-                Style_Property_Record'
-                  (Style => Style));
+      Set_Data (Instance, Class, Style_Property_Record'(Style => Style));
    end Set_Data;
 
    ---------------
@@ -71,14 +68,14 @@ package body GPS.Kernel.Style_Manager.Shell is
    ---------------
 
    function Get_Style
-     (Instance : Class_Instance)
-      return GPS.Kernel.Style_Manager.Style_Access
+     (Instance : Class_Instance) return GPS.Kernel.Style_Manager.Style_Access
    is
       Prop : Style_Property_Access;
    begin
       if Instance /= No_Class_Instance then
-         Prop := Style_Property_Access
-           (Instance_Property'(Get_Data (Instance, Class)));
+         Prop :=
+           Style_Property_Access
+             (Instance_Property'(Get_Data (Instance, Class)));
 
          if Prop /= null then
             return Prop.Style;
@@ -100,9 +97,7 @@ package body GPS.Kernel.Style_Manager.Shell is
    begin
       if Command = Constructor_Method then
          Name_Parameters
-           (Data,
-            (1 => Name_Cst'Access,
-             2 => Create_Cst'Access));
+           (Data, (1 => Name_Cst'Access, 2 => Create_Cst'Access));
 
          declare
             Name   : constant String := Nth_Arg (Data, 2);
@@ -121,7 +116,7 @@ package body GPS.Kernel.Style_Manager.Shell is
 
       elsif Command = "create_from_preference" then
          declare
-            Style_Name : constant String     := Nth_Arg (Data, 1);
+            Style_Name : constant String := Nth_Arg (Data, 1);
             Pref       : constant Preference :=
               Get_Pref_From_Name
                 (Kernel.Preferences, Nth_Arg (Data, 2), False);
@@ -129,7 +124,7 @@ package body GPS.Kernel.Style_Manager.Shell is
          begin
             Style :=
               Get_Style_Manager (Kernel).Create_From_Preferences
-              (Style_Name, Style_Preference (Pref));
+                (Style_Name, Style_Preference (Pref));
             Style_Inst := New_Instance (Get_Script (Data), Style_Class);
             Set_Data (Style_Inst, Style);
             Set_Return_Value (Data, Style_Inst);
@@ -137,26 +132,26 @@ package body GPS.Kernel.Style_Manager.Shell is
 
       elsif Command = "create_from_preferences" then
          declare
-            Style_Name : constant String     := Nth_Arg (Data, 1);
-            Fg_Name    : constant String     := Nth_Arg (Data, 2);
-            Bg_Name    : constant String     := Nth_Arg (Data, 3);
+            Style_Name : constant String := Nth_Arg (Data, 1);
+            Fg_Name    : constant String := Nth_Arg (Data, 2);
+            Bg_Name    : constant String := Nth_Arg (Data, 3);
             Fg_Pref    : constant Color_Preference :=
               (if Fg_Name /= ""
-               then Color_Preference
-                 (Get_Pref_From_Name (Kernel.Preferences, Fg_Name, False))
+               then
+                 Color_Preference
+                   (Get_Pref_From_Name (Kernel.Preferences, Fg_Name, False))
                else null);
             Bg_Pref    : constant Color_Preference :=
               (if Bg_Name /= ""
-               then Color_Preference
-                 (Get_Pref_From_Name (Kernel.Preferences, Bg_Name, False))
+               then
+                 Color_Preference
+                   (Get_Pref_From_Name (Kernel.Preferences, Bg_Name, False))
                else null);
             Style      : GPS.Kernel.Style_Manager.Style_Access;
          begin
             Style :=
               Get_Style_Manager (Kernel).Create_From_Preferences
-              (Key     => Style_Name,
-               Fg_Pref => Fg_Pref,
-               Bg_Pref => Bg_Pref);
+                (Key => Style_Name, Fg_Pref => Fg_Pref, Bg_Pref => Bg_Pref);
             Style_Inst := New_Instance (Get_Script (Data), Style_Class);
             Set_Data (Style_Inst, Style);
             Set_Return_Value (Data, Style_Inst);
@@ -168,15 +163,21 @@ package body GPS.Kernel.Style_Manager.Shell is
             Base_Style       : constant String := Nth_Arg (Data, 2);
             Shade_Or_Lighten : constant Gdouble :=
               Gdouble (Float'(Nth_Arg (Data, 3, 0.0)));
-            Style      : GPS.Kernel.Style_Manager.Style_Access;
+            Style            : GPS.Kernel.Style_Manager.Style_Access;
          begin
             Trace
-              (Me, "create_from_style (" & Style_Name & ", " & Base_Style &
-                 "," & Shade_Or_Lighten'Img & ")");
+              (Me,
+               "create_from_style ("
+               & Style_Name
+               & ", "
+               & Base_Style
+               & ","
+               & Shade_Or_Lighten'Img
+               & ")");
 
             Style :=
               Get_Style_Manager (Kernel).Create_From_Style
-              (Style_Name, Base_Style, Shade_Or_Lighten);
+                (Style_Name, Base_Style, Shade_Or_Lighten);
 
             Style_Inst := New_Instance (Get_Script (Data), Style_Class);
             Set_Data (Style_Inst, Style);
@@ -187,7 +188,7 @@ package body GPS.Kernel.Style_Manager.Shell is
          Set_Return_Value_As_List (Data);
 
          declare
-            List    : GPS.Kernel.Style_Manager.Style_Vector.Vector;
+            List : GPS.Kernel.Style_Manager.Style_Vector.Vector;
          begin
             List := Get_Style_Manager (Kernel).List_Styles;
 
@@ -204,11 +205,9 @@ package body GPS.Kernel.Style_Manager.Shell is
    -- Accessors --
    ---------------
 
-   procedure Accessors
-     (Data : in out Callback_Data'Class; Command : String)
-   is
-      Style : constant GPS.Kernel.Style_Manager.Style_Access := Get_Style
-        (Nth_Arg (Data, 1, Style_Class));
+   procedure Accessors (Data : in out Callback_Data'Class; Command : String) is
+      Style : constant GPS.Kernel.Style_Manager.Style_Access :=
+        Get_Style (Nth_Arg (Data, 1, Style_Class));
 
    begin
       if Command = "set_foreground" then
@@ -219,13 +218,11 @@ package body GPS.Kernel.Style_Manager.Shell is
 
       elsif Command = "set_font_variant" then
          Set_Variant
-           (Style,
-            Default_Preferences.From_String (Nth_Arg (Data, 2)));
+           (Style, Default_Preferences.From_String (Nth_Arg (Data, 2)));
 
       elsif Command = "set_underline" then
          Set_Underline
-           (Style,
-            Default_Preferences.From_String (Nth_Arg (Data, 2)));
+           (Style, Default_Preferences.From_String (Nth_Arg (Data, 2)));
 
       elsif Command = "set_underline_color" then
          Set_Underline_Color (Style, Parse_Color (Nth_Arg (Data, 2)));
@@ -258,26 +255,50 @@ package body GPS.Kernel.Style_Manager.Shell is
    -----------------------
 
    procedure Register_Commands
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Style_Class := New_Class (Kernel, Class);
 
       Register_Command
-        (Kernel, Constructor_Method, 1, 2, Style_Command_Handler'Access,
-         Style_Class, False);
+        (Kernel,
+         Constructor_Method,
+         1,
+         2,
+         Style_Command_Handler'Access,
+         Style_Class,
+         False);
       Register_Command
-        (Kernel, "list", 0, 0, Style_Command_Handler'Access,
-         Style_Class, True);
+        (Kernel,
+         "list",
+         0,
+         0,
+         Style_Command_Handler'Access,
+         Style_Class,
+         True);
       Register_Command
-        (Kernel, "create_from_preference", 2, 2, Style_Command_Handler'Access,
-         Style_Class, True);
+        (Kernel,
+         "create_from_preference",
+         2,
+         2,
+         Style_Command_Handler'Access,
+         Style_Class,
+         True);
       Register_Command
-        (Kernel, "create_from_preferences", 3, 3, Style_Command_Handler'Access,
-         Style_Class, True);
+        (Kernel,
+         "create_from_preferences",
+         3,
+         3,
+         Style_Command_Handler'Access,
+         Style_Class,
+         True);
       Register_Command
-        (Kernel, "create_from_style", 2, 3, Style_Command_Handler'Access,
-         Style_Class, True);
+        (Kernel,
+         "create_from_style",
+         2,
+         3,
+         Style_Command_Handler'Access,
+         Style_Class,
+         True);
 
       Register_Command
         (Kernel, "get_foreground", 0, 0, Accessors'Access, Style_Class);
@@ -300,8 +321,12 @@ package body GPS.Kernel.Style_Manager.Shell is
       Register_Command
         (Kernel, "set_strikethrough", 1, 1, Accessors'Access, Style_Class);
       Register_Command
-        (Kernel, "set_strikethrough_color",
-         1, 1, Accessors'Access, Style_Class);
+        (Kernel,
+         "set_strikethrough_color",
+         1,
+         1,
+         Accessors'Access,
+         Style_Class);
       Register_Command
         (Kernel, "set_in_speedbar", 1, 1, Accessors'Access, Style_Class);
    end Register_Commands;

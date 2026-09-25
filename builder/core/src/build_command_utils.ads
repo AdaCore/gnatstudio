@@ -23,34 +23,35 @@
 
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with VSS.Strings;
 
-with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS;                     use GNATCOLL.VFS;
-with GNATCOLL.Projects;                use GNATCOLL.Projects;
-with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
-with GPS.Core_Kernels;                 use GPS.Core_Kernels;
-with GPS.Messages_Windows;             use GPS.Messages_Windows;
+with GPS.Core_Kernels;     use GPS.Core_Kernels;
+with GPS.Messages_Windows; use GPS.Messages_Windows;
 
-with Build_Configurations;             use Build_Configurations;
-with Command_Lines;                    use Command_Lines;
-with Commands;                         use Commands;
-with Extending_Environments;           use Extending_Environments;
-with GPS_Preferences_Types;            use GPS_Preferences_Types;
-with Projects;                         use Projects;
-with Remote;                           use Remote;
-with Toolchains;                       use Toolchains;
+with Build_Configurations;   use Build_Configurations;
+with Command_Lines;          use Command_Lines;
+with Commands;               use Commands;
+with Extending_Environments; use Extending_Environments;
+with GPS_Preferences_Types;  use GPS_Preferences_Types;
+with Projects;               use Projects;
+with Remote;                 use Remote;
+with Toolchains;             use Toolchains;
 
 package Build_Command_Utils is
 
    type Dialog_Mode is
-     (Force_Dialog, Force_No_Dialog,
+     (Force_Dialog,
+      Force_No_Dialog,
       Force_Dialog_Unless_Disabled_By_Target,
       Default);
    --  Force_Dialog means that the dialog should always be displayed
@@ -60,16 +61,16 @@ package Build_Command_Utils is
    --  Default means that the target default should be enforced
 
    function Get_Server
-     (Registry   : Build_Config_Registry_Access;
-      Mode       : String;
-      Target     : Target_Access) return Server_Type;
+     (Registry : Build_Config_Registry_Access;
+      Mode     : String;
+      Target   : Target_Access) return Server_Type;
 
    type Project_And_Main is record
       Project_Path : GNATCOLL.VFS.Virtual_File;
       Main         : GNATCOLL.VFS.Virtual_File;
    end record;
-   package Project_And_Main_Vectors is new Ada.Containers.Vectors
-     (Positive, Project_And_Main);
+   package Project_And_Main_Vectors is new
+     Ada.Containers.Vectors (Positive, Project_And_Main);
    subtype Project_And_Main_Vector is Project_And_Main_Vectors.Vector;
 
    function Get_Project (P : Project_And_Main) return Project_Type;
@@ -79,25 +80,26 @@ package Build_Command_Utils is
      (Registry : Project_Registry_Access) return Project_And_Main_Vector;
    --  Return the list of mains corresponding to the loaded project tree.
 
-   function Get_Mains_Files_Only (Registry : Project_Registry_Access)
-   return GNATCOLL.VFS.File_Array;
+   function Get_Mains_Files_Only
+     (Registry : Project_Registry_Access) return GNATCOLL.VFS.File_Array;
    --  Return the list of mains corresponding to the loaded project tree.
 
    function Get_Mode_Subdir
-     (Registry : Build_Config_Registry_Access;
-      Mode : String) return Filesystem_String;
+     (Registry : Build_Config_Registry_Access; Mode : String)
+      return Filesystem_String;
    --  Return the special directory ("subdir") for Mode
 
    type Abstract_Build_Command_Adapter is abstract tagged private;
    --  This type provides values to expand macros in command arguments.
    --  Actual expansion done in Expand_Command_Line subprogram
 
-   type Abstract_Build_Command_Adapter_Access is access all
-      Abstract_Build_Command_Adapter'Class;
+   type Abstract_Build_Command_Adapter_Access is
+     access all Abstract_Build_Command_Adapter'Class;
 
    function Get_Last_Main_For_Background_Target
-     (Adapter : Abstract_Build_Command_Adapter;
-      Target : Target_Access) return Virtual_File is abstract;
+     (Adapter : Abstract_Build_Command_Adapter; Target : Target_Access)
+      return Virtual_File
+   is abstract;
    --  Return the Main to use for building Target as a background build.
    --  This is either the last main that was used, if it exists, or the first
    --  main defined for this target, if it exists.
@@ -118,12 +120,10 @@ package Build_Command_Utils is
       return Multi_Language_Builder_Policy;
 
    function Get_Context_Toolchains_Manager
-     (Adapter : Abstract_Build_Command_Adapter)
-      return Toolchain_Manager;
+     (Adapter : Abstract_Build_Command_Adapter) return Toolchain_Manager;
 
    function Get_Kernel_Macros_Special_Character
-     (Adapter : Abstract_Build_Command_Adapter)
-      return Character;
+     (Adapter : Abstract_Build_Command_Adapter) return Character;
    --  The special character that is found before the macros
 
    function Get_Context_File_Information
@@ -133,53 +133,55 @@ package Build_Command_Utils is
      (Adapter : Abstract_Build_Command_Adapter) return Project_Registry_Access;
 
    function Get_Background_Project_Full_Name
-     (Adapter : Abstract_Build_Command_Adapter)
-        return Filesystem_String is abstract;
+     (Adapter : Abstract_Build_Command_Adapter) return Filesystem_String
+   is abstract;
 
    function Substitute
-     (Adapter : Abstract_Build_Command_Adapter;
+     (Adapter   : Abstract_Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
       Done      : access Boolean;
       Server    : Server_Type := GPS_Server;
-      For_Shell : Boolean := False) return String is abstract;
+      For_Shell : Boolean := False) return String
+   is abstract;
    --  Wrapper around GPS.Kernel.Macros.Substitute
 
    function Get_Scenario_Variables
-     (Adapter : Abstract_Build_Command_Adapter)
-      return Scenario_Variable_Array is abstract;
+     (Adapter : Abstract_Build_Command_Adapter) return Scenario_Variable_Array
+   is abstract;
 
    function Get_Untyped_Variables
-     (Adapter : Abstract_Build_Command_Adapter)
-      return Untyped_Variable_Array is abstract;
+     (Adapter : Abstract_Build_Command_Adapter) return Untyped_Variable_Array
+   is abstract;
 
    procedure Console_Insert
      (Adapter : in out Abstract_Build_Command_Adapter;
-      Text   : String;
-      Add_LF : Boolean := True;
-      Mode   : Message_Type := Info) is abstract;
+      Text    : String;
+      Add_LF  : Boolean := True;
+      Mode    : Message_Type := Info)
+   is abstract;
 
    procedure Remove_Error_Builder_Message_From_File
-     (Adapter : Abstract_Build_Command_Adapter;
-      File     : Virtual_File) is abstract;
+     (Adapter : Abstract_Build_Command_Adapter; File : Virtual_File)
+   is abstract;
    --  Removes all messages for specified file in the error category.
    --  Do nothing when there is no such category or file.
 
    function Get_Background_Environment_File
-     (Adapter : Abstract_Build_Command_Adapter)
-        return Virtual_File is abstract;
+     (Adapter : Abstract_Build_Command_Adapter) return Virtual_File
+   is abstract;
 
    type Expansion_Result is record
-      Args     : Arg_List;
+      Args : Arg_List;
       --  The list of arguments
 
-      Dir      : Virtual_File := No_File;
+      Dir : Virtual_File := No_File;
       --  The directory in which to launch the compilation
 
       Exec_Dir : Virtual_File := No_File;
       --  Computed directory which contains executable file.
 
-      Status   : Unbounded_String := To_Unbounded_String ("");
+      Status : Unbounded_String := To_Unbounded_String ("");
    end record;
 
    function Args_Length (Result : Expansion_Result) return Integer;
@@ -201,7 +203,7 @@ package Build_Command_Utils is
    --  Return the status of Expand_Command_Line
 
    function Expand_Command_Line
-     (Adapter    : Abstract_Build_Command_Adapter_Access;
+     (Adapter           : Abstract_Build_Command_Adapter_Access;
       Cmd_Line          : Command_Line;
       Target            : Target_Access;
       Server            : Server_Type;
@@ -235,8 +237,10 @@ package Build_Command_Utils is
    --  found.
 
    procedure Initialize
-     (Adapter                    : in out Abstract_Build_Command_Adapter'Class;
-      Kernel                     : not null access Core_Kernel_Record'Class;
+     (Adapter                         :
+        in out Abstract_Build_Command_Adapter'Class;
+      Kernel                          :
+        not null access Core_Kernel_Record'Class;
       Context_Project                 : Project_Type;
       Context_Toolchains_Manager      : Toolchain_Manager;
       Context_File_Information        : Virtual_File;
@@ -296,8 +300,12 @@ package Build_Command_Utils is
       Background : Boolean);
    --  Clear all saved build output
 
-   package Target_Outputs is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Unbounded_String, Ada.Strings.Unbounded.Hash, "=");
+   package Target_Outputs is new
+     Ada.Containers.Hashed_Maps
+       (Unbounded_String,
+        Unbounded_String,
+        Ada.Strings.Unbounded.Hash,
+        "=");
 
    function Clear_All_Build_Output
      (Self       : access Builder_Context_Record;
@@ -316,8 +324,8 @@ package Build_Command_Utils is
       Target : String;
       Main   : Virtual_File);
    function Get_Last_Main
-     (Self   : access Builder_Context_Record;
-      Target : String) return Virtual_File;
+     (Self : access Builder_Context_Record; Target : String)
+      return Virtual_File;
    --  Get/Set the last main that was actually used when launching a manual
    --  build for Target
 
@@ -350,14 +358,12 @@ package Build_Command_Utils is
    --  Inform the module that a background build has finished
 
    procedure Background_Build_Started
-     (Self    : access Builder_Context_Record;
-      Command : Command_Access);
+     (Self : access Builder_Context_Record; Command : Command_Access);
    --  Inform the module that a background build has started, controlled by
    --  Command.
 
    procedure Interrupt_Background_Build
-     (Self    : access Builder_Context_Record;
-      Command : out Command_Access);
+     (Self : access Builder_Context_Record; Command : out Command_Access);
    --  Interrupt the currently running background build
 
    -----------------
@@ -383,7 +389,7 @@ package Build_Command_Utils is
       Via_Menu        : Boolean;
       Launch          : Boolean;
 
-      On_Exit         : Subprogram_Type := null;
+      On_Exit : Subprogram_Type := null;
       --  The scripting subprogram which should be called at the end of the
       --  build.
    end record;
@@ -391,11 +397,11 @@ package Build_Command_Utils is
    function Get_Last_Build
      (Self : access Builder_Context_Record) return Build_Information;
    procedure Set_Last_Build
-     (Self   : access Builder_Context_Record;
-      Build  : Build_Information);
+     (Self : access Builder_Context_Record; Build : Build_Information);
    --  Get/Set the last built target
 
-   overriding procedure Destroy (Self : in out Builder_Context_Record);
+   overriding
+   procedure Destroy (Self : in out Builder_Context_Record);
    --  Cleanup internal data
 
    function Expand_Command_Line
@@ -412,62 +418,65 @@ package Build_Command_Utils is
    --  Expand command line CL using trivial Build_Command_Adapter.
 
    function Expand_Command_Line
-     (Build_Registry   : Build_Config_Registry_Access;
-      Kernel           : not null access Core_Kernel_Record'Class;
-      Proj_Type        : Project_Type;
-      Toolchains       : Toolchain_Manager;
-      Command_Line     : String;
-      Target_Name      : String;
-      Mode_Name        : String;
-      Project_File     : Virtual_File;
-      Force_File       : Virtual_File;
-      Main_File        : Virtual_File;
-      Simulate         : Boolean;
-      Trusted_Mode     : Boolean;
+     (Build_Registry         : Build_Config_Registry_Access;
+      Kernel                 : not null access Core_Kernel_Record'Class;
+      Proj_Type              : Project_Type;
+      Toolchains             : Toolchain_Manager;
+      Command_Line           : String;
+      Target_Name            : String;
+      Mode_Name              : String;
+      Project_File           : Virtual_File;
+      Force_File             : Virtual_File;
+      Main_File              : Virtual_File;
+      Simulate               : Boolean;
+      Trusted_Mode           : Boolean;
       Multi_Language_Builder : Multi_Language_Builder_Policy;
-      Execute_Command  : String)
-     return Expansion_Result;
+      Execute_Command        : String) return Expansion_Result;
    --  Expand command line CL compatible with gnatbench objects.
    --  Do not remove, this function is needed for GNAT Bench
 
 private
    type Abstract_Build_Command_Adapter is abstract tagged record
-      Kernel          : access Core_Kernel_Record'Class;
+      Kernel : access Core_Kernel_Record'Class;
 
-      Context_Project : Project_Type;
+      Context_Project            : Project_Type;
       Context_Toolchains_Manager : Toolchain_Manager;
-      Context_File_Information : Virtual_File;
+      Context_File_Information   : Virtual_File;
 
       Kernel_Macros_Special_Character : Character;
 
-      Trusted_Mode_Preference : Boolean;
+      Trusted_Mode_Preference    : Boolean;
       Execute_Command_Preference : Unbounded_String;
-      Multi_Language_Builder : Multi_Language_Builder_Policy;
+      Multi_Language_Builder     : Multi_Language_Builder_Policy;
    end record;
 
-   package Files is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Virtual_File, Ada.Strings.Unbounded.Hash, "=");
+   package Files is new
+     Ada.Containers.Hashed_Maps
+       (Unbounded_String,
+        Virtual_File,
+        Ada.Strings.Unbounded.Hash,
+        "=");
 
    type Target_Output_Type is
      (Normal_Output, Background_Output, Shadow_Output);
 
-   type Target_Output_Array is array (Target_Output_Type) of
-     Target_Outputs.Map;
+   type Target_Output_Array is
+     array (Target_Output_Type) of Target_Outputs.Map;
 
    type Builder_Context_Record is new Abstract_Module_Record with record
-      Kernel : GPS.Core_Kernels.Core_Kernel;
+      Kernel                   : GPS.Core_Kernels.Core_Kernel;
       --  Kernel handle
-      Registry : Build_Config_Registry_Access;
+      Registry                 : Build_Config_Registry_Access;
       --  Build Config Registry
-      Last_Mains : Files.Map;
+      Last_Mains               : Files.Map;
       --  The last launched main
       Background_Build_ID      : Integer := 0;
       --  The ID of the current background build.
       Background_Build_Command : Command_Access;
       --  The command holding the background build.
-      Outputs : Target_Output_Array;
+      Outputs                  : Target_Output_Array;
       --  Save output for target builds
-      Build : Build_Information;
+      Build                    : Build_Information;
       --  The last build target
    end record;
 

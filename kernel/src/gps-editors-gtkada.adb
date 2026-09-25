@@ -17,8 +17,8 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Glib;             use Glib;
-with Glib.Object;      use Glib.Object;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
 with System;
 
 package body GPS.Editors.GtkAda is
@@ -36,10 +36,10 @@ package body GPS.Editors.GtkAda is
 
    pragma Warnings (Off);
    --  This UC is safe aliasing-wise, so kill warning
-   function To_Editor_Mark is new Ada.Unchecked_Conversion
-      (System.Address, Editor_Mark_Access);
-   function To_Address is new Ada.Unchecked_Conversion
-     (Editor_Mark_Access, System.Address);
+   function To_Editor_Mark is new
+     Ada.Unchecked_Conversion (System.Address, Editor_Mark_Access);
+   function To_Address is new
+     Ada.Unchecked_Conversion (Editor_Mark_Access, System.Address);
    pragma Warnings (On);
 
    ----------------------
@@ -47,7 +47,7 @@ package body GPS.Editors.GtkAda is
    ----------------------
 
    function Editor_Mark_Copy (Boxed : System.Address) return System.Address is
-      Value : constant Editor_Mark_Access := To_Editor_Mark (Boxed);
+      Value  : constant Editor_Mark_Access := To_Editor_Mark (Boxed);
       Value2 : Editor_Mark_Access;
    begin
       if Value = null then
@@ -63,8 +63,8 @@ package body GPS.Editors.GtkAda is
    ----------------------
 
    procedure Editor_Mark_Free (Boxed : System.Address) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Editor_Mark'Class, Editor_Mark_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Editor_Mark'Class, Editor_Mark_Access);
       Value : Editor_Mark_Access := To_Editor_Mark (Boxed);
    begin
       Unchecked_Free (Value);
@@ -77,10 +77,9 @@ package body GPS.Editors.GtkAda is
    function Get_Editor_Mark_Type return Glib.GType is
    begin
       if Editor_Mark_Type = Glib.GType_None then
-         Editor_Mark_Type := Glib.Boxed_Type_Register_Static
-           ("Editor_Mark",
-            Editor_Mark_Copy'Access,
-            Editor_Mark_Free'Access);
+         Editor_Mark_Type :=
+           Glib.Boxed_Type_Register_Static
+             ("Editor_Mark", Editor_Mark_Copy'Access, Editor_Mark_Free'Access);
       end if;
       return Editor_Mark_Type;
    end Get_Editor_Mark_Type;
@@ -89,8 +88,8 @@ package body GPS.Editors.GtkAda is
    -- Set_Mark --
    --------------
 
-   procedure Set_Mark (Value : in out Glib.Values.GValue;
-                       Mark  : Editor_Mark'Class)
+   procedure Set_Mark
+     (Value : in out Glib.Values.GValue; Mark : Editor_Mark'Class)
    is
       --  Val : Editor_Mark_Access;
    begin
@@ -125,8 +124,7 @@ package body GPS.Editors.GtkAda is
    --------------
 
    function Get_Mark
-     (Model  : not null
-          access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class;
+     (Model  : not null access Gtk.Tree_Model.Gtk_Root_Tree_Model_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint) return Editor_Mark'Class
    is
@@ -151,7 +149,7 @@ package body GPS.Editors.GtkAda is
       Stub : Standard.Gtkada.MDI.MDI_Child_Record;
       pragma Warnings (Off, Stub);
       use type System.Address;
-      A : System.Address;
+      A    : System.Address;
    begin
       A := GPS.Editors.Get_MDI_Child (This);
       if A = System.Null_Address then

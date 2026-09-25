@@ -34,7 +34,8 @@ package LAL.Highlighters is
    procedure Highlight_Token
      (Self  : in out Highlightable_Interface;
       Token : Libadalang.Common.Token_Reference;
-      Style : String) is abstract;
+      Style : String)
+   is abstract;
    --  Highlight the given token with the designated style.
    --  This subprohgram is called automatically by Highlight_Using_Tree when
    --  mapping a token to a given style.
@@ -43,7 +44,8 @@ package LAL.Highlighters is
      (Self  : in out Highlightable_Interface;
       Style : String;
       From  : Integer;
-      To    : Integer) is abstract;
+      To    : Integer)
+   is abstract;
    --  Remove the given style highlighting between the given lines.
    --  This subrpogram is called automatically when needed in
    --  Highlight_Using_Tree.

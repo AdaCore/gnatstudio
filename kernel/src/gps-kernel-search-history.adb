@@ -19,30 +19,30 @@ pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
-with GNAT.Strings;               use GNAT.Strings;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNAT.Strings;      use GNAT.Strings;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Utils;
 
-with Cairo.Region;               use Cairo.Region;
-with Gdk.Window;                 use Gdk.Window;
-with Glib.Object;                use Glib.Object;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Text_Tag;               use Gtk.Text_Tag;
-with Gtk.Text_View;              use Gtk.Text_View;
-with Gtk.Widget;                 use Gtk.Widget;
+with Cairo.Region;    use Cairo.Region;
+with Gdk.Window;      use Gdk.Window;
+with Glib.Object;     use Glib.Object;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Text_Buffer; use Gtk.Text_Buffer;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Gtk.Text_Tag;    use Gtk.Text_Tag;
+with Gtk.Text_View;   use Gtk.Text_View;
+with Gtk.Widget;      use Gtk.Widget;
 
 with VSS.Strings.Conversions;
 
-with Basic_Types;                use Basic_Types;
-with GPS.Editors;                use GPS.Editors;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Search;                 use GPS.Search;
+with Basic_Types;            use Basic_Types;
+with GPS.Editors;            use GPS.Editors;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Charsets;    use GPS.Kernel.Charsets;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Search;             use GPS.Search;
 
 package body GPS.Kernel.Search.History is
 
@@ -54,8 +54,7 @@ package body GPS.Kernel.Search.History is
    type Result_View_Access is access all Result_View'Class;
 
    procedure On_Size_Allocate
-     (View       : access Gtk_Widget_Record'Class;
-      Allocation : Cairo_Rectangle_Int);
+     (View : access Gtk_Widget_Record'Class; Allocation : Cairo_Rectangle_Int);
 
    Vector : History_Vectors.Vector;
 
@@ -63,7 +62,8 @@ package body GPS.Kernel.Search.History is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out History_Search_Provider) is
+   overriding
+   procedure Free (Self : in out History_Search_Provider) is
    begin
       Free (Self.Pattern);
       Free (Kernel_Search_Provider (Self));  --  inherited
@@ -73,20 +73,23 @@ package body GPS.Kernel.Search.History is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
+   overriding
+   function Documentation
      (Self : not null access History_Search_Provider) return String
    is
       pragma Unreferenced (Self);
    begin
-      return -("Shows files that were already opened for a given pattern or" &
-                 " whose names match the pattern");
+      return
+        -("Shows files that were already opened for a given pattern or"
+          & " whose names match the pattern");
    end Documentation;
 
    -----------------
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access History_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -103,7 +106,8 @@ package body GPS.Kernel.Search.History is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access History_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
@@ -113,7 +117,7 @@ package body GPS.Kernel.Search.History is
       L       : GNAT.Strings.String_Access;
       Similar : Boolean := False;
    begin
-      Result   := null;
+      Result := null;
       Has_Next := False;
 
       if Self.Pattern = null
@@ -131,40 +135,46 @@ package body GPS.Kernel.Search.History is
       if Context = GPS.Search.No_Match then
          --  Show a file if the pattern that was present when the file was
          --  selected is similar to the current pattern
-         Similar := GNATCOLL.Utils.Starts_With
-           (To_String (H.Pattern), Self.Pattern.Get_Text);
+         Similar :=
+           GNATCOLL.Utils.Starts_With
+             (To_String (H.Pattern), Self.Pattern.Get_Text);
       end if;
 
-      if Context /= GPS.Search.No_Match
-        or else Similar
-      then
+      if Context /= GPS.Search.No_Match or else Similar then
          declare
             P_Name : constant String :=
               (if H.Project = No_Project
                then ""
-               else ASCII.LF
-               & "(" & H.Project.Project_Path.Display_Base_Name & " -- "
-               & (+H.Project.Project_Path.Dir_Name) & ')');
+               else
+                 ASCII.LF
+                 & "("
+                 & H.Project.Project_Path.Display_Base_Name
+                 & " -- "
+                 & (+H.Project.Project_Path.Dir_Name)
+                 & ')');
          begin
-            L := new String'
-              (Path_And_Name (Self.Kernel, H.File, H.Project) & P_Name);
+            L :=
+              new String'
+                (Path_And_Name (Self.Kernel, H.File, H.Project) & P_Name);
 
-            Result := new History_Search_Result'
-              (Kernel   => Self.Kernel,
-               Provider => Self,
-               Score    => (if Similar then 100 else Context.Score),
-               Short    => new String'
-                 (if Similar
-                  then To_String (H.Pattern)
-                     else Self.Pattern.Highlight_Match
-                    (Buffer => (+H.File.Base_Name),
-                     Context => Context)),
-               Long     => L,
-               Id       => VSS.Strings.Conversions.To_Virtual_String (L.all),
-               Line     => H.Line,
-               Column   => H.Column,
-               Project  => H.Project,
-               File     => H.File);
+            Result :=
+              new History_Search_Result'
+                (Kernel   => Self.Kernel,
+                 Provider => Self,
+                 Score    => (if Similar then 100 else Context.Score),
+                 Short    =>
+                   new String'
+                     (if Similar
+                      then To_String (H.Pattern)
+                      else
+                        Self.Pattern.Highlight_Match
+                          (Buffer => (+H.File.Base_Name), Context => Context)),
+                 Long     => L,
+                 Id       => VSS.Strings.Conversions.To_Virtual_String (L.all),
+                 Line     => H.Line,
+                 Column   => H.Column,
+                 Project  => H.Project,
+                 File     => H.File);
          end;
       end if;
 
@@ -177,7 +187,8 @@ package body GPS.Kernel.Search.History is
    -- Get_Total_Progress --
    ------------------------
 
-   overriding function Get_Total_Progress
+   overriding
+   function Get_Total_Progress
      (Self : not null access History_Search_Provider) return Integer is
    begin
       if Is_Empty (Vector) then
@@ -191,9 +202,9 @@ package body GPS.Kernel.Search.History is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self       : not null access History_Search_Result;
-       Give_Focus : Boolean) is
+   overriding
+   procedure Execute
+     (Self : not null access History_Search_Result; Give_Focus : Boolean) is
    begin
       if Self.File /= No_File then
          Open_File_Action_Hook.Run
@@ -213,9 +224,10 @@ package body GPS.Kernel.Search.History is
    -- Full --
    ----------
 
-   overriding function Full
+   overriding
+   function Full
      (Self : not null access History_Search_Result)
-     return Gtk.Widget.Gtk_Widget
+      return Gtk.Widget.Gtk_Widget
    is
       Text   : VSS.Strings.Virtual_String;
       View   : Result_View_Access;
@@ -270,13 +282,12 @@ package body GPS.Kernel.Search.History is
    ----------------------
 
    procedure On_Size_Allocate
-     (View       : access Gtk_Widget_Record'Class;
-      Allocation : Cairo_Rectangle_Int)
+     (View : access Gtk_Widget_Record'Class; Allocation : Cairo_Rectangle_Int)
    is
       pragma Unreferenced (Allocation);
-      V : constant Result_View_Access := Result_View_Access (View);
+      V      : constant Result_View_Access := Result_View_Access (View);
       Buffer : constant Gtk_Text_Buffer := V.Get_Buffer;
-      First : Gtk_Text_Iter;
+      First  : Gtk_Text_Iter;
    begin
       Buffer.Get_Iter_At_Line_Offset
         (First, Gint (V.Result.Line - 1), Gint (V.Result.Column - 1));
@@ -303,9 +314,7 @@ package body GPS.Kernel.Search.History is
       H : History;
       C : History_Vectors.Cursor;
    begin
-      if Pattern /= ""
-        and then File /= No_File
-      then
+      if Pattern /= "" and then File /= No_File then
          --  Delete history for the file, if any
          C := Vector.First;
          while Has_Element (C) loop
@@ -317,8 +326,7 @@ package body GPS.Kernel.Search.History is
          end loop;
 
          --  Insert the file into history
-         H := (To_Unbounded_String (Pattern),
-               File, Project, Line, Column);
+         H := (To_Unbounded_String (Pattern), File, Project, Line, Column);
          Vector.Prepend (H);
       end if;
    end Add_File_To_History;

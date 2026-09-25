@@ -30,7 +30,8 @@ package body DAP.Modules.Variables.Items is
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (Object : in out Item_Holder) is
+   overriding
+   procedure Adjust (Object : in out Item_Holder) is
    begin
       if Object.Info /= null then
          Object.Info := new Item_Info'Class'(Object.Info.all);
@@ -41,10 +42,11 @@ package body DAP.Modules.Variables.Items is
    -- Finalize --
    --------------
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Item_Info'Class, Item_Info_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Item_Info'Class, Item_Info_Access);
 
-   overriding procedure Finalize (Object : in out Item_Holder) is
+   overriding
+   procedure Finalize (Object : in out Item_Holder) is
    begin
       Free (Object.Info);
    end Finalize;
@@ -99,12 +101,13 @@ package body DAP.Modules.Variables.Items is
       return Item_Info'Class is
    begin
       if not Variable.Is_Empty then
-         return DAP.Modules.Variables.Items.Variables.Create
-           (Variable, Format);
+         return
+           DAP.Modules.Variables.Items.Variables.Create (Variable, Format);
 
       elsif not Command.Is_Empty then
-         return DAP.Modules.Variables.Items.Commands.Create
-           (Command, Split_Lines, Format);
+         return
+           DAP.Modules.Variables.Items.Commands.Create
+             (Command, Split_Lines, Format);
 
       elsif Arguments then
          return DAP.Modules.Variables.Items.Arguments.Create (Format);
@@ -189,12 +192,13 @@ package body DAP.Modules.Variables.Items is
    -- Find_DAP_Item --
    -------------------
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : No_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean) is
    begin
-      C     := DAP.Types.Variables_References_Trees.No_Element;
+      C := DAP.Types.Variables_References_Trees.No_Element;
       Found := False;
    end Find_DAP_Item;
 
@@ -202,7 +206,8 @@ package body DAP.Modules.Variables.Items is
    -- Get_Format --
    ----------------
 
-   overriding function Get_Format (Self : No_Item_Info) return String is
+   overriding
+   function Get_Format (Self : No_Item_Info) return String is
    begin
       return "";
    end Get_Format;
@@ -211,7 +216,8 @@ package body DAP.Modules.Variables.Items is
    -- Is_No_Item --
    ----------------
 
-   overriding function Is_No_Item (Info : No_Item_Info) return Boolean is
+   overriding
+   function Is_No_Item (Info : No_Item_Info) return Boolean is
    begin
       return True;
    end Is_No_Item;
@@ -220,8 +226,8 @@ package body DAP.Modules.Variables.Items is
    -- Restore --
    -------------
 
-   function Restore
-     (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class is
+   function Restore (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class
+   is
    begin
       if String'(Value.Get ("tag")) = "cmd" then
          return DAP.Modules.Variables.Items.Commands.Load (Value);

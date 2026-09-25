@@ -23,7 +23,8 @@ package body CodePeer.Listeners is
    -- Message_Can_Be_Destroyed --
    ------------------------------
 
-   overriding function Message_Can_Be_Destroyed
+   overriding
+   function Message_Can_Be_Destroyed
      (Self    : not null access Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
       return Boolean
@@ -44,8 +45,7 @@ package body CodePeer.Listeners is
    ----------------------
 
    procedure Set_Cleanup_Mode
-     (Self    : not null access Listener;
-      Enabled : Boolean) is
+     (Self : not null access Listener; Enabled : Boolean) is
    begin
       Self.Cleanup := Enabled;
    end Set_Cleanup_Mode;

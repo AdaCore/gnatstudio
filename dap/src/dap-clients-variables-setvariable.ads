@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with VSS.Strings;                 use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 
 with DAP.Requests.SetVariable;
 with DAP.Tools;
@@ -23,8 +23,7 @@ with DAP.Tools;
 private package DAP.Clients.Variables.SetVariable is
 
    type Set_Variable_Request (<>) is
-     new DAP.Requests.SetVariable.Set_Variable_DAP_Request
-   with private;
+     new DAP.Requests.SetVariable.Set_Variable_DAP_Request with private;
    type Set_Variable_Request_Access is access all Set_Variable_Request;
 
    procedure Send_Set_Variable_Request
@@ -37,24 +36,27 @@ private
 
    type Set_Variable_Request
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Kind   : Request_Params_Kind) is
-     new DAP.Requests.SetVariable.Set_Variable_DAP_Request (Kernel)
+      Kind   : Request_Params_Kind)
+   is new DAP.Requests.SetVariable.Set_Variable_DAP_Request (Kernel)
    with record
       Params : Request_Parameters (Kind);
    end record;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Set_Variable_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetVariableResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Set_Variable_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Set_Variable_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 

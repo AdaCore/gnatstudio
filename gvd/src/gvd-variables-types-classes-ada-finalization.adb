@@ -23,25 +23,24 @@ package body GVD.Variables.Types.Classes.Ada.Finalization is
    -- Add_Ancestor --
    ------------------
 
-   overriding procedure Add_Ancestor
+   overriding
+   procedure Add_Ancestor
      (Self     : not null access GVD_Ada_Finalization_Type;
       Num      : Positive;
       Ancestor : GVD_Type_Holder) is
    begin
-      raise Constraint_Error with
-        "GVD_Ada_Finalization_Type cannot have an ancestor";
+      raise Constraint_Error
+        with "GVD_Ada_Finalization_Type cannot have an ancestor";
    end Add_Ancestor;
 
    -----------------------
    -- Create_Controlled --
    -----------------------
 
-   function Create_Controlled return GVD_Type_Holder
-   is
+   function Create_Controlled return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Ada_Finalization_Type);
+          (Count => 1, Instance => new GVD_Ada_Finalization_Type);
    begin
       GVD_Ada_Finalization_Type_Access (Data.Instance).Name :=
         To_Unbounded_String ("Ada.Finalization.Limited_Controlled");
@@ -53,12 +52,10 @@ package body GVD.Variables.Types.Classes.Ada.Finalization is
    -- Create_Limited_Controlled --
    -------------------------------
 
-   function Create_Limited_Controlled return GVD_Type_Holder
-   is
+   function Create_Limited_Controlled return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Ada_Finalization_Type);
+          (Count => 1, Instance => new GVD_Ada_Finalization_Type);
    begin
       GVD_Ada_Finalization_Type_Access (Data.Instance).Name :=
         To_Unbounded_String ("Ada.Finalization.Limited_Controlled");
@@ -70,12 +67,13 @@ package body GVD.Variables.Types.Classes.Ada.Finalization is
    -- Set_Child --
    ---------------
 
-   overriding procedure Set_Child
+   overriding
+   procedure Set_Child
      (Self  : not null access GVD_Ada_Finalization_Type;
       Child : GVD_Type_Holder) is
    begin
-      raise Constraint_Error with
-        "GVD_Ada_Finalization_Type cannot have a chaild";
+      raise Constraint_Error
+        with "GVD_Ada_Finalization_Type cannot have a chaild";
    end Set_Child;
 
 begin

@@ -36,8 +36,8 @@ package body Codefix.Text_Manager.Commands is
       Remove_Empty_Line : Boolean := False) is
    begin
       This.Words := new Word_Mark_Array (Words'First .. Words'Last);
-      This.Search_Forward    := Search_Forward;
-      This.All_Occurrences   := All_Occurrences;
+      This.Search_Forward := Search_Forward;
+      This.All_Occurrences := All_Occurrences;
       This.Remove_Empty_Line := Remove_Empty_Line;
 
       for J in This.Words'Range loop
@@ -62,12 +62,13 @@ package body Codefix.Text_Manager.Commands is
       Make_Word_Mark (Word, Current_Text, Mark);
 
       This.Words := new Word_Mark_Array'(1 => Mark);
-      This.Search_Forward    := Search_Forward;
-      This.All_Occurrences   := All_Occurrences;
+      This.Search_Forward := Search_Forward;
+      This.All_Occurrences := All_Occurrences;
       This.Remove_Empty_Line := Remove_Empty_Line;
    end Initialize;
 
-   overriding procedure Free (This : in out Remove_Words_Cmd) is
+   overriding
+   procedure Free (This : in out Remove_Words_Cmd) is
    begin
       for Word of This.Words.all loop
          Free (Word);
@@ -77,7 +78,8 @@ package body Codefix.Text_Manager.Commands is
       Free (Text_Command (This));
    end Free;
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Remove_Words_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -94,8 +96,8 @@ package body Codefix.Text_Manager.Commands is
          Make_Word_Cursor (Mark, Current_Text, Word);
 
          declare
-            Match      : constant String := Word.Get_Matching_Word
-              (Current_Text);
+            Match      : constant String :=
+              Word.Get_Matching_Word (Current_Text);
             Str_Parsed : constant String :=
               Do_Tab_Expansion
                 (Current_Text.Get_Line (Word, Start_Col => 1),
@@ -117,10 +119,11 @@ package body Codefix.Text_Manager.Commands is
                end loop;
             end if;
 
-            pragma Assert
-              (Column + Match'Length - 1 <= Str_Parsed'Last
-               and then
-               Str_Parsed (Column .. Column + Match'Length - 1) = Match);
+            pragma
+              Assert
+                (Column + Match'Length - 1 <= Str_Parsed'Last
+                 and then
+                   Str_Parsed (Column .. Column + Match'Length - 1) = Match);
 
             --  Move the cursor back to preceding (consecutive) occurrences of
             --  the text
@@ -132,11 +135,12 @@ package body Codefix.Text_Manager.Commands is
                begin
                   loop
                      Prev_Column := Column - Match'Length;
-                     exit when Prev_Column <= 0
+                     exit when
+                       Prev_Column <= 0
                        or else
                          Str_Parsed
                            (Prev_Column .. Prev_Column + Match'Length - 1)
-                       /= Match;
+                         /= Match;
 
                      Column := Prev_Column;
                   end loop;
@@ -150,8 +154,8 @@ package body Codefix.Text_Manager.Commands is
 
                Current_Text.Replace
                  (Word,
-                  Word.Get_Matching_Word
-                    (Current_Text, Check => True)'Length, "");
+                  Word.Get_Matching_Word (Current_Text, Check => True)'Length,
+                  "");
 
                if Current_Text.Get_Line (Word, 1) = "" then
                   if This.Remove_Empty_Line then
@@ -167,15 +171,15 @@ package body Codefix.Text_Manager.Commands is
                exit when not This.All_Occurrences;
 
                declare
-                  Str_Parsed : constant String :=
-                    Current_Text.Get_Line (Word);
+                  Str_Parsed : constant String := Current_Text.Get_Line (Word);
 
                begin
-                  exit when Str_Parsed'Length < Match'Length
+                  exit when
+                    Str_Parsed'Length < Match'Length
                     or else
                       Str_Parsed
-                        (Str_Parsed'First ..
-                           Str_Parsed'First + Match'Length - 1)
+                        (Str_Parsed'First
+                         .. Str_Parsed'First + Match'Length - 1)
                       /= Match;
                end;
             end loop;
@@ -193,8 +197,8 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Remove_Words_Cmd) return Boolean is
    begin
-      return (for all Word of This.Words.all
-              => Word.Mark_Id.Get_File.Is_Writable);
+      return
+        (for all Word of This.Words.all => Word.Mark_Id.Get_File.Is_Writable);
    end Is_Writable;
 
    ----------------
@@ -226,7 +230,8 @@ package body Codefix.Text_Manager.Commands is
       This.Insert_New_Line := Insert_New_Line;
    end Initialize;
 
-   overriding procedure Free (This : in out Insert_Word_Cmd) is
+   overriding
+   procedure Free (This : in out Insert_Word_Cmd) is
    begin
       Free (This.Word);
       Free (This.New_Position);
@@ -237,9 +242,9 @@ package body Codefix.Text_Manager.Commands is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (This         : Insert_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class)
+   overriding
+   procedure Execute
+     (This : Insert_Word_Cmd; Current_Text : in out Text_Navigator_Abstr'Class)
    is
       New_Str         : Unbounded_String;
       Line_Cursor     : File_Cursor;
@@ -268,17 +273,19 @@ package body Codefix.Text_Manager.Commands is
                Get_Line (Current_Text, New_Pos),
                Matches);
 
-            New_Pos.Col := To_Column_Index
-              (String_Index_Type (Matches (1).Last) + 1,
-               Get_Line (Current_Text, New_Pos, 1),
-               Current_Text.Tab_Width (New_Pos.File));
+            New_Pos.Col :=
+              To_Column_Index
+                (String_Index_Type (Matches (1).Last) + 1,
+                 Get_Line (Current_Text, New_Pos, 1),
+                 Current_Text.Tab_Width (New_Pos.File));
          end;
       end if;
 
-      Word_Char_Index := To_Char_Index
-        (New_Pos.Col,
-         Get_Line (Current_Text, Line_Cursor),
-         Current_Text.Tab_Width (New_Pos.File));
+      Word_Char_Index :=
+        To_Char_Index
+          (New_Pos.Col,
+           Get_Line (Current_Text, Line_Cursor),
+           Current_Text.Tab_Width (New_Pos.File));
 
       if This.Position = Specified then
          if This.Add_Spaces then
@@ -295,8 +302,8 @@ package body Codefix.Text_Manager.Commands is
 
                Space_Cursor.Col := Space_Cursor.Col + 1;
 
-               if Natural (Word_Char_Index) <
-                 Line_Length (Current_Text, Line_Cursor)
+               if Natural (Word_Char_Index)
+                 < Line_Length (Current_Text, Line_Cursor)
                  and then not Is_Separator (Get (Current_Text, Space_Cursor))
                then
                   Append (New_Str, " ");
@@ -346,20 +353,21 @@ package body Codefix.Text_Manager.Commands is
          New_Position    => New_Position,
          Insert_New_Line => Insert_New_Line);
 
-      Initialize (This.Step_Remove, Current_Text, Word,
-                  Remove_Empty_Line => True);
+      Initialize
+        (This.Step_Remove, Current_Text, Word, Remove_Empty_Line => True);
    end Initialize;
 
-   overriding procedure Free (This : in out Move_Word_Cmd) is
+   overriding
+   procedure Free (This : in out Move_Word_Cmd) is
    begin
       Free (This.Step_Remove);
       Free (This.Step_Insert);
       Free (Text_Command (This));
    end Free;
 
-   overriding procedure Execute
-     (This         : Move_Word_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class)
+   overriding
+   procedure Execute
+     (This : Move_Word_Cmd; Current_Text : in out Text_Navigator_Abstr'Class)
    is
    begin
       This.Step_Insert.Execute (Current_Text);
@@ -369,8 +377,8 @@ package body Codefix.Text_Manager.Commands is
    overriding
    function Is_Writable (This : Move_Word_Cmd) return Boolean is
    begin
-      return This.Step_Remove.Is_Writable
-        and then This.Step_Insert.Is_Writable;
+      return
+        This.Step_Remove.Is_Writable and then This.Step_Insert.Is_Writable;
    end Is_Writable;
 
    ----------------
@@ -393,13 +401,15 @@ package body Codefix.Text_Manager.Commands is
    -- Free --
    ----------
 
-   overriding procedure Free (This : in out Replace_Word_Cmd) is
+   overriding
+   procedure Free (This : in out Replace_Word_Cmd) is
    begin
       Free (This.Mark);
       Free (Text_Command (This));
    end Free;
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -465,15 +475,16 @@ package body Codefix.Text_Manager.Commands is
       This.Second_Word := Second_Word;
    end Initialize;
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Matches       : Match_Array (1 .. 1);
       Matcher       : constant Pattern_Matcher :=
         Compile ("(" & To_String (This.Second_Word) & ") ", Case_Insensitive);
-      First_Cursor  : constant File_Cursor := File_Cursor
-        (Current_Text.Get_Current_Cursor (This.Cursor.all));
+      First_Cursor  : constant File_Cursor :=
+        File_Cursor (Current_Text.Get_Current_Cursor (This.Cursor.all));
       Second_Cursor : File_Cursor := First_Cursor;
       Line          : Integer := Get_Line (Second_Cursor);
 
@@ -516,13 +527,13 @@ package body Codefix.Text_Manager.Commands is
       Indent       : Boolean) is
    begin
       Init (This, Current_Text, Position);
-      This.Line   := Line;
+      This.Line := Line;
       This.Indent := Indent;
    end Initialize;
 
-   overriding procedure Execute
-     (This         : Add_Line_Cmd;
-      Current_Text : in out Text_Navigator_Abstr'Class)
+   overriding
+   procedure Execute
+     (This : Add_Line_Cmd; Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Cursor : constant File_Cursor'Class :=
         Current_Text.Get_Current_Cursor (This.Cursor.all);
@@ -535,7 +546,9 @@ package body Codefix.Text_Manager.Commands is
 
       Add_Line
         (Get_File (Current_Text, This.Cursor.File_Name).all,
-         Cursor, End_Of_Line & To_String (This.Line), This.Indent);
+         Cursor,
+         End_Of_Line & To_String (This.Line),
+         This.Indent);
    end Execute;
 
    ----------------
@@ -560,7 +573,8 @@ package body Codefix.Text_Manager.Commands is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Wrap_Statement_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -569,16 +583,10 @@ package body Codefix.Text_Manager.Commands is
       End_Cursor       : File_Cursor;
       Before_Statement : constant Construct_Tree_Iterator :=
         Get_Iterator_At
-          (Current_Text,
-           Start_Cursor,
-           Start_Construct,
-           Position => Before);
-      After_Statement : constant Construct_Tree_Iterator :=
+          (Current_Text, Start_Cursor, Start_Construct, Position => Before);
+      After_Statement  : constant Construct_Tree_Iterator :=
         Get_Iterator_At
-          (Current_Text,
-           Start_Cursor,
-           Start_Construct,
-           Position => After);
+          (Current_Text, Start_Cursor, Start_Construct, Position => After);
    begin
       Set_File (Start_Cursor, Get_File (Start_Cursor));
       Set_Location
@@ -607,10 +615,10 @@ package body Codefix.Text_Manager.Commands is
       Start_Cursor, End_Cursor : File_Cursor'Class;
       New_Text                 : Unbounded_String) is
    begin
-      This.Start_Mark := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, Start_Cursor));
-      This.End_Mark := new Mark_Abstr'Class'
-        (Get_New_Mark (Current_Text, End_Cursor));
+      This.Start_Mark :=
+        new Mark_Abstr'Class'(Get_New_Mark (Current_Text, Start_Cursor));
+      This.End_Mark :=
+        new Mark_Abstr'Class'(Get_New_Mark (Current_Text, End_Cursor));
       This.New_Text := New_Text;
    end Initialize;
 
@@ -618,23 +626,25 @@ package body Codefix.Text_Manager.Commands is
    -- Free --
    ----------
 
-   overriding procedure Free (This : in out Replace_Slice_Cmd) is
+   overriding
+   procedure Free (This : in out Replace_Slice_Cmd) is
    begin
       Free (This.Start_Mark);
       Free (This.End_Mark);
    end Free;
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Replace_Slice_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Start_Cursor, End_Cursor : File_Cursor;
       Modified_Text            : Ptr_Text;
    begin
-      Start_Cursor := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.Start_Mark.all));
-      End_Cursor := File_Cursor
-        (Get_Current_Cursor (Current_Text, This.End_Mark.all));
+      Start_Cursor :=
+        File_Cursor (Get_Current_Cursor (Current_Text, This.Start_Mark.all));
+      End_Cursor :=
+        File_Cursor (Get_Current_Cursor (Current_Text, This.End_Mark.all));
       Modified_Text := Current_Text.Get_File (Start_Cursor.File);
 
       Modified_Text.Replace
@@ -659,12 +669,13 @@ package body Codefix.Text_Manager.Commands is
       Init (This, Current_Text, Start_Cursor);
    end Initialize;
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Remove_Blank_Lines_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Cursor : constant File_Cursor := File_Cursor
-        (Current_Text.Get_Current_Cursor (This.Cursor.all));
+      Cursor : constant File_Cursor :=
+        File_Cursor (Current_Text.Get_Current_Cursor (This.Cursor.all));
    begin
       Remove_Blank_Lines (Current_Text, Cursor);
    end Execute;
@@ -674,7 +685,7 @@ package body Codefix.Text_Manager.Commands is
       Cursor       : File_Cursor'Class)
    is
       Line_Cursor : File_Cursor'Class := Clone (Cursor);
-      Text   : constant Ptr_Text := Current_Text.Get_File (Cursor.File);
+      Text        : constant Ptr_Text := Current_Text.Get_File (Cursor.File);
    begin
       Line_Cursor.Col := 1;
 
@@ -699,7 +710,8 @@ package body Codefix.Text_Manager.Commands is
       Init (This, Current_Text, Cursor);
    end Initialize;
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Tab_Expansion_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
@@ -708,9 +720,10 @@ package body Codefix.Text_Manager.Commands is
    begin
       Current_Text.Add_Line
         (Cursor   => Cursor,
-         New_Line => Do_Tab_Expansion
-           (Current_Text.Get_Line (Cursor, 1),
-            Current_Text.Tab_Width (Get_File (Cursor))),
+         New_Line =>
+           Do_Tab_Expansion
+             (Current_Text.Get_Line (Cursor, 1),
+              Current_Text.Tab_Width (Get_File (Cursor))),
          Indent   => False);
 
       Current_Text.Delete_Line (Cursor);

@@ -31,11 +31,11 @@ with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
 
-with Gtkada.Tree_View;         use Gtkada.Tree_View;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with Histories;                use Histories;
-with Switches_Chooser.Gtkada;  use Switches_Chooser.Gtkada;
-with Pango.Font;               use Pango.Font;
+with Histories;               use Histories;
+with Switches_Chooser.Gtkada; use Switches_Chooser.Gtkada;
+with Pango.Font;              use Pango.Font;
 
 package Build_Configurations.Gtkada is
 
@@ -58,11 +58,12 @@ package Build_Configurations.Gtkada is
    --  Apply the changes made in the given Build Targets configuration UI
 
    procedure Modes_Dialog
-     (Registry     : Build_Config_Registry_Access;
-      Parent       : Gtk_Window   := null;
-      Set_Default_Size_From_History : not null access procedure
-         (Win : not null access Gtk_Window_Record'Class);
-      Changes_Made : out Boolean);
+     (Registry                      : Build_Config_Registry_Access;
+      Parent                        : Gtk_Window := null;
+      Set_Default_Size_From_History :
+        not null access procedure
+          (Win : not null access Gtk_Window_Record'Class);
+      Changes_Made                  : out Boolean);
    --  Launch the modes configuration dialog
    --  Changes_Made is set to True if the user caused some changes that
    --  need to be saved (in other words, if the user clicked "OK" or "Apply").
@@ -70,15 +71,16 @@ package Build_Configurations.Gtkada is
    type Cmd_Line_Expander is access function (CL : String) return String;
 
    procedure Single_Target_Dialog
-     (Registry        : Build_Config_Registry_Access;
-      Parent          : Gtk_Window   := null;
-      Target          : String;
-      History         : Histories.History;
-      Expand_Cmd_Line : Cmd_Line_Expander;
-      Set_Default_Size_From_History : not null access procedure
-         (Win : not null access Gtk_Window_Record'Class);
-      Result          : out GNAT.OS_Lib.Argument_List_Access;
-      Fixed_Font      : Pango_Font_Description);
+     (Registry                      : Build_Config_Registry_Access;
+      Parent                        : Gtk_Window := null;
+      Target                        : String;
+      History                       : Histories.History;
+      Expand_Cmd_Line               : Cmd_Line_Expander;
+      Set_Default_Size_From_History :
+        not null access procedure
+          (Win : not null access Gtk_Window_Record'Class);
+      Result                        : out GNAT.OS_Lib.Argument_List_Access;
+      Fixed_Font                    : Pango_Font_Description);
    --  Launch a dialog allowing to modify the command line for Target only.
    --  Return the resulting command followed by arguments, macros not
    --  expanded.
@@ -91,57 +93,57 @@ package Build_Configurations.Gtkada is
 private
 
    type Target_UI_Record is new Gtk_Scrolled_Window_Record with record
-      Registry       : Build_Config_Registry_Access;
-      Target         : Target_Access;
+      Registry : Build_Config_Registry_Access;
+      Target   : Target_Access;
 
-      Frame          : Gtk_Frame;
+      Frame : Gtk_Frame;
       --  The frame that contains the elements to describe the switches
 
-      Editor         : Switches_Editor := null;
+      Editor : Switches_Editor := null;
       --  The one switch editor for the target, if there is only one command
 
-      Model_Entry    : Gtk_Entry;
+      Model_Entry : Gtk_Entry;
       --  The entry containing the model
 
-      History        : Histories.History;
+      History : Histories.History;
 
-      Fixed_Font     : Pango_Font_Description := null;
+      Fixed_Font : Pango_Font_Description := null;
       --  Font used to print the target help, must be monospace
 
-      Icon_Entry       : Gtk_Entry;
-      Icon_Button      : Gtkada_Combo_Tool_Button;
-      Icon_Check       : Gtk_Check_Button;
-      Menu_Check       : Gtk_Check_Button;
+      Icon_Entry  : Gtk_Entry;
+      Icon_Button : Gtkada_Combo_Tool_Button;
+      Icon_Check  : Gtk_Check_Button;
+      Menu_Check  : Gtk_Check_Button;
 
-      Project_Contextual_Menu_Check  : Gtk_Check_Button;
-      File_Contextual_Menu_Check     : Gtk_Check_Button;
+      Project_Contextual_Menu_Check : Gtk_Check_Button;
+      File_Contextual_Menu_Check    : Gtk_Check_Button;
 
       Multiple_Targets : Gtk_Entry;
 
-      Launch_Combo   : Gtk_Combo_Box_Text;
+      Launch_Combo : Gtk_Combo_Box_Text;
 
       Expanded_Entry : Gtk_Text_View;
    end record;
    type Target_UI_Access is access all Target_UI_Record'Class;
 
    type Build_UI_Record is new Gtk_Hbox_Record with record
-      Registry        : Build_Config_Registry_Access;
-      Target_UI       : Target_UI_Access;
+      Registry  : Build_Config_Registry_Access;
+      Target_UI : Target_UI_Access;
       --  Single target UI when using the Single mode
 
       Expand_Cmd_Line : Cmd_Line_Expander;
       --  Command line expander callback
 
-      Notebook        : Gtk_Notebook;
+      Notebook : Gtk_Notebook;
       --  The main notebook
 
-      View            : Tree_View;
+      View : Tree_View;
       --  The tree
 
-      History         : Histories.History;
+      History : Histories.History;
       --  Reference to the History
 
-      Fixed_Font      : Pango_Font_Description := null;
+      Fixed_Font : Pango_Font_Description := null;
       --  Font used to print the target help, must be monospace
    end record;
 

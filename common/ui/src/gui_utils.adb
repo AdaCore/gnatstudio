@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar; use Ada.Calendar;
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Fixed;
 with Ada.Strings.Equal_Case_Insensitive;
 use Ada.Strings;
@@ -26,7 +26,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with Interfaces.C;
 
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with VSS.Application;
 with VSS.Strings;                    use VSS.Strings;
@@ -107,19 +107,22 @@ package body GUI_Utils is
    --  A global variable, allocated once and never freed
 
    type Contextual_Menu_Data is record
-      Create  : Contextual_Menu_Create;
-      Widget  : Gtk_Widget;
+      Create : Contextual_Menu_Create;
+      Widget : Gtk_Widget;
    end record;
 
    type Model_Column is record
-      Model   : Gtk_Tree_Model;
-      Column  : Glib.Gint;
+      Model  : Gtk_Tree_Model;
+      Column : Glib.Gint;
    end record;
 
-   package Contextual_Callback is new Gtk.Handlers.User_Return_Callback
-     (Gtk_Widget_Record, Boolean, Contextual_Menu_Data);
-   package Tree_Column_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Model_Column);
+   package Contextual_Callback is new
+     Gtk.Handlers.User_Return_Callback
+       (Gtk_Widget_Record,
+        Boolean,
+        Contextual_Menu_Data);
+   package Tree_Column_Callback is new
+     Gtk.Handlers.User_Callback (Glib.Object.GObject_Record, Model_Column);
 
    function Idle_Grab_Focus (Widget : Gtk_Widget) return Boolean;
    pragma Unreferenced (Idle_Grab_Focus);
@@ -164,15 +167,15 @@ package body GUI_Utils is
    package String_User_Data is new Glib.Object.User_Data (String);
 
    function On_Focus_In
-     (View    : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event_Focus) return Boolean;
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean;
    function On_Focus_Out
-     (View    : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event_Focus) return Boolean;
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean;
    --  Handling of placeholders on text view
 
-   package View_Idle_Sources is new Glib.Main.Generic_Sources
-     (Activity_Progress_Bar);
+   package View_Idle_Sources is new
+     Glib.Main.Generic_Sources (Activity_Progress_Bar);
 
    function Progress_Pulse_Timeout
      (Self : Activity_Progress_Bar) return Boolean;
@@ -183,8 +186,7 @@ package body GUI_Utils is
    --  Called when the progress bar's owner is destroyed.
    --  Remove the progress bar's timeout used to pulse it.
 
-   function Image
-     (Mods    : Gdk.Types.Gdk_Modifier_Type) return String;
+   function Image (Mods : Gdk.Types.Gdk_Modifier_Type) return String;
    --  Return a string suitable for display to show the Mods.
 
    Button_Img : constant String := "Button_";
@@ -227,18 +229,19 @@ package body GUI_Utils is
    ----------------------------
 
    procedure Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : VSS.Strings.Virtual_String;
-      Select_Text  : Boolean := False;
-      Prepend      : Boolean := False;
-      Col          : Gint := 0;
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : VSS.Strings.Virtual_String;
+      Select_Text    : Boolean := False;
+      Prepend        : Boolean := False;
+      Col            : Gint := 0;
       Case_Sensitive : Boolean := True)
    is
       Iter : Gtk_Tree_Iter;
       pragma Unreferenced (Iter);
    begin
-      Iter := Add_Unique_Combo_Entry
-        (Combo, Text, Select_Text, Prepend, Col, Case_Sensitive);
+      Iter :=
+        Add_Unique_Combo_Entry
+          (Combo, Text, Select_Text, Prepend, Col, Case_Sensitive);
    end Add_Unique_Combo_Entry;
 
    ----------------------------
@@ -246,11 +249,11 @@ package body GUI_Utils is
    ----------------------------
 
    function Add_Unique_Combo_Entry
-     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : VSS.Strings.Virtual_String;
-      Select_Text  : Boolean := False;
-      Prepend      : Boolean := False;
-      Col          : Gint := 0;
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : VSS.Strings.Virtual_String;
+      Select_Text    : Boolean := False;
+      Prepend        : Boolean := False;
+      Col            : Gint := 0;
       Case_Sensitive : Boolean := True) return Gtk_Tree_Iter
    is
       Iter  : Gtk_Tree_Iter;
@@ -260,18 +263,18 @@ package body GUI_Utils is
 
       while Iter /= Null_Iter loop
          declare
-            Str : Virtual_String
-              renames VSS.Strings.Conversions.To_Virtual_String
-                        (Model.Get_String (Iter, Col));
+            Str : Virtual_String renames
+              VSS.Strings.Conversions.To_Virtual_String
+                (Model.Get_String (Iter, Col));
          begin
             exit when
               Str = Text
-              or else (not Case_Sensitive
-                       and then Equal_Case_Insensitive
-                                  (VSS.Strings.Conversions.To_UTF_8_String
-                                     (Text),
-                                   VSS.Strings.Conversions.To_UTF_8_String
-                                     (Str)));
+              or else
+                (not Case_Sensitive
+                 and then
+                   Equal_Case_Insensitive
+                     (VSS.Strings.Conversions.To_UTF_8_String (Text),
+                      VSS.Strings.Conversions.To_UTF_8_String (Str)));
          end;
 
          Model.Next (Iter);
@@ -299,9 +302,9 @@ package body GUI_Utils is
    ---------------------
 
    procedure Set_Active_Text
-     (Combo        : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
-      Text         : String;
-      Col          : Gint := 0;
+     (Combo          : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
+      Text           : String;
+      Col            : Gint := 0;
       Case_Sensitive : Boolean := True)
    is
       Iter  : Gtk_Tree_Iter;
@@ -380,9 +383,8 @@ package body GUI_Utils is
             Show_All (Menu);
             Menu.Set_Can_Focus (True);
             Menu.Grab_Focus;
-            Popup (Menu,
-                   Button        => 0,
-                   Activate_Time => Gdk.Event.Get_Time (Event));
+            Popup
+              (Menu, Button => 0, Activate_Time => Gdk.Event.Get_Time (Event));
 
             Emit_Stop_By_Name (Widget, "key_press_event");
             return True;
@@ -410,8 +412,7 @@ package body GUI_Utils is
       Time_Before_Factory : Time;
 
    begin
-      if Get_Button (Event) = 3
-        and then Get_Event_Type (Event) = Button_Press
+      if Get_Button (Event) = 3 and then Get_Event_Type (Event) = Button_Press
       then
          if Host = Windows then
             Time_Before_Factory := Clock;
@@ -436,14 +437,17 @@ package body GUI_Utils is
             --  they are created with a simple click.
 
             if Host = Windows then
-               Popup (Menu,
-                      Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event)
-                        + Guint32 ((Clock - Time_Before_Factory) * 1000));
+               Popup
+                 (Menu,
+                  Button        => Gdk.Event.Get_Button (Event),
+                  Activate_Time =>
+                    Gdk.Event.Get_Time (Event)
+                    + Guint32 ((Clock - Time_Before_Factory) * 1000));
             else
-               Popup (Menu,
-                      Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event));
+               Popup
+                 (Menu,
+                  Button        => Gdk.Event.Get_Button (Event),
+                  Activate_Time => Gdk.Event.Get_Time (Event));
             end if;
 
             Emit_Stop_By_Name (Widget, "button_press_event");
@@ -464,8 +468,8 @@ package body GUI_Utils is
    ------------------------------
 
    procedure Register_Contextual_Menu
-     (Widget       : access Gtk_Widget_Record'Class;
-      Menu_Create  : Contextual_Menu_Create) is
+     (Widget      : access Gtk_Widget_Record'Class;
+      Menu_Create : Contextual_Menu_Create) is
    begin
       --  If the widget doesn't have a window, it might not work. But then, if
       --  the children have windows and do not handle the event, this might get
@@ -479,12 +483,14 @@ package body GUI_Utils is
       end if;
 
       Contextual_Callback.Connect
-        (Widget, Signal_Button_Press_Event,
+        (Widget,
+         Signal_Button_Press_Event,
          Contextual_Callback.To_Marshaller
            (Button_Press_For_Contextual_Menu'Access),
          (Menu_Create, Gtk_Widget (Widget)));
       Contextual_Callback.Connect
-        (Widget, Signal_Key_Press_Event,
+        (Widget,
+         Signal_Key_Press_Event,
          Contextual_Callback.To_Marshaller
            (Key_Press_For_Contextual_Menu'Access),
          (Menu_Create, Gtk_Widget (Widget)));
@@ -496,15 +502,15 @@ package body GUI_Utils is
 
    package body User_Contextual_Menus is
 
-      package Pop is new Gtk.Menu.Popup_For_Device_User_Data
-        (Gdk.Event.Gdk_Event);
+      package Pop is new
+        Gtk.Menu.Popup_For_Device_User_Data (Gdk.Event.Gdk_Event);
 
       procedure Contextual_Menu_Position_Callback
-        (Menu : not null access Gtk_Menu_Record'Class;
-         X : out Gint;
-         Y : out Gint;
+        (Menu    : not null access Gtk_Menu_Record'Class;
+         X       : out Gint;
+         Y       : out Gint;
          Push_In : out Boolean;
-         Val : Gdk.Event.Gdk_Event);
+         Val     : Gdk.Event.Gdk_Event);
 
       function Button_Press_For_Contextual_Menu
         (Widget : access Gtk_Widget_Record'Class;
@@ -535,9 +541,10 @@ package body GUI_Utils is
                Show_All (Menu);
                Menu.Set_Can_Focus (True);
                Menu.Grab_Focus;
-               Popup (Menu,
-                      Button        => 0,
-                      Activate_Time => Gdk.Event.Get_Time (Event));
+               Popup
+                 (Menu,
+                  Button        => 0,
+                  Activate_Time => Gdk.Event.Get_Time (Event));
                Emit_Stop_By_Name (Widget, "key_press_event");
                return True;
             end if;
@@ -551,11 +558,11 @@ package body GUI_Utils is
       ---------------------------------------
 
       procedure Contextual_Menu_Position_Callback
-        (Menu : not null access Gtk_Menu_Record'Class;
-         X : out Gint;
-         Y : out Gint;
+        (Menu    : not null access Gtk_Menu_Record'Class;
+         X       : out Gint;
+         Y       : out Gint;
          Push_In : out Boolean;
-         Val : Gdk.Event.Gdk_Event)
+         Val     : Gdk.Event.Gdk_Event)
       is
          pragma Unreferenced (Menu);
       begin
@@ -613,14 +620,15 @@ package body GUI_Utils is
 
                Pop.Popup_For_Device
                  (Menu,
-                  Device           => Gdk_Device
-                    (Get_User_Data (Event.Button.Device, Stub)),
+                  Device            =>
+                    Gdk_Device (Get_User_Data (Event.Button.Device, Stub)),
                   Parent_Menu_Shell => null,
                   Parent_Menu_Item  => null,
-                  Button           => Event.Button.Button,
-                  Activate_Time    => Event.Button.Time + Offset,
-                  Func             => Contextual_Menu_Position_Callback'Access,
-                  Data             => Event);
+                  Button            => Event.Button.Button,
+                  Activate_Time     => Event.Button.Time + Offset,
+                  Func              =>
+                    Contextual_Menu_Position_Callback'Access,
+                  Data              => Event);
 
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;
@@ -635,9 +643,9 @@ package body GUI_Utils is
       ------------------------------
 
       procedure Register_Contextual_Menu
-        (Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
-         User         : User_Data;
-         Menu_Create  : Contextual_Menu_Create) is
+        (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;
+         User        : User_Data;
+         Menu_Create : Contextual_Menu_Create) is
       begin
          if Widget.Get_Has_Window then
             Add_Events
@@ -646,19 +654,19 @@ package body GUI_Utils is
          end if;
 
          Contextual_Callback.Connect
-           (Widget, Signal_Button_Press_Event,
+           (Widget,
+            Signal_Button_Press_Event,
             Contextual_Callback.To_Marshaller
-              (User_Contextual_Menus.Button_Press_For_Contextual_Menu'
-                 Unrestricted_Access),
-            (Menu_Create  => Menu_Create,
-             User         => User));
+              (User_Contextual_Menus
+                 .Button_Press_For_Contextual_Menu'Unrestricted_Access),
+            (Menu_Create => Menu_Create, User => User));
          Contextual_Callback.Connect
-           (Widget, Signal_Key_Press_Event,
+           (Widget,
+            Signal_Key_Press_Event,
             Contextual_Callback.To_Marshaller
-              (User_Contextual_Menus.Key_Press_For_Contextual_Menu'
-                 Unrestricted_Access),
-            (Menu_Create  => Menu_Create,
-             User         => User));
+              (User_Contextual_Menus
+                 .Key_Press_For_Contextual_Menu'Unrestricted_Access),
+            (Menu_Create => Menu_Create, User => User));
       end Register_Contextual_Menu;
 
    end User_Contextual_Menus;
@@ -736,10 +744,10 @@ package body GUI_Utils is
       H_Adj           : constant Gtk_Adjustment := Self.Get_Hadjustment;
       H_Adj_Value     : constant Gdouble := H_Adj.Get_Value;
       H_Adj_Page_Size : constant Gdouble := H_Adj.Get_Page_Size;
-      Child_Alloc   : Gtk_Allocation;
-      Parent_Alloc  : Gtk_Allocation;
-      Total_Alloc_Y : Gdouble;
-      Total_Alloc_X : Gdouble;
+      Child_Alloc     : Gtk_Allocation;
+      Parent_Alloc    : Gtk_Allocation;
+      Total_Alloc_Y   : Gdouble;
+      Total_Alloc_X   : Gdouble;
    begin
       Child.Get_Allocation (Child_Alloc);
       Child.Get_Parent.Get_Allocation (Parent_Alloc);
@@ -774,8 +782,11 @@ package body GUI_Utils is
       Set_Radio (Renderer, True);
 
       Tree_Model_Callback.Object_Connect
-        (Renderer, Signal_Toggled,
-         Radio_Callback'Access, Slot_Object => Model, User_Data => Column);
+        (Renderer,
+         Signal_Toggled,
+         Radio_Callback'Access,
+         Slot_Object => Model,
+         User_Data   => Column);
    end Set_Radio_And_Callback;
 
    --------------------
@@ -811,7 +822,8 @@ package body GUI_Utils is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Radio_Callback;
 
    -------------------------------
@@ -826,12 +838,18 @@ package body GUI_Utils is
    begin
       if Escape_Text then
          Tree_Model_Callback.Object_Connect
-           (Renderer, Signal_Edited, Edited_Callback_With_Escape'Access,
-            Slot_Object => Model, User_Data => Column);
+           (Renderer,
+            Signal_Edited,
+            Edited_Callback_With_Escape'Access,
+            Slot_Object => Model,
+            User_Data   => Column);
       else
          Tree_Model_Callback.Object_Connect
-           (Renderer, Signal_Edited, Edited_Callback'Access,
-            Slot_Object => Model, User_Data => Column);
+           (Renderer,
+            Signal_Edited,
+            Edited_Callback'Access,
+            Slot_Object => Model,
+            User_Data   => Column);
       end if;
    end Set_Editable_And_Callback;
 
@@ -864,8 +882,8 @@ package body GUI_Utils is
    is
       M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
       Path_String : constant String := Get_String (Nth (Params, 1));
-      Text_Value  : constant String := Escape_Text
-        (Get_String (Nth (Params, 2)));
+      Text_Value  : constant String :=
+        Escape_Text (Get_String (Nth (Params, 2)));
       Iter        : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_From_String (M, Path_String);
@@ -877,8 +895,8 @@ package body GUI_Utils is
    -------------------------
 
    function Find_Iter_For_Event
-     (Tree  : access Gtk_Tree_View_Record'Class;
-      Event : Gdk_Event_Button) return Gtk_Tree_Iter
+     (Tree : access Gtk_Tree_View_Record'Class; Event : Gdk_Event_Button)
+      return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter;
       Col  : Gtk_Tree_View_Column;
@@ -895,10 +913,10 @@ package body GUI_Utils is
      (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
       Event : Gdk.Event.Gdk_Event) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      X, Y      : Gdouble;
-      N_Model   : Gtk_Tree_Model;
-      Iter      : Gtk_Tree_Iter := Null_Iter;
-      Column    : Gtk_Tree_View_Column := null;
+      X, Y    : Gdouble;
+      N_Model : Gtk_Tree_Model;
+      Iter    : Gtk_Tree_Iter := Null_Iter;
+      Column  : Gtk_Tree_View_Column := null;
 
       procedure On_Selected
         (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; It : Gtk_Tree_Iter);
@@ -940,10 +958,10 @@ package body GUI_Utils is
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
    is
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Found     : Boolean;
-      Path      : Gtk_Tree_Path;
+      Buffer_X : Gint;
+      Buffer_Y : Gint;
+      Found    : Boolean;
+      Path     : Gtk_Tree_Path;
    begin
       Column := null;
       Get_Path_At_Pos
@@ -967,7 +985,7 @@ package body GUI_Utils is
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
    is
-      N_Model   : Gtk_Tree_Model;
+      N_Model : Gtk_Tree_Model;
    begin
       if Event.The_Type in Button_Press .. Button_Release then
          Coordinates_For_Event (Tree, Event.X, Event.Y, Iter, Column);
@@ -1021,9 +1039,8 @@ package body GUI_Utils is
 
             Current := Gunichar'(Get_Char (Start_Iter));
             if not Is_Operator_Letter (Current) then
-               if not Extend or else
-                 (not Is_Dot (Current)
-                  and then not Is_Blank (Current))
+               if not Extend
+                 or else (not Is_Dot (Current) and then not Is_Blank (Current))
                then
                   Forward_Char (Start_Iter, Ignored);
                end if;
@@ -1044,9 +1061,8 @@ package body GUI_Utils is
 
             Current := Gunichar'(Get_Char (Start_Iter));
             if not Is_Entity_Letter (Current) then
-               if not Extend or else
-                 (not Is_Dot (Current)
-                  and then not Is_Blank (Current))
+               if not Extend
+                 or else (not Is_Dot (Current) and then not Is_Blank (Current))
                then
                   Forward_Char (Start_Iter, Ignored);
                end if;
@@ -1061,9 +1077,7 @@ package body GUI_Utils is
    -- Image --
    -----------
 
-   function Image
-     (Mods : Gdk.Types.Gdk_Modifier_Type) return String
-   is
+   function Image (Mods : Gdk.Types.Gdk_Modifier_Type) return String is
       Shift   : constant String := "shift-";
       Meta    : constant String := "alt-";
       Control : constant String := "control-";
@@ -1101,27 +1115,24 @@ package body GUI_Utils is
       Button : Guint;
       Mods   : Gdk.Types.Gdk_Modifier_Type) return String is
    begin
-      if Key = 0
-        and then Button < 4
-      then
+      if Key = 0 and then Button < 4 then
          return "";
       end if;
 
       case Key is
          when GDK_Shift_L
-           | GDK_Shift_R
-           | GDK_Control_L
-           | GDK_Control_R
-           | GDK_Caps_Lock
-           | GDK_Shift_Lock
-           | GDK_Meta_L
-           | GDK_Meta_R
-           | GDK_Alt_L
-           | GDK_Alt_R
-           =>
+            | GDK_Shift_R
+            | GDK_Control_L
+            | GDK_Control_R
+            | GDK_Caps_Lock
+            | GDK_Shift_Lock
+            | GDK_Meta_L
+            | GDK_Meta_R
+            | GDK_Alt_L
+            | GDK_Alt_R =>
             return Special_Key_Binding;
 
-         when others =>
+         when others    =>
             if Key /= 0 then
                return Image (Mods) & Gdk.Keyval.Name (Key);
 
@@ -1129,8 +1140,10 @@ package body GUI_Utils is
                declare
                   Key : constant String := Guint'Image (Button);
                begin
-                  return Image (Mods) & Button_Img &
-                    Key (Key'First + 1 .. Key'Last);
+                  return
+                    Image (Mods)
+                    & Button_Img
+                    & Key (Key'First + 1 .. Key'Last);
                end;
             end if;
       end case;
@@ -1162,6 +1175,7 @@ package body GUI_Utils is
                   --  backward compatibility: cmd-<key> are now saved as
                   --  primary-<key> on OSX
                   Mods := Mods or Primary_Mod_Mask; --  command (OSX)
+
                else
                   Mods := Mods or Mod1_Mask;  --  alt on other systems
                end if;
@@ -1175,10 +1189,10 @@ package body GUI_Utils is
       if Start + Button_Img'Length <= From'Last
         and then From (Start .. Start + Button_Img'Length - 1) = Button_Img
       then
-         Key    := 0;
+         Key := 0;
          Button := Guint'Value (From (Start + Button_Img'Length .. From'Last));
       else
-         Key    := From_Name (From (Start .. From'Last));
+         Key := From_Name (From (Start .. From'Last));
          Button := 0;
       end if;
    end Value;
@@ -1187,9 +1201,7 @@ package body GUI_Utils is
    -- Switch_Paned_Orientation --
    ------------------------------
 
-   procedure Switch_Paned_Orientation
-     (Paned : in out Gtk.Paned.Gtk_Paned)
-   is
+   procedure Switch_Paned_Orientation (Paned : in out Gtk.Paned.Gtk_Paned) is
       Pane1_Child  : Gtk_Widget;
       Pane2_Child  : Gtk_Widget;
       Current_Type : constant GType := Paned.Get_Type;
@@ -1224,13 +1236,12 @@ package body GUI_Utils is
    --------------------------
 
    function Get_Position_Percent
-     (Paned    : not null access Gtk.Paned.Gtk_Paned_Record'Class) return Float
+     (Paned : not null access Gtk.Paned.Gtk_Paned_Record'Class) return Float
    is
       Pane_Size : constant Float :=
-                    (if Paned.Get_Type = Gtk.Paned.Get_Type_Hpaned then
-                                    Float (Paned.Get_Allocated_Width)
-                     else
-                        Float (Paned.Get_Allocated_Height));
+        (if Paned.Get_Type = Gtk.Paned.Get_Type_Hpaned
+         then Float (Paned.Get_Allocated_Width)
+         else Float (Paned.Get_Allocated_Height));
       Sep_Pos   : constant Float := Float (Paned.Get_Position);
    begin
       return Sep_Pos / Pane_Size * 100.00;
@@ -1245,12 +1256,10 @@ package body GUI_Utils is
       Percent : Float)
    is
       Paned_Size : constant Float :=
-                     (if Paned.Get_Type = Gtk.Paned.Get_Type_Hpaned then
-                         Float (Paned.Get_Allocated_Width)
-                      else
-                         Float (Paned.Get_Allocated_Height));
-      Abs_Pos         : constant Float :=
-                          Percent / 100.0  * Paned_Size;
+        (if Paned.Get_Type = Gtk.Paned.Get_Type_Hpaned
+         then Float (Paned.Get_Allocated_Width)
+         else Float (Paned.Get_Allocated_Height));
+      Abs_Pos    : constant Float := Percent / 100.0 * Paned_Size;
    begin
       --  Avoid setting the position of the paned view when it's size is
       --  not allocated yet.
@@ -1271,7 +1280,7 @@ package body GUI_Utils is
       Uneditable_Tag  : Gtk_Text_Tag;
       User_Data       : System.Address)
    is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (View);
+      Buffer                 : constant Gtk_Text_Buffer := Get_Buffer (View);
       Prompt_Iter, Last_Iter : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Prompt_Iter, Prompt_End_Mark);
@@ -1287,8 +1296,8 @@ package body GUI_Utils is
          Line          : Gint;
          Offset        : Gint;
          More_Than_One : constant Boolean :=
-                           not Completions.Is_Empty
-                           and then Has_Element (Next (Completions.First));
+           not Completions.Is_Empty
+           and then Has_Element (Next (Completions.First));
          Success       : Boolean;
          Prev_Begin    : Gtk_Text_Iter;
          Prev_Last     : Gtk_Text_Iter;
@@ -1340,8 +1349,10 @@ package body GUI_Utils is
             Get_End_Iter (Buffer, Pos);
 
             if Prefix'Length > Text'Length then
-               Insert (Buffer, Pos,
-                       Prefix (Prefix'First + Text'Length .. Prefix'Last));
+               Insert
+                 (Buffer,
+                  Pos,
+                  Prefix (Prefix'First + Text'Length .. Prefix'Last));
             end if;
 
             if not More_Than_One then
@@ -1362,8 +1373,7 @@ package body GUI_Utils is
       Urgent        : Boolean := True;
       Default       : String := "";
       Options       : access Query_User_Option_Array_Type := null;
-      History_Acc   : Histories.History := null)
-      return String
+      History_Acc   : Histories.History := null) return String
    is
 
       Dialog              : Gtk_Dialog;
@@ -1377,10 +1387,11 @@ package body GUI_Utils is
       Option_Checkbuttons :
         array (Options_First .. Options_Last) of Gtk_Check_Button;
    begin
-      Gtk_New (Dialog,
-               Title  => Prompt,
-               Parent => Parent,
-               Flags  => Destroy_With_Parent or Modal);
+      Gtk_New
+        (Dialog,
+         Title  => Prompt,
+         Parent => Parent,
+         Flags  => Destroy_With_Parent or Modal);
 
       Gtk_New (Label, Prompt);
       Set_Alignment (Label, 0.0, 0.5);
@@ -1464,7 +1475,7 @@ package body GUI_Utils is
       Index     : out Gint)
    is
       use type Widget_List.Glist;
-      Children, Tmp   : Widget_List.Glist;
+      Children, Tmp : Widget_List.Glist;
       Label         : Gtk_Label;
       Box           : Gtk_Box;
       New_Name      : constant String :=
@@ -1499,8 +1510,8 @@ package body GUI_Utils is
            and then Get_Child (Menu_Item).all in Gtk_Label_Record'Class
          then
             Label := Gtk_Label (Get_Child (Menu_Item));
-            exit when Equal
-              (Get_Text (Label), New_Name, Case_Sensitive => False);
+            exit when
+              Equal (Get_Text (Label), New_Name, Case_Sensitive => False);
 
          elsif Get_Child (Menu_Item) /= null
            and then Get_Child (Menu_Item).all in Gtk_Box_Record'Class
@@ -1511,14 +1522,14 @@ package body GUI_Utils is
               and then Get_Child (Box, 0).all in Gtk_Label_Record'Class
             then
                Label := Gtk_Label (Get_Child (Box, 0));
-               exit when Equal
-                 (Get_Text (Label), New_Name, Case_Sensitive => False);
+               exit when
+                 Equal (Get_Text (Label), New_Name, Case_Sensitive => False);
             elsif Get_Child (Box, 1) /= null
               and then Get_Child (Box, 1).all in Gtk_Label_Record'Class
             then
                Label := Gtk_Label (Get_Child (Box, 1));
-               exit when Equal
-                 (Get_Text (Label), New_Name, Case_Sensitive => False);
+               exit when
+                 Equal (Get_Text (Label), New_Name, Case_Sensitive => False);
             end if;
          end if;
 
@@ -1538,8 +1549,7 @@ package body GUI_Utils is
    -- Create_Menu_Path --
    ----------------------
 
-   function Create_Menu_Path (Parent, Menu : String) return String
-   is
+   function Create_Menu_Path (Parent, Menu : String) return String is
       function Cleanup (Path : String) return String;
       --  Remove duplicate // in Path
 
@@ -1553,7 +1563,7 @@ package body GUI_Utils is
               or else Path (P + 1) /= '/'
             then
                Output (Index) := Path (P);
-               Index          := Index + 1;
+               Index := Index + 1;
             end if;
          end loop;
          return Output (Output'First .. Index - 1);
@@ -1577,9 +1587,7 @@ package body GUI_Utils is
       R : Unbounded_String;
    begin
       for N in Name'Range loop
-         if Name (N) = '/'
-           or else Name (N) = '\'
-         then
+         if Name (N) = '/' or else Name (N) = '\' then
             Append (R, '\' & Name (N));
          else
             Append (R, Name (N));
@@ -1593,7 +1601,7 @@ package body GUI_Utils is
    ------------------------
 
    function Unescape_Menu_Name (Name : String) return String is
-      R : Unbounded_String;
+      R     : Unbounded_String;
       Index : Natural := Name'First;
    begin
       while Index <= Name'Last loop
@@ -1653,9 +1661,10 @@ package body GUI_Utils is
    function Parent_Menu_Name (Name : String) return String is
    begin
       for N in reverse Name'Range loop
-         if Name (N) = '/' and then
-           (N = Name'First
-            or else (Name (N - 1) /= '\' and then Name (N - 1) /= '<'))
+         if Name (N) = '/'
+           and then
+             (N = Name'First
+              or else (Name (N - 1) /= '\' and then Name (N - 1) /= '<'))
          then
             return Name (Name'First .. N);
          end if;
@@ -1670,9 +1679,10 @@ package body GUI_Utils is
    function First_Parent_Menu_Name (Name : String) return String is
    begin
       for N in Name'Range loop
-         if Name (N) = '/' and then
-           (N = Name'First
-            or else (Name (N - 1) /= '\' and then Name (N - 1) /= '<'))
+         if Name (N) = '/'
+           and then
+             (N = Name'First
+              or else (Name (N - 1) /= '\' and then Name (N - 1) /= '<'))
          then
             return Name (Name'First .. N);
          end if;
@@ -1714,9 +1724,9 @@ package body GUI_Utils is
    ---------------------------------
 
    function Find_Or_Create_Single_Level
-      (Model        : not null access Gmenu_Record'Class;
-       Name         : String;
-       Allow_Create : Boolean) return Menu_Item_Info
+     (Model        : not null access Gmenu_Record'Class;
+      Name         : String;
+      Allow_Create : Boolean) return Menu_Item_Info
    is
       N_Items : constant Gint := Model.Get_N_Items;
       Val     : Gvariant;
@@ -1730,24 +1740,23 @@ package body GUI_Utils is
          if M2 /= null then
             --  Else we might have a separator, with a specific id
 
-            Val := Model.Get_Item_Attribute_Value
-              (Item_Index    => N,
-               Attribute     => GPS_Id_Attribute,
-               Expected_Type => Gvariant_Type_String);
+            Val :=
+              Model.Get_Item_Attribute_Value
+                (Item_Index    => N,
+                 Attribute     => GPS_Id_Attribute,
+                 Expected_Type => Gvariant_Type_String);
 
             if Val /= Null_Gvariant then
                if Get_String (Val, null) = Name then
                   Unref (Val);
-                  return
-                    (Item     => null,
-                     Model    => Gmenu (M2),
-                     Position => 0);
+                  return (Item => null, Model => Gmenu (M2), Position => 0);
                end if;
                Unref (Val);
             end if;
 
-            Item := Find_Or_Create_Single_Level
-               (Gmenu (M2), Name, Allow_Create => False);
+            Item :=
+              Find_Or_Create_Single_Level
+                (Gmenu (M2), Name, Allow_Create => False);
             if Item /= No_Menu_Item then
                return Item;
             end if;
@@ -1756,23 +1765,25 @@ package body GUI_Utils is
             --  Else check the item's name (do it later to avoid extra
             --  memory allocation when we had a section)
 
-            Val := Model.Get_Item_Attribute_Value
-               (Item_Index    => N,
-                Attribute     => "label",
-                Expected_Type => Gvariant_Type_String);
+            Val :=
+              Model.Get_Item_Attribute_Value
+                (Item_Index    => N,
+                 Attribute     => "label",
+                 Expected_Type => Gvariant_Type_String);
 
             if Val /= Null_Gvariant then
                declare
                   It_Name : constant String :=
-                     Strip_Single_And_Unescape_Underscores
-                        (Unescape_Menu_Name (Get_String (Val, null)));
+                    Strip_Single_And_Unescape_Underscores
+                      (Unescape_Menu_Name (Get_String (Val, null)));
                begin
                   Unref (Val);
                   if It_Name = Name then
                      return
-                        (Item => Gmenu_Item_New_From_Model (Gmenu (Model), N),
-                         Model    => Gmenu (Model),
-                         Position => N);
+                       (Item     =>
+                          Gmenu_Item_New_From_Model (Gmenu (Model), N),
+                        Model    => Gmenu (Model),
+                        Position => N);
                   end if;
                end;
             end if;
@@ -1781,9 +1792,10 @@ package body GUI_Utils is
       end loop;
 
       if Allow_Create then
-         Item := (Item     => Gmenu_Item_New_Submenu (Name, Gmenu_New),
-                  Model    => Gmenu (Model),
-                  Position => -1); --  irrelevant
+         Item :=
+           (Item     => Gmenu_Item_New_Submenu (Name, Gmenu_New),
+            Model    => Gmenu (Model),
+            Position => -1); --  irrelevant
          Model.Append_Item (Item.Item);
          return Item;
       end if;
@@ -1796,14 +1808,14 @@ package body GUI_Utils is
    -------------------------
 
    function Find_Or_Create_Menu
-      (Model        : not null access Gmenu_Record'Class;
-       Path         : String;
-       Allow_Create : Boolean := True) return Menu_Item_Info
+     (Model        : not null access Gmenu_Record'Class;
+      Path         : String;
+      Allow_Create : Boolean := True) return Menu_Item_Info
    is
       First : Natural := Path'First;
-      Last : Natural;
-      Item : Menu_Item_Info;
-      M2   : Gmenu_Model;
+      Last  : Natural;
+      Item  : Menu_Item_Info;
+      M2    : Gmenu_Model;
    begin
       if Path (First) = '/' then
          First := First + 1;
@@ -1811,23 +1823,23 @@ package body GUI_Utils is
 
       --  Find name of toplevel parent
       Last := First;
-      while Last <= Path'Last and then
-         (Path (Last) /= '/'
-          or else Last = Path'First
-          or else Path (Last - 1) = '\')
+      while Last <= Path'Last
+        and then
+          (Path (Last) /= '/'
+           or else Last = Path'First
+           or else Path (Last - 1) = '\')
       loop
          Last := Last + 1;
       end loop;
 
-      Item := Find_Or_Create_Single_Level
-         (Model,
-          Strip_Single_And_Unescape_Underscores (Unescape_Menu_Name
-            (Path (First .. Last - 1))),
-          Allow_Create => Allow_Create);
+      Item :=
+        Find_Or_Create_Single_Level
+          (Model,
+           Strip_Single_And_Unescape_Underscores
+             (Unescape_Menu_Name (Path (First .. Last - 1))),
+           Allow_Create => Allow_Create);
 
-      if Last >= Path'Last
-         or else Item = No_Menu_Item
-      then
+      if Last >= Path'Last or else Item = No_Menu_Item then
          return Item;
       else
          --  Else we found the toplevel, search for other parents
@@ -1835,9 +1847,11 @@ package body GUI_Utils is
          Unref (Item);  --  no longer needed
 
          if M2 /= null then
-            return Find_Or_Create_Menu
-               (Gmenu (M2), Path (Last + 1 .. Path'Last),
-                Allow_Create => Allow_Create);
+            return
+              Find_Or_Create_Menu
+                (Gmenu (M2),
+                 Path (Last + 1 .. Path'Last),
+                 Allow_Create => Allow_Create);
          else
             return No_Menu_Item;  --  Not found
          end if;
@@ -1849,18 +1863,18 @@ package body GUI_Utils is
    ------------------------------
 
    function Find_Or_Create_Menu_Tree
-     (Menu_Bar      : Gtk_Menu_Bar;
-      Menu          : Gtk_Menu;
-      Path          : String;
-      Accelerators  : Gtk.Accel_Group.Gtk_Accel_Group;
-      Allow_Create  : Boolean := True;
-      Ref_Item      : String  := "";
-      Add_Before    : Boolean := True;
-      New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
+     (Menu_Bar     : Gtk_Menu_Bar;
+      Menu         : Gtk_Menu;
+      Path         : String;
+      Accelerators : Gtk.Accel_Group.Gtk_Accel_Group;
+      Allow_Create : Boolean := True;
+      Ref_Item     : String := "";
+      Add_Before   : Boolean := True;
+      New_Item     : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
       return Gtk_Menu_Item
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Gtk_Menu_Item_Record'Class, Gtk_Menu_Item);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Gtk_Menu_Item_Record'Class, Gtk_Menu_Item);
       First     : Natural := Path'First;
       Last      : Natural;
       Parent    : Gtk_Menu := Menu;
@@ -1879,7 +1893,8 @@ package body GUI_Utils is
          Last := First + 1;
          Skip_To_Char (Path, Last, '/');
 
-         if Last > First and then Last <= Path'Last
+         if Last > First
+           and then Last <= Path'Last
            and then Path (Last - 1) = '\'
          then
             Last := Last + 1;
@@ -1887,14 +1902,16 @@ package body GUI_Utils is
          end if;
 
          Find_Menu_Item_By_Name
-           (Menu_Bar, Parent,
+           (Menu_Bar,
+            Parent,
             Unescape_Menu_Name (Path (First .. Last - 1)),
-            Menu_Item, Index);
+            Menu_Item,
+            Index);
 
          exit when Menu_Item = null;
 
          --  Have we found the item ?
-         First  := Last + 1;
+         First := Last + 1;
          exit when Last >= Path'Last;
 
          if Get_Submenu (Menu_Item) = null then
@@ -1911,7 +1928,8 @@ package body GUI_Utils is
             Last := First + 1;
             Skip_To_Char (Path, Last, '/');
 
-            if Last > First and then Last <= Path'Last
+            if Last > First
+              and then Last <= Path'Last
               and then Path (Last - 1) = '\'
             then
                Last := Last + 1;
@@ -1925,8 +1943,7 @@ package body GUI_Utils is
             end if;
 
             Initialize_With_Mnemonic
-              (Menu_Item,
-               Unescape_Menu_Name (Path (First .. Last - 1)));
+              (Menu_Item, Unescape_Menu_Name (Path (First .. Last - 1)));
 
             --  Should we create a submenu ?
             if Last <= Path'Last then
@@ -1935,8 +1952,7 @@ package body GUI_Utils is
                Set_Accel_Group (M, Accelerators);
             end if;
 
-            Find_Menu_Item_By_Name
-              (Menu_Bar, Parent, Ref_Item, Pred, Index);
+            Find_Menu_Item_By_Name (Menu_Bar, Parent, Ref_Item, Pred, Index);
 
             Add_Menu (Parent, Menu_Bar, Menu_Item, Index, Add_Before);
             Show_All (Menu_Item);
@@ -1994,13 +2010,12 @@ package body GUI_Utils is
       Name      : String;
       Column    : Gint;
       Parent    : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter;
-      Recursive : Boolean := False)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Recursive : Boolean := False) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Iter : Gtk_Tree_Iter := (if Parent /= Null_Iter then
-                                  Model.Children (Parent)
-                               else
-                                  Get_Iter_First (Model));
+      Iter : Gtk_Tree_Iter :=
+        (if Parent /= Null_Iter
+         then Model.Children (Parent)
+         else Get_Iter_First (Model));
    begin
       while Iter /= Null_Iter loop
          if Get_String (Model, Iter, Column) = Name then
@@ -2034,9 +2049,7 @@ package body GUI_Utils is
    --------------------------
 
    procedure Create_Warning_Label
-     (Msg   : String;
-      Label : out Gtk.Label.Gtk_Label)
-   is
+     (Msg : String; Label : out Gtk.Label.Gtk_Label) is
    begin
       Gtk_New (Label, Msg);
       Get_Style_Context (Label).Add_Class ("warning-label");
@@ -2048,8 +2061,7 @@ package body GUI_Utils is
    -----------------------
 
    procedure Create_Blue_Label
-     (Label : out Gtk.Label.Gtk_Label;
-      Event : out Gtk.Event_Box.Gtk_Event_Box)
+     (Label : out Gtk.Label.Gtk_Label; Event : out Gtk.Event_Box.Gtk_Event_Box)
    is
       Color   : Gdk_RGBA;
       Success : Boolean;
@@ -2077,7 +2089,7 @@ package body GUI_Utils is
    is
       pragma Unreferenced (Event);
       Info_Bar : constant Gtk.Info_Bar.Gtk_Info_Bar :=
-                   Gtk.Info_Bar.Gtk_Info_Bar (Self);
+        Gtk.Info_Bar.Gtk_Info_Bar (Self);
    begin
       Info_Bar.Hide;
 
@@ -2089,17 +2101,16 @@ package body GUI_Utils is
    ---------------------
 
    function Create_Info_Bar
-     (Message      : String;
-      Message_Type : Gtk.Message_Dialog.Gtk_Message_Type)
+     (Message : String; Message_Type : Gtk.Message_Dialog.Gtk_Message_Type)
       return Gtk.Info_Bar.Gtk_Info_Bar
    is
       use Gtk.Message_Dialog;
 
-      Info_Bar : Gtk.Info_Bar.Gtk_Info_Bar;
-      Label    : Gtk_Label;
-      Event    : Gtk_Event_Box;
+      Info_Bar   : Gtk.Info_Bar.Gtk_Info_Bar;
+      Label      : Gtk_Label;
+      Event      : Gtk_Event_Box;
       Close_UTF8 : constant String :=
-                     Character'Val (16#C3#) & Character'Val (16#97#);
+        Character'Val (16#C3#) & Character'Val (16#97#);
    begin
       Gtk.Info_Bar.Gtk_New (Info_Bar);
 
@@ -2140,7 +2151,7 @@ package body GUI_Utils is
       Editable_Columns   : Gint_Array := (1 .. 0 => -1);
       Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null);
       Editing_Canceled   : Editing_Canceled_Cb := null)
-     return Gtk.Tree_View.Gtk_Tree_View
+      return Gtk.Tree_View.Gtk_Tree_View
    is
       View              : Gtk_Tree_View;
       Col               : Gtk_Tree_View_Column;
@@ -2153,7 +2164,7 @@ package body GUI_Utils is
       Is_Icon           : Boolean;
       ColNum            : Guint;
       pragma Unreferenced (Col_Number);
-      CT : GType_Array := Column_Types;
+      CT                : GType_Array := Column_Types;
    begin
       for C in CT'Range loop
          if CT (C) = GType_Icon_Name_String then
@@ -2177,20 +2188,20 @@ package body GUI_Utils is
          Col := null;
       end if;
 
-      for N in 0
-        .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
+      for N in 0 .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
       loop
          ColNum := Column_Types'First + Guint (N);
-         Is_Icon := Column_Types (ColNum) = Gdk.Pixbuf.Get_Type
-            or else Column_Types (ColNum) = GType_Icon_Name_String;
+         Is_Icon :=
+           Column_Types (ColNum) = Gdk.Pixbuf.Get_Type
+           or else Column_Types (ColNum) = GType_Icon_Name_String;
 
          --  Reuse existing column for icons
          if not Merge_Icon_Columns
-           or else (not Previous_Was_Icon
-                    and then (Col = null or else not Is_Icon))
+           or else
+             (not Previous_Was_Icon and then (Col = null or else not Is_Icon))
          then
-            Gtk_New         (Col);
-            Set_Resizable   (Col, True);
+            Gtk_New (Col);
+            Set_Resizable (Col, True);
             Set_Reorderable (Col, True);
 
             Col_Number := Append_Column (View, Col);
@@ -2216,7 +2227,8 @@ package body GUI_Utils is
             Add_Attribute (Col, Toggle_Render, "active", Gint (N));
 
             Tree_Column_Callback.Connect
-              (Toggle_Render, Signal_Toggled,
+              (Toggle_Render,
+               Signal_Toggled,
                Toggle_Callback'Access,
                User_Data => (+Model, Gint (N)));
 
@@ -2224,17 +2236,21 @@ package body GUI_Utils is
               and then Editable_Columns (Integer (ColNum)) >= 0
             then
                Add_Attribute
-                 (Col, Toggle_Render, "activatable",
+                 (Col,
+                  Toggle_Render,
+                  "activatable",
                   Editable_Columns (Integer (ColNum)));
 
                if Integer (ColNum) in Editable_Callback'Range
                  and then Editable_Callback (Integer (ColNum)) /= null
                then
                   Widget_Callback.Object_Connect
-                    (Toggle_Render, Signal_Toggled,
+                    (Toggle_Render,
+                     Signal_Toggled,
                      Widget_Callback.Handler
                        (Editable_Callback (Integer (ColNum))),
-                     Slot_Object => View, After => True);
+                     Slot_Object => View,
+                     After       => True);
                end if;
 
                if Editing_Canceled /= null then
@@ -2255,7 +2271,9 @@ package body GUI_Utils is
               and then Editable_Columns (Integer (ColNum)) >= 0
             then
                Add_Attribute
-                 (Col, Text_Render, "editable",
+                 (Col,
+                  Text_Render,
+                  "editable",
                   Editable_Columns (Integer (ColNum)));
 
                --  First connect the user callback, before validating the
@@ -2266,15 +2284,19 @@ package body GUI_Utils is
                  and then Editable_Callback (Integer (ColNum)) /= null
                then
                   Widget_Callback.Object_Connect
-                    (Text_Render, Signal_Edited,
+                    (Text_Render,
+                     Signal_Edited,
                      Widget_Callback.Handler
                        (Editable_Callback (Integer (ColNum))),
                      Slot_Object => View);
                end if;
 
                Tree_Model_Callback.Object_Connect
-                 (Text_Render, Signal_Edited, Edited_Callback'Access,
-                  Slot_Object => Model, User_Data => Gint (N));
+                 (Text_Render,
+                  Signal_Edited,
+                  Edited_Callback'Access,
+                  Slot_Object => Model,
+                  User_Data   => Gint (N));
 
                if Editing_Canceled /= null then
                   Text_Render.On_Editing_Canceled
@@ -2328,8 +2350,7 @@ package body GUI_Utils is
 
          if Activatable then
             M := -Data.Model;
-            Set (M, Iter, Data.Column,
-                 not Get_Boolean (M, Iter, Data.Column));
+            Set (M, Iter, Data.Column, not Get_Boolean (M, Iter, Data.Column));
          end if;
       end if;
    end Toggle_Callback;
@@ -2339,8 +2360,8 @@ package body GUI_Utils is
    ----------------
 
    procedure Expand_Row
-     (Tree  : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
+     (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
    is
       Path : Gtk_Tree_Path;
       Tmp  : Boolean;
@@ -2379,7 +2400,7 @@ package body GUI_Utils is
                --  We only copy the string columns
                declare
                   V : constant String :=
-                        Gtk.Tree_Model.Get_String (Model, Iter, K);
+                    Gtk.Tree_Model.Get_String (Model, Iter, K);
                begin
                   if V /= "" then
                      if Result /= Null_Unbounded_String then
@@ -2411,8 +2432,9 @@ package body GUI_Utils is
       Selection.Get_Selected_Rows (Model, List);
 
       if List /= Gtk_Tree_Path_List.Null_List then
-         Path := Gtk_Tree_Path
-           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Path :=
+           Gtk_Tree_Path
+             (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
          Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
          Selection.Unselect_All;
          Selection.Select_Iter (Iter);
@@ -2427,8 +2449,7 @@ package body GUI_Utils is
    -- Free_Path_List --
    --------------------
 
-   procedure Free_Path_List (List : in out Gtk_Tree_Path_List.Glist)
-   is
+   procedure Free_Path_List (List : in out Gtk_Tree_Path_List.Glist) is
       Iter : Gtk_Tree_Path_List.Glist;
       Path : Gtk_Tree_Path;
 
@@ -2494,10 +2515,12 @@ package body GUI_Utils is
 
             if Path /= Null_Gtk_Tree_Path then
                case Command is
-                  when Collapse_Rows =>
+                  when Collapse_Rows   =>
                      Dummy := Collapse_Row (Tree, Path);
-                  when Expand_Rows =>
+
+                  when Expand_Rows     =>
                      Dummy := Expand_Row (Tree, Path, False);
+
                   when Expand_All_Rows =>
                      Dummy := Expand_Row (Tree, Path, True);
                end case;
@@ -2515,13 +2538,11 @@ package body GUI_Utils is
    ---------------------------------
 
    procedure Gtk_New_From_Name_And_Label
-     (Button    : out Gtk_Button;
-      Icon_Name : String;
-      Label     : String)
+     (Button : out Gtk_Button; Icon_Name : String; Label : String)
    is
-      Box : Gtk_Box;
-      Lab : Gtk_Label;
-      Img : Gtk_Image;
+      Box   : Gtk_Box;
+      Lab   : Gtk_Label;
+      Img   : Gtk_Image;
       Align : Gtk_Alignment;
    begin
       Gtk_New (Button);
@@ -2553,13 +2574,11 @@ package body GUI_Utils is
       Progress_Bar.Set_Pulse_Step (0.5);
       Progress_Bar.Set_Fraction (0.0);
       Get_Style_Context (Progress_Bar).Add_Class ("inactive");
-      Container.Pack_Start
-        (Progress_Bar,
-         Expand => False);
+      Container.Pack_Start (Progress_Bar, Expand => False);
 
       Container.On_Destroy
-        (Call  => On_Activity_Progress_Bar_Destroy'Access,
-         Slot  => Progress_Bar);
+        (Call => On_Activity_Progress_Bar_Destroy'Access,
+         Slot => Progress_Bar);
    end Gtk_New_Activity_Progress_Bar;
 
    ----------------------------
@@ -2584,7 +2603,7 @@ package body GUI_Utils is
       use Glib.Main;
 
       Progress_Bar : constant Activity_Progress_Bar :=
-                       Activity_Progress_Bar (Self);
+        Activity_Progress_Bar (Self);
    begin
       if Progress_Bar.Progress_Pulse_Handler /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (Progress_Bar.Progress_Pulse_Handler);
@@ -2606,10 +2625,11 @@ package body GUI_Utils is
             Get_Style_Context (Self).Remove_Class ("inactive");
             Self.Set_No_Show_All (False);
             Self.Show_All;
-            Self.Progress_Pulse_Handler := View_Idle_Sources.Timeout_Add
-              (Interval => 500,
-               Func     => Progress_Pulse_Timeout'Access,
-               Data     => Activity_Progress_Bar (Self));
+            Self.Progress_Pulse_Handler :=
+              View_Idle_Sources.Timeout_Add
+                (Interval => 500,
+                 Func     => Progress_Pulse_Timeout'Access,
+                 Data     => Activity_Progress_Bar (Self));
          end if;
       else
          Self.Set_Fraction (0.0);
@@ -2681,14 +2701,10 @@ package body GUI_Utils is
    is
       --  Compute luminosity as in photoshop (as per wikipedia)
       Luminosity : constant Gdouble :=
-        0.299 * Color.Red
-        + 0.587 * Color.Green
-        + 0.114 * Color.Blue;
+        0.299 * Color.Red + 0.587 * Color.Green + 0.114 * Color.Blue;
 
       Gray_Luminosity : constant Gdouble :=
-        0.299 * 0.5
-        + 0.587 * 0.5
-        + 0.114 * 0.5;
+        0.299 * 0.5 + 0.587 * 0.5 + 0.114 * 0.5;
    begin
       if Luminosity > Gray_Luminosity then
          return Darken (Color);
@@ -2739,8 +2755,10 @@ package body GUI_Utils is
       return S : Windows_Sets.Set do
          while Get (Iter) /= null loop
             Child := Get (Iter);
-            W := (if Child.Is_Floating then Child.Get_Widget.Get_Toplevel
-                  else Child.Get_Toplevel);
+            W :=
+              (if Child.Is_Floating
+               then Child.Get_Widget.Get_Toplevel
+               else Child.Get_Toplevel);
 
             if W.all in Gtk_Window_Record'Class then
                S.Include (Gtk_Window (W));
@@ -2756,13 +2774,13 @@ package body GUI_Utils is
    -------------------------
 
    procedure Grab_Toplevel_Focus
-     (MDI         : not null access Gtkada.MDI.MDI_Window_Record'Class;
-      Widget      : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      Present     : Boolean := True)
+     (MDI     : not null access Gtkada.MDI.MDI_Window_Record'Class;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      Present : Boolean := True)
    is
-      Win : Gtk_Widget;
-      Id : Glib.Main.G_Source_Id;
-      C  : MDI_Child;
+      Win           : Gtk_Widget;
+      Id            : Glib.Main.G_Source_Id;
+      C             : MDI_Child;
       pragma Unreferenced (Id);
       GPS_Has_Focus : Boolean := False;
 
@@ -2889,15 +2907,15 @@ package body GUI_Utils is
    -----------------
 
    function On_Focus_In
-     (View    : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event_Focus) return Boolean
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean
    is
       pragma Unreferenced (Event);
-      V            : constant Gtk_Text_View := Gtk_Text_View (View);
-      Buffer       : constant Gtk_Text_Buffer := V.Get_Buffer;
-      First, Last  : Gtk_Text_Iter;
-      Tag          : Gtk_Text_Tag;
-      Success      : Boolean;
+      V           : constant Gtk_Text_View := Gtk_Text_View (View);
+      Buffer      : constant Gtk_Text_Buffer := V.Get_Buffer;
+      First, Last : Gtk_Text_Iter;
+      Tag         : Gtk_Text_Tag;
+      Success     : Boolean;
    begin
       Tag := Buffer.Get_Tag_Table.Lookup ("placeholder");
       if Tag /= null then
@@ -2918,8 +2936,8 @@ package body GUI_Utils is
    ------------------
 
    function On_Focus_Out
-     (View    : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event_Focus) return Boolean
+     (View : access Gtk_Widget_Record'Class; Event : Gdk_Event_Focus)
+      return Boolean
    is
       pragma Unreferenced (Event);
    begin
@@ -2932,11 +2950,11 @@ package body GUI_Utils is
    --------------------------------
 
    procedure Show_Placeholder_If_Needed
-     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
+     (View : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
    is
-      Buffer       : constant Gtk_Text_Buffer := View.Get_Buffer;
-      First, Last  : Gtk_Text_Iter;
-      Tag          : Gtk_Text_Tag;
+      Buffer      : constant Gtk_Text_Buffer := View.Get_Buffer;
+      First, Last : Gtk_Text_Iter;
+      Tag         : Gtk_Text_Tag;
    begin
       Buffer.Get_Start_Iter (First);
       Buffer.Get_End_Iter (Last);
@@ -2945,7 +2963,8 @@ package body GUI_Utils is
          if Tag = null then
             Tag := Buffer.Create_Tag ("placeholder");
             Gdk.RGBA.Set_Property
-              (Tag, Gtk.Text_Tag.Foreground_Rgba_Property,
+              (Tag,
+               Gtk.Text_Tag.Foreground_Rgba_Property,
                (0.6, 0.6, 0.6, 1.0));
             Set_Property
               (Tag, Gtk.Text_Tag.Style_Property, Pango_Style_Italic);
@@ -2966,12 +2985,12 @@ package body GUI_Utils is
    ----------------------------------
 
    function Get_Text_Without_Placeholder
-     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
-     return String
+     (View : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
+      return String
    is
-      Buffer       : constant Gtk_Text_Buffer := View.Get_Buffer;
-      First, Last  : Gtk_Text_Iter;
-      Tag          : Gtk_Text_Tag;
+      Buffer      : constant Gtk_Text_Buffer := View.Get_Buffer;
+      First, Last : Gtk_Text_Iter;
+      Tag         : Gtk_Text_Tag;
    begin
       Buffer.Get_Start_Iter (First);
 
@@ -2998,21 +3017,22 @@ package body GUI_Utils is
       Include_Hidden_Chars : Boolean := False)
       return GNAT.Strings.String_Access
    is
-      Result     : GNAT.Strings.String_Access;
-      Chars      : Gtkada.Types.Chars_Ptr;
-      C_Str      : Unchecked_String_Access;
+      Result : GNAT.Strings.String_Access;
+      Chars  : Gtkada.Types.Chars_Ptr;
+      C_Str  : Unchecked_String_Access;
 
-      function To_Unchecked_String is new Ada.Unchecked_Conversion
-        (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
+      function To_Unchecked_String is new
+        Ada.Unchecked_Conversion
+          (Gtkada.Types.Chars_Ptr,
+           Unchecked_String_Access);
 
       function Strlen
         (Str : Gtkada.Types.Chars_Ptr) return Interfaces.C.size_t;
       pragma Import (C, Strlen);
       --  Import Strlen directly, for efficiency
    begin
-      Chars  :=
-        Get_Text (Buffer, Start, The_End, Include_Hidden_Chars);
-      C_Str  := To_Unchecked_String (Chars);
+      Chars := Get_Text (Buffer, Start, The_End, Include_Hidden_Chars);
+      C_Str := To_Unchecked_String (Chars);
       Result := new String'(C_Str (1 .. Integer (Strlen (Chars))));
       Gtkada.Types.g_free (Chars);
 
@@ -3027,15 +3047,10 @@ package body GUI_Utils is
      (Buffer               : not null access Gtk_Text_Buffer_Record'Class;
       Start                : Gtk.Text_Iter.Gtk_Text_Iter;
       The_End              : Gtk.Text_Iter.Gtk_Text_Iter;
-      Include_Hidden_Chars : Boolean := False)
-      return Unbounded_String
+      Include_Hidden_Chars : Boolean := False) return Unbounded_String
    is
       Text_Access : GNAT.Strings.String_Access :=
-        Get_Text
-          (Buffer,
-           Start,
-           The_End,
-           Include_Hidden_Chars);
+        Get_Text (Buffer, Start, The_End, Include_Hidden_Chars);
    begin
       return To_Unbounded_String (Text_Access);
    end Get_Text;
@@ -3045,21 +3060,21 @@ package body GUI_Utils is
    ---------------------
 
    procedure Set_Placeholder
-     (View    : not null access Gtk_Text_View_Record'Class;
-      Message : String)
+     (View : not null access Gtk_Text_View_Record'Class; Message : String)
    is
       Dummy : Boolean;
    begin
       String_User_Data.Set (View, Message, Id => "placeholder");
       View.On_Focus_In_Event (On_Focus_In'Access);
       View.On_Focus_Out_Event (On_Focus_Out'Access);
-      Dummy := On_Focus_Out
-        (View,
-         Gdk_Event_Focus'
-           (The_Type => Nothing,
-            Window     => null,
-            Send_Event => 0,
-            Gtk_In     => 0));
+      Dummy :=
+        On_Focus_Out
+          (View,
+           Gdk_Event_Focus'
+             (The_Type   => Nothing,
+              Window     => null,
+              Send_Event => 0,
+              Gtk_In     => 0));
    end Set_Placeholder;
 
    --------------------------------
@@ -3116,22 +3131,23 @@ package body GUI_Utils is
       Parent         : Gtk.Window.Gtk_Window := null)
       return Message_Dialog_Buttons is
    begin
-      return Gtkada.Dialogs.Message_Dialog
-        (Msg            => Msg,
-         Dialog_Type    => Dialog_Type,
-         Buttons        => Buttons,
-         Default_Button => Default_Button,
-         Help_Msg       => Help_Msg,
-         Title          => Title,
-         Justification  => Justification,
-         Parent         => Parent,
-         Icon_Name      =>
-           (case Dialog_Type is
-               when Information  => "gps-info-symbolic",
-               when Confirmation => "gps-confirmation-symbolic",
-               when Warning      => "gps-warning-symbolic",
-               when Error        => "gps-error-symbolic",
-               when Custom       => ""));
+      return
+        Gtkada.Dialogs.Message_Dialog
+          (Msg            => Msg,
+           Dialog_Type    => Dialog_Type,
+           Buttons        => Buttons,
+           Default_Button => Default_Button,
+           Help_Msg       => Help_Msg,
+           Title          => Title,
+           Justification  => Justification,
+           Parent         => Parent,
+           Icon_Name      =>
+             (case Dialog_Type is
+                when Information  => "gps-info-symbolic",
+                when Confirmation => "gps-confirmation-symbolic",
+                when Warning      => "gps-warning-symbolic",
+                when Error        => "gps-error-symbolic",
+                when Custom       => ""));
    end GPS_Message_Dialog;
 
    --------------------------

@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings; use GNAT.Strings;
-with String_Utils; use String_Utils;
+with GNAT.Strings;   use GNAT.Strings;
+with String_Utils;   use String_Utils;
 with Indent_Stack;
 with Generic_Stack;
 with GNATCOLL.Utils; use GNATCOLL.Utils;
@@ -186,29 +186,29 @@ package body C_Analyzer is
    --  is on a separate line.
 
    type Extended_Token is record
-      Token          : Token_Type := No_Token;
+      Token : Token_Type := No_Token;
       --  Enclosing token
 
       Start_New_Line : Boolean := False;
       --  Set to True if the first '{' for the current construct was found
       --  its own line (only used internally).
 
-      Paren_Level    : Natural := 0;
-      Curly_Level    : Natural := 0;
+      Paren_Level : Natural := 0;
+      Curly_Level : Natural := 0;
       --  Saved paren and curly levels for the current construct
 
-      First          : Boolean := True;
+      First : Boolean := True;
       --  Flag used to mark the first use of this construct, e.g. the first
       --  'case' of a 'switch'.
 
-      Sloc           : Source_Location;
+      Sloc : Source_Location;
       --  Source location for this entity
 
-      Sloc_Name      : Source_Location;
+      Sloc_Name : Source_Location;
       --  Source location for the name of this entity, if relevant
 
-      Name_Start     : Natural := 0;
-      Name_End       : Natural := 0;
+      Name_Start : Natural := 0;
+      Name_End   : Natural := 0;
       --  Location in the buffer of the entity name, if any
    end record;
    --  Extended information for a token
@@ -240,10 +240,12 @@ package body C_Analyzer is
    begin
       loop
          Item := Top (Stack);
-         exit when Item.Token = No_Token
-           or else (Item.Token /= Tok_Identifier
-                    and then Item.Token not in Type_Token
-                    and then Item.Token not in Storage_Token);
+         exit when
+           Item.Token = No_Token
+           or else
+             (Item.Token /= Tok_Identifier
+              and then Item.Token not in Type_Token
+              and then Item.Token not in Storage_Token);
          Pop (Stack);
       end loop;
    end Pop_To_Construct;
@@ -264,7 +266,7 @@ package body C_Analyzer is
       --  Use a case statement instead of a loop for efficiency
 
       case S (S'First) is
-         when 'a' =>
+         when 'a'    =>
             if S (Second .. S'Last) = "uto" then
                return Tok_Auto;
             elsif S (Second .. S'Last) = "bstract" then
@@ -273,14 +275,14 @@ package body C_Analyzer is
                return Tok_Asm;
             end if;
 
-         when 'b' =>
+         when 'b'    =>
             if S (Second .. S'Last) = "reak" then
                return Tok_Break;
             elsif S (Second .. S'Last) = "ool" then
                return Tok_Bool;
             end if;
 
-         when 'c' =>
+         when 'c'    =>
             if S (Second .. S'Last) = "ase" then
                return Tok_Case;
             elsif S (Second .. S'Last) = "atch" then
@@ -290,7 +292,7 @@ package body C_Analyzer is
             elsif S'Length > 4 and then S (Second .. Second + 3) = "onst" then
                if S'Length = 5 then
                   return Tok_Const;
-               elsif S (Second  + 4 .. S'Last) = "_cast" then
+               elsif S (Second + 4 .. S'Last) = "_cast" then
                   return Tok_Const_Cast;
                end if;
 
@@ -300,7 +302,7 @@ package body C_Analyzer is
                return Tok_Char;
             end if;
 
-         when 'd' =>
+         when 'd'    =>
             if S (Second .. S'Last) = "efault" then
                return Tok_Default;
             elsif S (Second .. S'Last) = "elete" then
@@ -313,7 +315,7 @@ package body C_Analyzer is
                return Tok_Dynamic_Cast;
             end if;
 
-         when 'e' =>
+         when 'e'    =>
             if S (Second .. S'Last) = "lse" then
                return Tok_Else;
             elsif S (Second .. S'Last) = "num" then
@@ -324,7 +326,7 @@ package body C_Analyzer is
                return Tok_Explicit;
             end if;
 
-         when 'f' =>
+         when 'f'    =>
             if S (Second .. S'Last) = "alse" then
                return Tok_False;
             elsif S (Second .. S'Last) = "or" then
@@ -337,12 +339,12 @@ package body C_Analyzer is
                return Tok_Friend;
             end if;
 
-         when 'g' =>
+         when 'g'    =>
             if S (Second .. S'Last) = "oto" then
                return Tok_Goto;
             end if;
 
-         when 'i' =>
+         when 'i'    =>
             if S (Second .. S'Last) = "f" then
                return Tok_If;
             elsif S (Second) = 'n' then
@@ -355,29 +357,29 @@ package body C_Analyzer is
                end if;
             end if;
 
-         when 'l' =>
+         when 'l'    =>
             if S (Second .. S'Last) = "ong" then
                return Tok_Long;
             end if;
 
-         when 'm' =>
+         when 'm'    =>
             if S (Second .. S'Last) = "utable" then
                return Tok_Mutable;
             end if;
 
-         when 'n' =>
+         when 'n'    =>
             if S (Second .. S'Last) = "amespace" then
                return Tok_Namespace;
             elsif S (Second .. S'Last) = "ew" then
                return Tok_New;
             end if;
 
-         when 'o' =>
+         when 'o'    =>
             if S (Second .. S'Last) = "perator" then
                return Tok_Operator;
             end if;
 
-         when 'p' =>
+         when 'p'    =>
             if S (Second) = 'r' then
                if S (Second + 1 .. S'Last) = "ivate" then
                   return Tok_Private;
@@ -389,7 +391,7 @@ package body C_Analyzer is
                return Tok_Public;
             end if;
 
-         when 'r' =>
+         when 'r'    =>
             if S (Second) = 'e' then
                if S (Second + 1 .. S'Last) = "gister" then
                   return Tok_Register;
@@ -402,10 +404,9 @@ package body C_Analyzer is
                end if;
             end if;
 
-         when 's' =>
+         when 's'    =>
             if S (Second) = 't' then
-               if S'Length > 5
-                 and then S (Second + 1 .. Second + 4) = "atic"
+               if S'Length > 5 and then S (Second + 1 .. Second + 4) = "atic"
                then
                   if S'Length = 6 then
                      return Tok_Static;
@@ -432,7 +433,7 @@ package body C_Analyzer is
                return Tok_Switch;
             end if;
 
-         when 't' =>
+         when 't'    =>
             if S (Second .. S'Last) = "emplate" then
                return Tok_Template;
             elsif S (Second .. S'Last) = "his" then
@@ -453,7 +454,7 @@ package body C_Analyzer is
                end if;
             end if;
 
-         when 'u' =>
+         when 'u'    =>
             if S (Second .. S'Last) = "nion" then
                return Tok_Union;
             elsif S (Second .. S'Last) = "sing" then
@@ -462,7 +463,7 @@ package body C_Analyzer is
                return Tok_Unsigned;
             end if;
 
-         when 'v' =>
+         when 'v'    =>
             if S (Second) = 'o' then
                if S (Second + 1 .. S'Last) = "id" then
                   return Tok_Void;
@@ -473,7 +474,7 @@ package body C_Analyzer is
                return Tok_Virtual;
             end if;
 
-         when 'w' =>
+         when 'w'    =>
             if S (Second .. S'Last) = "hile" then
                return Tok_While;
             elsif S (Second .. S'Last) = "char_t" then
@@ -492,42 +493,42 @@ package body C_Analyzer is
    ----------------------
 
    procedure Analyze_C_Source
-     (Buffer           : String;
-      Symbols          : GNATCOLL.Symbols.Symbol_Table_Access;
-      Indent_Params    : Indent_Parameters;
-      Format           : Boolean               := True;
-      From, To         : Natural               := 0;
-      Replace          : Replace_Text_Callback := null;
-      Constructs       : Construct_List_Access := null;
-      Callback         : Entity_Callback       := null;
-      Enable_Cpp       : Boolean               := False)
+     (Buffer        : String;
+      Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
+      Indent_Params : Indent_Parameters;
+      Format        : Boolean := True;
+      From, To      : Natural := 0;
+      Replace       : Replace_Text_Callback := null;
+      Constructs    : Construct_List_Access := null;
+      Callback      : Entity_Callback := null;
+      Enable_Cpp    : Boolean := False)
    is
-      None              : constant := -1;
+      None : constant := -1;
 
-      Default_Extended  : Extended_Token;
+      Default_Extended : Extended_Token;
       pragma Warnings (Off, Default_Extended);
       --  Use default values to initialize this pseudo constant.
 
-      Indent_Level      : Natural renames Indent_Params.Indent_Level;
-      Indent_Continue   : Natural renames Indent_Params.Indent_Level;
-      Indent_Comments   : Boolean renames Indent_Params.Indent_Comments;
-      Indent_Extra      : Boolean renames Indent_Params.Align_On_Colons;
-      Use_Tabs          : Boolean renames Indent_Params.Use_Tabs;
+      Indent_Level    : Natural renames Indent_Params.Indent_Level;
+      Indent_Continue : Natural renames Indent_Params.Indent_Level;
+      Indent_Comments : Boolean renames Indent_Params.Indent_Comments;
+      Indent_Extra    : Boolean renames Indent_Params.Align_On_Colons;
+      Use_Tabs        : Boolean renames Indent_Params.Use_Tabs;
 
-      First             : Natural;
-      Index             : Natural := Buffer'First;
-      Paren_Index       : Natural;
-      Indent            : Natural := 0;
-      Indent_Done       : Boolean := False;
-      Indentation       : Natural := 0;
-      Token             : Token_Type := No_Token;
-      Prev_Token        : Token_Type := No_Token;
-      Curly_Level       : Integer := 0;
-      Continuation_Val  : Integer := 0;
-      Paren_Level       : Integer := 0;
-      Line              : Natural := 1;
-      Padding           : Integer := 0;
-      Char_In_Line      : Natural := 1;
+      First            : Natural;
+      Index            : Natural := Buffer'First;
+      Paren_Index      : Natural;
+      Indent           : Natural := 0;
+      Indent_Done      : Boolean := False;
+      Indentation      : Natural := 0;
+      Token            : Token_Type := No_Token;
+      Prev_Token       : Token_Type := No_Token;
+      Curly_Level      : Integer := 0;
+      Continuation_Val : Integer := 0;
+      Paren_Level      : Integer := 0;
+      Line             : Natural := 1;
+      Padding          : Integer := 0;
+      Char_In_Line     : Natural := 1;
       --  Current byte index in current line, different from logical column
       --  which is computed by the callers directly. In other words, callers
       --  expect byte counts for the column information.
@@ -553,9 +554,7 @@ package body C_Analyzer is
       --  (and thus avoid performing the call twice with the same token).
 
       procedure Do_Indent
-        (P            : Natural;
-         Num_Spaces   : Integer;
-         Continuation : Boolean := False);
+        (P : Natural; Num_Spaces : Integer; Continuation : Boolean := False);
       --  Perform indentation by inserting spaces in the buffer at position P.
       --  If Continuation is True, Indent_Continue extra spaces are added.
 
@@ -582,10 +581,7 @@ package body C_Analyzer is
       --  #include directives and # <number> <file> directives.
       --  Return whether processing should be stopped.
 
-      procedure Replace_Text
-        (First : Natural;
-         Last  : Natural;
-         Str   : String);
+      procedure Replace_Text (First : Natural; Last : Natural; Str : String);
       --  Wrapper for Replace.all, taking (From, To) into account.
 
       procedure Set_Paren_Index;
@@ -633,8 +629,7 @@ package body C_Analyzer is
             return False;
          else
             Callback_Done := True;
-            return Callback
-              (Entity, Sloc_Start, Sloc_End, Partial_Entity);
+            return Callback (Entity, Sloc_Start, Sloc_End, Partial_Entity);
          end if;
       end Do_Callback;
 
@@ -643,9 +638,7 @@ package body C_Analyzer is
       ---------------
 
       procedure Do_Indent
-        (P            : Natural;
-         Num_Spaces   : Integer;
-         Continuation : Boolean := False)
+        (P : Natural; Num_Spaces : Integer; Continuation : Boolean := False)
       is
          Start : Natural;
          Index : Natural;
@@ -658,8 +651,8 @@ package body C_Analyzer is
          Index := Start;
 
          loop
-            exit when Buffer (Index) /= ' '
-              and then Buffer (Index) /= ASCII.HT;
+            exit when
+              Buffer (Index) /= ' ' and then Buffer (Index) /= ASCII.HT;
 
             Index := Index + 1;
          end loop;
@@ -709,8 +702,7 @@ package body C_Analyzer is
       ---------
 
       procedure Pop
-        (Stack : in out Token_Stack.Simple_Stack;
-         Value : out Extended_Token)
+        (Stack : in out Token_Stack.Simple_Stack; Value : out Extended_Token)
       is
          Column : Natural;
          Info   : Construct_Access;
@@ -731,8 +723,8 @@ package body C_Analyzer is
          --  Build next entry of Constructs if needed.
 
          if Constructs /= null then
-            Column             := Char_In_Line;
-            Info               := Constructs.Current;
+            Column := Char_In_Line;
+            Info := Constructs.Current;
             Constructs.Current := new Construct_Information;
 
             if Constructs.First = null then
@@ -740,28 +732,31 @@ package body C_Analyzer is
             else
                Constructs.Current.Prev := Info;
                Constructs.Current.Next := Info.Next;
-               Info.Next               := Constructs.Current;
+               Info.Next := Constructs.Current;
             end if;
 
             Constructs.Size := Constructs.Size + 1;
             Constructs.Last := Constructs.Current;
 
             case Value.Token is
-               when Tok_Pound =>
+               when Tok_Pound                    =>
                   --  Tok_Pound is used for #include
 
                   Constructs.Current.Info.Category := Cat_Include;
-                  Constructs.Current.Info.Name := Symbols.Find
-                    (Buffer (Value.Name_Start .. Value.Name_End));
+                  Constructs.Current.Info.Name :=
+                    Symbols.Find (Buffer (Value.Name_Start .. Value.Name_End));
                   Constructs.Current.Info.Sloc_Entity := Value.Sloc_Name;
 
                when Tok_Do | Tok_For | Tok_While =>
                   Constructs.Current.Info.Category := Cat_Loop_Statement;
-               when Tok_If | Tok_Else =>
+
+               when Tok_If | Tok_Else            =>
                   Constructs.Current.Info.Category := Cat_If_Statement;
-               when Tok_Switch =>
+
+               when Tok_Switch                   =>
                   Constructs.Current.Info.Category := Cat_Case_Statement;
-               when Tok_Void =>
+
+               when Tok_Void                     =>
                   --  Tok_Void is used for blocks: {}
 
                   if Value.Name_Start /= 0 then
@@ -769,33 +764,38 @@ package body C_Analyzer is
                      --  of this function
 
                      Constructs.Current.Info.Category := Cat_Function;
-                     Constructs.Current.Info.Name := Symbols.Find
-                       (Buffer (Value.Name_Start .. Value.Name_End));
+                     Constructs.Current.Info.Name :=
+                       Symbols.Find
+                         (Buffer (Value.Name_Start .. Value.Name_End));
 
                   else
                      Constructs.Current.Info.Category := Cat_Simple_Block;
                   end if;
 
-               when Tok_Struct =>
+               when Tok_Struct                   =>
                   Constructs.Current.Info.Category := Cat_Structure;
-                  Constructs.Current.Info.Name := Symbols.Find
-                    (Buffer (Value.Name_Start .. Value.Name_End));
-               when Tok_Union =>
+                  Constructs.Current.Info.Name :=
+                    Symbols.Find (Buffer (Value.Name_Start .. Value.Name_End));
+
+               when Tok_Union                    =>
                   Constructs.Current.Info.Category := Cat_Union;
-                  Constructs.Current.Info.Name := Symbols.Find
-                    (Buffer (Value.Name_Start .. Value.Name_End));
-               when Tok_Class =>
+                  Constructs.Current.Info.Name :=
+                    Symbols.Find (Buffer (Value.Name_Start .. Value.Name_End));
+
+               when Tok_Class                    =>
                   Constructs.Current.Info.Category := Cat_Class;
-                  Constructs.Current.Info.Name := Symbols.Find
-                    (Buffer (Value.Name_Start .. Value.Name_End));
-               when Tok_Enum =>
+                  Constructs.Current.Info.Name :=
+                    Symbols.Find (Buffer (Value.Name_Start .. Value.Name_End));
+
+               when Tok_Enum                     =>
                   Constructs.Current.Info.Category := Cat_Type;
-               when others =>
+
+               when others                       =>
                   Constructs.Current.Info.Category := Cat_Unknown;
             end case;
 
-            Constructs.Current.Info.Sloc_Start     := Value.Sloc;
-            Constructs.Current.Info.Sloc_End       := (Line, Column, Index);
+            Constructs.Current.Info.Sloc_Start := Value.Sloc;
+            Constructs.Current.Info.Sloc_End := (Line, Column, Index);
             Constructs.Current.Info.Is_Declaration := False;
          end if;
       end Pop;
@@ -810,16 +810,10 @@ package body C_Analyzer is
       -- Replace_Text --
       ------------------
 
-      procedure Replace_Text
-        (First : Natural;
-         Last  : Natural;
-         Str   : String)
-      is
+      procedure Replace_Text (First : Natural; Last : Natural; Str : String) is
          Start : Natural;
       begin
-         if Replace /= null
-           and then (To = 0 or else Line in From .. To)
-         then
+         if Replace /= null and then (To = 0 or else Line in From .. To) then
             if Last_Replace_Line /= Line then
                Last_Replace_Line := Line;
                Padding := 0;
@@ -829,7 +823,8 @@ package body C_Analyzer is
             Replace
               (Line,
                Padding + First - Start + 1,
-               Padding + Last - Start + 1, Str);
+               Padding + Last - Start + 1,
+               Str);
 
             Padding := Padding + Str'Length - (Last - First);
          end if;
@@ -843,7 +838,7 @@ package body C_Analyzer is
          Escape : Boolean := False;
       begin
          First := Index;
-         Start_Char   := Char_In_Line;
+         Start_Char := Char_In_Line;
          Next_Char;
 
          while Index < Buffer'Last loop
@@ -853,23 +848,26 @@ package body C_Analyzer is
                   Escape := False;
                   New_Line;
 
-               when ''' =>
+               when '''      =>
                   exit when not Escape;
                   Escape := False;
 
-               when '\' =>
+               when '\'      =>
                   Escape := not Escape;
 
-               when others =>
+               when others   =>
                   Escape := False;
             end case;
 
             Next_Char;
          end loop;
 
-         return Do_Callback
-           (Character_Text, (Line, Start_Char, First),
-            (Line, Char_In_Line, Index), False);
+         return
+           Do_Callback
+             (Character_Text,
+              (Line, Start_Char, First),
+              (Line, Char_In_Line, Index),
+              False);
       end Skip_Character;
 
       -----------------
@@ -890,23 +888,26 @@ package body C_Analyzer is
                   Escape := False;
                   New_Line;
 
-               when '"' =>
+               when '"'      =>
                   exit when not Escape;
                   Escape := False;
 
-               when '\' =>
+               when '\'      =>
                   Escape := not Escape;
 
-               when others =>
+               when others   =>
                   Escape := False;
             end case;
 
             Next_Char;
          end loop;
 
-         return Do_Callback
-           (String_Text, (Line, Start_Char, First),
-            (Line, Char_In_Line, Index), False);
+         return
+           Do_Callback
+             (String_Text,
+              (Line, Start_Char, First),
+              (Line, Char_In_Line, Index),
+              False);
       end Skip_String;
 
       ------------------
@@ -917,15 +918,15 @@ package body C_Analyzer is
          Start_Line    : Natural;  --  Line starting the comment
          Ref_Column    : Natural;  --  First column with non blank char
          Indent_Normal : Integer := 0;    --  Number of spaces to use when
-                                          --  indenting comments
+         --  indenting comments
          Indent_Star   : Integer := 0;    --  Ditto, when the first non blank
-                                          --  char is a '*'
+         --  char is a '*'
          Line_Reset    : Boolean;         --  Whether we have a newline that
-                                          --  needs indentation.
+         --  needs indentation.
          Column        : Natural;         --  Current column, taking into
-                                          --  account TAB characters.
+         --  account TAB characters.
          Last_Blank    : Natural;         --  Last blank column on the first
-                                          --  comment line.
+         --  comment line.
          All_Stars     : Boolean;
          Tmp           : Natural;
 
@@ -961,16 +962,19 @@ package body C_Analyzer is
                Do_Indent (Index, Indent);
             end if;
 
-            return Do_Callback
-              (Comment_Text, (Line, Start_Char, First),
-               (Line, Char_In_Line, Index), False);
+            return
+              Do_Callback
+                (Comment_Text,
+                 (Line, Start_Char, First),
+                 (Line, Char_In_Line, Index),
+                 False);
 
          elsif Buffer (Index + 1) = '*' then
             --  Skip and indent C-style multi-line comment
 
             Start_Char := Char_In_Line;
             Start_Line := Line;
-            Column     := Char_In_Line;
+            Column := Char_In_Line;
             Last_Blank := 0;
 
             if Indent_Comments then
@@ -979,11 +983,13 @@ package body C_Analyzer is
 
                loop
                   case Buffer (Tmp) is
-                     when ' ' =>
+                     when ' '      =>
                         Last_Blank := Last_Blank + 1;
+
                      when ASCII.HT =>
                         Add_Tab (Last_Blank);
-                     when others =>
+
+                     when others   =>
                         exit;
                   end case;
 
@@ -1021,11 +1027,13 @@ package body C_Analyzer is
             else
                while Index < Buffer'Last loop
                   case Buffer (Index) is
-                     when ' ' =>
+                     when ' '      =>
                         Column := Column + 1;
+
                      when ASCII.HT =>
                         Add_Tab (Column);
-                     when others =>
+
+                     when others   =>
                         exit;
                   end case;
 
@@ -1049,11 +1057,10 @@ package body C_Analyzer is
             All_Stars := True;
 
             while Index < Buffer'Last
-              and then (Buffer (Index - 1) /= '*'
-                        or else Buffer (Index) /= '/')
+              and then
+                (Buffer (Index - 1) /= '*' or else Buffer (Index) /= '/')
             loop
-               if Buffer (Index) /= ' '
-                 and then Buffer (Index) /= ASCII.HT
+               if Buffer (Index) /= ' ' and then Buffer (Index) /= ASCII.HT
                then
                   if Buffer (Index) = ASCII.LF then
                      New_Line;
@@ -1090,11 +1097,12 @@ package body C_Analyzer is
                Next_Char;
             end loop;
 
-            return Do_Callback
-              (Comment_Text,
-               (Start_Line, Start_Char, First),
-               (Line, Char_In_Line, Index),
-               Buffer (Index) /= '/');
+            return
+              Do_Callback
+                (Comment_Text,
+                 (Start_Line, Start_Char, First),
+                 (Line, Char_In_Line, Index),
+                 Buffer (Index) /= '/');
          end if;
 
          return False;
@@ -1118,7 +1126,7 @@ package body C_Analyzer is
          then
             --  Handle #if 0 ... #endif block as a comment
 
-            First      := Index;
+            First := Index;
             Start_Char := Char_In_Line;
             Start_Line := Line;
 
@@ -1145,9 +1153,9 @@ package body C_Analyzer is
                         Num_Ifdef := Num_Ifdef + 1;
 
                      elsif Buffer'Last >= Index + 4
-                       and then (Buffer (Index + 1 .. Index + 4) = "else"
-                                 or else Buffer (Index + 1 .. Index + 4)
-                                   = "elif")
+                       and then
+                         (Buffer (Index + 1 .. Index + 4) = "else"
+                          or else Buffer (Index + 1 .. Index + 4) = "elif")
                      then
                         Char_In_Line := Char_In_Line + 4;
                         Index := Index + 4;
@@ -1172,11 +1180,12 @@ package body C_Analyzer is
                Next_Char;
             end loop;
 
-            return Do_Callback
-              (Comment_Text,
-               (Start_Line, Start_Char, First),
-               (Line, Char_In_Line, Index),
-               Num_Ifdef > 0);
+            return
+              Do_Callback
+                (Comment_Text,
+                 (Start_Line, Start_Char, First),
+                 (Line, Char_In_Line, Index),
+                 Num_Ifdef > 0);
 
          else
             if Buffer'Last > Index + 7
@@ -1184,9 +1193,9 @@ package body C_Analyzer is
             then
                --  #include directive
 
-               First_Index  := Index;
+               First_Index := Index;
                First_Column := Char_In_Line;
-               Index        := Index + 8;
+               Index := Index + 8;
                Char_In_Line := Char_In_Line + 8;
 
                --  ??? Need to ignore comments
@@ -1200,7 +1209,7 @@ package body C_Analyzer is
                end loop;
 
                if Index < Buffer'Last and then Buffer (Index) /= ASCII.LF then
-                  Name_Index  := Index;
+                  Name_Index := Index;
                   Name_Column := Char_In_Line;
                   Next_Char;
 
@@ -1210,8 +1219,7 @@ package body C_Analyzer is
                      Char := '>';
                   end if;
 
-                  while Index < Buffer'Last
-                    and then Buffer (Index) /= Char
+                  while Index < Buffer'Last and then Buffer (Index) /= Char
                   loop
                      Next_Char;
                   end loop;
@@ -1223,11 +1231,11 @@ package body C_Analyzer is
                         --  Dummy push/pop in order to register this #include
                         --  directive in the list of constructs
 
-                        Val.Token       := Tok_Pound;
-                        Val.Sloc        := (Line, First_Column, First_Index);
-                        Val.Sloc_Name   := (Line, Name_Column, Name_Index);
-                        Val.Name_Start  := Name_Index;
-                        Val.Name_End    := Index;
+                        Val.Token := Tok_Pound;
+                        Val.Sloc := (Line, First_Column, First_Index);
+                        Val.Sloc_Name := (Line, Name_Column, Name_Index);
+                        Val.Name_Start := Name_Index;
+                        Val.Name_End := Index;
                         Push (Tokens, Val);
                         Pop (Tokens);
                      end;
@@ -1248,8 +1256,11 @@ package body C_Analyzer is
                     and then Buffer (Index) in '0' .. '9'
                   loop
                      Index := Index + 1;
-                     Start_Line := Start_Line * 10 +
-                       Character'Pos (Buffer (Index)) - Character'Pos ('0');
+                     Start_Line :=
+                       Start_Line
+                       * 10
+                       + Character'Pos (Buffer (Index))
+                       - Character'Pos ('0');
                   end loop;
 
                   Skip_Blanks (Buffer, Index);
@@ -1257,8 +1268,7 @@ package body C_Analyzer is
                   Index := Index + 1;
                   First_Index := Index;
 
-                  while Index <= Buffer'Last
-                    and then Buffer (Index) /= '"'
+                  while Index <= Buffer'Last and then Buffer (Index) /= '"'
                   loop
                      Index := Index + 1;
                   end loop;
@@ -1288,7 +1298,8 @@ package body C_Analyzer is
                         return False;
                      end if;
 
-                     exit when  Buffer (Index - 1) = ASCII.LF
+                     exit when
+                       Buffer (Index - 1) = ASCII.LF
                        and then Buffer (Index + 1) = ' '
                        and then Buffer (Index + 2) in '1' .. '9';
 
@@ -1348,22 +1359,22 @@ package body C_Analyzer is
          Char_In_Line := Char_In_Line - 1;
          Token := Get_Token (Buffer (First .. Index));
 
-         Temp.Token       := Token;
+         Temp.Token := Token;
          Temp.Curly_Level := Curly_Level;
          Temp.Paren_Level := Paren_Level;
-         Temp.Sloc.Line   := Line;
+         Temp.Sloc.Line := Line;
          Temp.Sloc.Column := Start_Char;
-         Temp.Sloc.Index  := First;
-         Temp.Name_Start  := First;
-         Temp.Name_End    := Index;
+         Temp.Sloc.Index := First;
+         Temp.Name_Start := First;
+         Temp.Name_End := Index;
 
          case Token is
-            when Tok_For | Tok_Do | Tok_Switch | Tok_Else =>
+            when Tok_For | Tok_Do | Tok_Switch | Tok_Else      =>
                Push (Tokens, Temp);
                Do_Indent (Index, Indent);
                Indent := Indent + Indent_Level;
 
-            when Tok_While =>
+            when Tok_While                                     =>
                if Top_Token.Token = Tok_Do
                  and then Top_Token.Curly_Level = Curly_Level
                  and then Top_Token.Paren_Level = Paren_Level
@@ -1375,14 +1386,14 @@ package body C_Analyzer is
                   Indent := Indent + Indent_Level;
                end if;
 
-            when Tok_If =>
+            when Tok_If                                        =>
                if Prev_Token /= Tok_Else then
                   Push (Tokens, Temp);
                   Do_Indent (Index, Indent);
                   Indent := Indent + Indent_Level;
                end if;
 
-            when Tok_Case | Tok_Default =>
+            when Tok_Case | Tok_Default                        =>
                if Prev_Token /= Tok_Left_Paren then
                   if Top_Token.First then
                      Top_Token.First := False;
@@ -1401,7 +1412,7 @@ package body C_Analyzer is
                   Indent := Indent + Indent_Level;
                end if;
 
-            when Tok_Typedef =>
+            when Tok_Typedef                                   =>
                if Constructs /= null then
                   --  ??? Register type definition
                   null;
@@ -1409,14 +1420,14 @@ package body C_Analyzer is
 
                Do_Indent (Index, Indent);
 
-            when Type_Token | Storage_Token =>
+            when Type_Token | Storage_Token                    =>
                if Curly_Level = 0 then
                   Push (Tokens, Temp);
                end if;
 
                Do_Indent (Index, Indent);
 
-            when Tok_Identifier =>
+            when Tok_Identifier                                =>
                if Curly_Level = 0
                  or else Top_Token.Token in Tok_Class | Tok_Struct | Tok_Union
                then
@@ -1427,17 +1438,17 @@ package body C_Analyzer is
 
                   --  save the name of the struct in the Struct token itself
                   if Curly_Level = 0
-                    and then Top_Token.Token
-                      in Tok_Struct | Tok_Class | Tok_Union
+                    and then
+                      Top_Token.Token in Tok_Struct | Tok_Class | Tok_Union
                   then
                      Top_Token.Name_Start := Temp.Name_Start;
-                     Top_Token.Name_End   := Temp.Name_End;
+                     Top_Token.Name_End := Temp.Name_End;
                   end if;
                end if;
 
                Do_Indent (Index, Indent);
 
-            when Tok_Public | Tok_Protected | Tok_Private =>
+            when Tok_Public | Tok_Protected | Tok_Private      =>
                --  Need to unindent temporarily:
                --  class t
                --  {
@@ -1454,19 +1465,26 @@ package body C_Analyzer is
                   Do_Indent (Index, Indent);
                end if;
 
-            when others =>
+            when others                                        =>
                Do_Indent (Index, Indent);
          end case;
 
          if Callback /= null then
             if Token = Tok_Identifier then
-               return Do_Callback
-                 (Identifier_Text,
-                  Temp.Sloc, (Line, Char_In_Line, Index), False);
+               return
+                 Do_Callback
+                   (Identifier_Text,
+                    Temp.Sloc,
+                    (Line, Char_In_Line, Index),
+                    False);
 
             elsif Enable_Cpp or else Token not in Cpp_Token then
-               return Do_Callback
-                 (Keyword_Text, Temp.Sloc, (Line, Char_In_Line, Index), False);
+               return
+                 Do_Callback
+                   (Keyword_Text,
+                    Temp.Sloc,
+                    (Line, Char_In_Line, Index),
+                    False);
             end if;
          end if;
 
@@ -1482,9 +1500,7 @@ package body C_Analyzer is
          Local_Indent    : Natural;
          Indents_Level   : constant Integer := Top (Indents).Level;
       begin
-         if Indents_Level = None
-           or else Top (Indents).Line = Line
-         then
+         if Indents_Level = None or else Top (Indents).Line = Line then
             Local_Indent := Indentation;
          else
             Local_Indent := Indents_Level;
@@ -1503,7 +1519,8 @@ package body C_Analyzer is
          loop
             Pop_To_Construct (Tokens, Top_Token);
 
-            exit when Top_Token.Token = No_Token
+            exit when
+              Top_Token.Token = No_Token
               or else Top_Token.Curly_Level /= Curly_Level
               or else Top_Token.Paren_Level /= Paren_Level;
 
@@ -1527,14 +1544,15 @@ package body C_Analyzer is
 
       Some_Token_Found : Boolean;
 
-   --  Start of processing for Analyze_C_Source
+      --  Start of processing for Analyze_C_Source
 
-   begin  -- Analyze_C_Source
-      Indent_Separate_Line (Tok_If)     := Indent_Extra;
-      Indent_Separate_Line (Tok_Else)   := Indent_Extra;
-      Indent_Separate_Line (Tok_For)    := Indent_Extra;
-      Indent_Separate_Line (Tok_While)  := Indent_Extra;
-      Indent_Separate_Line (Tok_Do)     := Indent_Extra;
+   begin
+      --  Analyze_C_Source
+      Indent_Separate_Line (Tok_If) := Indent_Extra;
+      Indent_Separate_Line (Tok_Else) := Indent_Extra;
+      Indent_Separate_Line (Tok_For) := Indent_Extra;
+      Indent_Separate_Line (Tok_While) := Indent_Extra;
+      Indent_Separate_Line (Tok_Do) := Indent_Extra;
       Indent_Separate_Line (Tok_Switch) := Indent_Extra;
 
       --  Push a dummy token so that stack will never be empty.
@@ -1544,14 +1562,14 @@ package body C_Analyzer is
       Push (Indents, (None, 0, 0, 0));
 
       while Index <= Buffer'Last loop
-         Start_Char  := Char_In_Line;
+         Start_Char := Char_In_Line;
          Start_Index := Index;
 
          Some_Token_Found := True;
          Callback_Done := False;
 
          case Buffer (Index) is
-            when '{' =>
+            when '{'                                        =>
                Token := Tok_Left_Bracket;
 
                Enclosing := Top (Tokens);
@@ -1608,8 +1626,8 @@ package body C_Analyzer is
                            --  see below.
 
                            if Tok_Ident.Token = Tok_Identifier then
-                              Val.Name_Start  := Tok_Ident.Name_Start;
-                              Val.Name_End    := Tok_Ident.Name_End;
+                              Val.Name_Start := Tok_Ident.Name_Start;
+                              Val.Name_End := Tok_Ident.Name_End;
                               --  We do not want to reuse this value
                               Tok_Ident.Token := Tok_Void;
                            end if;
@@ -1617,10 +1635,10 @@ package body C_Analyzer is
 
                         Val.Curly_Level := Curly_Level;
                         Val.Paren_Level := Paren_Level;
-                        Val.Sloc.Line   := Line;
+                        Val.Sloc.Line := Line;
                         Val.Sloc.Column :=
                           Index - Line_Start (Buffer, Index) + 1;
-                        Val.Sloc.Index  := Index;
+                        Val.Sloc.Index := Index;
                         Indent := Indent + Indent_Level;
                         Push (Tokens, Val);
                      end;
@@ -1636,7 +1654,7 @@ package body C_Analyzer is
 
                Curly_Level := Curly_Level + 1;
 
-            when '}' =>
+            when '}'                                        =>
                Token := Tok_Right_Bracket;
 
                --  Ignore extra curlys (may happen with syntax errors or
@@ -1694,11 +1712,11 @@ package body C_Analyzer is
                   end if;
                end if;
 
-            when ';' =>
+            when ';'                                        =>
                Token := Tok_Semicolon;
                Pop_Constructs_And_Indent;
 
-            when '(' =>
+            when '('                                        =>
                Token := Tok_Left_Paren;
 
                --  Get identifier just before the parenthesis, this is usually
@@ -1747,7 +1765,7 @@ package body C_Analyzer is
                Do_Indent (Index, Indent);
                Paren_Level := Paren_Level + 1;
 
-            when ')' =>
+            when ')'                                        =>
                Token := Tok_Right_Paren;
 
                if Paren_Level > 0 then
@@ -1755,12 +1773,13 @@ package body C_Analyzer is
                   Paren_Level := Paren_Level - 1;
                end if;
 
-            when '=' =>
+            when '='                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='    =>
                         Token := Tok_Equal;
                         Next_Char;
+
                      when others =>
                         Token := Tok_Assign;
                   end case;
@@ -1775,36 +1794,39 @@ package body C_Analyzer is
                   Pop_Constructs_And_Indent;
                end if;
 
-            when ':' =>
+            when ':'                                        =>
                Token := Tok_Colon;
 
-            when '?' =>
+            when '?'                                        =>
                Token := Tok_Question_Mark;
 
-            when ',' =>
+            when ','                                        =>
                Token := Tok_Comma;
 
-            when '.' =>
+            when '.'                                        =>
                Token := Tok_Dot;
 
-            when '[' =>
+            when '['                                        =>
                Token := Tok_Left_Square_Bracket;
 
-            when ']' =>
+            when ']'                                        =>
                Token := Tok_Right_Square_Bracket;
 
-            when '-' =>
+            when '-'                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='    =>
                         Token := Tok_Minus_Assign;
                         Next_Char;
-                     when '>' =>
+
+                     when '>'    =>
                         Token := Tok_Deref_Select;
                         Next_Char;
-                     when '-' =>
+
+                     when '-'    =>
                         Token := Tok_Minus_Minus;
                         Next_Char;
+
                      when others =>
                         Token := Tok_Minus;
                   end case;
@@ -1812,15 +1834,17 @@ package body C_Analyzer is
                   Token := Tok_Minus;
                end if;
 
-            when '+' =>
+            when '+'                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='    =>
                         Token := Tok_Plus_Assign;
                         Next_Char;
-                     when '+' =>
+
+                     when '+'    =>
                         Token := Tok_Plus_Plus;
                         Next_Char;
+
                      when others =>
                         Token := Tok_Plus;
                   end case;
@@ -1828,7 +1852,7 @@ package body C_Analyzer is
                   Token := Tok_Plus;
                end if;
 
-            when '*' =>
+            when '*'                                        =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Star_Assign;
                   Next_Char;
@@ -1836,13 +1860,14 @@ package body C_Analyzer is
                   Token := Tok_Star;
                end if;
 
-            when '>' =>
+            when '>'                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='    =>
                         Token := Tok_Greater_Equal;
                         Next_Char;
-                     when '>' =>
+
+                     when '>'    =>
                         if (Index + 1) < Buffer'Last
                           and then Buffer (Index + 2) = '='
                         then
@@ -1860,13 +1885,14 @@ package body C_Analyzer is
                   Token := Tok_Greater;
                end if;
 
-            when '<' =>
+            when '<'                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='    =>
                         Token := Tok_Less_Equal;
                         Next_Char;
-                     when '<' =>
+
+                     when '<'    =>
                         if (Index + 1) > Buffer'Last
                           and then Buffer (Index + 2) = '='
                         then
@@ -1884,10 +1910,10 @@ package body C_Analyzer is
                   Token := Tok_Less;
                end if;
 
-            when '~' =>
+            when '~'                                        =>
                Token := Tok_Tilde;
 
-            when '!' =>
+            when '!'                                        =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Not_Equal;
                   Next_Char;
@@ -1895,7 +1921,7 @@ package body C_Analyzer is
                   Token := Tok_Not;
                end if;
 
-            when '%' =>
+            when '%'                                        =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Percent;
                   Next_Char;
@@ -1903,7 +1929,7 @@ package body C_Analyzer is
                   Token := Tok_Percent_Assign;
                end if;
 
-            when '^' =>
+            when '^'                                        =>
                if Index < Buffer'Last and then Buffer (Index + 1) = '=' then
                   Token := Tok_Xor_Assign;
                   Next_Char;
@@ -1911,15 +1937,17 @@ package body C_Analyzer is
                   Token := Tok_Xor;
                end if;
 
-            when '&' =>
+            when '&'                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='    =>
                         Token := Tok_And_Assign;
                         Next_Char;
-                     when '&' =>
+
+                     when '&'    =>
                         Token := Tok_Logical_And;
                         Next_Char;
+
                      when others =>
                         Token := Tok_And;
                   end case;
@@ -1927,15 +1955,17 @@ package body C_Analyzer is
                   Token := Tok_And;
                end if;
 
-            when '|' =>
+            when '|'                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='    =>
                         Token := Tok_Or_Assign;
                         Next_Char;
-                     when '|' =>
+
+                     when '|'    =>
                         Token := Tok_Logical_Or;
                         Next_Char;
+
                      when others =>
                         Token := Tok_Or;
                   end case;
@@ -1943,37 +1973,39 @@ package body C_Analyzer is
                   Token := Tok_Or;
                end if;
 
-            when '"' =>
+            when '"'                                        =>
                Token := Tok_String_Literal;
                exit when Skip_String;
 
-            when ''' =>
+            when '''                                        =>
                Token := Tok_Char_Literal;
                exit when Skip_Character;
 
-            when '/' =>
+            when '/'                                        =>
                if Index < Buffer'Last then
                   case Buffer (Index + 1) is
-                     when '=' =>
+                     when '='       =>
                         Token := Tok_Slash_Assign;
                         Next_Char;
+
                      when '/' | '*' =>
                         exit when Skip_Comment;
-                     when others =>
+
+                     when others    =>
                         Token := Tok_Slash;
                   end case;
                else
                   Token := Tok_Slash;
                end if;
 
-            when '#' =>
+            when '#'                                        =>
                Token := Tok_Pound;
                exit when Preprocessor_Directive;
 
             when 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' =>
                exit when Identifier_Keyword;
 
-            when others =>
+            when others                                     =>
                Some_Token_Found := False;
          end case;
 
@@ -1981,11 +2013,12 @@ package body C_Analyzer is
            and then Some_Token_Found
            and then Token in Tok_Minus .. Tok_Left_Shift_Assign
          then
-            exit when Do_Callback
-              (Entity         => Operator_Text,
-               Sloc_Start     => (Line, Start_Char, Start_Index),
-               Sloc_End       => (Line, Char_In_Line, Index),
-               Partial_Entity => False);
+            exit when
+              Do_Callback
+                (Entity         => Operator_Text,
+                 Sloc_Start     => (Line, Start_Char, Start_Index),
+                 Sloc_End       => (Line, Char_In_Line, Index),
+                 Partial_Entity => False);
          end if;
 
          if Is_Blank (Buffer (Index)) then

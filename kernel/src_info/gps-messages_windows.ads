@@ -38,23 +38,24 @@ package GPS.Messages_Windows is
      (Self   : not null access Abstract_Messages_Window;
       Text   : String;
       Add_LF : Boolean := True;
-      Mode   : Message_Type := Info) is abstract;
+      Mode   : Message_Type := Info)
+   is abstract;
    procedure Insert_UTF8
      (Self   : not null access Abstract_Messages_Window;
       UTF8   : String;
       Add_LF : Boolean := True;
-      Mode   : Message_Type := Info) is abstract;
+      Mode   : Message_Type := Info)
+   is abstract;
    --  Insert Text in the GNAT Studio's console.
    --  If Add_LF is True, automatically add a line separator.
 
-   procedure Clear (Self   : not null access Abstract_Messages_Window)
+   procedure Clear (Self : not null access Abstract_Messages_Window)
    is abstract;
    --  Clear all the text in given message windows
 
    procedure Raise_Console
-     (Self       : not null access Abstract_Messages_Window;
-      Give_Focus : Boolean)
-     is abstract;
+     (Self : not null access Abstract_Messages_Window; Give_Focus : Boolean)
+   is abstract;
    --  Put given message windows in the foreground.
    --  Give the focus to this window if Give_Focus is set to True.
 
@@ -64,7 +65,8 @@ package GPS.Messages_Windows is
 
    function Get_Virtual_Console
      (Self : not null access Abstract_Messages_Window)
-      return GNATCOLL.Scripts.Virtual_Console is abstract;
+      return GNATCOLL.Scripts.Virtual_Console
+   is abstract;
    --  Return a virtual console compatible with GNATCOLL.Scripts
 
 end GPS.Messages_Windows;

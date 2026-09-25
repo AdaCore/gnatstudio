@@ -15,40 +15,40 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings;               use Ada.Strings;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings;           use Ada.Strings;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 pragma Warnings (Off);
 with System.OS_Constants;
 --  Special case for preparing commands for gdb on Windows
 pragma Warnings (On);
 
-with GNAT.Expect;               use GNAT.Expect;
-with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Expect;     use GNAT.Expect;
+with GNAT.Expect.TTY; use GNAT.Expect.TTY;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
-with Config;                    use Config;
-pragma Warnings
-  (Off, "child unit * hides compilation unit with the same name");
-with Debugger.Base_Gdb.Ada;     use Debugger.Base_Gdb.Ada;
+with Config;                use Config;
+pragma
+  Warnings (Off, "child unit * hides compilation unit with the same name");
+with Debugger.Base_Gdb.Ada; use Debugger.Base_Gdb.Ada;
 pragma Warnings (On, "child unit * hides compilation unit with the same name");
-with Default_Preferences;       use Default_Preferences;
-with GVD.Preferences;           use GVD.Preferences;
-with GVD.Trace;                 use GVD.Trace;
-with GVD.Types;                 use GVD.Types;
-with Language;                  use Language;
-with Process_Proxies;           use Process_Proxies;
-with Remote;                    use Remote;
-with String_Utils;              use String_Utils;
+with Default_Preferences;   use Default_Preferences;
+with GVD.Preferences;       use GVD.Preferences;
+with GVD.Trace;             use GVD.Trace;
+with GVD.Types;             use GVD.Types;
+with Language;              use Language;
+with Process_Proxies;       use Process_Proxies;
+with Remote;                use Remote;
+with String_Utils;          use String_Utils;
 with GPS.Core_Kernels;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body Debugger.Base_Gdb.Gdb_CLI is
 
@@ -61,24 +61,23 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Constants --
    ---------------
 
-   Prompt_Regexp             : constant Pattern_Matcher :=
+   Prompt_Regexp : constant Pattern_Matcher :=
      Compile ("\(([^\s]*-)?gdb\)( )?$", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
 
-   Prompt_String             : constant String := "(gdb) ";
+   Prompt_String : constant String := "(gdb) ";
    --  The prompt used by the debugger
 
-   Gdb_Command               : constant String := "gdb";
+   Gdb_Command : constant String := "gdb";
    --  Name of the command to launch gdb
 
    Gdb_Options_NW             : aliased String := "-nw";
    Gdb_Options_Q              : aliased String := "-q";
    Gdb_Options_Ex             : aliased String := "-ex";
    Gdb_Options_Set_Prompt     : aliased String := "set prompt (gdb) ";
-   Gdb_Options_Set_Ext_Prompt : aliased String :=
-      "set extended-prompt (gdb) ";
+   Gdb_Options_Set_Ext_Prompt : aliased String := "set extended-prompt (gdb) ";
    Gdb_Options                : constant Argument_List :=
      (Gdb_Options_NW'Access,
       Gdb_Options_Q'Access,
@@ -90,140 +89,153 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  and override any user-defined prompt so that we can match the first
    --  prompt.
 
-   Highlight_Pattern         : constant Pattern_Matcher :=
+   Highlight_Pattern : constant Pattern_Matcher :=
      Compile ("^\(([^\s]*-)?gdb\) ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window
 
-   File_Name_Pattern         : constant Pattern_Matcher :=
-     Compile (ASCII.SUB & ASCII.SUB
-              & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)$", Multiple_Lines);
+   File_Name_Pattern : constant Pattern_Matcher :=
+     Compile
+       (ASCII.SUB & ASCII.SUB & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)$",
+        Multiple_Lines);
    --  Matches a file name/line indication in gdb's output
 
-   File_Name_Pattern2        : constant Pattern_Matcher :=
-     Compile ("^(\d+)" & ASCII.HT &
-              "(in (.+)|(.+): No such file or directory.)",
-              Multiple_Lines);
+   File_Name_Pattern2 : constant Pattern_Matcher :=
+     Compile
+       ("^(\d+)" & ASCII.HT & "(in (.+)|(.+): No such file or directory.)",
+        Multiple_Lines);
    --  Second regexp used to detect when the current frame can not be displayed
    --  Note that this pattern should work even when LANG isn't english because
    --  gdb does not seem to take into account this variable at all.
 
-   Remote_Error_Pattern      : constant Pattern_Matcher :=
-     Compile ("(.+): (No such file or directory."
-              & "|The system cannot find the file specified."
-              & "|Cannot assign requested address.)",
-              Multiple_Lines);
+   Remote_Error_Pattern : constant Pattern_Matcher :=
+     Compile
+       ("(.+): (No such file or directory."
+        & "|The system cannot find the file specified."
+        & "|Cannot assign requested address.)",
+        Multiple_Lines);
    --  Matches errors when trying to connect to a remote target
    --  (e.g: 'target remote :1234').
 
-   Language_Pattern          : constant Pattern_Matcher := Compile
-     ("^(The current source language is|Current language:) +" &
-      """?(auto; currently )?([^""\s]+)("".)?\n", Multiple_Lines);
+   Language_Pattern : constant Pattern_Matcher :=
+     Compile
+       ("^(The current source language is|Current language:) +"
+        & """?(auto; currently )?([^""\s]+)("".)?\n",
+        Multiple_Lines);
    --  Pattern used to detect language changes in the debugger
 
-   Terminate_Pattern         : constant Pattern_Matcher := Compile
-     ("^Program exited (normally|with code)", Multiple_Lines);
+   Terminate_Pattern : constant Pattern_Matcher :=
+     Compile ("^Program exited (normally|with code)", Multiple_Lines);
    --  Pattern used to detect when the debuggee terminates
 
-   Not_Running_Pattern           : constant Pattern_Matcher := Compile
-     ("^The program is not being run.", Multiple_Lines);
+   Not_Running_Pattern : constant Pattern_Matcher :=
+     Compile ("^The program is not being run.", Multiple_Lines);
    --  Pattern used to detect when the debuggee is not running
 
-   Frame_Pattern             : constant Pattern_Matcher := Compile
-     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (\w?\:?[^:]+)(:\d+)?)?$",
-      Multiple_Lines);
+   Frame_Pattern        : constant Pattern_Matcher :=
+     Compile
+       ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (\w?\:?[^:]+)(:\d+)?)?$",
+        Multiple_Lines);
    type Frame_Pattern_Kind is
-        (Frame_Matched, Frame_Num, Frame_Address_Part, Frame_Address,
-         Frame_Names, Frame_Location, Frame_File, Frame_Line)
-     with Warnings => Off;
-   Frame_Pattern_Groups      : constant Natural := 7;
+     (Frame_Matched,
+      Frame_Num,
+      Frame_Address_Part,
+      Frame_Address,
+      Frame_Names,
+      Frame_Location,
+      Frame_File,
+      Frame_Line)
+   with Warnings => Off;
+   Frame_Pattern_Groups : constant Natural := 7;
    --  Regular expression used to detect and parse callstack frames
    --  Example:
    --  "#0  0x0000000000400548 in main () at /tests/RA25-028/common/main.c:17
    --  "#1  0x0000000000400548 in main () at C:\tests\main.c:17
    --  "#2  0x0000000000400548 in main ()
 
-   Frame_Subprogram_Params_Pattern : constant Pattern_Matcher := Compile
-     ("^(.*) (\(.*\))");
+   Frame_Subprogram_Params_Pattern : constant Pattern_Matcher :=
+     Compile ("^(.*) (\(.*\))");
    --  Regular expression used to separate parameters form the subprogram name
 
-   Breakpoint_Num_Pattern    : constant Pattern_Matcher := Compile
-     ("(?:Breakpoint|Watchpoint|Catchpoint) (\d+)");
+   Breakpoint_Num_Pattern : constant Pattern_Matcher :=
+     Compile ("(?:Breakpoint|Watchpoint|Catchpoint) (\d+)");
    --  Extract breakpoint identifier after setting a breakpoint via "break"
    --  or "tbreak"
 
-   Breakpoint_Pattern        : constant Pattern_Matcher := Compile
-     ("^(\d+)\s+(breakpoint|\w+? watchpoint|catchpoint)\s+"
-      & "(keep|dis|del)\s+([yn])"
-      & "\s+(<MULTIPLE>\s+)*((0x0*)?(\S+))?\s+(.*)$",
-      Multiple_Lines);
+   Breakpoint_Pattern : constant Pattern_Matcher :=
+     Compile
+       ("^(\d+)\s+(breakpoint|\w+? watchpoint|catchpoint)\s+"
+        & "(keep|dis|del)\s+([yn])"
+        & "\s+(<MULTIPLE>\s+)*((0x0*)?(\S+))?\s+(.*)$",
+        Multiple_Lines);
    --  Pattern to match a single line in "info breakpoint"
 
-   Multiloc_Breakpoint_Instance_Pattern : constant Pattern_Matcher := Compile
-     ("^\d+\.\d+\s+[yn]\s+(.*)$", Multiple_Lines);
+   Multiloc_Breakpoint_Instance_Pattern : constant Pattern_Matcher :=
+     Compile ("^\d+\.\d+\s+[yn]\s+(.*)$", Multiple_Lines);
 
-   File_Name_In_Breakpoint                 : constant Pattern_Matcher :=
+   File_Name_In_Breakpoint                : constant Pattern_Matcher :=
      Compile ("\bat (.+):(\d+)$", Multiple_Lines);
-   File_Name_Without_Method_In_Breakpoint  : constant Pattern_Matcher :=
+   File_Name_Without_Method_In_Breakpoint : constant Pattern_Matcher :=
      Compile ("^(.+):(\d+)$", Multiple_Lines);
    --  How to find file names in the info given by "info breakpoint".
    --  Note that we have to allow for special characters in the directory
    --  or file name, since the user might be using some strange names. The only
    --  restriction is that the name can not contain newline characters.
 
-   Exception_In_Breakpoint   : constant Pattern_Matcher := Compile
-     ("\b(on (exception ([-\w_:]+)|all|unhandled))" &
-        "|((`([-\w_:]+)'|all|unhandled) Ada exception)");
+   Exception_In_Breakpoint : constant Pattern_Matcher :=
+     Compile
+       ("\b(on (exception ([-\w_:]+)|all|unhandled))"
+        & "|((`([-\w_:]+)'|all|unhandled) Ada exception)");
    --  How to detect exception names in the info given by "info breakpoint"
 
-   Subprogram_In_Breakpoint  : constant Pattern_Matcher := Compile
-     ("\bin (\S+)");
+   Subprogram_In_Breakpoint : constant Pattern_Matcher :=
+     Compile ("\bin (\S+)");
    --  How to detect subprogram names in the info given by "info breakpoint"
 
-   Condition_In_Breakpoint   : constant Pattern_Matcher := Compile
-     ("^\t?stop only if (.*)");
+   Condition_In_Breakpoint : constant Pattern_Matcher :=
+     Compile ("^\t?stop only if (.*)");
    --  How to detect breakpoint conditions in "info breakpoint"
 
-   Ignore_In_Breakpoint      : constant Pattern_Matcher := Compile
-     ("^\t?ignore next (\d+) hits");
+   Ignore_In_Breakpoint : constant Pattern_Matcher :=
+     Compile ("^\t?ignore next (\d+) hits");
    --  How to detect the ignore count in "info breakpoint"
 
-   Breakpoint_Extra_Info     : constant Pattern_Matcher := Compile
-     ("^(\d+)\s+(task|pd|any)\s+(task|pd|all)(.*)$", Multiple_Lines);
+   Breakpoint_Extra_Info : constant Pattern_Matcher :=
+     Compile ("^(\d+)\s+(task|pd|any)\s+(task|pd|all)(.*)$", Multiple_Lines);
    --  Pattern to match a single line in "info
    --  breakpoints-extra-info"
 
-   Continuation_Line_Pattern : constant Pattern_Matcher := Compile
-     ("^ ?>$", Multiple_Lines);
+   Continuation_Line_Pattern : constant Pattern_Matcher :=
+     Compile ("^ ?>$", Multiple_Lines);
 
-   Address_Range_Pattern     : constant Pattern_Matcher := Compile
-     ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
+   Address_Range_Pattern : constant Pattern_Matcher :=
+     Compile
+       ("starts at address (0x[0-9a-f]+) <[^>]+> and ends at (0x[0-9a-f]+)");
    --  How to get the range of addresses for a given line
 
-   GNAT_Binder_File_Pattern  : constant Pattern_Matcher := Compile
-     ("(b(~|_).+\.(adb|c))");
+   GNAT_Binder_File_Pattern : constant Pattern_Matcher :=
+     Compile ("(b(~|_).+\.(adb|c))");
 
-   Undefined_Info_Command    : constant String := "Undefined info command";
+   Undefined_Info_Command : constant String := "Undefined info command";
    --  Another string used to detect undefined info commands
 
-   Info_Tasks_Pattern : constant Pattern_Matcher := Compile
-     ("^ +(ID) +(TID) +(P-ID) +(Pri) +(State) +(Name).*$");
+   Info_Tasks_Pattern : constant Pattern_Matcher :=
+     Compile ("^ +(ID) +(TID) +(P-ID) +(Pri) +(State) +(Name).*$");
    --  Used to parse the output of "info tasks"
 
-   Question_Filter_Pattern1  : constant Pattern_Matcher :=
+   Question_Filter_Pattern1 : constant Pattern_Matcher :=
      Compile ("^\[0\] .*> ", Multiple_Lines + Single_Line);
 
-   Question_Filter_Pattern2  : constant Pattern_Matcher :=
+   Question_Filter_Pattern2 : constant Pattern_Matcher :=
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
    --  How to detect a question in gdb's output
 
-   Is_Quit_Pattern : constant Pattern_Matcher := Compile
-     ("^\s*(q|qu|qui|quit)\s*$");
+   Is_Quit_Pattern : constant Pattern_Matcher :=
+     Compile ("^\s*(q|qu|qui|quit)\s*$");
 
-   Register_Name_Pattern : constant Pattern_Matcher := Compile
-     ("^(\w+)\s*");
+   Register_Name_Pattern : constant Pattern_Matcher := Compile ("^(\w+)\s*");
 
-   Multiple_Symbols_Pattern : constant Pattern_Matcher := Compile
-     (".+is ""(.+)""");
+   Multiple_Symbols_Pattern : constant Pattern_Matcher :=
+     Compile (".+is ""(.+)""");
 
    procedure Not_Running_Filter
      (Process : access Visual_Debugger_Record'Class;
@@ -248,22 +260,20 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Set the debuggee arguments to Arguments
 
    procedure Switch_Language
-     (Debugger : access Gdb_Debugger;
-      Language : String);
+     (Debugger : access Gdb_Debugger; Language : String);
    --  Switch gdb to another language. The possible values for Language are:
    --  "ada", "c", "c++", "asm", "chill", "fortran", "java", "modula-2",
    --  "scheme".
    --  When calling this function, the current language is stored internally
    --  and can be restored by calling Restore_Language.
 
-   procedure Restore_Language
-     (Debugger : access Gdb_Debugger);
+   procedure Restore_Language (Debugger : access Gdb_Debugger);
    --  Restore the language that was active before Switch_Language was called
 
    function Internal_Set_Breakpoint
-     (Debugger  : access Gdb_Debugger;
-      Command   : String;
-      Mode      : GVD.Types.Command_Type)
+     (Debugger : access Gdb_Debugger;
+      Command  : String;
+      Mode     : GVD.Types.Command_Type)
       return GVD.Types.Breakpoint_Identifier;
    --  Send a command that sets a breakpoint, and retrieve the id of the newly
    --  created breakpoint
@@ -281,8 +291,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --  Return the GDB version number.
 
    function Break_Or_Catch
-     (Debugger  : access Gdb_Debugger;
-      Temporary : Boolean := False)
+     (Debugger : access Gdb_Debugger; Temporary : Boolean := False)
       return String;
    --  Return the GDB catch command if it's supported
    --  and (t)break in other case.
@@ -298,8 +307,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    --------------------
 
    function Break_Or_Catch
-     (Debugger  : access Gdb_Debugger;
-      Temporary : Boolean := False)
+     (Debugger : access Gdb_Debugger; Temporary : Boolean := False)
       return String
    is
       use GNATCOLL.Tribooleans;
@@ -339,8 +347,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
 
       declare
-         S : constant String := Send_And_Get_Clean_Output
-           (Debugger, "show version", Mode => Internal);
+         S : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, "show version", Mode => Internal);
       begin
          Debugger.GDB_Version := Parse_GDB_Version (S);
       end;
@@ -368,14 +377,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Send_And_Get_Clean_Output --
    -------------------------------
 
-   overriding function Send_And_Get_Clean_Output
+   overriding
+   function Send_And_Get_Clean_Output
      (Debugger    : access Gdb_Debugger;
       Cmd         : String;
       Mode        : Command_Type := Hidden;
       Synchronous : Boolean := True) return String
    is
-      S   : constant String := Send_And_Get_Output
-        (Debugger, Cmd, Mode, Synchronous);
+      S   : constant String :=
+        Send_And_Get_Output (Debugger, Cmd, Mode, Synchronous);
       Pos : Integer;
    begin
       if Ends_With (S, Prompt_String) then
@@ -393,7 +403,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Send --
    ----------
 
-   overriding procedure Send
+   overriding
+   procedure Send
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
@@ -415,7 +426,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Type_Of --
    -------------
 
-   overriding function Type_Of
+   overriding
+   function Type_Of
      (Debugger : access Gdb_Debugger; Entity : String) return String is
    begin
       --  If Entity contains a LF, this is an invalid entity, so give up
@@ -428,8 +440,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end loop;
 
       declare
-         S   : constant String := Send_And_Get_Clean_Output
-           (Debugger, "ptype " & Entity, Mode => Internal);
+         S   : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, "ptype " & Entity, Mode => Internal);
          Pos : constant Integer := Index (S, "type = ");
 
       begin
@@ -445,16 +458,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Info_Locals --
    -----------------
 
-   overriding function Info_Locals
+   overriding
+   function Info_Locals
      (Debugger : access Gdb_Debugger)
       return VSS.String_Vectors.Virtual_String_Vector
    is
-      S : constant String := Debugger.Send_And_Get_Clean_Output
-        ("info locals",
-         Mode => GVD.Types.Internal);
+      S : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("info locals", Mode => GVD.Types.Internal);
 
-      Pattern : constant Pattern_Matcher := Compile
-        ("^([^\s]+)\s+=", Multiple_Lines);
+      Pattern : constant Pattern_Matcher :=
+        Compile ("^([^\s]+)\s+=", Multiple_Lines);
       From    : Integer := S'First;
       Matched : Match_Array (0 .. 1);
       Result  : VSS.String_Vectors.Virtual_String_Vector;
@@ -476,9 +490,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Info_Args --
    ---------------
 
-   overriding function Info_Args
-     (Debugger : access Gdb_Debugger) return String
-   is
+   overriding
+   function Info_Args (Debugger : access Gdb_Debugger) return String is
       pragma Unreferenced (Debugger);
    begin
       return "info args";
@@ -501,12 +514,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
      Compile ("^\$\d+\s+=\s+(.+)$", Multiple_Lines);
    --  Matches a variable output
 
-   overriding function Value_Of
+   overriding
+   function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
       Format   : Value_Format := Default_Format;
-      From_API : Boolean := False)
-      return String
+      From_API : Boolean := False) return String
    is
       pragma Unreferenced (From_API);
 
@@ -524,15 +537,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       --  Remove CR and LF characters which can be present in the result by
       --    "set print pretty on" and others commands modifying outputs.
 
-      S : constant String := Strip_Character
-        (Strip_CR
-           (Send_And_Get_Clean_Output
+      S : constant String :=
+        Strip_Character
+          (Strip_CR
+             (Send_And_Get_Clean_Output
                 (Debugger,
                  (if Is_Command (Entity)
                   then Entity
                   else "print " & Fmt_Array (Format) & ' ' & Entity),
                  Mode => Internal)),
-         ASCII.LF);
+           ASCII.LF);
 
       Matched : Match_Array (0 .. 1);
 
@@ -550,9 +564,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Print_Value_Cmd --
    ---------------------
 
-   overriding function Print_Value_Cmd
-     (Debugger : access Gdb_Debugger;
-      Entity   : String) return String
+   overriding
+   function Print_Value_Cmd
+     (Debugger : access Gdb_Debugger; Entity : String) return String
    is
       pragma Unreferenced (Debugger);
    begin
@@ -563,16 +577,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Uniq_Id --
    -----------------
 
-   overriding function Get_Uniq_Id
-     (Debugger : access Gdb_Debugger;
-      Entity   : String) return String
+   overriding
+   function Get_Uniq_Id
+     (Debugger : access Gdb_Debugger; Entity : String) return String
    is
       --  ??? Probably, this should be language-dependent.
       --  In particular, in C, &(*A) returns A, not an address, which causes
       --  unexpected wrong aliases to be detected.
 
-      S       : constant String := Send_And_Get_Clean_Output
-        (Debugger, "print &(" & Entity & ")", Mode => Internal);
+      S       : constant String :=
+        Send_And_Get_Clean_Output
+          (Debugger, "print &(" & Entity & ")", Mode => Internal);
       Matched : Match_Array (0 .. 1);
 
    begin
@@ -589,7 +604,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Spawn --
    -----------
 
-   overriding procedure Spawn
+   overriding
+   procedure Spawn
      (Debugger        : access Gdb_Debugger;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Executable      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -606,7 +622,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       --  caller owns the ones in Debugger_Args, so we have no memory
       --  management to do here for these.
 
-      Process         : Visual_Debugger;
+      Process : Visual_Debugger;
 
       function Contains (S : String; Substring : String) return Boolean;
       --  Return True if S contains Substring
@@ -631,9 +647,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         (Kernel        => Kernel,
          Arguments     => Local_Arguments,
          Debugger_Name =>
-           (if Debugger_Name = ""
-            then Gdb_Command
-            else Debugger_Name),
+           (if Debugger_Name = "" then Gdb_Command else Debugger_Name),
          Debugger_Num  => Debugger_Num,
          Proxy         => Proxy);
 
@@ -666,8 +680,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Process := Convert (Debugger);
 
       if Process /= null then
-         Add_Regexp_Filter
-           (Process, Language_Filter'Access, Language_Pattern);
+         Add_Regexp_Filter (Process, Language_Filter'Access, Language_Pattern);
          Add_Regexp_Filter
            (Process, Not_Running_Filter'Access, Terminate_Pattern);
          Add_Regexp_Filter
@@ -684,7 +697,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          Add_Regexp_Filter
            (Process,
-            Continuation_Line_Filter'Access, Continuation_Line_Pattern);
+            Continuation_Line_Filter'Access,
+            Continuation_Line_Pattern);
 
          Set_Input_Output_Filter (Process);
       end if;
@@ -694,7 +708,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Initialize (Debugger : access Gdb_Debugger) is
       Num     : Expect_Match;
       Lang    : Language_Access;
       Process : Visual_Debugger;
@@ -706,7 +721,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       --  Wait for initial output and prompt (and display it in the window)
       Wait
-        (Get_Process (Debugger), Num,
+        (Get_Process (Debugger),
+         Num,
          Compile ("^\([^\s]+\).*$", Multiple_Lines),
          Timeout => -1);
 
@@ -843,7 +859,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Close --
    -----------
 
-   overriding procedure Close (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Close (Debugger : access Gdb_Debugger) is
       Can_Quit : Boolean := True;
    begin
       --  If the debugger process is dead, do not attempt to communicate
@@ -851,16 +868,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if Get_Process (Debugger) /= null
         and then Get_Descriptor (Get_Process (Debugger)) /= null
-        and then Get_Pid (Get_Descriptor (Get_Process (Debugger)).all) /=
-          GNAT.Expect.Invalid_Pid
+        and then
+          Get_Pid (Get_Descriptor (Get_Process (Debugger)).all)
+          /= GNAT.Expect.Invalid_Pid
       then
          --  In case the debugger was waiting for some input, or was busy
          --  processing a command, interrupt it.
          --  Try to handle case were gdb is waiting on a user question.
 
          if Command_In_Process (Debugger.Process) then
-            Send
-              (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
+            Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
             Interrupt (Debugger);
 
             --  Wait for the prompt after interrupting it. Sometimes the
@@ -888,14 +905,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Connect_To_Target --
    -----------------------
 
-   overriding procedure Connect_To_Target
+   overriding
+   procedure Connect_To_Target
      (Debugger : access Gdb_Debugger;
       Target   : String;
       Protocol : String;
       Force    : Boolean := False;
       Mode     : Command_Type := Hidden)
    is
-      Cmd     : constant String := "target " & Protocol & " " & Target;
+      Cmd : constant String := "target " & Protocol & " " & Target;
    begin
       --  If the debugger is already connected, kill the connection if Force
       --  is True or simply return otherwise.
@@ -909,11 +927,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
 
       declare
-         Output : constant String :=  Send_And_Get_Clean_Output
-           (Debugger,
-            Cmd             => Cmd,
-            Synchronous     => False,
-            Mode            => Mode);
+         Output  : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, Cmd => Cmd, Synchronous => False, Mode => Mode);
          Success : Boolean :=
            Index (Output, Pattern => Failed_To_Connect_Pattern) = 0;
          Matched : Match_Array (0 .. 1);
@@ -934,14 +950,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end;
    end Connect_To_Target;
 
-      ----------------------------
+   ----------------------------
    -- Is_Connected_To_Target --
    ----------------------------
 
-   overriding function Is_Connected_To_Target
+   overriding
+   function Is_Connected_To_Target
      (Debugger : access Gdb_Debugger) return Boolean
-   is
-     (Debugger.Target_Connected);
+   is (Debugger.Target_Connected);
 
    --------------
    -- Set_Args --
@@ -960,7 +976,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Executable --
    --------------------
 
-   overriding function Get_Executable
+   overriding
+   function Get_Executable
      (Debugger : access Gdb_Debugger) return GNATCOLL.VFS.Virtual_File is
    begin
       return Debugger.Executable;
@@ -976,9 +993,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         and then Debugger.Remote_Protocol /= null
         and then not Debugger.Target_Connected
       then
-         Debugger.Connect_To_Target (Target   => Debugger.Get_Remote_Target,
-                                     Protocol => Debugger.Get_Remote_Protocol,
-                                     Mode     => Visible);
+         Debugger.Connect_To_Target
+           (Target   => Debugger.Get_Remote_Target,
+            Protocol => Debugger.Get_Remote_Protocol,
+            Mode     => Visible);
       end if;
    end Connect_To_Target_If_Needed;
 
@@ -986,25 +1004,23 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Set_Executable --
    --------------------
 
-   overriding procedure Set_Executable
-     (Debugger   : access Gdb_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File)
+   overriding
+   procedure Set_Executable
+     (Debugger : access Gdb_Debugger; Executable : GNATCOLL.VFS.Virtual_File)
    is
       Remote_Exec         : constant Virtual_File :=
-                              To_Remote
-                                (Executable, Get_Nickname (Debug_Server));
+        To_Remote (Executable, Get_Nickname (Debug_Server));
       Exec_Has_Spaces     : constant Boolean :=
-                              Index (Remote_Exec.Display_Full_Name, " ") /= 0;
+        Index (Remote_Exec.Display_Full_Name, " ") /= 0;
       Full_Name           : constant String :=
-                              +Remote_Exec.Unix_Style_Full_Name;
+        +Remote_Exec.Unix_Style_Full_Name;
       No_Such_File_Regexp : constant Pattern_Matcher :=
-                              Compile (Full_Name &
-                                       ": No such file or directory.");
+        Compile (Full_Name & ": No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
 
-      Lang                : Language_Access;
-      Process             : Visual_Debugger;
+      Lang    : Language_Access;
+      Process : Visual_Debugger;
 
       procedure Launch_Command_And_Output (Command : String);
       --  Launch a "file" or "load" command and display it if relevant
@@ -1017,21 +1033,18 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Cmd : GNAT.Strings.String_Access;
       begin
          if Exec_Has_Spaces then
-            Cmd := new String'
-              (Command & " """ & Full_Name & '"');
+            Cmd := new String'(Command & " """ & Full_Name & '"');
          else
-            Cmd := new String'
-              (Command & " " & Full_Name);
+            Cmd := new String'(Command & " " & Full_Name);
          end if;
 
          --  Send the command and wait until the end of it's execution without
          --  blocking The UI.
 
          declare
-            Output : constant String := Debugger.Send_And_Get_Clean_Output
-              (Cmd.all,
-               Mode        => Visible,
-               Synchronous => False);
+            Output : constant String :=
+              Debugger.Send_And_Get_Clean_Output
+                (Cmd.all, Mode => Visible, Synchronous => False);
          begin
             Free (Cmd);
 
@@ -1092,12 +1105,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Set_Parse_File_Name (Get_Process (Debugger), False);
 
          declare
-            Str         : constant String := Send_And_Get_Clean_Output
-              (Debugger, "info line", Mode => Internal);
-            Matched     : Match_Array (0 .. 2);
-            File        : Unbounded_String;
-            Line        : Natural;
-            Addr        : Address_Type;
+            Str     : constant String :=
+              Send_And_Get_Clean_Output
+                (Debugger, "info line", Mode => Internal);
+            Matched : Match_Array (0 .. 2);
+            File    : Unbounded_String;
+            Line    : Natural;
+            Addr    : Address_Type;
          begin
             Set_Parse_File_Name (Get_Process (Debugger), True);
             Found_File_Name (Debugger, Str, File, Line, Addr);
@@ -1121,8 +1135,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
                      Send
                        (Debugger,
-                        "info line " &
-                          F (First .. Matched (0).Last) & ":1",
+                        "info line " & F (First .. Matched (0).Last) & ":1",
                         Mode => Internal);
                      return;
                   end if;
@@ -1140,17 +1153,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Catch_Exception --
    ---------------------
 
-   overriding procedure Catch_Exception (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Catch_Exception (Debugger : access Gdb_Debugger) is
       Process : Visual_Debugger;
    begin
       Process := Convert (Debugger);
 
       if Get_Pref (Break_On_Exception) then
          declare
-            Cmd : constant String :=
-              Break_Or_Catch (Debugger) & " exception";
-            S   : constant String := Send_And_Get_Clean_Output
-              (Debugger, Cmd);
+            Cmd : constant String := Break_Or_Catch (Debugger) & " exception";
+            S   : constant String := Send_And_Get_Clean_Output (Debugger, Cmd);
 
          begin
             if Process /= null then
@@ -1170,7 +1182,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Load_Core_File --
    --------------------
 
-   overriding procedure Load_Core_File
+   overriding
+   procedure Load_Core_File
      (Debugger : access Gdb_Debugger;
       Core     : Virtual_File;
       Mode     : Command_Type := Hidden)
@@ -1191,7 +1204,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Add_Symbols --
    -----------------
 
-   overriding procedure Add_Symbols
+   overriding
+   procedure Add_Symbols
      (Debugger : access Gdb_Debugger;
       Module   : Virtual_File;
       Address  : String;
@@ -1200,8 +1214,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Symbols : constant String := +Module.Unix_Style_Full_Name;
    begin
       Test_If_Has_Command
-        (Debugger, Debugger.Has_Wtx_Add_Symbol_File,
-         "wtx add-symbol-file");
+        (Debugger, Debugger.Has_Wtx_Add_Symbol_File, "wtx add-symbol-file");
 
       if Debugger.Has_Wtx_Add_Symbol_File = GNATCOLL.Tribooleans.True
         and then Address = ""
@@ -1210,7 +1223,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       else
          Send
            (Debugger,
-            "add-symbol-file " & Symbols & " " & Address, Mode => Mode);
+            "add-symbol-file " & Symbols & " " & Address,
+            Mode => Mode);
       end if;
    end Add_Symbols;
 
@@ -1218,7 +1232,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Load_Executable --
    ---------------------
 
-   overriding procedure Load_Executable
+   overriding
+   procedure Load_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -1227,7 +1242,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          if Executable /= GNATCOLL.VFS.No_File then
             Send
-              (Debugger, "load """ & (+Executable.Unix_Style_Full_Name) & '"',
+              (Debugger,
+               "load """ & (+Executable.Unix_Style_Full_Name) & '"',
                Mode => Mode);
          else
             Send (Debugger, "load", Mode => Mode);
@@ -1239,7 +1255,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Attach_Process --
    --------------------
 
-   overriding procedure Attach_Process
+   overriding
+   procedure Attach_Process
      (Debugger : access Gdb_Debugger;
       Process  : String;
       Mode     : Command_Type := Hidden) is
@@ -1253,8 +1270,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Set_Parse_File_Name (Get_Process (Debugger), False);
 
          declare
-            Str  : constant String := Send_And_Get_Clean_Output
-              (Debugger, "up", Mode => Internal);
+            Str  : constant String :=
+              Send_And_Get_Clean_Output (Debugger, "up", Mode => Internal);
             File : Unbounded_String;
             Line : Natural;
             Addr : Address_Type;
@@ -1291,9 +1308,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Detach_Process --
    --------------------
 
-   overriding procedure Detach_Process
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Detach_Process
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Send (Debugger, "detach", Mode => Mode);
       Set_Is_Started (Debugger, None);
@@ -1303,7 +1320,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Kill_Process --
    ------------------
 
-   overriding procedure Kill_Process
+   overriding
+   procedure Kill_Process
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1315,15 +1333,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Wait_Prompt --
    -----------------
 
-   overriding procedure Wait_Prompt (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Wait_Prompt (Debugger : access Gdb_Debugger) is
       Num : Expect_Match;
    begin
       Debugger.Get_Process.Wait (Num, Prompt_Regexp, Timeout => -1);
    end Wait_Prompt;
 
-   overriding function Wait_Prompt
-     (Debugger : access Gdb_Debugger;
-      Timeout  : Integer) return Boolean
+   overriding
+   function Wait_Prompt
+     (Debugger : access Gdb_Debugger; Timeout : Integer) return Boolean
    is
       Num : Expect_Match;
    begin
@@ -1354,26 +1373,30 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Run --
    ---------
 
-   overriding procedure Run
+   overriding
+   procedure Run
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      if Arguments = "" and then Debugger.Remote_Target /= null
+      if Arguments = ""
+        and then Debugger.Remote_Target /= null
         and then Debugger.Executable /= GNATCOLL.VFS.No_File
       then
          declare
             Module : constant String := Get_Module (Debugger.Executable);
          begin
             Send
-              (Debugger, "run " & Module,
+              (Debugger,
+               "run " & Module,
                Wait_For_Prompt => False,
                Mode            => Mode);
          end;
 
       else
          Send
-           (Debugger, "run " & Arguments,
+           (Debugger,
+            "run " & Arguments,
             Wait_For_Prompt => False,
             Mode            => Mode);
       end if;
@@ -1383,14 +1406,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Start --
    -----------
 
-   overriding procedure Start
+   overriding
+   procedure Start
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
       Debugger.Test_If_Has_Command (Debugger.Has_Start_Cmd, "start");
 
-      if Arguments = "" and then Debugger.Remote_Target /= null
+      if Arguments = ""
+        and then Debugger.Remote_Target /= null
         and then Debugger.Executable /= GNATCOLL.VFS.No_File
       then
          declare
@@ -1405,14 +1430,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       else
          if Debugger.Has_Start_Cmd = GNATCOLL.Tribooleans.True then
-            Send
-              (Debugger,
-               "start " & Arguments,
-               Mode            => Mode);
+            Send (Debugger, "start " & Arguments, Mode => Mode);
          else
-            Send
-              (Debugger, "begin " & Arguments,
-               Mode            => Mode);
+            Send (Debugger, "begin " & Arguments, Mode => Mode);
          end if;
       end if;
    end Start;
@@ -1421,9 +1441,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Step_Into --
    ---------------
 
-   overriding procedure Step_Into
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Step_Into
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Send (Debugger, "step", Mode => Mode);
    end Step_Into;
@@ -1432,9 +1452,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Step_Over --
    ---------------
 
-   overriding procedure Step_Over
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Step_Over
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Send (Debugger, "next", Mode => Mode);
    end Step_Over;
@@ -1443,9 +1463,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Step_Into_Instruction --
    ---------------------------
 
-   overriding procedure Step_Into_Instruction
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Step_Into_Instruction
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Send (Debugger, "stepi", Mode => Mode);
    end Step_Into_Instruction;
@@ -1454,9 +1474,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Step_Over_Instruction --
    ---------------------------
 
-   overriding procedure Step_Over_Instruction
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Step_Over_Instruction
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Send (Debugger, "nexti", Mode => Mode);
    end Step_Over_Instruction;
@@ -1465,9 +1485,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Continue --
    --------------
 
-   overriding procedure Continue
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Continue
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Debugger.Send ("continue", Wait_For_Prompt => False, Mode => Mode);
    end Continue;
@@ -1476,7 +1496,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Continue_Until_Location --
    -----------------------------
 
-   overriding procedure Continue_Until_Location
+   overriding
+   procedure Continue_Until_Location
      (Debugger : access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Editable_Line_Type;
@@ -1492,18 +1513,18 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Line_Contains_Code --
    ------------------------
 
-   overriding function Line_Contains_Code
+   overriding
+   function Line_Contains_Code
      (Debugger : not null access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Editable_Line_Type)
-      return Boolean
+      Line     : Editable_Line_Type) return Boolean
    is
-      Block  : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
-      Output : constant String := Debugger.Send_And_Get_Clean_Output
-           ("info line "
-            & (+Base_Name (File)) & ":" & Image (Integer (Line)),
-            Mode => Internal);
+      Block  : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
+      Output : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("info line " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
+           Mode => Internal);
    begin
       return Index (Output, Pattern => "no code") = 0;
    end Line_Contains_Code;
@@ -1512,12 +1533,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Current_Frame --
    -------------------
 
-   overriding function Current_Frame
-     (Debugger : access Gdb_Debugger)
-      return Integer
-   is
-      Block : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+   overriding
+   function Current_Frame (Debugger : access Gdb_Debugger) return Integer is
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
    begin
       Update_Frame_Info (Debugger);
@@ -1528,10 +1547,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Interrupt (Debugger : access Gdb_Debugger) is
       Proxy      : constant Process_Proxy_Access := Get_Process (Debugger);
       Descriptor : constant Process_Descriptor_Access :=
-                     Get_Descriptor (Proxy);
+        Get_Descriptor (Proxy);
 
    begin
       --  Should only do this when running under Windows, in native mode,
@@ -1558,9 +1578,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Command_Kind --
    ------------------
 
-   overriding function Command_Kind
-     (Debugger : access Gdb_Debugger;
-      Command  : String) return Command_Category
+   overriding
+   function Command_Kind
+     (Debugger : access Gdb_Debugger; Command : String) return Command_Category
    is
       Index : Natural;
       Num   : constant Integer := Debugger.Current_Frame_Num;
@@ -1590,7 +1610,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Index := Command'First;
       Skip_Word (Command, Index);
 
-      if        Command (Command'First .. Index - 1) = "step"
+      if Command (Command'First .. Index - 1) = "step"
         or else Command (Command'First .. Index - 1) = "stepi"
         or else Command (Command'First .. Index - 1) = "s"
         or else Command (Command'First .. Index - 1) = "si"
@@ -1617,9 +1637,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if Starts_With (Command, "up")
         or else Starts_With (Command, "down")
-        or else
-          (Starts_With (Command, "frame")
-           and then Command /= "farme")
+        or else (Starts_With (Command, "frame") and then Command /= "farme")
       then
          return Frame_Command;
       end if;
@@ -1635,13 +1653,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Breakpoints_Changed --
    -------------------------
 
-   overriding function Breakpoints_Changed
-     (Debugger : access Gdb_Debugger;
-      Command  : String) return Boolean
+   overriding
+   function Breakpoints_Changed
+     (Debugger : access Gdb_Debugger; Command : String) return Boolean
    is
       pragma Unreferenced (Debugger);
    begin
-      return Looking_At (Command, Command'First + 1, "break")
+      return
+        Looking_At (Command, Command'First + 1, "break")
         or else Starts_With (Command, "break")
         or else Starts_With (Command, "b ")
         or else Starts_With (Command, "watch")
@@ -1670,33 +1689,32 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Stack_Down --
    ----------------
 
-   overriding procedure Stack_Down
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Stack_Down
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Update_Frame_Info
-        (Debugger,
-         Debugger.Send_And_Get_Clean_Output ("down", Mode => Mode));
+        (Debugger, Debugger.Send_And_Get_Clean_Output ("down", Mode => Mode));
    end Stack_Down;
 
    --------------
    -- Stack_Up --
    --------------
 
-   overriding procedure Stack_Up
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Stack_Up
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Update_Frame_Info
-        (Debugger,
-         Debugger.Send_And_Get_Clean_Output ("up", Mode => Mode));
+        (Debugger, Debugger.Send_And_Get_Clean_Output ("up", Mode => Mode));
    end Stack_Up;
 
    -----------------
    -- Stack_Frame --
    -----------------
 
-   overriding procedure Stack_Frame
+   overriding
+   procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
       Frame    : Natural;
       Mode     : Command_Type := Hidden)
@@ -1704,8 +1722,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Str : constant String := "frame" & Natural'Image (Frame);
    begin
       Update_Frame_Info
-        (Debugger,
-         Debugger.Send_And_Get_Clean_Output (Str, Mode => Mode));
+        (Debugger, Debugger.Send_And_Get_Clean_Output (Str, Mode => Mode));
    end Stack_Frame;
 
    --------------------------
@@ -1728,31 +1745,39 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          declare
             Rec : Backtrace_Record;
          begin
-            Rec.Frame_Id := Natural'Value
-              (S (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
-                   Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
+            Rec.Frame_Id :=
+              Natural'Value
+                (S
+                   (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First
+                    .. Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
 
-            if Matched
-              (Frame_Pattern_Kind'Pos (Frame_Address)) /= No_Match
+            if Matched (Frame_Pattern_Kind'Pos (Frame_Address)) /= No_Match
             then
-               Rec.Address := String_To_Address
-                 (S (Matched (Frame_Pattern_Kind'Pos (Frame_Address)).First ..
-                      Matched (Frame_Pattern_Kind'Pos (Frame_Address)).Last));
+               Rec.Address :=
+                 String_To_Address
+                   (S
+                      (Matched (Frame_Pattern_Kind'Pos (Frame_Address)).First
+                       ..
+                         Matched (Frame_Pattern_Kind'Pos (Frame_Address))
+                           .Last));
             end if;
 
             declare
-               N : constant String :=
-                 S (Matched (Frame_Pattern_Kind'Pos (Frame_Names)).First ..
-                      Matched (Frame_Pattern_Kind'Pos (Frame_Names)).Last);
+               N            : constant String :=
+                 S
+                   (Matched (Frame_Pattern_Kind'Pos (Frame_Names)).First
+                    .. Matched (Frame_Pattern_Kind'Pos (Frame_Names)).Last);
                Params_Match : Match_Array (0 .. 2);
-               B, E : Natural;
+               B, E         : Natural;
             begin
                Match (Frame_Subprogram_Params_Pattern, N, Params_Match);
 
                if Params_Match (0) /= No_Match then
-                  Rec.Subprogram := new String'
-                    (Trim (N (Params_Match (1).First ..
-                         Params_Match (1).Last), Both));
+                  Rec.Subprogram :=
+                    new String'
+                      (Trim
+                         (N (Params_Match (1).First .. Params_Match (1).Last),
+                          Both));
 
                   B := Params_Match (2).First + 1;
                   E := B;
@@ -1762,8 +1787,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                            --  parameter's range is B .. E - 1
                            Rec.Parameters.Append
                              (Backtrace_Subprogram_Parameter'
-                                (Value => new String'
-                                     (Trim (N (B .. E - 1), Both))));
+                                (Value =>
+                                   new String'(Trim (N (B .. E - 1), Both))));
                         end if;
                         B := E + 1;
                      end if;
@@ -1776,16 +1801,21 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             end;
 
             if Matched (Frame_Pattern_Kind'Pos (Frame_File)) /= No_Match then
-               Rec.File := GPS.Core_Kernels.To_File
-                 (Kernel,
-                  S (Matched (Frame_Pattern_Kind'Pos (Frame_File)).First ..
-                        Matched (Frame_Pattern_Kind'Pos (Frame_File)).Last));
+               Rec.File :=
+                 GPS.Core_Kernels.To_File
+                   (Kernel,
+                    S
+                      (Matched (Frame_Pattern_Kind'Pos (Frame_File)).First
+                       .. Matched (Frame_Pattern_Kind'Pos (Frame_File)).Last));
             end if;
 
             if Matched (Frame_Pattern_Kind'Pos (Frame_Line)) /= No_Match then
-               Rec.Line := Natural'Value
-                 (S (Matched (Frame_Pattern_Kind'Pos (Frame_Line)).First + 1 ..
-                      Matched (Frame_Pattern_Kind'Pos (Frame_Line)).Last));
+               Rec.Line :=
+                 Natural'Value
+                   (S
+                      (Matched (Frame_Pattern_Kind'Pos (Frame_Line)).First
+                       + 1
+                       .. Matched (Frame_Pattern_Kind'Pos (Frame_Line)).Last));
             end if;
 
             First := Matched (0).Last + 2;
@@ -1798,7 +1828,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Configure_Backtrace --
    -------------------------
 
-   overriding procedure Configure_Backtrace
+   overriding
+   procedure Configure_Backtrace
      (Self                 : not null access Gdb_Debugger;
       Show_Id              : Boolean := True;
       Show_PC              : Boolean := True;
@@ -1806,8 +1837,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Show_Parameters      : Boolean := True;
       Show_Location        : Boolean := True)
    is
-      pragma Unreferenced
-        (Show_Id, Show_PC, Show_Subprogram_Name, Show_Location);
+      pragma
+        Unreferenced (Show_Id, Show_PC, Show_Subprogram_Name, Show_Location);
    begin
       if Show_Parameters then
          Self.Send ("set print frame-arguments scalar");
@@ -1820,7 +1851,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Backtrace --
    ---------------
 
-   overriding procedure Backtrace
+   overriding
+   procedure Backtrace
      (Debugger : access Gdb_Debugger;
       From     : Integer;
       To       : Integer;
@@ -1830,11 +1862,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
         (Debugger.Kernel,
          Send_And_Get_Clean_Output
            (Debugger,
-            "where" &
-            (if From >= 0
-               then Integer'Image (To + 1)
-               else ""),
-            Mode => Internal), Value);
+            "where" & (if From >= 0 then Integer'Image (To + 1) else ""),
+            Mode => Internal),
+         Value);
 
       if not Value.Is_Empty then
          Debugger.Current_Frame_Num := Value.First_Element.Frame_Id;
@@ -1846,19 +1876,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -----------------------------
 
    function Internal_Set_Breakpoint
-     (Debugger  : access Gdb_Debugger;
-      Command   : String;
-      Mode      : GVD.Types.Command_Type)
-      return GVD.Types.Breakpoint_Identifier
+     (Debugger : access Gdb_Debugger;
+      Command  : String;
+      Mode     : GVD.Types.Command_Type) return GVD.Types.Breakpoint_Identifier
    is
-      C : constant String := Debugger.Send_And_Get_Clean_Output
-        (Cmd => Command, Mode => Mode);
+      C : constant String :=
+        Debugger.Send_And_Get_Clean_Output (Cmd => Command, Mode => Mode);
       M : Match_Array (0 .. 1);
    begin
       Match (Breakpoint_Num_Pattern, C, Matches => M);
       if M (1) /= No_Match then
-         return Breakpoint_Identifier'Value
-           (C (M (1).First .. M (1).Last));
+         return Breakpoint_Identifier'Value (C (M (1).First .. M (1).Last));
       else
          return No_Breakpoint;
       end if;
@@ -1868,7 +1896,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Break_Subprogram --
    ----------------------
 
-   overriding function Break_Subprogram
+   overriding
+   function Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
@@ -1876,16 +1905,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       return GVD.Types.Breakpoint_Identifier
    is
       --  Store current multiple-symbols mode
-      C      : constant String := Debugger.Send_And_Get_Clean_Output
-        (Cmd => "show multiple-symbols", Mode => Internal);
+      C      : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          (Cmd => "show multiple-symbols", Mode => Internal);
       M      : Match_Array (0 .. 1);
       Resume : Boolean := False;
    begin
       Match (Multiple_Symbols_Pattern, C, Matches => M);
 
-      if M (1) /= No_Match
-        and then C (M (1).First .. M (1).Last) /= "all"
-      then
+      if M (1) /= No_Match and then C (M (1).First .. M (1).Last) /= "all" then
          --  Set mode to all
          --  (old behavior which was before disabling questions)
          --  in other case gdb won't set breakpoint in case of several matches
@@ -1894,11 +1922,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Resume := True;
       end if;
 
-      return Result : constant GVD.Types.Breakpoint_Identifier :=
-        Internal_Set_Breakpoint
-          (Debugger,
-           (if Temporary then "tbreak " else "break ") & Name,
-           Mode => Mode)
+      return
+         Result : constant GVD.Types.Breakpoint_Identifier :=
+           Internal_Set_Breakpoint
+             (Debugger,
+              (if Temporary then "tbreak " else "break ") & Name,
+              Mode => Mode)
       do
          if Resume then
             --  Restore multiple-symbols mode
@@ -1913,7 +1942,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Break_Source --
    ------------------
 
-   overriding function Break_Source
+   overriding
+   function Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
@@ -1924,16 +1954,18 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Result : GVD.Types.Breakpoint_Identifier;
    begin
       if Temporary then
-         Result := Internal_Set_Breakpoint
-           (Debugger,
-            "tbreak " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
-            Mode => Mode);
+         Result :=
+           Internal_Set_Breakpoint
+             (Debugger,
+              "tbreak " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
+              Mode => Mode);
 
       else
-         Result := Internal_Set_Breakpoint
-           (Debugger,
-            "break " & (+Base_Name (File)) & ':' & Image (Integer (Line)),
-            Mode => Mode);
+         Result :=
+           Internal_Set_Breakpoint
+             (Debugger,
+              "break " & (+Base_Name (File)) & ':' & Image (Integer (Line)),
+              Mode => Mode);
 
          Debugger.Remove_Breakpoint_Duplicates (Result);
       end if;
@@ -1945,7 +1977,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Remove_Breakpoint_At --
    --------------------------
 
-   overriding procedure Remove_Breakpoint_At
+   overriding
+   procedure Remove_Breakpoint_At
      (Debugger : not null access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Editable_Line_Type;
@@ -1968,9 +2001,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Break_Exception --
    ---------------------
 
-   overriding function Break_Exception
+   overriding
+   function Break_Exception
      (Debugger  : access Gdb_Debugger;
-      Name      : String  := "";
+      Name      : String := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
       Mode      : Command_Type := Hidden)
@@ -1988,9 +2022,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          if Unhandled then
             return Command & " exception unhandled";
 
-         elsif Name /= ""
-           and then Name /= "all"
-         then
+         elsif Name /= "" and then Name /= "all" then
             return Command & " exception " & Name;
 
          else
@@ -2006,7 +2038,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Catch_Assertions --
    ----------------------
 
-   overriding function Catch_Assertions
+   overriding
+   function Catch_Assertions
      (Debugger  : access Gdb_Debugger;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -2014,17 +2047,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    is
       pragma Unreferenced (Temporary);
    begin
-      return Internal_Set_Breakpoint
-        (Debugger,
-         Break_Or_Catch (Debugger) & " assert",
-         Mode => Mode);
+      return
+        Internal_Set_Breakpoint
+          (Debugger, Break_Or_Catch (Debugger) & " assert", Mode => Mode);
    end Catch_Assertions;
 
    -------------------
    -- Break_Address --
    -------------------
 
-   overriding function Break_Address
+   overriding
+   function Break_Address
      (Debugger  : access Gdb_Debugger;
       Address   : GVD.Types.Address_Type;
       Temporary : Boolean := False;
@@ -2032,11 +2065,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       return GVD.Types.Breakpoint_Identifier is
    begin
       if Temporary then
-         return Internal_Set_Breakpoint
-           (Debugger, "tbreak *" & Address_To_String (Address), Mode => Mode);
+         return
+           Internal_Set_Breakpoint
+             (Debugger,
+              "tbreak *" & Address_To_String (Address),
+              Mode => Mode);
       else
-         return Internal_Set_Breakpoint
-           (Debugger, "break *" & Address_To_String (Address), Mode => Mode);
+         return
+           Internal_Set_Breakpoint
+             (Debugger, "break *" & Address_To_String (Address), Mode => Mode);
       end if;
    end Break_Address;
 
@@ -2044,7 +2081,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Break_Regexp --
    ------------------
 
-   overriding function Break_Regexp
+   overriding
+   function Break_Regexp
      (Debugger  : access Gdb_Debugger;
       Regexp    : String;
       Temporary : Boolean := False;
@@ -2053,10 +2091,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    begin
       if Temporary then
          raise Unknown_Command;
-         --  Error ("Temporary regexp breakpoints not supported");
+      --  Error ("Temporary regexp breakpoints not supported");
+
       else
-         return Internal_Set_Breakpoint
-           (Debugger, "rbreak " & Regexp, Mode => Mode);
+         return
+           Internal_Set_Breakpoint
+             (Debugger, "rbreak " & Regexp, Mode => Mode);
       end if;
    end Break_Regexp;
 
@@ -2064,11 +2104,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Last_Breakpoint_Id --
    ----------------------------
 
-   overriding function Get_Last_Breakpoint_Id
+   overriding
+   function Get_Last_Breakpoint_Id
      (Debugger : access Gdb_Debugger) return Breakpoint_Identifier
    is
-      S            : constant String := Send_And_Get_Clean_Output
-        (Debugger, "print $bpnum", Mode => Internal);
+      S            : constant String :=
+        Send_And_Get_Clean_Output (Debugger, "print $bpnum", Mode => Internal);
       Error_String : constant String := "void";
       Index        : Integer := S'First;
    begin
@@ -2092,21 +2133,25 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Set_Breakpoint_Condition --
    ------------------------------
 
-   overriding procedure Set_Breakpoint_Condition
+   overriding
+   procedure Set_Breakpoint_Condition
      (Debugger  : access Gdb_Debugger;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Send (Debugger, "condition" & Breakpoint_Identifier'Image (Num)
-            & " " & Condition, Mode => Mode);
+      Send
+        (Debugger,
+         "condition" & Breakpoint_Identifier'Image (Num) & " " & Condition,
+         Mode => Mode);
    end Set_Breakpoint_Condition;
 
    ----------------------------
    -- Set_Breakpoint_Command --
    ----------------------------
 
-   overriding procedure Set_Breakpoint_Command
+   overriding
+   procedure Set_Breakpoint_Command
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
@@ -2141,17 +2186,28 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    begin
       if Commands = "" or else Commands (Commands'Last) = ASCII.LF then
-         Send (Debugger,
-               Prepare ("command" & Breakpoint_Identifier'Image (Num)
-                 & ASCII.LF & Commands & "end"),
-               Mode => Mode,
-               Wait_For_Prompt => False);
+         Send
+           (Debugger,
+            Prepare
+              ("command"
+               & Breakpoint_Identifier'Image (Num)
+               & ASCII.LF
+               & Commands
+               & "end"),
+            Mode            => Mode,
+            Wait_For_Prompt => False);
       else
-         Send (Debugger,
-               Prepare ("command" & Breakpoint_Identifier'Image (Num)
-                 & ASCII.LF & Commands & ASCII.LF & "end"),
-               Mode => Mode,
-               Wait_For_Prompt => False);
+         Send
+           (Debugger,
+            Prepare
+              ("command"
+               & Breakpoint_Identifier'Image (Num)
+               & ASCII.LF
+               & Commands
+               & ASCII.LF
+               & "end"),
+            Mode            => Mode,
+            Wait_For_Prompt => False);
       end if;
    end Set_Breakpoint_Command;
 
@@ -2159,14 +2215,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Set_Breakpoint_Ignore_Count --
    ---------------------------------
 
-   overriding procedure Set_Breakpoint_Ignore_Count
+   overriding
+   procedure Set_Breakpoint_Ignore_Count
      (Debugger : access Gdb_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Send (Debugger, "ignore" & Breakpoint_Identifier'Image (Num)
-            & Integer'Image (Count), Mode => Mode);
+      Send
+        (Debugger,
+         "ignore" & Breakpoint_Identifier'Image (Num) & Integer'Image (Count),
+         Mode => Mode);
    end Set_Breakpoint_Ignore_Count;
 
    ----------------------
@@ -2178,7 +2237,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    Any_String  : aliased String := "any";
    All_String  : aliased String := "all";
 
-   overriding procedure Set_Scope_Action
+   overriding
+   procedure Set_Scope_Action
      (Debugger : access Gdb_Debugger;
       Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
@@ -2192,13 +2252,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          when Current_Task =>
             Scope_String := Task_String'Access;
 
-         when Tasks_In_PD =>
+         when Tasks_In_PD  =>
             Scope_String := PD_String'Access;
 
-         when Any_Task =>
+         when Any_Task     =>
             Scope_String := Any_String'Access;
 
-         when No_Scope =>
+         when No_Scope     =>
             null;
       end case;
 
@@ -2212,11 +2272,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          --  the Action radio button to jump to its previous setting
 
          if Num = 0 then
-            Send (Debugger, "set break-command-scope "
-                  & Scope_String.all, Mode => GVD.Types.Internal);
+            Send
+              (Debugger,
+               "set break-command-scope " & Scope_String.all,
+               Mode => GVD.Types.Internal);
          else
-            Send (Debugger, "change-breakpoint-scope" & Num'Img
-                  & " " & Scope_String.all, Mode => GVD.Types.Internal);
+            Send
+              (Debugger,
+               "change-breakpoint-scope" & Num'Img & " " & Scope_String.all,
+               Mode => GVD.Types.Internal);
          end if;
       end if;
 
@@ -2224,13 +2288,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          when Current_Task =>
             Action_String := Task_String'Access;
 
-         when Tasks_In_PD =>
+         when Tasks_In_PD  =>
             Action_String := PD_String'Access;
 
-         when All_Tasks =>
+         when All_Tasks    =>
             Action_String := All_String'Access;
 
-         when No_Action =>
+         when No_Action    =>
             null;
       end case;
 
@@ -2240,11 +2304,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          --  scope of breakpoint indicated by Num
 
          if Num = 0 then
-            Send (Debugger, "set break-command-action "
-                  & Action_String.all, Mode => Mode);
+            Send
+              (Debugger,
+               "set break-command-action " & Action_String.all,
+               Mode => Mode);
          else
-            Send (Debugger, "change-breakpoint-action" & Num'Img
-                  & " " & Action_String.all, Mode => Mode);
+            Send
+              (Debugger,
+               "change-breakpoint-action" & Num'Img & " " & Action_String.all,
+               Mode => Mode);
          end if;
       end if;
    end Set_Scope_Action;
@@ -2253,7 +2321,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Watch --
    -----------
 
-   overriding function Watch
+   overriding
+   function Watch
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Trigger   : GVD.Types.Watchpoint_Trigger;
@@ -2272,10 +2341,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       function Command return String is
       begin
          case Trigger is
-            when GVD.Types.Read =>
+            when GVD.Types.Read       =>
                return "rwatch";
-            when GVD.Types.Write =>
+
+            when GVD.Types.Write      =>
                return "watch";
+
             when GVD.Types.Read_Write =>
                return "awatch";
          end case;
@@ -2283,13 +2354,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
    begin
       if Condition = "" then
-         return Internal_Set_Breakpoint
-           (Debugger, Command & " " & Name, Mode => Mode);
+         return
+           Internal_Set_Breakpoint
+             (Debugger, Command & " " & Name, Mode => Mode);
       else
-         return Internal_Set_Breakpoint
-           (Debugger,
-            Command & " " & Name & " if " & Condition,
-            Mode => Mode);
+         return
+           Internal_Set_Breakpoint
+             (Debugger,
+              Command & " " & Name & " if " & Condition,
+              Mode => Mode);
       end if;
    end Watch;
 
@@ -2297,9 +2370,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Finish --
    ------------
 
-   overriding procedure Finish
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+   overriding
+   procedure Finish
+     (Debugger : access Gdb_Debugger; Mode : Command_Type := Hidden) is
    begin
       Send (Debugger, "finish", Mode => Mode);
    end Finish;
@@ -2308,7 +2381,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Task_Switch --
    -----------------
 
-   overriding procedure Task_Switch
+   overriding
+   procedure Task_Switch
      (Debugger : access Gdb_Debugger;
       Task_Num : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -2320,7 +2394,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Thread_Switch --
    -------------------
 
-   overriding procedure Thread_Switch
+   overriding
+   procedure Thread_Switch
      (Debugger : access Gdb_Debugger;
       Thread   : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -2332,7 +2407,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- PD_Switch --
    ---------------
 
-   overriding procedure PD_Switch
+   overriding
+   procedure PD_Switch
      (Debugger : access Gdb_Debugger;
       PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -2344,7 +2420,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Info_Tasks --
    ----------------
 
-   overriding procedure Info_Tasks
+   overriding
+   procedure Info_Tasks
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural)
@@ -2355,8 +2432,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    begin
       Len := 0;
 
-      if Output = "The program is not being run."
-        or else Output = "No stack"
+      if Output = "The program is not being run." or else Output = "No stack"
       then
          return;
       end if;
@@ -2384,22 +2460,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                   if Matched (0) /= No_Match then
                      Header_Found := True;
 
-                     ID_End      := Matched (1).Last - S'First;
-                     TID_End     := Matched (2).Last - S'First;
-                     P_ID_End    := Matched (3).Last - S'First;
-                     Pri_End     := Matched (4).Last - S'First;
+                     ID_End := Matched (1).Last - S'First;
+                     TID_End := Matched (2).Last - S'First;
+                     P_ID_End := Matched (3).Last - S'First;
+                     Pri_End := Matched (4).Last - S'First;
                      State_Start := Matched (5).First - S'First;
-                     Name_Start  := Matched (6).First - S'First;
+                     Name_Start := Matched (6).First - S'First;
 
                      Len := Len + 1;
                      Info (Len) :=
                        (Information =>
-                          ["ID",
-                           "TID",
-                           "P-ID",
-                           "Pri",
-                           "State",
-                           "Name"]);
+                          ["ID", "TID", "P-ID", "Pri", "State", "Name"]);
                   end if;
                end;
             else
@@ -2412,7 +2483,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                      Info (Len) :=
                        (Information =>
                           [VSS.Strings.Conversions.To_Virtual_String
-                               (S (F .. ID_End + F)),
+                             (S (F .. ID_End + F)),
                            VSS.Strings.Conversions.To_Virtual_String
                              (S (ID_End + F + 1 .. TID_End + F)),
                            VSS.Strings.Conversions.To_Virtual_String
@@ -2429,26 +2500,27 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end loop;
       end;
 
-      exception
-         when Constraint_Error =>
-            --  A parsing error occured when filling Info (Len)
+   exception
+      when Constraint_Error =>
+         --  A parsing error occured when filling Info (Len)
 
-            if Len > 0 then
-               Len := Len - 1;
-            end if;
+         if Len > 0 then
+            Len := Len - 1;
+         end if;
    end Info_Tasks;
 
    ------------------
    -- Info_Threads --
    ------------------
 
-   overriding procedure Info_Threads
+   overriding
+   procedure Info_Threads
      (Debugger : access Gdb_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      Output : constant String := Send_And_Get_Clean_Output
-        (Debugger, "info threads", Mode => Internal);
+      Output : constant String :=
+        Send_And_Get_Clean_Output (Debugger, "info threads", Mode => Internal);
       EOL    : Natural;
       Index  : Integer := Output'Last;
 
@@ -2473,7 +2545,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Info (Len) :=
            (Information =>
               [VSS.Strings.Conversions.To_Virtual_String
-                   (Output (EOL + 1 .. Index))]);
+                 (Output (EOL + 1 .. Index))]);
          Index := EOL - 1;
       end loop;
    end Info_Threads;
@@ -2482,13 +2554,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Info_PD --
    --------------
 
-   overriding procedure Info_PD
+   overriding
+   procedure Info_PD
      (Debugger : access Gdb_Debugger;
       Info     : out PD_Information_Array;
       Len      : out Natural)
    is
-      Output : constant String := Send_And_Get_Clean_Output
-        (Debugger, "info pds", Mode => Internal);
+      Output : constant String :=
+        Send_And_Get_Clean_Output (Debugger, "info pds", Mode => Internal);
       EOL    : Positive;
       Start  : Positive := Output'First;
       First  : Positive := Output'First;
@@ -2539,7 +2612,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Info (Len) :=
            (Information =>
               [VSS.Strings.Conversions.To_Virtual_String
-                   (Output (Start  .. First)),
+                 (Output (Start .. First)),
                VSS.Strings.Conversions.To_Virtual_String
                  (Output (Second .. EOL - 1))]);
          Start := EOL + 1;
@@ -2558,13 +2631,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Set_VxWorks_Version --
    -------------------------
 
-   overriding procedure Set_VxWorks_Version
+   overriding
+   procedure Set_VxWorks_Version
      (Debugger : access Gdb_Debugger; Force : Boolean := False) is
    begin
       if Force or else Debugger.VxWorks_Version = Vx_None then
          declare
-            Output : constant String := Send_And_Get_Clean_Output
-              (Debugger, "info wtx vxworks-version", Mode => Internal);
+            Output : constant String :=
+              Send_And_Get_Clean_Output
+                (Debugger, "info wtx vxworks-version", Mode => Internal);
          begin
             if Output'Length >= 17 then
                if Output (1 .. 17) = "VxWorks version 5" then
@@ -2587,7 +2662,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- VxWorks_Version --
    ---------------------
 
-   overriding function VxWorks_Version
+   overriding
+   function VxWorks_Version
      (Debugger : access Gdb_Debugger) return VxWorks_Version_Type is
    begin
       return Debugger.VxWorks_Version;
@@ -2597,7 +2673,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Highlighting_Pattern --
    --------------------------
 
-   overriding function Highlighting_Pattern
+   overriding
+   function Highlighting_Pattern
      (Debugger : access Gdb_Debugger) return GNAT.Regpat.Pattern_Matcher
    is
       pragma Unreferenced (Debugger);
@@ -2609,14 +2686,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Display_Prompt --
    --------------------
 
-   overriding procedure Display_Prompt (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Display_Prompt (Debugger : access Gdb_Debugger) is
       Proc : constant Visual_Debugger := Convert (Debugger);
    begin
       if Proc /= null then
          Output_Text
            (Proc,
             Send_And_Get_Output (Debugger, "echo", Mode => Internal),
-            Is_Command => False,
+            Is_Command   => False,
             Set_Position => True);
       end if;
    end Display_Prompt;
@@ -2625,7 +2703,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Change_Directory --
    ----------------------
 
-   overriding procedure Change_Directory
+   overriding
+   procedure Change_Directory
      (Debugger : access Gdb_Debugger;
       Dir      : Virtual_File;
       Mode     : Command_Type := Hidden)
@@ -2639,12 +2718,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Found_File_Name --
    ---------------------
 
-   overriding procedure Found_File_Name
-     (Debugger    : access Gdb_Debugger;
-      Str         : String;
-      Name        : out Unbounded_String;
-      Line        : out Natural;
-      Addr        : out GVD.Types.Address_Type)
+   overriding
+   procedure Found_File_Name
+     (Debugger : access Gdb_Debugger;
+      Str      : String;
+      Name     : out Unbounded_String;
+      Line     : out Natural;
+      Addr     : out GVD.Types.Address_Type)
    is
       pragma Unreferenced (Debugger);
 
@@ -2712,33 +2792,32 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Addr_Index := 3;
       end if;
 
-      if Name_Index /= 0
-        and then Matched (Name_Index) /= No_Match
-      then
+      if Name_Index /= 0 and then Matched (Name_Index) /= No_Match then
          Set_Unbounded_String
            (Name,
             Str (Matched (Name_Index).First .. Matched (Name_Index).Last));
       end if;
 
-      if Addr_Index /= 0
-        and then Matched (Addr_Index) /= No_Match
-      then
+      if Addr_Index /= 0 and then Matched (Addr_Index) /= No_Match then
          Addr :=
            String_To_Address
              (Str (Matched (Addr_Index).First .. Matched (Addr_Index).Last));
       end if;
 
-      if Line_Index /= 0
-        and then Matched (Line_Index) /= No_Match
-      then
+      if Line_Index /= 0 and then Matched (Line_Index) /= No_Match then
          if Str (Matched (Line_Index).First) = ':' then
-            Line := Natural'Value
-              (Str (Matched (Line_Index).First + 1 ..
-                 Matched (Line_Index).Last));
+            Line :=
+              Natural'Value
+                (Str
+                   (Matched (Line_Index).First
+                    + 1
+                    .. Matched (Line_Index).Last));
 
          else
-            Line := Natural'Value
-              (Str (Matched (Line_Index).First .. Matched (Line_Index).Last));
+            Line :=
+              Natural'Value
+                (Str
+                   (Matched (Line_Index).First .. Matched (Line_Index).Last));
          end if;
       end if;
 
@@ -2755,7 +2834,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Found_Frame_Info --
    ----------------------
 
-   overriding procedure Found_Frame_Info
+   overriding
+   procedure Found_Frame_Info
      (Debugger : access Gdb_Debugger;
       Str      : String;
       Frame    : out Unbounded_String;
@@ -2767,8 +2847,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if Matched (Frame_Pattern_Kind'Pos (Frame_Matched)) /= No_Match then
          Set_Unbounded_String
-           (Frame, Str (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
-                Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
+           (Frame,
+            Str
+              (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First
+               .. Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
          Debugger.Current_Frame_Num := Integer'Value (To_String (Frame));
 
          if Matched (Frame_Pattern_Kind'Pos (Frame_Line)) /= No_Match
@@ -2780,7 +2862,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          end if;
 
       else
-         Frame   := Null_Unbounded_String;
+         Frame := Null_Unbounded_String;
          Message := Location_Not_Found;
       end if;
    end Found_Frame_Info;
@@ -2789,11 +2871,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Source_Files_List --
    -----------------------
 
-   overriding function Source_Files_List
+   overriding
+   function Source_Files_List
      (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List
    is
-      S         : constant String := Send_And_Get_Clean_Output
-        (Debugger, "info sources", Mode => Internal);
+      S         : constant String :=
+        Send_And_Get_Clean_Output (Debugger, "info sources", Mode => Internal);
       Max_Files : Natural := 0;
 
    begin
@@ -2860,15 +2943,16 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- List_Breakpoints --
    ----------------------
 
-   overriding procedure List_Breakpoints
-     (Debugger  : not null access Gdb_Debugger;
-      Kernel    : not null access Kernel_Handle_Record'Class;
-      List      : out Breakpoint_Vectors.Vector)
+   overriding
+   procedure List_Breakpoints
+     (Debugger : not null access Gdb_Debugger;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      List     : out Breakpoint_Vectors.Vector)
    is
-      S : constant String :=
+      S     : constant String :=
         Send_And_Get_Output (Debugger, "info breakpoints", Mode => Internal);
-      Index           : Natural := S'First;
-      Tmp             : Natural;
+      Index : Natural := S'First;
+      Tmp   : Natural;
 
       procedure Fill_Scope_Action (Debugger : access Gdb_Debugger);
       --  Assign values of Scope and Action for the breakpoints in
@@ -2883,9 +2967,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       --  subprogram name associated with the current breakpoint.
 
       procedure Match_Extra_Breakpoint_Info
-        (First   : Integer;
-         Last    : Integer;
-         Current : in out Breakpoint_Data);
+        (First : Integer; Last : Integer; Current : in out Breakpoint_Data);
       --  Match in S (First .. Last - 2) extra information like commands,
       --  condition,... The string represents a single line of the output, so
       --  should add any extra info to the breakpoint, not override
@@ -2895,9 +2977,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       -----------------------
 
       procedure Fill_Scope_Action (Debugger : access Gdb_Debugger) is
-         S : constant String := Send_And_Get_Clean_Output
-           (Debugger, "info breakpoints-extra-info",
-            Mode => Internal);
+         S : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, "info breakpoints-extra-info", Mode => Internal);
 
          Index   : Natural := S'First;
          Matched : Match_Array (0 .. 4);
@@ -2963,23 +3045,28 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          Has_Matched : out Boolean)
       is
          Matched : Match_Array (0 .. 10);
-         F : Virtual_File;
+         F       : Virtual_File;
       begin
          Has_Matched := False;
 
          Match (File_Name_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) = No_Match then
-            Match (File_Name_Without_Method_In_Breakpoint,
-                   S (First .. Last - 2), Matched);
+            Match
+              (File_Name_Without_Method_In_Breakpoint,
+               S (First .. Last - 2),
+               Matched);
          end if;
          if Matched (0) /= No_Match then
-            F := GPS.Core_Kernels.To_File
-              (Kernel, S (Matched (1).First .. Matched (1).Last));
-            Current.Location := Kernel.Get_Buffer_Factory.Create_Marker
-              (File => F,
-               Line => Editable_Line_Type'Value
-                 (S (Matched (2).First .. Matched (2).Last)),
-               Column => 1);
+            F :=
+              GPS.Core_Kernels.To_File
+                (Kernel, S (Matched (1).First .. Matched (1).Last));
+            Current.Location :=
+              Kernel.Get_Buffer_Factory.Create_Marker
+                (File   => F,
+                 Line   =>
+                   Editable_Line_Type'Value
+                     (S (Matched (2).First .. Matched (2).Last)),
+                 Column => 1);
 
             Has_Matched := True;
          end if;
@@ -2988,29 +3075,33 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          if Matched (0) /= No_Match then
             if Matched (1) /= No_Match then
                if Matched (3) /= No_Match then
-                  Current.Except := To_Unbounded_String
-                    (S (Matched (3).First .. Matched (3).Last));
+                  Current.Except :=
+                    To_Unbounded_String
+                      (S (Matched (3).First .. Matched (3).Last));
                else
-                  Current.Except := To_Unbounded_String
-                    (S (Matched (2).First .. Matched (2).Last));
+                  Current.Except :=
+                    To_Unbounded_String
+                      (S (Matched (2).First .. Matched (2).Last));
                end if;
             else
                if Matched (6) /= No_Match then
-                  Current.Except := To_Unbounded_String
-                    (S (Matched (6).First .. Matched (6).Last));
+                  Current.Except :=
+                    To_Unbounded_String
+                      (S (Matched (6).First .. Matched (6).Last));
 
                elsif Matched (5) /= No_Match then
-                  Current.Except := To_Unbounded_String
-                    (S (Matched (5).First .. Matched (5).Last));
+                  Current.Except :=
+                    To_Unbounded_String
+                      (S (Matched (5).First .. Matched (5).Last));
                else
-                  Current.Except := To_Unbounded_String
-                    (S (Matched (4).First .. Matched (4).Last));
+                  Current.Except :=
+                    To_Unbounded_String
+                      (S (Matched (4).First .. Matched (4).Last));
                end if;
             end if;
             Has_Matched := True;
 
-         elsif Starts_With
-           (S (First .. Last - 2), "failed Ada assertions")
+         elsif Starts_With (S (First .. Last - 2), "failed Ada assertions")
          then
             Current.Except := To_Unbounded_String ("assertions");
             Has_Matched := True;
@@ -3018,8 +3109,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          Match (Subprogram_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Current.Subprogram := To_Unbounded_String
-              (S (Matched (1).First .. Matched (1).Last));
+            Current.Subprogram :=
+              To_Unbounded_String (S (Matched (1).First .. Matched (1).Last));
             Has_Matched := True;
          end if;
       end Match_Breakpoint_Info;
@@ -3029,30 +3120,27 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       ---------------------------------
 
       procedure Match_Extra_Breakpoint_Info
-        (First   : Integer;
-         Last    : Integer;
-         Current : in out Breakpoint_Data)
+        (First : Integer; Last : Integer; Current : in out Breakpoint_Data)
       is
-         Matched : Match_Array (0 .. 10);
-         Index, Index2   : Integer;
+         Matched       : Match_Array (0 .. 10);
+         Index, Index2 : Integer;
       begin
          Match (Condition_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Append (Current.Condition,
-                    S (Matched (1).First .. Matched (1).Last));
+            Append
+              (Current.Condition, S (Matched (1).First .. Matched (1).Last));
             return;
          end if;
 
          Match (Ignore_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Current.Ignore := Natural'Value
-              (S (Matched (1).First .. Matched (1).Last));
+            Current.Ignore :=
+              Natural'Value (S (Matched (1).First .. Matched (1).Last));
             return;
          end if;
 
          --  List of commands:
-         if First + 7 <= S'Last
-           and then S (First .. First + 7) = "        "
+         if First + 7 <= S'Last and then S (First .. First + 7) = "        "
          then
             Index := First + 8;
             Index2 := Index;
@@ -3108,44 +3196,56 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                Multiple := Matched (5) /= No_Match;
 
                B := (others => <>);
-               B.Num := Breakpoint_Identifier'Value
-                 (S (Matched (1).First .. Matched (1).Last));
+               B.Num :=
+                 Breakpoint_Identifier'Value
+                   (S (Matched (1).First .. Matched (1).Last));
 
                case S (Matched (2).First) is
-                  when 'b' =>
+                  when 'b'    =>
                      --  "breakpoint"
                      B.The_Type := Breakpoint;
-                  when 'c' =>
+
+                  when 'c'    =>
                      --  "catchpoint"
                      B.The_Type := Catchpoint;
-                  when 'a' =>
+
+                  when 'a'    =>
                      --  "acc watchpoint"
                      B.The_Type := Watchpoint;
-                     B.Trigger  := Read_Write;
-                  when 'r' =>
+                     B.Trigger := Read_Write;
+
+                  when 'r'    =>
                      --  "read watchpoint"
                      B.The_Type := Watchpoint;
-                     B.Trigger  := Read;
+                     B.Trigger := Read;
+
                   when others =>
                      --  "hw watchpoint"
                      B.The_Type := Watchpoint;
-                     B.Trigger  := Write;
+                     B.Trigger := Write;
                end case;
 
                case S (Matched (3).First) is
-                  when 'k'    => B.Disposition := Keep;
-                  when 'd'    => B.Disposition := Disable;
-                  when others => B.Disposition := Delete;
+                  when 'k'    =>
+                     B.Disposition := Keep;
+
+                  when 'd'    =>
+                     B.Disposition := Disable;
+
+                  when others =>
+                     B.Disposition := Delete;
                end case;
 
                B.Enabled := S (Matched (4).First) = 'y';
 
                if B.The_Type = Breakpoint then
-                  B.Address := String_To_Address
-                    ("0x" & S (Matched (8).First .. Matched (8).Last));
+                  B.Address :=
+                    String_To_Address
+                      ("0x" & S (Matched (8).First .. Matched (8).Last));
                else
-                  B.Expression := To_Unbounded_String
-                    (S (Matched (9).First .. Matched (9).Last));
+                  B.Expression :=
+                    To_Unbounded_String
+                      (S (Matched (9).First .. Matched (9).Last));
                end if;
 
                --  Go to beginning of next line.
@@ -3159,8 +3259,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                   --  Get the extra information associated with the breakpoint
                   --  (ignore count, commands, conditions).
 
-                  while Index <= S'Last
-                    and then not (S (Index) in '0' .. '9')
+                  while Index <= S'Last and then not (S (Index) in '0' .. '9')
                   loop
                      Tmp := Index;
                      Skip_To_Char (S, Index, ASCII.LF);
@@ -3177,7 +3276,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                   Index := Index + 1;
                   Match
                     (Multiloc_Breakpoint_Instance_Pattern,
-                     S (Tmp .. Index - 2), Matched);
+                     S (Tmp .. Index - 2),
+                     Matched);
                   Match_Breakpoint_Info (Matched (1).First, Index, B, M);
 
                   --  Skip the following lines that correspond to other
@@ -3187,8 +3287,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                      Tmp := Index;
                      Parse_Num (S, Tmp, Breakpoint_Number);
 
-                     exit when Integer (Breakpoint_Number) /=
-                       Integer (B.Num);
+                     exit when Integer (Breakpoint_Number) /= Integer (B.Num);
 
                      Skip_To_Char (S, Index, ASCII.LF);
                      Index := Index + 1;
@@ -3210,8 +3309,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
                if not Multiple then
                   --  For each extra line in the breakpoint info
-                  while Index <= S'Last
-                    and then not (S (Index) in '0' .. '9')
+                  while Index <= S'Last and then not (S (Index) in '0' .. '9')
                   loop
                      Tmp := Index;
                      Skip_To_Char (S, Index, ASCII.LF);
@@ -3251,16 +3349,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Enable_Breakpoints --
    ------------------------
 
-   overriding procedure Enable_Breakpoints
+   overriding
+   procedure Enable_Breakpoints
      (Debugger    : access Gdb_Debugger;
       Breakpoints : Breakpoint_Identifier_Lists.List;
       Enable      : Boolean := True;
       Mode        : Command_Type := Hidden)
    is
-      Cmd : Unbounded_String := (if Enable then
-                                    To_Unbounded_String ("enable")
-                                 else
-                                    To_Unbounded_String ("disable"));
+      Cmd : Unbounded_String :=
+        (if Enable
+         then To_Unbounded_String ("enable")
+         else To_Unbounded_String ("disable"));
    begin
       for Breakpoint of Breakpoints loop
          Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
@@ -3273,7 +3372,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Remove_Breakpoints --
    ------------------------
 
-   overriding procedure Remove_Breakpoints
+   overriding
+   procedure Remove_Breakpoints
      (Debugger    : access Gdb_Debugger;
       Breakpoints : Breakpoint_Identifier_Lists.List;
       Mode        : Command_Type := Hidden)
@@ -3291,13 +3391,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- List_Exceptions --
    ---------------------
 
-   overriding function List_Exceptions
-     (Debugger : access Gdb_Debugger)
-     return GVD.Types.Exception_Array
+   overriding
+   function List_Exceptions
+     (Debugger : access Gdb_Debugger) return GVD.Types.Exception_Array
    is
-      S     : constant String := Send_And_Get_Clean_Output
-        (Debugger, "info exceptions", Mode => Internal);
-      Nums  : Natural := 0;
+      S    : constant String :=
+        Send_And_Get_Clean_Output
+          (Debugger, "info exceptions", Mode => Internal);
+      Nums : Natural := 0;
    begin
       --  Count the number of exceptions listed
       for J in S'Range loop
@@ -3346,12 +3447,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Register_Names --
    ------------------------
 
-   overriding function Get_Register_Names
-     (Debugger : access Gdb_Debugger)
-      return GVD.Types.Strings_Vectors.Vector
+   overriding
+   function Get_Register_Names
+     (Debugger : access Gdb_Debugger) return GVD.Types.Strings_Vectors.Vector
    is
-      Block : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
    begin
       if not Debugger.Registers.Is_Empty then
@@ -3359,8 +3460,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       end if;
 
       declare
-         S       : constant String := Send_And_Get_Clean_Output
-           (Debugger, "info all-registers", Mode => Internal);
+         S       : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, "info all-registers", Mode => Internal);
          Idx     : Natural := S'First;
          Start   : Natural;
          Matched : Match_Array (0 .. 1);
@@ -3371,7 +3473,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          while Idx in S'Range loop
             Start := Idx;
-            Idx   := Line_End (S, Idx);
+            Idx := Line_End (S, Idx);
             Match (Register_Name_Pattern, S (Start .. Idx), Matched);
 
             if Matched (1) /= No_Match then
@@ -3390,10 +3492,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Registers_Values --
    --------------------------
 
-   Regular_Register_Value : constant Pattern_Matcher := Compile
-     ("^(0x[0-9a-f]+)\s+((0x)?[0-9a-f]+)$");
+   Regular_Register_Value : constant Pattern_Matcher :=
+     Compile ("^(0x[0-9a-f]+)\s+((0x)?[0-9a-f]+)$");
 
-   overriding function Get_Registers_Values
+   overriding
+   function Get_Registers_Values
      (Debugger : access Gdb_Debugger;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
@@ -3407,10 +3510,11 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       function Get (Name : String) return String;
       function Get (Name : String) return String is
-         S        : constant String := Send_And_Get_Clean_Output
-           (Debugger, "info registers " & Name, Mode => Internal);
-         Idx      : Natural := S'First;
-         Matched  : Match_Array (0 .. 3);
+         S       : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, "info registers " & Name, Mode => Internal);
+         Idx     : Natural := S'First;
+         Matched : Match_Array (0 .. 3);
       begin
          Skip_Word (S, Idx);
          if Idx not in S'Range then
@@ -3436,7 +3540,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                when GVD.Types.Hexadecimal =>
                   return S (Matched (1).First .. Matched (1).Last);
 
-               when GVD.Types.Naturals =>
+               when GVD.Types.Naturals    =>
                   if Matched (3) = No_Match then
                      return S (Matched (2).First .. Matched (2).Last);
 
@@ -3444,7 +3548,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
                      return "";
                   end if;
 
-               when others =>
+               when others                =>
                   return "";
             end case;
          end if;
@@ -3467,18 +3571,17 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Type_Info --
    -------------------
 
-   overriding function Get_Type_Info
-     (Debugger  : access Gdb_Debugger;
-      Entity    : String;
-      Default   : String) return String
+   overriding
+   function Get_Type_Info
+     (Debugger : access Gdb_Debugger; Entity : String; Default : String)
+      return String
    is
-      S : constant String := Send_And_Get_Clean_Output
-        (Debugger, "whatis " & Entity, Mode => Internal);
+      S : constant String :=
+        Send_And_Get_Clean_Output
+          (Debugger, "whatis " & Entity, Mode => Internal);
 
    begin
-      if S'Length > 6
-        and then S (S'First .. S'First + 5) = "type ="
-      then
+      if S'Length > 6 and then S (S'First .. S'First + 5) = "type =" then
          return S (S'First + 7 .. S'Last);
       else
          return Default;
@@ -3489,7 +3592,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Find_File --
    ---------------
 
-   overriding function Find_File
+   overriding
+   function Find_File
      (Debugger : access Gdb_Debugger; File_Name : String) return String
    is
       File : Unbounded_String;
@@ -3509,8 +3613,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Switch_Language (Debugger, "c");
 
       declare
-         Str : constant String := Send_And_Get_Clean_Output
-           (Debugger, "info line " & File_Name & ":1", Mode => Internal);
+         Str : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, "info line " & File_Name & ":1", Mode => Internal);
       begin
          Restore_Language (Debugger);
          Set_Parse_File_Name (Get_Process (Debugger), True);
@@ -3528,7 +3633,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Machine_Code --
    ----------------------
 
-   overriding procedure Get_Machine_Code
+   overriding
+   procedure Get_Machine_Code
      (Debugger      : access Gdb_Debugger;
       Range_Start   : out GVD.Types.Address_Type;
       Range_End     : out Address_Type;
@@ -3570,9 +3676,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       begin
          if Version.Major > 7
-           or else
-             (Version.Major = 7
-              and then Version.Minor >= 1)
+           or else (Version.Major = 7 and then Version.Minor >= 1)
          then
             declare
                S : constant String := Raw_Disassembled (", ");
@@ -3616,13 +3720,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             S : constant String := Code_Address_To_String (Start_Address);
             E : constant String := Code_Address_To_String (End_Address);
 
-            R : constant String := Send_And_Get_Clean_Output
-              (Debugger,
-               "disassemble /r " & S &
-               (if S /= "" and then E /= ""
-                  then Separator & E
-                  else ""),
-               Mode => Internal);
+            R : constant String :=
+              Send_And_Get_Clean_Output
+                (Debugger,
+                 "disassemble /r "
+                 & S
+                 & (if S /= "" and then E /= "" then Separator & E else ""),
+                 Mode => Internal);
          begin
             Restore_Language (Debugger);
             return R;
@@ -3634,9 +3738,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       ----------------
 
       procedure Parse_Line (Line : String) is
-         Idx,
-         Idx1 : Integer;
-         El   : Disassemble_Element;
+         Idx, Idx1 : Integer;
+         El        : Disassemble_Element;
 
       begin
          --  Get the actual end address, in case the disassembled zone
@@ -3654,8 +3757,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
          if Idx1 < Idx then
             El.Address := String_To_Address (Line (Line'First .. Idx1 - 2));
-            El.Method_Offset := To_Unbounded_String
-              (Line (Idx1 + 1 .. Idx - 2));
+            El.Method_Offset :=
+              To_Unbounded_String (Line (Idx1 + 1 .. Idx - 2));
 
          else
             El.Address := String_To_Address (Line (Line'First .. Idx - 1));
@@ -3667,20 +3770,19 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          El.Opcodes := To_Unbounded_String (Line (Idx + 2 .. Idx1));
 
          --  Instruction
-         El.Instr := To_Unbounded_String
-           (Do_Tab_Expansion (Line (Idx1 + 1 .. Line'Last), 8));
+         El.Instr :=
+           To_Unbounded_String
+             (Do_Tab_Expansion (Line (Idx1 + 1 .. Line'Last), 8));
 
          Code.Append (El);
       end Parse_Line;
 
-      Disassembled : constant String := Get_Disassembled;
-      Tmp,
-      Start_Index,
-      End_Index    : Integer;
+      Disassembled                : constant String := Get_Disassembled;
+      Tmp, Start_Index, End_Index : Integer;
 
    begin
       Range_Start := Invalid_Address;
-      Range_End   := Invalid_Address;
+      Range_End := Invalid_Address;
 
       --  Gdb always return a leading and tailing line, which we don't want
       --  to return.
@@ -3711,7 +3813,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       if not Code.Is_Empty then
          Range_Start := Code.First_Element.Address;
-         Range_End   := Code.Last_Element.Address;
+         Range_End := Code.Last_Element.Address;
       end if;
    end Get_Machine_Code;
 
@@ -3719,7 +3821,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Machine_Code --
    ----------------------
 
-   overriding procedure Get_Machine_Code
+   overriding
+   procedure Get_Machine_Code
      (Debugger : access Gdb_Debugger;
       File     : String;
       From     : Natural;
@@ -3737,7 +3840,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Line_Address --
    ----------------------
 
-   overriding procedure Get_Line_Address
+   overriding
+   procedure Get_Line_Address
      (Debugger    : access Gdb_Debugger;
       Line        : Natural;
       File        : GNATCOLL.VFS.Virtual_File;
@@ -3750,23 +3854,24 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       Switch_Language (Debugger, "c");
 
       declare
-         S : constant String := Send_And_Get_Clean_Output
-           (Debugger, "info line" & Natural'Image (Line), Mode => Internal);
+         S       : constant String :=
+           Send_And_Get_Clean_Output
+             (Debugger, "info line" & Natural'Image (Line), Mode => Internal);
          Matched : Match_Array (0 .. 2);
 
       begin
          Match (Address_Range_Pattern, S, Matched);
 
          if Matched (0) /= No_Match then
-            Range_Start := String_To_Address
-              (S (Matched (1).First .. Matched (1).Last));
+            Range_Start :=
+              String_To_Address (S (Matched (1).First .. Matched (1).Last));
 
-            Range_End := String_To_Address
-              (S (Matched (2).First .. Matched (2).Last));
+            Range_End :=
+              String_To_Address (S (Matched (2).First .. Matched (2).Last));
 
          else
             Range_Start := Invalid_Address;
-            Range_End   := Invalid_Address;
+            Range_End := Invalid_Address;
          end if;
       end;
 
@@ -3778,15 +3883,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Memory --
    ----------------
 
-   overriding function Get_Memory
-     (Debugger : access Gdb_Debugger;
-      Size     : Integer;
-      Address  : String) return Memory_Dump_Access
+   overriding
+   function Get_Memory
+     (Debugger : access Gdb_Debugger; Size : Integer; Address : String)
+      return Memory_Dump_Access
    is
       procedure Get_Label
-        (Text  : String;
-         From  : in out Positive;
-         Value : out Unbounded_String);
+        (Text : String; From : in out Positive; Value : out Unbounded_String);
       --  Scan Text starting from From position and search for label.
       --  If found put label into Value.
 
@@ -3802,9 +3905,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
       ---------------
 
       procedure Get_Label
-        (Text  : String;
-         From  : in out Positive;
-         Value : out Unbounded_String)
+        (Text : String; From : in out Positive; Value : out Unbounded_String)
       is
          --  We expect Text in the form: "address <label> : 0x...", for example
          --  0x1234567 <label+123>: 0xff
@@ -3851,11 +3952,12 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       Error_String : constant String := "Cannot access memory at";
       Image        : constant String := Integer'Image (Size / 8);
-      S              : GNAT.OS_Lib.String_Access := new String'
-        (Send_And_Get_Clean_Output
-           (Debugger,
-            "x/" & Image (Image'First + 1 .. Image'Last)
-            & "gx " & Address, Mode => Internal));
+      S            : GNAT.OS_Lib.String_Access :=
+        new String'
+          (Send_And_Get_Clean_Output
+             (Debugger,
+              "x/" & Image (Image'First + 1 .. Image'Last) & "gx " & Address,
+              Mode => Internal));
       S_Index      : Integer := S'First + 2;
       Last_Index   : Integer := S'First + 2;
       Result       : constant Memory_Dump_Access :=
@@ -3884,10 +3986,15 @@ package body Debugger.Base_Gdb.Gdb_CLI is
          declare
             Image : constant String := Integer'Image (Size);
          begin
-            S := new String'(Send_And_Get_Clean_Output
-              (Debugger,
-                 "x/" & Image (Image'First + 1 .. Image'Last)
-                 & "b " & Address, Mode => Internal));
+            S :=
+              new String'
+                (Send_And_Get_Clean_Output
+                   (Debugger,
+                    "x/"
+                    & Image (Image'First + 1 .. Image'Last)
+                    & "b "
+                    & Address,
+                    Mode => Internal));
 
             S_Index := S'First + 2;
             Last_Index := S'First + 2;
@@ -3908,11 +4015,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
                --  Detect actual data : 0xXX... right after an ASCII.HT
                if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
-                  Append (Result (Result_Index).Value,
-                          S (S_Index + 2 .. S_Index + 3));
+                  Append
+                    (Result (Result_Index).Value,
+                     S (S_Index + 2 .. S_Index + 3));
                   Total := Total + 1;
-               elsif S (S_Index) = ASCII.LF and then
-                 Length (Result (Result_Index).Value) >= Dump_Item_Size * 2
+               elsif S (S_Index) = ASCII.LF
+                 and then
+                   Length (Result (Result_Index).Value) >= Dump_Item_Size * 2
                then
                   --  If new line and we have collected enought bytes
                   --  Read label in new string
@@ -3934,8 +4043,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             --  Detect actual data : 0xXX... right after an ASCII.HT
 
             if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
-               Append (Result (Result_Index).Value,
-                       Swap (S (S_Index + 2 .. S_Index + 17)));
+               Append
+                 (Result (Result_Index).Value,
+                  Swap (S (S_Index + 2 .. S_Index + 17)));
                Total := Total + 8;
             elsif S (S_Index) = ASCII.LF then
                --  Read label in new string
@@ -3973,14 +4083,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Put_Memory_Byte --
    ---------------------
 
-   overriding procedure Put_Memory_Byte
-     (Debugger : access Gdb_Debugger;
-      Address  : String;
-      Byte     : String) is
+   overriding
+   procedure Put_Memory_Byte
+     (Debugger : access Gdb_Debugger; Address : String; Byte : String) is
    begin
       Switch_Language (Debugger, "c");
-      Send (Debugger, "set {char}" & Address & " = 0x" & Byte,
-            Mode => Internal);
+      Send
+        (Debugger, "set {char}" & Address & " = 0x" & Byte, Mode => Internal);
       Restore_Language (Debugger);
    end Put_Memory_Byte;
 
@@ -3988,14 +4097,13 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Variable_Address --
    --------------------------
 
-   overriding function Get_Variable_Address
-     (Debugger : access Gdb_Debugger;
-      Variable : String) return String
+   overriding
+   function Get_Variable_Address
+     (Debugger : access Gdb_Debugger; Variable : String) return String
    is
       S         : constant String :=
-                    Send_And_Get_Clean_Output
-                      (Debugger, "print &(" & Variable & ")",
-                       Mode => Internal);
+        Send_And_Get_Clean_Output
+          (Debugger, "print &(" & Variable & ")", Mode => Internal);
       Index     : Integer := S'Last;
       Error_Msg : constant String := "No ";
       --  Error messages can be "No definition..." or "No symbol..."
@@ -4025,8 +4133,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Get_Endian_Type --
    ---------------------
 
-   overriding function Get_Endian_Type
-     (Debugger : access Gdb_Debugger) return Endian_Type is
+   overriding
+   function Get_Endian_Type (Debugger : access Gdb_Debugger) return Endian_Type
+   is
    begin
       if Debugger.Endian /= Unknown_Endian then
          --  Return the cached value, to avoid too much communication with
@@ -4036,8 +4145,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
 
       declare
          S      : constant String :=
-                    Send_And_Get_Clean_Output
-                      (Debugger, "show endian", Mode => Internal);
+           Send_And_Get_Clean_Output
+             (Debugger, "show endian", Mode => Internal);
          Little : constant String := "little endian";
 
       begin
@@ -4055,13 +4164,14 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Complete --
    --------------
 
-   overriding function Complete
-     (Debugger  : access Gdb_Debugger;
-      Beginning : String) return GNAT.Strings.String_List
+   overriding
+   function Complete
+     (Debugger : access Gdb_Debugger; Beginning : String)
+      return GNAT.Strings.String_List
    is
       S           : constant String :=
-                      Send_And_Get_Clean_Output
-                        (Debugger, "complete " & Beginning, Mode => Internal);
+        Send_And_Get_Clean_Output
+          (Debugger, "complete " & Beginning, Mode => Internal);
       First_Index : Integer := S'First;
       Last_Index  : Integer := S'First;
       Num         : Integer := 0;
@@ -4093,7 +4203,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
             end if;
 
             Result (Index) := new String'(S (First_Index .. Last_Index - 1));
-            Last_Index  := Last_Index + 1;
+            Last_Index := Last_Index + 1;
             First_Index := Last_Index;
          end loop;
 
@@ -4107,27 +4217,28 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Open_Processes --
    --------------------
 
-   overriding procedure Open_Processes (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Open_Processes (Debugger : access Gdb_Debugger) is
    begin
       if Debugger.Remote_Protocol /= null
-        and then (Debugger.Remote_Protocol.all = "wtx"
-                  or else Debugger.Remote_Protocol.all = "dfw")
+        and then
+          (Debugger.Remote_Protocol.all = "wtx"
+           or else Debugger.Remote_Protocol.all = "dfw")
       then
          Debugger.WTX_List :=
-            new String'
+           new String'
              (Send_And_Get_Clean_Output
                 (Debugger, "info wtx threads", Mode => Internal));
 
          if Starts_With (Debugger.WTX_List.all, Undefined_Info_Command)
+           or else Starts_With (Debugger.WTX_List.all, Undefined_Command)
            or else
-             Starts_With (Debugger.WTX_List.all, Undefined_Command)
-           or else
-             Starts_With (Debugger.WTX_List.all,
-                          "warning: Unexpected arguments")
+             Starts_With
+               (Debugger.WTX_List.all, "warning: Unexpected arguments")
          then
             Free (Debugger.WTX_List);
             Debugger.WTX_List :=
-               new String'
+              new String'
                 (Send_And_Get_Clean_Output
                    (Debugger, "tcl activeTaskNameMap", Mode => Internal));
          end if;
@@ -4143,7 +4254,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Next_Process --
    ------------------
 
-   overriding procedure Next_Process
+   overriding
+   procedure Next_Process
      (Debugger : access Gdb_Debugger;
       Info     : out GVD.Proc_Utils.Process_Info;
       Success  : out Boolean)
@@ -4188,7 +4300,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Close_Processes --
    ---------------------
 
-   overriding procedure Close_Processes (Debugger : access Gdb_Debugger) is
+   overriding
+   procedure Close_Processes (Debugger : access Gdb_Debugger) is
    begin
       if Debugger.WTX_List /= null then
          Free (Debugger.WTX_List);
@@ -4201,9 +4314,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Detect_Language --
    ---------------------
 
-   overriding procedure Detect_Language (Debugger : access Gdb_Debugger) is
-      S : constant String := Send_And_Get_Clean_Output
-        (Debugger, "show lang", Mode => Internal);
+   overriding
+   procedure Detect_Language (Debugger : access Gdb_Debugger) is
+      S : constant String :=
+        Send_And_Get_Clean_Output (Debugger, "show lang", Mode => Internal);
       pragma Unreferenced (S);
    begin
       null;
@@ -4214,11 +4328,10 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    ---------------------
 
    procedure Switch_Language
-     (Debugger : access Gdb_Debugger;
-      Language : String)
+     (Debugger : access Gdb_Debugger; Language : String)
    is
-      S           : constant String := Send_And_Get_Clean_Output
-        (Debugger, "show lang", Mode => Internal);
+      S           : constant String :=
+        Send_And_Get_Clean_Output (Debugger, "show lang", Mode => Internal);
       First_Index : Integer := S'First;
       End_Index   : Integer;
 
@@ -4252,9 +4365,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Support_TTY --
    -----------------
 
-   overriding function Support_TTY
-     (Debugger : access Gdb_Debugger) return Boolean
-   is
+   overriding
+   function Support_TTY (Debugger : access Gdb_Debugger) return Boolean is
       pragma Unreferenced (Debugger);
    begin
       return True;
@@ -4264,8 +4376,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Set_TTY --
    -------------
 
-   overriding procedure Set_TTY
-     (Debugger : access Gdb_Debugger; TTY : String) is
+   overriding
+   procedure Set_TTY (Debugger : access Gdb_Debugger; TTY : String) is
    begin
       if TTY /= "" then
          Send (Debugger, "tty " & TTY, Mode => Hidden);
@@ -4276,7 +4388,8 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Filter_Output --
    -------------------
 
-   overriding procedure Filter_Output
+   overriding
+   procedure Filter_Output
      (Debugger        : access Gdb_Debugger;
       Mode            : GVD.Types.Command_Type;
       Str             : String;
@@ -4338,9 +4451,9 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    -- Is_Quit_Command --
    ---------------------
 
-   overriding function Is_Quit_Command
-     (Debugger : access Gdb_Debugger;
-      Command : String) return Boolean
+   overriding
+   function Is_Quit_Command
+     (Debugger : access Gdb_Debugger; Command : String) return Boolean
    is
       pragma Unreferenced (Debugger);
    begin
@@ -4354,26 +4467,26 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    procedure Update_Frame_Info (Debugger : access Gdb_Debugger) is
    begin
       Update_Frame_Info
-        (Debugger, Debugger.Send_And_Get_Clean_Output
-           ("frame", Mode => Internal));
+        (Debugger,
+         Debugger.Send_And_Get_Clean_Output ("frame", Mode => Internal));
    end Update_Frame_Info;
 
    -----------------------
    -- Update_Frame_Info --
    -----------------------
 
-   procedure Update_Frame_Info
-     (Debugger : access Gdb_Debugger;
-      Info     : String)
+   procedure Update_Frame_Info (Debugger : access Gdb_Debugger; Info : String)
    is
       Matched : Match_Array (0 .. Frame_Pattern_Groups);
    begin
       Match (Frame_Pattern, Info, Matched);
 
       if Matched (Frame_Pattern_Kind'Pos (Frame_Num)) /= No_Match then
-         Debugger.Current_Frame_Num := Integer'Value
-           (Info (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First ..
-                Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
+         Debugger.Current_Frame_Num :=
+           Integer'Value
+             (Info
+                (Matched (Frame_Pattern_Kind'Pos (Frame_Num)).First
+                 .. Matched (Frame_Pattern_Kind'Pos (Frame_Num)).Last));
       end if;
    end Update_Frame_Info;
 
@@ -4384,7 +4497,7 @@ package body Debugger.Base_Gdb.Gdb_CLI is
    procedure Force_Kill (Debugger : not null access Gdb_Debugger) is
       Proxy      : constant Process_Proxy_Access := Get_Process (Debugger);
       Descriptor : constant Process_Descriptor_Access :=
-                     Get_Descriptor (Proxy);
+        Get_Descriptor (Proxy);
       SIGKILL    : constant Integer := 9;
    begin
       --  Should only do this when running under Windows, in native mode,

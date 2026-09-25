@@ -25,7 +25,7 @@ package body GNATCOLL.VFS.VSS_Utils is
 
    function Create
      (Full_Filename : VSS.Strings.Virtual_String;
-      Host          : String  := Local_Host;
+      Host          : String := Local_Host;
       Normalize     : Boolean := False) return Virtual_File is
    begin
       return
@@ -55,8 +55,8 @@ package body GNATCOLL.VFS.VSS_Utils is
    ---------------
 
    function Full_Name
-     (File      : Virtual_File;
-      Normalize : Boolean := False) return VSS.Strings.Virtual_String is
+     (File : Virtual_File; Normalize : Boolean := False)
+      return VSS.Strings.Virtual_String is
    begin
       return
         VSS.Strings.Conversions.To_Virtual_String
@@ -68,8 +68,8 @@ package body GNATCOLL.VFS.VSS_Utils is
    -------------------
 
    function Relative_Path
-     (File : Virtual_File;
-      From : Virtual_File) return VSS.Strings.Virtual_String is
+     (File : Virtual_File; From : Virtual_File)
+      return VSS.Strings.Virtual_String is
    begin
       return
         VSS.Strings.Conversions.To_Virtual_String (+File.Relative_Path (From));

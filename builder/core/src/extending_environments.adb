@@ -71,23 +71,32 @@ package body Extending_Environments is
       is
          W : Writable_File;
       begin
-         File := Create_From_Dir
-           (Env.Temporary_Dir, "extends_" & Base_Name (Project_Path (P)));
+         File :=
+           Create_From_Dir
+             (Env.Temporary_Dir, "extends_" & Base_Name (Project_Path (P)));
 
          W := Write_File (File);
-         Write (W, With_S & ASCII.LF & "project Extends_" & P.Name
-                & " extends " & E_All & " """
-                & (+Project_Path (P).Full_Name.all) & """ is"
-                & ASCII.LF
-                & Body_S & ASCII.LF);
+         Write
+           (W,
+            With_S
+            & ASCII.LF
+            & "project Extends_"
+            & P.Name
+            & " extends "
+            & E_All
+            & " """
+            & (+Project_Path (P).Full_Name.all)
+            & """ is"
+            & ASCII.LF
+            & Body_S
+            & ASCII.LF);
 
          --  If this is a library project, add a "Library_Dir" attribute
          if P.Attribute_Value (Library_Name_Attribute) /= "" then
             declare
                Lib_Directory : Virtual_File;
             begin
-               Lib_Directory :=
-                 Create_From_Dir (Env.Temporary_Dir, "lib");
+               Lib_Directory := Create_From_Dir (Env.Temporary_Dir, "lib");
                if not Is_Directory (Lib_Directory) then
                   Make_Dir (Lib_Directory);
                end if;
@@ -109,11 +118,12 @@ package body Extending_Environments is
          Object_Dir   : constant Virtual_File := Project.Object_Dir;
 
       begin
-         Env.Temporary_Dir := Create_From_Dir
-           ((if Object_Dir /= No_File
-            then Object_Dir
-            else Project.Project_Path.Dir),
-            Base_Name => Tmp_Dir_Name);
+         Env.Temporary_Dir :=
+           Create_From_Dir
+             ((if Object_Dir /= No_File
+               then Object_Dir
+               else Project.Project_Path.Dir),
+              Base_Name => Tmp_Dir_Name);
       end;
 
       if not Is_Directory (Env.Temporary_Dir) then
@@ -147,8 +157,8 @@ package body Extending_Environments is
       begin
          Write
            (Dest,
-            Get_Buffer_Factory (Kernel).Get
-            (Source, Open_View => False).Get_Chars_S);
+            Get_Buffer_Factory (Kernel).Get (Source, Open_View => False)
+              .Get_Chars_S);
          Close (Dest);
       end;
 
@@ -160,8 +170,8 @@ package body Extending_Environments is
    -------------
 
    procedure Destroy (Env : Extending_Environment) is
-      Dummy : Boolean;
-      BN : constant Filesystem_String := Env.File.Base_Name;
+      Dummy       : Boolean;
+      BN          : constant Filesystem_String := Env.File.Base_Name;
       BN_Stripped : constant Filesystem_String :=
         (if Env.File.Has_Suffix (".ads") or else Env.File.Has_Suffix (".adb")
          then BN (BN'First .. BN'Last - 4)

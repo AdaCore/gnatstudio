@@ -19,8 +19,8 @@ with Ada.Unchecked_Deallocation;
 
 package body Commands.Controls is
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Undo_Redo_Information, Undo_Redo);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Undo_Redo_Information, Undo_Redo);
 
    -------------------------
    -- Set_Undo_Redo_Queue --
@@ -103,8 +103,7 @@ package body Commands.Controls is
    -- Undo --
    ----------
 
-   procedure Undo (UR : Undo_Redo)
-   is
+   procedure Undo (UR : Undo_Redo) is
       Dummy : Boolean;
    begin
       if UR.Global_Command /= null and then not UR.Redo_Global then
@@ -128,8 +127,7 @@ package body Commands.Controls is
    -- Redo --
    ----------
 
-   procedure Redo (UR : Undo_Redo)
-   is
+   procedure Redo (UR : Undo_Redo) is
       Dummy : Command_Return_Type;
    begin
       if UR.Global_Command /= null and then UR.Redo_Global then
@@ -155,8 +153,9 @@ package body Commands.Controls is
    begin
       return
         (UR.Global_Command /= null and then not UR.Redo_Global)
-        or else (UR.Queue /= Null_Command_Queue
-                 and then not Undo_Queue_Empty (UR.Queue));
+        or else
+          (UR.Queue /= Null_Command_Queue
+           and then not Undo_Queue_Empty (UR.Queue));
    end Can_Undo;
 
    --------------
@@ -167,7 +166,8 @@ package body Commands.Controls is
    begin
       return
         (UR.Global_Command /= null and then UR.Redo_Global)
-        or else (UR.Queue /= Null_Command_Queue
-                 and then not Redo_Queue_Empty (UR.Queue));
+        or else
+          (UR.Queue /= Null_Command_Queue
+           and then not Redo_Queue_Empty (UR.Queue));
    end Can_Redo;
 end Commands.Controls;

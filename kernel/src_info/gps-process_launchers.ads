@@ -17,13 +17,13 @@
 
 --  Abstract root type for launching external processes.
 
-with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;
 
-with Commands;                         use Commands;
-with GPS.Messages_Windows;             use GPS.Messages_Windows;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
-with Remote;                           use Remote;
+with Commands;             use Commands;
+with GPS.Messages_Windows; use GPS.Messages_Windows;
+with GPS.Tools_Output;     use GPS.Tools_Output;
+with Remote;               use Remote;
 
 package GPS.Process_Launchers is
 
@@ -31,13 +31,14 @@ package GPS.Process_Launchers is
    type Process_Launcher is access all Process_Launcher_Record'Class;
 
    procedure Launch_Process
-     (Launcher             : access Process_Launcher_Record;
-      CL                   : Arg_List;
-      Server               : Server_Type := GPS_Server;
-      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Output_Parser        : GPS.Tools_Output.Tools_Output_Parser_Access;
-      Show_Command_To      : Abstract_Messages_Window_Access := null;
-      Success              : out Boolean) is abstract;
+     (Launcher        : access Process_Launcher_Record;
+      CL              : Arg_List;
+      Server          : Server_Type := GPS_Server;
+      Directory       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Output_Parser   : GPS.Tools_Output.Tools_Output_Parser_Access;
+      Show_Command_To : Abstract_Messages_Window_Access := null;
+      Success         : out Boolean)
+   is abstract;
 
    --  Launch a given CL command with arguments on Server.
    --  Arguments must be freed by the user.
@@ -68,7 +69,8 @@ package GPS.Process_Launchers is
       Show_In_Task_Manager : Boolean := True;
       Name_In_Task_Manager : String := "";
       Block_Exit           : Boolean := True;
-      Created_Command      : out Command_Access) is abstract;
+      Created_Command      : out Command_Access)
+   is abstract;
    --  This procedure is like Launch_Process but returns immediately after
    --  spawning process.
    --

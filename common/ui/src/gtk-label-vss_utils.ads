@@ -22,11 +22,10 @@ with VSS.Strings;
 package Gtk.Label.VSS_Utils is
 
    procedure Gtk_New
-     (Label : out Gtk_Label;
-      Text  : VSS.Strings.Virtual_String);
+     (Label : out Gtk_Label; Text : VSS.Strings.Virtual_String);
 
    procedure Set_Markup
-      (Label : not null access Gtk_Label_Record'Class;
-       Text  : VSS.Strings.Virtual_String);
+     (Label : not null access Gtk_Label_Record'Class;
+      Text  : VSS.Strings.Virtual_String);
 
 end Gtk.Label.VSS_Utils;

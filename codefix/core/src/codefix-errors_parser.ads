@@ -109,11 +109,11 @@
 --  changes.
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Regpat;            use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 
-with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
-with Codefix.Error_Lists;    use Codefix.Error_Lists;
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Codefix.Formal_Errors; use Codefix.Formal_Errors;
+with Codefix.Error_Lists;   use Codefix.Error_Lists;
+with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
 private with GPS_Vectors;
 
@@ -124,11 +124,11 @@ package Codefix.Errors_Parser is
    type Ptr_Matcher is access all Pattern_Matcher;
    type Arr_Matcher is array (Integer range <>) of Ptr_Matcher;
    procedure Free is new
-      Ada.Unchecked_Deallocation (Pattern_Matcher, Ptr_Matcher);
+     Ada.Unchecked_Deallocation (Pattern_Matcher, Ptr_Matcher);
 
    type Error_Parser (Nb_Parsers : Natural) is abstract new Root_Error_Parser
    with record
-       Matcher    : Arr_Matcher (1 .. Nb_Parsers);
+      Matcher : Arr_Matcher (1 .. Nb_Parsers);
    end record;
    --  The Error_Parser is used to parse a message and call the right
    --  funtions in the formal_errors package
@@ -154,7 +154,8 @@ package Codefix.Errors_Parser is
       Message_It   : Error_Message_Iterator;
       Options      : Fix_Options;
       Solutions    : out Solution_List;
-      Matches      : Match_Array) is abstract;
+      Matches      : Match_Array)
+   is abstract;
    --  Get informations parsed from the message and call functions in
    --  Formal_Errors in order to find possible corrections. At the end,
    --  Solutions contains the possible corrections, if no possible correction

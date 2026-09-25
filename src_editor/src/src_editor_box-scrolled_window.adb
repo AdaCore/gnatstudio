@@ -15,20 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.Event;             use Gdk.Event;
-with Gdk.Window;            use Gdk.Window;
-with Glib.Object;           use Glib, Glib.Object;
-with Gtk.Adjustment;        use Gtk.Adjustment;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Main;              use Gtk.Main;
-with Gtk.Style_Context;     use Gtk.Style_Context;
-with Gtk.Text_Iter;         use Gtk.Text_Iter;
-with Gtk.Text_View;         use Gtk.Text_View;
-with Gtk.Widget;            use Gtk.Widget;
-with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
-with GNATCOLL.Utils;        use GNATCOLL.Utils;
-with Pango.Layout;          use Pango.Layout;
-with Src_Editor_Buffer;     use Src_Editor_Buffer;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Window;        use Gdk.Window;
+with Glib.Object;
+use Glib, Glib.Object;
+with Gtk.Adjustment;    use Gtk.Adjustment;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Main;          use Gtk.Main;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Gtk.Text_View;     use Gtk.Text_View;
+with Gtk.Widget;        use Gtk.Widget;
+with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with Pango.Layout;      use Pango.Layout;
+with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package body Src_Editor_Box.Scrolled_Window is
 
@@ -37,57 +38,60 @@ package body Src_Editor_Box.Scrolled_Window is
    --  wheel or trackpad.
 
    function On_Button_Press
-      (Self  : access GObject_Record'Class;
-       Event : Gdk_Event_Button) return Boolean;
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    function On_Button_Release
-      (Self  : access GObject_Record'Class;
-       Event : Gdk_Event_Button) return Boolean;
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    --  Called when the user interacts with the scrolled window with the mouse.
 
-   procedure On_Changed (Self  : access GObject_Record'Class);
+   procedure On_Changed (Self : access GObject_Record'Class);
    --  Called when the window is scrolled
 
    ----------------
    -- On_Changed --
    ----------------
 
-   procedure On_Changed (Self  : access GObject_Record'Class) is
-      S : constant Tooltip_Scrolled_Window := Tooltip_Scrolled_Window (Self);
-      Adj  : constant Gtk_Adjustment := S.Get_Vadjustment;
-      View : constant Gtk_Text_View := Gtk_Text_View (S.Get_Child);
-      Scrollbar_Width : constant Gint := 10;
-      Buffer : Source_Buffer;
-      Iter : aliased Gtk_Text_Iter;
-      Trailing : aliased Gint;
+   procedure On_Changed (Self : access GObject_Record'Class) is
+      S                   : constant Tooltip_Scrolled_Window :=
+        Tooltip_Scrolled_Window (Self);
+      Adj                 : constant Gtk_Adjustment := S.Get_Vadjustment;
+      View                : constant Gtk_Text_View :=
+        Gtk_Text_View (S.Get_Child);
+      Scrollbar_Width     : constant Gint := 10;
+      Buffer              : Source_Buffer;
+      Iter                : aliased Gtk_Text_Iter;
+      Trailing            : aliased Gint;
       X, Y, Width, Height : Gint;
-      Alloc : Gtk_Allocation;
-      Min, Nat : Gtk_Requisition;
-      Event : Gdk_Event;
+      Alloc               : Gtk_Allocation;
+      Min, Nat            : Gtk_Requisition;
+      Event               : Gdk_Event;
 
    begin
       --  Is the scroll due to a wheel or touchpad event ?
       if not S.Has_Button_Press then
          Event := Gtk.Main.Get_Current_Event;
          if Event = null  --  would be a programmatic change
-            or else Get_Event_Type (Event) /= Scroll
-            or else not Display_Popup_On_Wheel
+           or else Get_Event_Type (Event) /= Scroll
+           or else not Display_Popup_On_Wheel
          then
             return;
          end if;
 
-         --  For a Scroll event, we either need to remove the dialog
-         --  after a timeout or grab the mouse to detect a
-         --  change. But if we do that, the scroll window no longer
-         --  gets the event.
+      --  For a Scroll event, we either need to remove the dialog
+      --  after a timeout or grab the mouse to detect a
+      --  change. But if we do that, the scroll window no longer
+      --  gets the event.
+
       end if;
 
       --  Else the user is scrolling the scroll bar with the mouse
 
       if not View.Get_Iter_At_Position
-        (Iter'Access,
-         Trailing'Access,
-         X => Scrollbar_Width,
-         Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0))
+               (Iter'Access,
+                Trailing'Access,
+                X => Scrollbar_Width,
+                Y => Gint (Adj.Get_Value + Adj.Get_Page_Size / 2.0))
       then
          return;
       end if;
@@ -99,17 +103,21 @@ package body Src_Editor_Box.Scrolled_Window is
       end if;
 
       S.Label.Set_Markup
-         ("<b>File:</b> " & Buffer.Get_Filename.Display_Base_Name
-          & ASCII.LF
-          & "<b>Line:</b> " & Gint'Image (Get_Line (Iter) + 1)
-          & " ("
-          & Image (Integer (100.0 * Adj.Get_Value / Adj.Get_Upper),
-                   Min_Width => 1)
-          & "%)"
-          & ASCII.LF
-          & "<b>Entity:</b> "
-          & Get (Buffer.Get_Subprogram_Block
-             (Line => Editable_Line_Type (Get_Line (Iter))).Name).all);
+        ("<b>File:</b> "
+         & Buffer.Get_Filename.Display_Base_Name
+         & ASCII.LF
+         & "<b>Line:</b> "
+         & Gint'Image (Get_Line (Iter) + 1)
+         & " ("
+         & Image
+             (Integer (100.0 * Adj.Get_Value / Adj.Get_Upper), Min_Width => 1)
+         & "%)"
+         & ASCII.LF
+         & "<b>Entity:</b> "
+         & Get
+             (Buffer.Get_Subprogram_Block
+                (Line => Editable_Line_Type (Get_Line (Iter)))
+                .Name).all);
 
       if S.Window = null then
          Gtk_New (S.Window, Window_Popup);
@@ -147,8 +155,8 @@ package body Src_Editor_Box.Scrolled_Window is
    ---------------------
 
    function On_Button_Press
-      (Self  : access GObject_Record'Class;
-       Event : Gdk_Event_Button) return Boolean
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
       pragma Unreferenced (Event);
       S : constant Tooltip_Scrolled_Window := Tooltip_Scrolled_Window (Self);
@@ -163,8 +171,8 @@ package body Src_Editor_Box.Scrolled_Window is
    -----------------------
 
    function On_Button_Release
-      (Self  : access GObject_Record'Class;
-       Event : Gdk_Event_Button) return Boolean
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
       pragma Unreferenced (Event);
       S : constant Tooltip_Scrolled_Window := Tooltip_Scrolled_Window (Self);
@@ -192,7 +200,7 @@ package body Src_Editor_Box.Scrolled_Window is
 
       Self.Get_Vscrollbar.On_Button_Press_Event (On_Button_Press'Access, Self);
       Self.Get_Vscrollbar.On_Button_Release_Event
-         (On_Button_Release'Access, Self);
+        (On_Button_Release'Access, Self);
       Self.Get_Vadjustment.On_Value_Changed (On_Changed'Access, Self);
    end Gtk_New;
 

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;  use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 package Ada_Semantic_Tree.Interfaces is
 

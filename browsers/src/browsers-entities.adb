@@ -16,51 +16,52 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Xref;             use GNATCOLL.Xref;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Xref;    use GNATCOLL.Xref;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Gdk.Window;                use Gdk.Window;
+with Gdk.Pixbuf; use Gdk.Pixbuf;
+with Gdk.Window; use Gdk.Window;
 
-with Glib;                      use Glib;
+with Glib;        use Glib;
 with Glib.Main;
-with Glib.Object;               use Glib.Object;
+with Glib.Object; use Glib.Object;
 
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
-with Gtk.Widget;                use Gtk.Widget;
-with Pango.Enums;               use Pango.Enums;
-with Pango.Font;                use Pango.Font;
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
+with Gtk.Widget;              use Gtk.Widget;
+with Pango.Enums;             use Pango.Enums;
+with Pango.Font;              use Pango.Font;
 
-with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
-with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Style;              use Gtkada.Style;
+with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Style;             use Gtkada.Style;
 
-with Basic_Types;               use Basic_Types;
-with Browsers.Canvas;           use Browsers.Canvas;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Default_Preferences;       use Default_Preferences;
+with Basic_Types;            use Basic_Types;
+with Browsers.Canvas;        use Browsers.Canvas;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences;    use Default_Preferences;
 with Generic_Views;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Xref;           use GPS.Kernel.Xref;
-with Xref;                      use Xref;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel.Xref;        use GPS.Kernel.Xref;
+with Xref;                   use Xref;
 
 package body Browsers.Entities is
 
-   package Entity_Arrays is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-      (Root_Entity'Class);
+   package Entity_Arrays is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Root_Entity'Class);
    use Entity_Arrays;
 
    UML_Abstract : constant String := "{Abstract}";
@@ -82,45 +83,48 @@ package body Browsers.Entities is
    end record;
    --  See inherited documentation
 
-   overriding procedure Create_Menu
-     (View    : not null access Type_Browser_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding function Load_From_XML
-     (Self : not null access Type_Browser_Record;
-      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class;
-   overriding procedure Load_From_XML
+   overriding
+   procedure Create_Menu
+     (View : not null access Type_Browser_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   function Load_From_XML
+     (Self : not null access Type_Browser_Record; Node : XML_Utils.Node_Ptr)
+      return access GPS_Item_Record'Class;
+   overriding
+   procedure Load_From_XML
      (Self     : not null access Type_Browser_Record;
       Node     : XML_Utils.Node_Ptr;
       From, To : not null access GPS_Item_Record'Class);
-   overriding procedure Preferences_Changed
+   overriding
+   procedure Preferences_Changed
      (Self : not null access Type_Browser_Record;
       Pref : Default_Preferences.Preference);
 
    function Initialize
-     (View   : access Type_Browser_Record'Class)
-      return Gtk_Widget;
+     (View : access Type_Browser_Record'Class) return Gtk_Widget;
    --  Creates the dependency browser and returns the focus widget
 
-   package Entities_Views is new Generic_Views.Simple_Views
-     (Module_Name            => Entity_Browser_Module_Name,
-      View_Name              => -"Entity Browser",
-      Formal_View_Record     => Type_Browser_Record,
-      Formal_MDI_Child       => Browser_Child_Record,
-      Reuse_If_Exist         => True,
-      Initialize             => Initialize,
-      Local_Toolbar          => True,
-      Local_Config           => True,
-      Position               => Position_Automatic,
-      Group                  => Group_Default);
+   package Entities_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => Entity_Browser_Module_Name,
+        View_Name          => -"Entity Browser",
+        Formal_View_Record => Type_Browser_Record,
+        Formal_MDI_Child   => Browser_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Position           => Position_Automatic,
+        Group              => Group_Default);
    subtype Type_Browser is Entities_Views.View_Access;
 
-   type Compartment_Item_Record is
-     new Rect_Item_Record and Clickable_Item
+   type Compartment_Item_Record is new Rect_Item_Record and Clickable_Item
    with record
       Folded : Boolean := False;
 
-      Col1   : Items_Lists.List;  --  will have the same width
-      Col2   : Items_Lists.List;  --  will have the same width
+      Col1 : Items_Lists.List;  --  will have the same width
+      Col2 : Items_Lists.List;  --  will have the same width
       --  The contents of these lists are not direct children of the
       --  compartment, but are contained within rect_item (one per line)
 
@@ -128,20 +132,21 @@ package body Browsers.Entities is
    end record;
    type Compartment_Item is access all Compartment_Item_Record'Class;
 
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Compartment_Item_Record;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access);
-   overriding procedure Size_Request
-     (Self    : not null access Compartment_Item_Record;
-      Context : Draw_Context);
+   overriding
+   procedure Size_Request
+     (Self : not null access Compartment_Item_Record; Context : Draw_Context);
 
    ---------------
    -- Type item --
    ---------------
 
    type Type_Item_Record is new GPS_Item_Record with record
-      Entity     : Root_Entity_Ref;
+      Entity : Root_Entity_Ref;
 
       Attrs, Ops : Compartment_Item;
       --  Those are children of the type_item, so destroyed automatically when
@@ -149,10 +154,11 @@ package body Browsers.Entities is
    end record;
    type Type_Item is access all Type_Item_Record'Class;
 
-   overriding function Save_To_XML
-     (Self : not null access Type_Item_Record)
-      return XML_Utils.Node_Ptr;
-   overriding procedure Set_Context
+   overriding
+   function Save_To_XML
+     (Self : not null access Type_Item_Record) return XML_Utils.Node_Ptr;
+   overriding
+   procedure Set_Context
      (Item    : not null access Type_Item_Record;
       Context : in out Selection_Context);
 
@@ -179,12 +185,13 @@ package body Browsers.Entities is
    -----------
 
    type Entity_Link_Record is new GPS_Link_Record with record
-      Parent_Link  : Boolean := False;
-      Name         : Unbounded_String;
+      Parent_Link : Boolean := False;
+      Name        : Unbounded_String;
    end record;
    type Entity_Link is access all Entity_Link_Record'Class;
 
-   overriding procedure Save_To_XML
+   overriding
+   procedure Save_To_XML
      (Self : not null access Entity_Link_Record;
       Node : not null XML_Utils.Node_Ptr);
 
@@ -207,10 +214,10 @@ package body Browsers.Entities is
    --  canvas to add the item.
 
    procedure Add_Link
-     (Item         : not null access Type_Item_Record'Class;
-      Item2        : not null access Type_Item_Record'Class;
-      Link_Name    : String;
-      Parent_Link  : Boolean);
+     (Item        : not null access Type_Item_Record'Class;
+      Item2       : not null access Type_Item_Record'Class;
+      Link_Name   : String;
+      Parent_Link : Boolean);
    --  Create a new item displaying the information for Entity, and link it
    --  with Item.
    --  If Parent_Link is true, then the link used is a Parent_Link_Record.
@@ -225,7 +232,8 @@ package body Browsers.Entities is
      (Self      : not null access Type_Browser_Record'Class;
       Entity    : Root_Entity'Class;
       Link_Name : String := "") return Entity_Ref;
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Entity_Ref_Record;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access);
@@ -233,12 +241,10 @@ package body Browsers.Entities is
    --  entity in the browser, with a link from
 
    procedure Show_Entity_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for this module (in the shell window)
 
-   procedure Add_Primitive_Operations
-     (Item   : access Type_Item_Record'Class);
+   procedure Add_Primitive_Operations (Item : access Type_Item_Record'Class);
    --  Add the sorted list of primitive operations for Entity at the end of
    --  Meth_Layout.
 
@@ -258,13 +264,15 @@ package body Browsers.Entities is
    --  cross-reference lists.
 
    type Show_Parents_Button is new Left_Arrow_Record with null record;
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Parents_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access);
 
    type Show_Children_Button is new Right_Arrow_Record with null record;
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Children_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access);
@@ -277,15 +285,15 @@ package body Browsers.Entities is
    --  hyper link for the type of Entity.
 
    procedure Add_Array_Type
-     (Item       : not null access Type_Item_Record'Class;
-      Entity     : Root_Entity'Class;
-      Prefix     : String);
+     (Item   : not null access Type_Item_Record'Class;
+      Entity : Root_Entity'Class;
+      Prefix : String);
    --  Add the information for an array type
 
    procedure Add_Access_Type
-     (Item       : not null access Type_Item_Record'Class;
-      Entity     : Root_Entity'Class;
-      Prefix     : String);
+     (Item   : not null access Type_Item_Record'Class;
+      Entity : Root_Entity'Class;
+      Prefix : String);
    --  Add the information for an access type
 
    procedure Add_Subprogram
@@ -299,7 +307,8 @@ package body Browsers.Entities is
    --  Sort the array alphabetically
 
    type Examine_Entity_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -307,9 +316,9 @@ package body Browsers.Entities is
    -- Save_To_XML --
    -----------------
 
-   overriding function Save_To_XML
-     (Self : not null access Type_Item_Record)
-      return XML_Utils.Node_Ptr
+   overriding
+   function Save_To_XML
+     (Self : not null access Type_Item_Record) return XML_Utils.Node_Ptr
    is
       Decl : constant General_Entity_Declaration :=
         Self.Entity.Element.Get_Declaration;
@@ -320,7 +329,7 @@ package body Browsers.Entities is
       XML_Utils.Set_Attribute_S (N, "name", To_String (Decl.Name));
       XML_Utils.Set_Attribute_S (N, "file", Decl.Loc.File.Display_Full_Name);
       XML_Utils.Set_Attribute_S (N, "line", Decl.Loc.Line'Img);
-      XML_Utils.Set_Attribute_S (N, "col",  Decl.Loc.Column'Img);
+      XML_Utils.Set_Attribute_S (N, "col", Decl.Loc.Column'Img);
 
       return N;
    end Save_To_XML;
@@ -329,7 +338,8 @@ package body Browsers.Entities is
    -- Save_To_XML --
    -----------------
 
-   overriding procedure Save_To_XML
+   overriding
+   procedure Save_To_XML
      (Self : not null access Entity_Link_Record;
       Node : not null XML_Utils.Node_Ptr) is
    begin
@@ -344,22 +354,24 @@ package body Browsers.Entities is
    -- Load_From_XML --
    -------------------
 
-   overriding function Load_From_XML
-     (Self : not null access Type_Browser_Record;
-      Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class
+   overriding
+   function Load_From_XML
+     (Self : not null access Type_Browser_Record; Node : XML_Utils.Node_Ptr)
+      return access GPS_Item_Record'Class
    is
-      E : constant Root_Entity'Class :=
+      E           : constant Root_Entity'Class :=
         Self.Kernel.Databases.Get_Entity
           (Name => XML_Utils.Get_Attribute_S (Node, "name"),
            Loc  =>
-             (File    => Create (+XML_Utils.Get_Attribute_S (Node, "file")),
+             (File         =>
+                Create (+XML_Utils.Get_Attribute_S (Node, "file")),
               Project_Path => <>,
-              Line    =>
+              Line         =>
                 Integer'Value (XML_Utils.Get_Attribute_S (Node, "line")),
-              Column  =>
+              Column       =>
                 Visible_Column_Type'Value
                   (XML_Utils.Get_Attribute_S (Node, "col"))));
-      It : Type_Item;
+      It          : Type_Item;
       Newly_Added : Boolean;
    begin
       Self.Find_Or_Create_Item (E, It, Newly_Added);
@@ -370,7 +382,8 @@ package body Browsers.Entities is
    -- Load_From_XML --
    -------------------
 
-   overriding procedure Load_From_XML
+   overriding
+   procedure Load_From_XML
      (Self     : not null access Type_Browser_Record;
       Node     : XML_Utils.Node_Ptr;
       From, To : not null access GPS_Item_Record'Class)
@@ -379,7 +392,8 @@ package body Browsers.Entities is
 
    begin
       Add_Link
-        (Type_Item (From), Type_Item (To),
+        (Type_Item (From),
+         Type_Item (To),
          Link_Name   => XML_Utils.Get_Attribute_S (Node, "name"),
          Parent_Link => XML_Utils.Get_Attribute_S (Node, "parent") = "1");
    end Load_From_XML;
@@ -388,11 +402,12 @@ package body Browsers.Entities is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Type_Browser_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   overriding
+   procedure Create_Menu
+     (View : not null access Type_Browser_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Sep   : Gtk_Separator_Menu_Item;
+      Sep : Gtk_Separator_Menu_Item;
    begin
       General_Browser_Record (View.all).Create_Menu (Menu);  --  inherited
 
@@ -406,7 +421,8 @@ package body Browsers.Entities is
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Compartment_Item_Record;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access)
@@ -417,6 +433,7 @@ package body Browsers.Entities is
          Self.Folded := not Self.Folded;
          Item.Reset;
          View.Model.Refresh_Layout;  --  position of links
+
       end if;
    end On_Click;
 
@@ -424,7 +441,8 @@ package body Browsers.Entities is
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Entity_Ref_Record;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access)
@@ -447,9 +465,10 @@ package body Browsers.Entities is
          Items.Append (Abstract_Item (New_Item));
          Insert_And_Layout_Items
            (B.Get_View,
-            Ref       => Item,
-            Items     => Items,
-            Direction => (if B.Horizontal_Layout then Right else Down),
+            Ref                  => Item,
+            Items                => Items,
+            Direction            =>
+              (if B.Horizontal_Layout then Right else Down),
             Space_Between_Items  => Default_Space_Between_Items,
             Space_Between_Layers => Default_Space_Between_Layers,
             Duration             => 0.3);
@@ -466,13 +485,11 @@ package body Browsers.Entities is
      (Self   : not null access Type_Browser_Record'Class;
       Entity : Root_Entity'Class)
    is
-      Ignore  : Type_Item;
-      Added   : Boolean;
+      Ignore : Type_Item;
+      Added  : Boolean;
    begin
       Self.Find_Or_Create_Item
-        (Entity      => Entity,
-         Item        => Ignore,
-         Newly_Added => Added);
+        (Entity => Entity, Item => Ignore, Newly_Added => Added);
 
       if Added then
          Self.Refresh_Layout
@@ -486,12 +503,13 @@ package body Browsers.Entities is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Examine_Entity_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      View : constant Type_Browser := Entities_Views.Get_Or_Create_View
-        (Get_Kernel (Context.Context));
+      View : constant Type_Browser :=
+        Entities_Views.Get_Or_Create_View (Get_Kernel (Context.Context));
       pragma Unreferenced (Command);
    begin
       Add_And_Layout (View, Get_Entity (Context.Context));
@@ -502,14 +520,12 @@ package body Browsers.Entities is
    -- Preferences_Changed --
    -------------------------
 
-   overriding procedure Preferences_Changed
+   overriding
+   procedure Preferences_Changed
      (Self : not null access Type_Browser_Record;
-      Pref : Default_Preferences.Preference)
-   is
+      Pref : Default_Preferences.Preference) is
    begin
-      if Pref = null
-        or else Pref = Preference (Show_Qualified_Name)
-      then
+      if Pref = null or else Pref = Preference (Show_Qualified_Name) then
          Reset_All_Items (Self);
       end if;
    end Preferences_Changed;
@@ -523,19 +539,23 @@ package body Browsers.Entities is
    begin
       Entities_Views.Register_Module (Kernel);
 
-      Show_Qualified_Name := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("browser-entities-qualified-names", False,
-         Label => -"Show qualified names",
-         Doc  => -"Show a fully qualified name for title bars.");
+      Show_Qualified_Name :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("browser-entities-qualified-names",
+           False,
+           Label => -"Show qualified names",
+           Doc   => -"Show a fully qualified name for title bars.");
 
       Register_Action
-        (Kernel, "Browser: examine entity",
+        (Kernel,
+         "Browser: examine entity",
          Command     => new Examine_Entity_Command,
          Description =>
            "Open the entity Browser to show details on the selected entity",
-         Filter     => not Create (Module => Entities_Views.M_Name)
-             and Lookup_Filter (Kernel, "Entity"),
-         Category  => -"Views");
+         Filter      =>
+           not Create (Module => Entities_Views.M_Name)
+           and Lookup_Filter (Kernel, "Entity"),
+         Category    => -"Views");
 
       Kernel.Scripts.Register_Command
         ("show",
@@ -543,9 +563,9 @@ package body Browsers.Entities is
          Handler => Show_Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("documentation",
-         Class        => Get_Entity_Class (Kernel),
-         Handler      => Show_Entity_Command_Handler'Access,
-         Params       => (2 => Param ("include_inherited", Optional => True)));
+         Class   => Get_Entity_Class (Kernel),
+         Handler => Show_Entity_Command_Handler'Access,
+         Params  => (2 => Param ("include_inherited", Optional => True)));
    end Register_Module;
 
    ---------------------------------
@@ -553,8 +573,7 @@ package body Browsers.Entities is
    ---------------------------------
 
    procedure Show_Entity_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Entity : constant Root_Entity'Class := Get_Data (Data, 1);
@@ -574,7 +593,7 @@ package body Browsers.Entities is
                   Documentation
                     (Kernel.Databases,
                      Kernel.Get_Language_Handler,
-                     Entity => Entity,
+                     Entity     => Entity,
                      Raw_Format => not Extended));
             end;
          end if;
@@ -586,18 +605,17 @@ package body Browsers.Entities is
    ----------------
 
    function Initialize
-     (View   : access Type_Browser_Record'Class)
-      return Gtk_Widget is
+     (View : access Type_Browser_Record'Class) return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (View);
-      Setup_Contextual_Menu
-        (Kernel          => View.Kernel,
-         Event_On_Widget => View);
+      Setup_Contextual_Menu (Kernel => View.Kernel, Event_On_Widget => View);
 
-      View.Compartment_Title := Gtk_New
-        (Font  => (Name   => From_String ("sans bold 9"),
-                   Halign => Pango.Enums.Pango_Align_Center,
-                   others => <>));
+      View.Compartment_Title :=
+        Gtk_New
+          (Font =>
+             (Name   => From_String ("sans bold 9"),
+              Halign => Pango.Enums.Pango_Align_Center,
+              others => <>));
 
       return Gtk_Widget (View.Get_View);
    end Initialize;
@@ -632,13 +650,13 @@ package body Browsers.Entities is
    ------------------------------
 
    procedure Add_Primitive_Operations (Item : access Type_Item_Record'Class) is
-      B    : constant Type_Browser := Type_Browser (Item.Browser);
+      B : constant Type_Browser := Type_Browser (Item.Browser);
 
       use Entity_Arrays;
       Methods : Xref.Entity_Array :=
         Item.Entity.Element.Methods (Include_Inherited => False);
 
-      Arr  : Entity_Arrays.List;
+      Arr : Entity_Arrays.List;
    begin
       --  Store all primitive operations in an array, so that we can display
       --  them sorted, and possibly filter them out.
@@ -702,8 +720,7 @@ package body Browsers.Entities is
       end if;
 
       if Child /= null and then not Self.Attrs.Folded then
-         Self.Attrs.Add_Child
-           (Child, Margin => (1.0, 4.0, 0.0, 10.0));
+         Self.Attrs.Add_Child (Child, Margin => (1.0, 4.0, 0.0, 10.0));
       end if;
    end Add_Attrs;
 
@@ -732,8 +749,7 @@ package body Browsers.Entities is
       end if;
 
       if Child /= null and then not Self.Ops.Folded then
-         Self.Ops.Add_Child
-           (Child, Margin => (1.0, 4.0, 0.0, 10.0));
+         Self.Ops.Add_Child (Child, Margin => (1.0, 4.0, 0.0, 10.0));
       end if;
    end Add_Ops;
 
@@ -766,7 +782,7 @@ package body Browsers.Entities is
       Params   : Parameter_Array := Item.Entity.Element.Parameters;
       Returned : constant Root_Entity'Class :=
         Item.Entity.Element.Returned_Type;
-      Rect  : Rect_Item;
+      Rect     : Rect_Item;
    begin
       for P in Params'Range loop
          declare
@@ -827,7 +843,7 @@ package body Browsers.Entities is
       Parent : constant Root_Entity'Class :=
         Item.Entity.Element.Parent_Package;
       Arr    : Entity_Arrays.List;
-      Rect  : Rect_Item;
+      Rect   : Rect_Item;
    begin
       if Parent /= No_Root_Entity then
          Rect := Gtk_New_Rect (S.Invisible);
@@ -838,8 +854,8 @@ package body Browsers.Entities is
       end if;
 
       declare
-         Iter : Abstract_Entities_Cursor'Class := Get_All_Called_Entities
-           (Item.Entity.Element);
+         Iter : Abstract_Entities_Cursor'Class :=
+           Get_All_Called_Entities (Item.Entity.Element);
       begin
          while not At_End (Iter) loop
             declare
@@ -932,10 +948,10 @@ package body Browsers.Entities is
       Entity : Root_Entity'Class;
       Prefix : String)
    is
-      B     : constant Type_Browser := Type_Browser (Item.Browser);
-      S     : constant access Browser_Styles := B.Get_View.Get_Styles;
-      Typ   : constant Root_Entity'Class := Entity.Get_Type_Of;
-      Rect  : Rect_Item;
+      B      : constant Type_Browser := Type_Browser (Item.Browser);
+      S      : constant access Browser_Styles := B.Get_View.Get_Styles;
+      Typ    : constant Root_Entity'Class := Entity.Get_Type_Of;
+      Rect   : Rect_Item;
       E1, E2 : access Container_Item_Record'Class;
    begin
       if Typ = No_Root_Entity then
@@ -969,9 +985,9 @@ package body Browsers.Entities is
    --------------------
 
    procedure Add_Array_Type
-     (Item       : not null access Type_Item_Record'Class;
-      Entity     : Root_Entity'Class;
-      Prefix     : String)
+     (Item   : not null access Type_Item_Record'Class;
+      Entity : Root_Entity'Class;
+      Prefix : String)
    is
       B       : constant Type_Browser := Type_Browser (Item.Browser);
       S       : constant access Browser_Styles := B.Get_View.Get_Styles;
@@ -1015,14 +1031,14 @@ package body Browsers.Entities is
    ---------------------
 
    procedure Add_Access_Type
-     (Item       : not null access Type_Item_Record'Class;
-      Entity     : Root_Entity'Class;
-      Prefix     : String)
+     (Item   : not null access Type_Item_Record'Class;
+      Entity : Root_Entity'Class;
+      Prefix : String)
    is
-      B   : constant Type_Browser := Type_Browser (Item.Browser);
-      S   : constant access Browser_Styles := B.Get_View.Get_Styles;
-      Typ : constant Root_Entity'Class := Pointed_Type (Entity);
-      Rect    : Rect_Item;
+      B    : constant Type_Browser := Type_Browser (Item.Browser);
+      S    : constant access Browser_Styles := B.Get_View.Get_Styles;
+      Typ  : constant Root_Entity'Class := Pointed_Type (Entity);
+      Rect : Rect_Item;
    begin
       if Typ /= No_Root_Entity then
          Rect := Gtk_New_Rect (S.Invisible);
@@ -1040,15 +1056,15 @@ package body Browsers.Entities is
    --------------
 
    procedure Add_Link
-     (Item         : not null access Type_Item_Record'Class;
-      Item2        : not null access Type_Item_Record'Class;
-      Link_Name    : String;
-      Parent_Link  : Boolean)
+     (Item        : not null access Type_Item_Record'Class;
+      Item2       : not null access Type_Item_Record'Class;
+      Link_Name   : String;
+      Parent_Link : Boolean)
    is
       Browser : constant Type_Browser := Type_Browser (Item.Browser);
       Styles  : constant access Browser_Styles := Browser.Get_View.Get_Styles;
-      Link     : Entity_Link;
-      Label    : Text_Item;
+      Link    : Entity_Link;
+      Label   : Text_Item;
    begin
       if not Browser.Has_Link (Item, Item2) then
          if Link_Name /= "" then
@@ -1075,19 +1091,20 @@ package body Browsers.Entities is
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Parents_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access)
    is
       pragma Unreferenced (Self);
-      Item     : constant Type_Item := Type_Item (Details.Toplevel_Item);
-      B        : constant Type_Browser := Type_Browser (Item.Browser);
-      Parents  : Xref.Entity_Array :=
+      Item    : constant Type_Item := Type_Item (Details.Toplevel_Item);
+      B       : constant Type_Browser := Type_Browser (Item.Browser);
+      Parents : Xref.Entity_Array :=
         Parent_Types (Item.Entity.Element, Recursive => False);
-      It       : Type_Item;
-      Added    : Boolean;
-      Items    : Items_Lists.List;
+      It      : Type_Item;
+      Added   : Boolean;
+      Items   : Items_Lists.List;
    begin
       for P in Parents'Range loop
          Find_Or_Create_Item (B, Parents (P).all, It, Added);
@@ -1099,12 +1116,13 @@ package body Browsers.Entities is
 
       Insert_And_Layout_Items
         (View,
-         Ref       => Item,
-         Items     => Items,
-         Direction => (if Item.Browser.Horizontal_Layout then Up else Left),
+         Ref                  => Item,
+         Items                => Items,
+         Direction            =>
+           (if Item.Browser.Horizontal_Layout then Up else Left),
          Space_Between_Items  => Default_Space_Between_Items,
          Space_Between_Layers => Default_Space_Between_Layers,
-         Duration  => 0.3);
+         Duration             => 0.3);
 
       Free (Parents);
    end On_Click;
@@ -1113,7 +1131,8 @@ package body Browsers.Entities is
    -- On_Click --
    --------------
 
-   overriding procedure On_Click
+   overriding
+   procedure On_Click
      (Self    : not null access Show_Children_Button;
       View    : not null access GPS_Canvas_View_Record'Class;
       Details : Gtkada.Canvas_View.Event_Details_Access)
@@ -1137,9 +1156,10 @@ package body Browsers.Entities is
 
       Insert_And_Layout_Items
         (View,
-         Ref       => Item,
-         Items     => Items,
-         Direction => (if Item.Browser.Horizontal_Layout then Down else Right),
+         Ref                  => Item,
+         Items                => Items,
+         Direction            =>
+           (if Item.Browser.Horizontal_Layout then Down else Right),
          Space_Between_Items  => Default_Space_Between_Items,
          Space_Between_Layers => Default_Space_Between_Layers,
          Duration             => 0.3);
@@ -1183,7 +1203,7 @@ package body Browsers.Entities is
    begin
       Self.Clear (B.Get_View.Model);
       Self.Attrs := null;  --  were destroyed
-      Self.Ops   := null;
+      Self.Ops := null;
 
       --  Now compute the contents of the item
 
@@ -1194,7 +1214,7 @@ package body Browsers.Entities is
       end if;
 
       if E.Is_Abstract then
-         Title :=  UML_Abstract & ASCII.LF & Title;
+         Title := UML_Abstract & ASCII.LF & Title;
       end if;
       if E.Is_Generic then
          Title := UML_Generic & ASCII.LF & Title;
@@ -1288,21 +1308,21 @@ package body Browsers.Entities is
    -- Set_Context --
    -----------------
 
-   overriding procedure Set_Context
+   overriding
+   procedure Set_Context
      (Item    : not null access Type_Item_Record;
       Context : in out Selection_Context)
    is
-      Loc   : constant General_Location :=
+      Loc : constant General_Location :=
         Get_Declaration (Item.Entity.Element).Loc;
    begin
       Set_Entity_Information
-        (Context       => Context,
-         Entity        => Item.Entity.Element);
+        (Context => Context, Entity => Item.Entity.Element);
       Set_File_Information
-        (Context     => Context,
-         Files       => (1 => Loc.File),
-         Line        => Loc.Line,
-         Column      => Loc.Column);
+        (Context => Context,
+         Files   => (1 => Loc.File),
+         Line    => Loc.Line,
+         Column  => Loc.Column);
       --  We need to set the file information, even though it will also display
       --  some contextual menus (file dependencies,...), otherwise the call
       --  graph will not work.
@@ -1312,11 +1332,11 @@ package body Browsers.Entities is
    -- Size_Request --
    ------------------
 
-   overriding procedure Size_Request
-     (Self    : not null access Compartment_Item_Record;
-      Context : Draw_Context)
+   overriding
+   procedure Size_Request
+     (Self : not null access Compartment_Item_Record; Context : Draw_Context)
    is
-      R      : Item_Rectangle;
+      R : Item_Rectangle;
    begin
       Rect_Item_Record (Self.all).Size_Request (Context);  --  inherited
 

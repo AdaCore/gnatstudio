@@ -21,71 +21,79 @@
 --  See language.ads and language-debugger.ads for a complete spec.
 
 with GNAT.Expect;
-with Language;           use Language;
+with Language; use Language;
 with Language.Debugger;
 
 package Debugger.Base_Gdb.Cpp is
 
-   type Gdb_Cpp_Language is new
-     Language.Debugger.Language_Debugger with private;
+   type Gdb_Cpp_Language is
+     new Language.Debugger.Language_Debugger with private;
 
    --------------------
    -- Simple Parsing --
    --------------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access Gdb_Cpp_Language; Str : String) return Boolean;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Gdb_Cpp_Language)
       return GNAT.Expect.Pattern_Matcher_Access;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Gdb_Cpp_Language) return GNAT.Strings.String_List;
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Gdb_Cpp_Language) return Language.Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access Gdb_Cpp_Language) return Language.Explorer_Categories;
 
-   overriding function Is_System_File
+   overriding
+   function Is_System_File
      (Lang : access Gdb_Cpp_Language; File_Name : String) return Boolean;
 
    ------------------------
    -- Naming conventions --
    ------------------------
 
-   overriding function Dereference_Name
-     (Lang : access Gdb_Cpp_Language;
-      Name : String) return String;
+   overriding
+   function Dereference_Name
+     (Lang : access Gdb_Cpp_Language; Name : String) return String;
 
-   overriding function Array_Item_Name
-     (Lang  : access Gdb_Cpp_Language;
-      Name  : String;
-      Index : String) return String;
+   overriding
+   function Array_Item_Name
+     (Lang : access Gdb_Cpp_Language; Name : String; Index : String)
+      return String;
 
-   overriding function Record_Field_Name
-     (Lang  : access Gdb_Cpp_Language;
-      Name  : String;
-      Field : String) return String;
+   overriding
+   function Record_Field_Name
+     (Lang : access Gdb_Cpp_Language; Name : String; Field : String)
+      return String;
 
    -------------
    -- Parsing --
    -------------
 
-   overriding procedure Parse_Type
+   overriding
+   procedure Parse_Type
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
       Result   : out GVD.Variables.Types.GVD_Type_Holder);
 
-   overriding procedure Parse_Value
+   overriding
+   procedure Parse_Value
      (Lang       : access Gdb_Cpp_Language;
       Entity     : String;
       Type_Str   : String;
@@ -93,7 +101,8 @@ package Debugger.Base_Gdb.Cpp is
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive);
 
-   overriding procedure Parse_Array_Type
+   overriding
+   procedure Parse_Array_Type
      (Lang         : access Gdb_Cpp_Language;
       Type_Str     : String;
       Entity       : String;
@@ -101,41 +110,47 @@ package Debugger.Base_Gdb.Cpp is
       Start_Of_Dim : Natural;
       Result       : out GVD.Variables.Types.GVD_Type_Holder);
 
-   overriding procedure Parse_Record_Type
-     (Lang      : access Gdb_Cpp_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder;
-      End_On    : String);
+   overriding
+   procedure Parse_Record_Type
+     (Lang     : access Gdb_Cpp_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
+      End_On   : String);
    --  End_On is ignored in the C implementation.
 
-   overriding procedure Parse_Array_Value
+   overriding
+   procedure Parse_Array_Value
      (Lang     : access Gdb_Cpp_Language;
       Type_Str : String;
       Index    : in out Natural;
       Result   : in out GVD.Variables.Types.GVD_Type_Holder);
 
-   overriding function Set_Variable
-     (Lang     : access Gdb_Cpp_Language;
-      Var_Name : String;
-      Value    : String) return String;
+   overriding
+   function Set_Variable
+     (Lang : access Gdb_Cpp_Language; Var_Name : String; Value : String)
+      return String;
 
-   overriding function Get_Language_Debugger_Context
+   overriding
+   function Get_Language_Debugger_Context
      (Lang : access Gdb_Cpp_Language)
       return Language.Debugger.Language_Debugger_Context;
 
 private
 
-   type Gdb_Cpp_Language is new
-     Language.Debugger.Language_Debugger with null record;
+   type Gdb_Cpp_Language is new Language.Debugger.Language_Debugger
+   with null record;
 
-   overriding function Get_Name (Lang : access Gdb_Cpp_Language) return String;
+   overriding
+   function Get_Name (Lang : access Gdb_Cpp_Language) return String;
    --  See inherited documentation
 
-   overriding function Is_Interpolation_Char
+   overriding
+   function Is_Interpolation_Char
      (Lang : access Gdb_Cpp_Language; Char : Wide_Wide_Character)
-      return Boolean is (False);
+      return Boolean
+   is (False);
 
 end Debugger.Base_Gdb.Cpp;

@@ -15,60 +15,55 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Editable;              use Gtk.Editable;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Image;                 use Gtk.Image;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Table;                 use Gtk.Table;
-with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Glib;                 use Glib;
+with Gtk.Check_Button;     use Gtk.Check_Button;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.Editable;         use Gtk.Editable;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Handlers;         use Gtk.Handlers;
+with Gtk.Image;            use Gtk.Image;
+with Gtk.Label;            use Gtk.Label;
+with Gtk.Table;            use Gtk.Table;
+with Gtk.Toggle_Button;    use Gtk.Toggle_Button;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Stock_Labels;
 
-with Toolchains_Old;            use Toolchains_Old;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GUI_Utils;                 use GUI_Utils;
+with Toolchains_Old;         use Toolchains_Old;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
+with GUI_Utils;              use GUI_Utils;
 
 package body Toolchains_Dialog is
 
-   package Dialog_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Dialog);
+   package Dialog_Callback is new
+     Gtk.Handlers.User_Callback (Gtk_Widget_Record, Dialog);
 
    type Entry_Callback_Data is record
       E : Gtk_Entry;
       D : Dialog;
    end record;
 
-   package Entry_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Entry_Callback_Data);
+   package Entry_Callback is new
+     Gtk.Handlers.User_Callback (Gtk_Widget_Record, Entry_Callback_Data);
 
    procedure Activate_Toggled
-     (Toggle : access Gtk_Widget_Record'Class;
-      D      : Dialog);
+     (Toggle : access Gtk_Widget_Record'Class; D : Dialog);
    --  Called when the 'Activate' check button is toggled
 
    procedure Xrefs_Toggled
-     (Toggle : access Gtk_Widget_Record'Class;
-      D      : Dialog);
+     (Toggle : access Gtk_Widget_Record'Class; D : Dialog);
    --  Called when the 'Activate' check button is toggled
 
-   procedure On_Changed
-     (GEntry : access Gtk_Widget_Record'Class;
-      D      : Dialog);
+   procedure On_Changed (GEntry : access Gtk_Widget_Record'Class; D : Dialog);
    --  Called when an entry changed.
 
    procedure On_Browse
-     (Button : access Gtk_Widget_Record'Class;
-      Data   : Entry_Callback_Data);
+     (Button : access Gtk_Widget_Record'Class; Data : Entry_Callback_Data);
    --  Browse for a directory, then fill the GEntry
 
    ----------------------
@@ -76,9 +71,7 @@ package body Toolchains_Dialog is
    ----------------------
 
    procedure Activate_Toggled
-     (Toggle : access Gtk_Widget_Record'Class;
-      D      : Dialog)
-   is
+     (Toggle : access Gtk_Widget_Record'Class; D : Dialog) is
    begin
       D.Active := Get_Active (Gtk_Check_Button (Toggle));
       Set_Sensitive (D.Frame, D.Active);
@@ -90,9 +83,7 @@ package body Toolchains_Dialog is
    -------------------
 
    procedure Xrefs_Toggled
-     (Toggle : access Gtk_Widget_Record'Class;
-      D      : Dialog)
-   is
+     (Toggle : access Gtk_Widget_Record'Class; D : Dialog) is
    begin
       D.Xrefs_Subdir := Get_Active (Gtk_Check_Button (Toggle));
    end Xrefs_Toggled;
@@ -101,9 +92,7 @@ package body Toolchains_Dialog is
    -- On_Changed --
    ----------------
 
-   procedure On_Changed
-     (GEntry : access Gtk_Widget_Record'Class;
-      D      : Dialog)
+   procedure On_Changed (GEntry : access Gtk_Widget_Record'Class; D : Dialog)
    is
       pragma Unreferenced (GEntry);
    begin
@@ -122,8 +111,7 @@ package body Toolchains_Dialog is
    ---------------
 
    procedure On_Browse
-     (Button : access Gtk_Widget_Record'Class;
-      Data   : Entry_Callback_Data)
+     (Button : access Gtk_Widget_Record'Class; Data : Entry_Callback_Data)
    is
       Current_Dir : constant String := Get_Text (Data.E);
       Start_Dir   : Virtual_File;
@@ -147,9 +135,9 @@ package body Toolchains_Dialog is
               Use_Native_Dialog => Use_Native_Dialogs.Get_Pref);
          Compiler : constant String :=
            Get_Project (Data.D.Kernel).Attribute_Value
-           (Compiler_Command_Attribute,
-            Default => "gnatmake",
-            Index   => "Ada");
+             (Compiler_Command_Attribute,
+              Default => "gnatmake",
+              Index   => "Ada");
          Exec     : Virtual_File;
       begin
          if Dir /= No_File then
@@ -163,14 +151,15 @@ package body Toolchains_Dialog is
                declare
                   Resp : Gtkada.Dialogs.Message_Dialog_Buttons;
                begin
-                  Resp := GPS_Message_Dialog
-                    (-("The selected path does not contain a compiler." &
-                       ASCII.LF &
-                       "Are you sure you want to use this path ?"),
-                     Dialog_Type => Gtkada.Dialogs.Error,
-                     Buttons     => Button_OK + Button_Cancel,
-                     Title       => -"Invalid compiler path",
-                     Parent      => Gtk_Window (Data.D));
+                  Resp :=
+                    GPS_Message_Dialog
+                      (-("The selected path does not contain a compiler."
+                         & ASCII.LF
+                         & "Are you sure you want to use this path ?"),
+                       Dialog_Type => Gtkada.Dialogs.Error,
+                       Buttons     => Button_OK + Button_Cancel,
+                       Title       => -"Invalid compiler path",
+                       Parent      => Gtk_Window (Data.D));
 
                   if Resp = Button_OK then
                      Set_Text (Data.E, Display_Full_Name (Dir));
@@ -186,10 +175,11 @@ package body Toolchains_Dialog is
    -------------
 
    procedure Gtk_New
-     (Widget          : out Dialog;
-      Kernel          : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Active          : Boolean;
-      Tools_Path      : Virtual_File;
+     (Widget            : out Dialog;
+      Kernel            :
+        not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Active            : Boolean;
+      Tools_Path        : Virtual_File;
       Use_Xrefs_Subdirs : Boolean;
       Compiler_Path     : Virtual_File)
    is
@@ -203,7 +193,7 @@ package body Toolchains_Dialog is
 
    begin
       Widget := new Dialog_Record;
-      Widget.Active       := Active;
+      Widget.Active := Active;
       Widget.Xrefs_Subdir := Use_Xrefs_Subdirs;
 
       GPS.Dialogs.Initialize
@@ -246,21 +236,22 @@ package body Toolchains_Dialog is
       Attach (Table, Widget.Compiler_Entry, 1, 2, 0, 1);
       Set_Tooltip_Text
         (Widget.Compiler_Entry,
-         -("This path will be used to spawn all code generation actions." &
-           ASCII.LF &
-           "In particular gnatmake, gprbuild, gcc, gdb, gcov" &
-           " will be searched for in this path." &
-           ASCII.LF &
-           "To compile your project with a specific version of a compiler," &
-           " please choose its bin directory here." &
-           ASCII.LF &
-           "This path should be different from the tools path." & ASCII.LF &
-           ASCII.LF &
-           "Note concerning the interaction with the remote mode:" &
-           ASCII.LF &
-           "In case you have defined a build server for your project, then " &
-           "this path will be ignored, and the regular server's search path " &
-           "will be used."));
+         -("This path will be used to spawn all code generation actions."
+           & ASCII.LF
+           & "In particular gnatmake, gprbuild, gcc, gdb, gcov"
+           & " will be searched for in this path."
+           & ASCII.LF
+           & "To compile your project with a specific version of a compiler,"
+           & " please choose its bin directory here."
+           & ASCII.LF
+           & "This path should be different from the tools path."
+           & ASCII.LF
+           & ASCII.LF
+           & "Note concerning the interaction with the remote mode:"
+           & ASCII.LF
+           & "In case you have defined a build server for your project, then "
+           & "this path will be ignored, and the regular server's search path "
+           & "will be used."));
 
       Gtk_New (Label, -"Tools path");
       Set_Alignment (Label, 1.0, 0.5);
@@ -273,17 +264,18 @@ package body Toolchains_Dialog is
       Attach (Table, Widget.Tools_Entry, 1, 2, 1, 2);
       Set_Tooltip_Text
         (Widget.Tools_Entry,
-         -("This path will be used to spawn all actions not related to code" &
-           " generation. These actions are (the list is not exclusive)" &
-           " gnatcheck, gnatmetric, cross-reference generation." &
-           ASCII.LF &
-           "This path should be different from the compiler path." & ASCII.LF &
-           ASCII.LF &
-           "Note concerning the interaction with the remote mode:" &
-           ASCII.LF &
-           "In case you have defined a build server for your project, then " &
-           "defining a tools path will make all actions enumerated above " &
-           "execute locally using the tools path."));
+         -("This path will be used to spawn all actions not related to code"
+           & " generation. These actions are (the list is not exclusive)"
+           & " gnatcheck, gnatmetric, cross-reference generation."
+           & ASCII.LF
+           & "This path should be different from the compiler path."
+           & ASCII.LF
+           & ASCII.LF
+           & "Note concerning the interaction with the remote mode:"
+           & ASCII.LF
+           & "In case you have defined a build server for your project, then "
+           & "defining a tools path will make all actions enumerated above "
+           & "execute locally using the tools path."));
 
       Dialog_Callback.Connect
         (Widget.Compiler_Entry, Signal_Changed, On_Changed'Access, Widget);
@@ -293,8 +285,7 @@ package body Toolchains_Dialog is
       for J in 1 .. 2 loop
          Gtk_New (Browse);
          Gtk_New_From_Icon_Name
-           (Pix, "gps-open-file-symbolic",
-            Icon_Size_Menu);
+           (Pix, "gps-open-file-symbolic", Icon_Size_Menu);
          Add (Browse, Pix);
          Set_Relief (Browse, Relief_None);
          Set_Border_Width (Browse, 0);
@@ -308,16 +299,16 @@ package body Toolchains_Dialog is
 
          if J = 1 then
             Entry_Callback.Connect
-              (Browse, Signal_Clicked,
+              (Browse,
+               Signal_Clicked,
                On_Browse'Access,
-               (E => Widget.Compiler_Entry,
-                D => Widget));
+               (E => Widget.Compiler_Entry, D => Widget));
          else
             Entry_Callback.Connect
-              (Browse, Signal_Clicked,
+              (Browse,
+               Signal_Clicked,
                On_Browse'Access,
-               (E => Widget.Tools_Entry,
-                D => Widget));
+               (E => Widget.Tools_Entry, D => Widget));
          end if;
       end loop;
 
@@ -329,18 +320,19 @@ package body Toolchains_Dialog is
       Attach (Table, Check, 0, 2, 2, 3);
       Set_Tooltip_Text
         (Check,
-         -("If checked, then GNAT Studio will automatically generate cross" &
-             " reference files (.ali files) upon compilations. It will use" &
-             " the compiler found in the tools path to generate those cross" &
-             " reference files and will place them in a specific" &
-             " subdirectory, so as not to interract with objects and cross" &
-             " reference files generated by the regular compiler used for" &
-             " actually building the project." &
-           ASCII.LF & ASCII.LF &
-           "This functionnality is used to allow full GNAT Studio " &
-           "functionalities with old compilers. If you need to use an old " &
-           "compiler with your project, then you might consider using this " &
-           "feature."));
+         -("If checked, then GNAT Studio will automatically generate cross"
+           & " reference files (.ali files) upon compilations. It will use"
+           & " the compiler found in the tools path to generate those cross"
+           & " reference files and will place them in a specific"
+           & " subdirectory, so as not to interract with objects and cross"
+           & " reference files generated by the regular compiler used for"
+           & " actually building the project."
+           & ASCII.LF
+           & ASCII.LF
+           & "This functionnality is used to allow full GNAT Studio "
+           & "functionalities with old compilers. If you need to use an old "
+           & "compiler with your project, then you might consider using this "
+           & "feature."));
       Dialog_Callback.Connect
         (Check, Signal_Toggled, Xrefs_Toggled'Access, Widget);
 
@@ -350,9 +342,7 @@ package body Toolchains_Dialog is
    -- Get_Active --
    ----------------
 
-   function Get_Active
-     (Widget : access Dialog_Record'Class) return Boolean
-   is
+   function Get_Active (Widget : access Dialog_Record'Class) return Boolean is
    begin
       return Widget.Active;
    end Get_Active;
@@ -362,8 +352,7 @@ package body Toolchains_Dialog is
    --------------------------
 
    function Get_Use_Xrefs_Subdir
-     (Widget : access Dialog_Record'Class) return Boolean
-   is
+     (Widget : access Dialog_Record'Class) return Boolean is
    begin
       return Widget.Xrefs_Subdir;
    end Get_Use_Xrefs_Subdir;

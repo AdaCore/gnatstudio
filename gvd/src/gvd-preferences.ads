@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Default_Preferences;      use Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 with Default_Preferences.Enums;
 with GVD.Types;
 
@@ -39,51 +39,51 @@ package GVD.Preferences is
    --  preferences should be used for.
 
    -- General --
-   Debugger_Kind                 : Debugger_Kind_Preferences.Preference;
+   Debugger_Kind : Debugger_Kind_Preferences.Preference;
 
-   Break_On_Exception            : Boolean_Preference;
-   Open_Main_Unit                : Boolean_Preference;
-   Execution_Window              : Boolean_Preference;
-   Preserve_State_On_Exit        : Boolean_Preference;
-   Pending_Breakpoints           : Boolean_Preference;
-   Auto_Start_Debuggee           : Debuggee_Start_Preferences.Preference;
+   Break_On_Exception     : Boolean_Preference;
+   Open_Main_Unit         : Boolean_Preference;
+   Execution_Window       : Boolean_Preference;
+   Preserve_State_On_Exit : Boolean_Preference;
+   Pending_Breakpoints    : Boolean_Preference;
+   Auto_Start_Debuggee    : Debuggee_Start_Preferences.Preference;
 
    -- Source Window --
-   Continue_To_Line_Buttons      : Boolean_Preference;
+   Continue_To_Line_Buttons : Boolean_Preference;
 
    -- Assembly Window --
-   Assembly_Range_Size           : Integer_Preference;
-   Asm_Show_Addresses            : Boolean_Preference;
-   Asm_Show_Offset               : Boolean_Preference;
-   Asm_Show_Opcodes              : Boolean_Preference;
-   Asm_Highlight_Instructions    : Boolean_Preference;
+   Assembly_Range_Size        : Integer_Preference;
+   Asm_Show_Addresses         : Boolean_Preference;
+   Asm_Show_Offset            : Boolean_Preference;
+   Asm_Show_Opcodes           : Boolean_Preference;
+   Asm_Highlight_Instructions : Boolean_Preference;
 
    -- Registers view --
-   Registers_Hexadecimal         : Boolean_Preference;
-   Registers_Octal               : Boolean_Preference;
-   Registers_Binary              : Boolean_Preference;
-   Registers_Decimal             : Boolean_Preference;
-   Registers_Raw                 : Boolean_Preference;
-   Registers_Natural             : Boolean_Preference;
+   Registers_Hexadecimal : Boolean_Preference;
+   Registers_Octal       : Boolean_Preference;
+   Registers_Binary      : Boolean_Preference;
+   Registers_Decimal     : Boolean_Preference;
+   Registers_Raw         : Boolean_Preference;
+   Registers_Natural     : Boolean_Preference;
 
    -- Memory Window --
-   Memory_View_Color             : Color_Preference;
-   Memory_Highlighted_Color      : Color_Preference;
-   Memory_Selected_Color         : Color_Preference;
-   Memory_Auto_Refresh           : Boolean_Preference;
+   Memory_View_Color        : Color_Preference;
+   Memory_Highlighted_Color : Color_Preference;
+   Memory_Selected_Color    : Color_Preference;
+   Memory_Auto_Refresh      : Boolean_Preference;
 
    --  Remote Debugging
-   Load_Executable_On_Init       : Boolean_Preference;
+   Load_Executable_On_Init : Boolean_Preference;
 
    -- Console --
    Debugger_Console_All_Interactions : Boolean_Preference;
    --  Whether display all interactions in the debugger console
 
    --  Call stack
-   Frames_Limit                  : Integer_Preference;
+   Frames_Limit : Integer_Preference;
    --  How many frames will be fetched at one time
 
-   Cancel_Multiple_Symbols       : Boolean_Preference;
+   Cancel_Multiple_Symbols : Boolean_Preference;
    --  Set multiple-symbols -> cancel during gdb initialization
    --  if this preference is true
 

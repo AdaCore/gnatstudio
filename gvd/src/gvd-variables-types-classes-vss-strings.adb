@@ -15,24 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 
-with VSS.Strings;             use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 with VSS.Strings.Conversions;
 
 with Debugger.Base_Gdb.Ada;
 
 package body GVD.Variables.Types.Classes.VSS.Strings is
 
-   Value_Pattern : constant Pattern_Matcher :=
-     Compile ("~""\$\d+\s=\s(.+)");
+   Value_Pattern : constant Pattern_Matcher := Compile ("~""\$\d+\s=\s(.+)");
 
    -----------
    -- Clear --
    -----------
 
-   overriding procedure Clear
-     (Self : not null access GVD_VSS_String_Type) is
+   overriding
+   procedure Clear (Self : not null access GVD_VSS_String_Type) is
    begin
       Self.Value := Empty_Virtual_String;
       GVD_Class_Type (Self.all).Clear;
@@ -42,7 +41,8 @@ package body GVD.Variables.Types.Classes.VSS.Strings is
    -- Clone --
    -----------
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_VSS_String_Type;
       Item : not null GVD_Generic_Type_Access) is
    begin
@@ -54,12 +54,10 @@ package body GVD.Variables.Types.Classes.VSS.Strings is
    -- Create --
    ------------
 
-   function Create return GVD_Type_Holder
-   is
+   function Create return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_VSS_String_Type (1));
+          (Count => 1, Instance => new GVD_VSS_String_Type (1));
    begin
       return GVD_Type_Holder'(Standard.Ada.Finalization.Controlled with Data);
    end Create;
@@ -68,7 +66,8 @@ package body GVD.Variables.Types.Classes.VSS.Strings is
    -- Get_Simple_Value --
    ----------------------
 
-   overriding function Get_Simple_Value
+   overriding
+   function Get_Simple_Value
      (Self : not null access GVD_VSS_String_Type) return String is
    begin
       return Standard.VSS.Strings.Conversions.To_UTF_8_String (Self.Value);
@@ -78,9 +77,9 @@ package body GVD.Variables.Types.Classes.VSS.Strings is
    -- Get_Value_Command --
    -----------------------
 
-   overriding function Get_Value_Command
-     (Self   : not null access GVD_VSS_String_Type;
-      Entity : String)
+   overriding
+   function Get_Value_Command
+     (Self : not null access GVD_VSS_String_Type; Entity : String)
       return String
    is
       pragma Unreferenced (Self);
@@ -92,9 +91,9 @@ package body GVD.Variables.Types.Classes.VSS.Strings is
    -- Set_Value --
    ---------------
 
-   overriding procedure Set_Value
-     (Self  : not null access GVD_VSS_String_Type;
-      Value : String)
+   overriding
+   procedure Set_Value
+     (Self : not null access GVD_VSS_String_Type; Value : String)
    is
       Matched : Match_Array (0 .. 1);
    begin

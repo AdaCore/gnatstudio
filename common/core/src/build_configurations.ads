@@ -30,7 +30,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Maps;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
@@ -77,8 +77,7 @@ package Build_Configurations is
    type Target_Model_Access is access all Target_Model_Type'class;
 
    procedure Create_Model_From_XML
-     (Registry : Build_Config_Registry_Access;
-      XML      : Node_Ptr);
+     (Registry : Build_Config_Registry_Access; XML : Node_Ptr);
    --  Create a target model from XML and add it to the registry
    --
    --  The XML format is the following:
@@ -115,8 +114,8 @@ package Build_Configurations is
    --     ARG1..ARGN   (optional) default arguments
 
    function Is_Registered_Model
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String) return Boolean;
+     (Registry : Build_Config_Registry_Access; Name : Unbounded_String)
+      return Boolean;
    --  Return True if name corresponds to a registered model
 
    --------------------------
@@ -139,8 +138,7 @@ package Build_Configurations is
    --  The configuration line for this target is reset to the model defaults.
 
    procedure Remove_Target
-     (Registry    : Build_Config_Registry_Access;
-      Target_Name : String);
+     (Registry : Build_Config_Registry_Access; Target_Name : String);
    --  Remove target named Target_Name from registry
 
    function Get_Target_From_Name
@@ -175,8 +173,7 @@ package Build_Configurations is
    end record;
    type Model_Record_Access is access all Model_Record'class;
 
-   package Model_List is new Ada.Containers.Doubly_Linked_Lists
-     (Model_Record);
+   package Model_List is new Ada.Containers.Doubly_Linked_Lists (Model_Record);
 
    type Mode_Record is tagged record
       Name        : Unbounded_String;
@@ -201,14 +198,14 @@ package Build_Configurations is
    --  Return the mode description
 
    function Load_Mode_From_XML
-      (Registry  : Build_Config_Registry_Access;
-       XML : Node_Ptr) return Mode_Record;
+     (Registry : Build_Config_Registry_Access; XML : Node_Ptr)
+      return Mode_Record;
    --  Insert in registry the "builder-mode" XML node in Registry
    --  if problem returns Mode.Name = "" otherwise the inserted Mode
 
    function Element_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String) return Mode_Record;
+     (Registry : Build_Config_Registry_Access; Name : Unbounded_String)
+      return Mode_Record;
    --  Return the mode element from Registry corresponding to Name
 
    procedure Insert_Mode
@@ -223,12 +220,12 @@ package Build_Configurations is
       Mode     : Mode_Record);
    --  Replace the given mode (given by its name) by contents of Mode
 
-   package Mode_Map is new Ada.Containers.Ordered_Maps
-     (Unbounded_String, Mode_Record);
+   package Mode_Map is new
+     Ada.Containers.Ordered_Maps (Unbounded_String, Mode_Record);
 
    function Contains_Mode
-     (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String) return Boolean;
+     (Registry : Build_Config_Registry_Access; Name : Unbounded_String)
+      return Boolean;
    --  Return the mode element from Registry corresponding to Name
 
    function First_Mode
@@ -264,17 +261,17 @@ package Build_Configurations is
      );
 
    type Target_Properties is record
-      Launch_Mode     : Launch_Mode_Type := Manually;
+      Launch_Mode : Launch_Mode_Type := Manually;
 
       Always_Clear_Locations : Boolean := True;
 
-      Visible    : Boolean          := True;
+      Visible : Boolean := True;
       --  Whether target visible at all
 
-      In_Toolbar : Boolean          := False;
+      In_Toolbar : Boolean := False;
       --  Whether to display an icon in the toolbar
 
-      In_Menu    : Boolean          := True;
+      In_Menu : Boolean := True;
       --  Whether to display an item in the menu
 
       In_Contextual_Menu_For_Projects : Boolean := False;
@@ -285,17 +282,17 @@ package Build_Configurations is
       --  Whether the target should be in contextual menus for contexts that
       --  have File information
 
-      Read_Only       : Boolean          := False;
+      Read_Only : Boolean := False;
       --  When set to True, the target cannot be renamed or removed
 
-      Do_Not_Save       : Boolean          := False;
+      Do_Not_Save : Boolean := False;
       --  When set to True, the target should not be saved
 
-      For_Learning     : Boolean := False;
+      For_Learning : Boolean := False;
       --  True if the target's associated action should be displayed in the
       --  Learn view.
 
-      Server           : Server_Type := GPS_Server;
+      Server : Server_Type := GPS_Server;
       --  Server used to launch the target. If equal to GPS_Server, then its
       --  model's server is used.
 
@@ -303,10 +300,10 @@ package Build_Configurations is
       --  If the target represents a series of mains/targets, hold the
       --  parameter to the compute_build_targets hook.
 
-      Key             : Unbounded_String;
+      Key : Unbounded_String;
       --  The key to which the target is bound
 
-      Icon_Name       : Unbounded_String;
+      Icon_Name : Unbounded_String;
       --  The string contains an icon name, from the icon theme
 
       Parent_Menu_Name : Unbounded_String;
@@ -318,7 +315,7 @@ package Build_Configurations is
       Menu_Name : Unbounded_String;
       --  The name of the menu to display target
 
-      Category          : Unbounded_String;
+      Category : Unbounded_String;
       --  The category of the target, used for purposes of displaying the
       --  targets in a hierarchical fashion.
 
@@ -326,10 +323,10 @@ package Build_Configurations is
       --  Name of the messages category to be used to create messages in
       --  the messages container.
 
-      Parser_List       : String_List_Utils.String_List.Vector;
+      Parser_List : String_List_Utils.String_List.Vector;
       --  Names of output parsers.
 
-      Project_Switches  : Unbounded_String;
+      Project_Switches : Unbounded_String;
       --  Project switches relevant for this target, if any.
 
       Aliased_Target_Name : Unbounded_String;
@@ -343,13 +340,11 @@ package Build_Configurations is
    --  Return the Target_Type property.
 
    procedure Set_Target_Type
-     (Target          : Target_Access;
-      New_Target_Type : String);
+     (Target : Target_Access; New_Target_Type : String);
    --  Set the Target_Type property.
 
    procedure Set_Project_Switches
-     (Target           : Target_Access;
-      Project_Switches : String);
+     (Target : Target_Access; Project_Switches : String);
    --  Set the Project_Switches property.
 
    ------------------------------------
@@ -375,8 +370,7 @@ package Build_Configurations is
    --  the target has changed, retrieving the target's current command line.
 
    procedure Set_Command_Line
-     (Target       : Target_Access;
-      Command_Line : GNAT.OS_Lib.Argument_List);
+     (Target : Target_Access; Command_Line : GNAT.OS_Lib.Argument_List);
    --  Set the current unexpanded command line of Target to Command_Line.
    --  Note that Command_Line should include the executable as well as the
    --  arguments
@@ -424,9 +418,7 @@ package Build_Configurations is
    function Get_Model (Target : Target_Access) return String;
    --  Return the name of the model for Target
 
-   procedure Set_Model
-     (Target : Target_Access;
-      Model : Target_Model_Access);
+   procedure Set_Model (Target : Target_Access; Model : Target_Model_Access);
    --  Change the name of the model for Target
 
    procedure Visible (Target : Target_Access; Value : Boolean);
@@ -447,12 +439,11 @@ package Build_Configurations is
    --  Change In_Contextual_Menu_For_Files value
 
    procedure Set_Launch_Mode
-   (Target : Target_Access; Launch_Mode : Launch_Mode_Type);
+     (Target : Target_Access; Launch_Mode : Launch_Mode_Type);
    --  Change Launch_Mode value
 
    procedure Set_As_Alias
-     (Target         : not null Target_Access;
-      Aliased_Target : Target_Access := null);
+     (Target : not null Target_Access; Aliased_Target : Target_Access := null);
    --  Set the given target as an alias for Aliased_Target.
    --  Aliases are used to temporarily replace a build target
    --  (e.g: "Build All") by another one (e.g: "My Custom Build All").
@@ -468,8 +459,7 @@ package Build_Configurations is
    function Apply_Mode_Args
      (Target   : access Target_Type;
       Mode     : String;
-      Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return Command_Line;
+      Cmd_Line : GNAT.OS_Lib.Argument_List) return Command_Line;
    --  Applies the mode arguments to the command_line passed as argument.
 
    -----------------------
@@ -520,8 +510,8 @@ package Build_Configurations is
    --     PARSER NAMES (optional) is list of output parser names
 
    function Save_Target_To_XML
-     (Registry : Build_Config_Registry_Access;
-      Target   : Target_Access) return Node_Ptr;
+     (Registry : Build_Config_Registry_Access; Target : Target_Access)
+      return Node_Ptr;
    --  Write Target to XML format
 
    function Load_Target_From_XML
@@ -542,7 +532,7 @@ package Build_Configurations is
    --  Return the new Target, or null if the target could not be created.
 
    function Save_All_Targets_To_XML
-     (Registry : Build_Config_Registry_Access;
+     (Registry                        : Build_Config_Registry_Access;
       Save_Even_If_Equals_To_Original : Boolean := False) return Node_Ptr;
    --  Save all targets to a node of the format
    --    <targets>
@@ -551,18 +541,17 @@ package Build_Configurations is
    --    </targets>
 
    procedure Load_All_Targets_From_XML
-     (Registry : Build_Config_Registry_Access;
-      XML      : Node_Ptr);
+     (Registry : Build_Config_Registry_Access; XML : Node_Ptr);
    --  Load multiple targets from XML
    --  See Save_All_Targets_To_XML for the format XML should be in.
 
-   procedure Load_Build_Config_Registry_From_File (
-      Registry : Build_Config_Registry_Access;
-      File : GNATCOLL.VFS.Virtual_File;
+   procedure Load_Build_Config_Registry_From_File
+     (Registry           : Build_Config_Registry_Access;
+      File               : GNATCOLL.VFS.Virtual_File;
       Load_Builder_Modes : Boolean := True;
       Load_Target_Models : Boolean := True;
-      Load_Targets : Boolean := True;
-      From_User : Boolean := True);
+      Load_Targets       : Boolean := True;
+      From_User          : Boolean := True);
    --  fill regitry with all "builder-mode", "target-model", "target" found in
    --  the file
 
@@ -602,8 +591,7 @@ package Build_Configurations is
    --  Iterate to the next target
 
    procedure Revert_Target
-     (Registry : Build_Config_Registry_Access;
-      Target   : String);
+     (Registry : Build_Config_Registry_Access; Target : String);
    --  Revert Target to its original
 
    function Get_Name (Target_Model : Target_Model_Access) return String;
@@ -621,11 +609,12 @@ package Build_Configurations is
    function Get_Icon_Name (Target_Model : Target_Model_Access) return String;
    --  return target model Icon field
 
-   function Get_Switches (Target_Model : Target_Model_Access)
-      return Switches_Editor_Config;
+   function Get_Switches
+     (Target_Model : Target_Model_Access) return Switches_Editor_Config;
    --  return target model Swtiches field
 
-   function Get_Default_Command_Line (Target_Model : Target_Model_Access)
+   function Get_Default_Command_Line
+     (Target_Model : Target_Model_Access)
       return GNAT.OS_Lib.Argument_List_Access;
    --  return target model Default_Command_Line field
 
@@ -638,17 +627,18 @@ package Build_Configurations is
    function Uses_Python (Target_Model : Target_Model_Access) return Boolean;
    --  whether the target should be interpreted as a Python function
 
-   package Model_Map is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
-      Element_Type => Target_Model_Access);
+   package Model_Map is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Unbounded_String,
+        Element_Type => Target_Model_Access);
 
    function First_Model
      (Registry : Build_Config_Registry_Access) return Model_Map.Cursor;
    --  Return the first model element from Registry
 
    function Get_Model_By_Name
-     (Registry : Build_Config_Registry_Access;
-      Model_Name : String) return Target_Model_Access;
+     (Registry : Build_Config_Registry_Access; Model_Name : String)
+      return Target_Model_Access;
    --  Return the target model (given by its name)
 
    End_Of_Build_Name : constant String := "end_of_build";
@@ -658,8 +648,8 @@ private
 
    -- Packages --
 
-   package Target_List is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type    => Target_Access);
+   package Target_List is new
+     Ada.Containers.Doubly_Linked_Lists (Element_Type => Target_Access);
 
    function Contains
      (List : Target_List.List; Key : Unbounded_String) return Boolean;
@@ -667,58 +657,59 @@ private
 
    type Target_Cursor is new Target_List.Cursor;
 
-   package Switches_Map is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
-      Element_Type => Switches_Editor_Config);
+   package Switches_Map is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Unbounded_String,
+        Element_Type => Switches_Editor_Config);
 
    -- Types --
 
    type Target_Model_Type is tagged record
-      Registry             : Build_Config_Registry_Access;
+      Registry : Build_Config_Registry_Access;
       --  Registry that contains given model
 
-      Name                 : Unbounded_String;
+      Name : Unbounded_String;
       --  The name of a target model
 
-      Category             : Unbounded_String;
+      Category : Unbounded_String;
       --  The category of the model, used for purposes of displaying the
       --  models in a hierarchical fashion.
 
-      Description          : Unbounded_String;
+      Description : Unbounded_String;
       --  A one-line description of the target model
 
-      Is_Run               : Boolean := False;
+      Is_Run : Boolean := False;
       --  Whether the model describes "run" actions.
 
-      Help                 : Unbounded_String := Null_Unbounded_String;
+      Help : Unbounded_String := Null_Unbounded_String;
       --  The target model help
 
-      Icon                 : Unbounded_String;
+      Icon : Unbounded_String;
       --  The string contains a stock identifier
 
-      Switches             : Switches_Editor_Config;
+      Switches : Switches_Editor_Config;
       --  The configuration of switches to display in the target
 
       Default_Command_Line : Command_Line;
       --  The command line to use when creating targets of this model
 
-      Persistent_History   : Boolean := True;
+      Persistent_History : Boolean := True;
       --  Keep command line history over GNAT Studio session
 
-      Server               : Server_Type      := Build_Server;
+      Server : Server_Type := Build_Server;
       --  The server used for executing this target
 
-      Uses_Python          : Boolean := False;
+      Uses_Python : Boolean := False;
       --  Whether this target should be interpreted as Python code.
       --  Valid only of GNAT Studio build targets.
 
-      Uses_Shell           : Boolean := False;
+      Uses_Shell : Boolean := False;
       --  If True, the commands inheriting from this model need to be launched
       --  throuhg $SHELL -c "command line".
    end record;
 
    type Build_Config_Registry is tagged record
-      Models  : Model_Map.Map;
+      Models : Model_Map.Map;
       --  Contains all registered models
 
       Targets : Target_List.List;
@@ -730,16 +721,16 @@ private
       Modes : Mode_Map.Map;
       --  The registered modes
 
-      Logger  : Logger_Type := null;
+      Logger : Logger_Type := null;
       --  A procedure to log messages
    end record;
 
    type Target_Type is tagged record
-      Name         : Unbounded_String;
+      Name : Unbounded_String;
       --  The name of the Target. This is the unique name that identifies
       --  the Target: there is only one target for each Name in the Registry.
 
-      Model        : Target_Model_Access;
+      Model : Target_Model_Access;
       --  The model of which the Target is an instance
 
       Command_Line : Command_Lines.Command_Line;
@@ -749,7 +740,7 @@ private
       --  This stores the default command line of the target, the one specified
       --  via XML.
 
-      Properties   : Target_Properties;
+      Properties : Target_Properties;
       --  The set of target properties
    end record;
 
@@ -761,9 +752,13 @@ private
       Mode     : Message_Mode := Error);
    --  Log Message
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Build_Config_Registry'Class, Build_Config_Registry_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Build_Config_Registry'Class,
+        Build_Config_Registry_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.OS_Lib.Argument_List,
+        GNAT.OS_Lib.Argument_List_Access);
 
 end Build_Configurations;

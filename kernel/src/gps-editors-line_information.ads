@@ -21,21 +21,21 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 with Commands;
-with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Messages.References;
-with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
+with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 
 package GPS.Editors.Line_Information is
 
-   type Cursor_Movement_Controller is
-     abstract new Limited_Controlled with null record;
+   type Cursor_Movement_Controller is abstract new Limited_Controlled
+   with null record;
    --  Stops cursor(s) movement while object exists.
 
    type GPS_Editor_Buffer is abstract new Editor_Buffer with null record;
 
    function Freeze_Cursor
-     (This : in out GPS_Editor_Buffer)
-      return Cursor_Movement_Controller'Class is abstract;
+     (This : in out GPS_Editor_Buffer) return Cursor_Movement_Controller'Class
+   is abstract;
    --  Returns an object which blocks cursor movement while exists.
 
    ----------------
@@ -55,16 +55,15 @@ package GPS.Editors.Line_Information is
    ----------------------
 
    type Line_Information_Record is record
-      Text               : Ada.Strings.Unbounded.Unbounded_String :=
+      Text         : Ada.Strings.Unbounded.Unbounded_String :=
         Null_Unbounded_String;
-      Tooltip_Text       : Ada.Strings.Unbounded.Unbounded_String :=
+      Tooltip_Text : Ada.Strings.Unbounded.Unbounded_String :=
         Null_Unbounded_String;
       --  A text to be displayed in a tooltip
 
-      Image              : Ada.Strings.Unbounded.Unbounded_String :=
-        Null_Unbounded_String;
+      Image : Ada.Strings.Unbounded.Unbounded_String := Null_Unbounded_String;
 
-      Category           : Ada.Strings.Unbounded.Unbounded_String :=
+      Category : Ada.Strings.Unbounded.Unbounded_String :=
         Null_Unbounded_String;
       --  When set, the multiactions popup will gather all the clickable
       --  actions belonging to same category, with the specified label above
@@ -72,7 +71,7 @@ package GPS.Editors.Line_Information is
       --  This has no effect for line infos that don't have associated comands
       --  or that are not clickable from the left-side of the editor.
 
-      Message            : GPS.Kernel.Messages.References.Message_Reference;
+      Message : GPS.Kernel.Messages.References.Message_Reference;
       --  Reference to the message that will be put into context of execution
       --  of associated command.
 
@@ -91,10 +90,10 @@ package GPS.Editors.Line_Information is
    type Line_Information_Access is access all Line_Information_Record;
    procedure Free (Info : in out Line_Information_Access);
    --  Free memory associated with Info
-   function To_Line_Information_Access is new Ada.Unchecked_Conversion
-      (System.Address, Line_Information_Access);
-   function To_Address is new Ada.Unchecked_Conversion
-     (Line_Information_Access, System.Address);
+   function To_Line_Information_Access is new
+     Ada.Unchecked_Conversion (System.Address, Line_Information_Access);
+   function To_Address is new
+     Ada.Unchecked_Conversion (Line_Information_Access, System.Address);
 
    type Line_Information_Display_Type is
      (No_Display, On_Line_Number, On_Side_Area);
@@ -107,19 +106,19 @@ package GPS.Editors.Line_Information is
       return Line_Information_Display_Type;
    --  Return the display type of the given line information data.
 
-   type Line_Information_Array is array (Editable_Line_Type range <>)
-     of Line_Information_Record;
+   type Line_Information_Array is
+     array (Editable_Line_Type range <>) of Line_Information_Record;
 
    function Sort_By_Category (A, B : Line_Information_Record) return Boolean
-   is
-     (if A.Category = Null_Unbounded_String then False
-      else A.Category < B.Category);
+   is (if A.Category = Null_Unbounded_String
+       then False
+       else A.Category < B.Category);
    --  Used to sort line information by category
 
-   package Line_Information_Vectors is
-     new Ada.Containers.Vectors (Positive, Line_Information_Record);
-   package Line_Information_Vectors_Sorting is
-     new Line_Information_Vectors.Generic_Sorting (Sort_By_Category);
+   package Line_Information_Vectors is new
+     Ada.Containers.Vectors (Positive, Line_Information_Record);
+   package Line_Information_Vectors_Sorting is new
+     Line_Information_Vectors.Generic_Sorting (Sort_By_Category);
 
    type Line_Information_Data is access Line_Information_Array;
    for Line_Information_Data'Size use Standard'Address_Size;
@@ -128,8 +127,10 @@ package GPS.Editors.Line_Information is
    procedure Free (X : in out Line_Information_Record);
    --  Free memory associated with X
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Line_Information_Array, Line_Information_Data);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Line_Information_Array,
+        Line_Information_Data);
 
    procedure Add_File_Information
      (This       : GPS_Editor_Buffer;
@@ -145,8 +146,8 @@ package GPS.Editors.Line_Information is
       Style      : Style_Access := null;
       Name       : String := "";
       Column_Id  : String := "";
-      Info       : Line_Information_Data := null)
-      return Editor_Mark'Class is abstract;
+      Info       : Line_Information_Data := null) return Editor_Mark'Class
+   is abstract;
    --  Adds one non-editable line to the buffer, starting at line start_line
    --  and contains string text. If Style is specified, use it for
    --  highlighting. Create a mark at beginning of block and return it.
@@ -165,16 +166,16 @@ package GPS.Editors.Line_Information is
    --  Same as above, but doesn't return mark
 
    procedure Remove_Special_Lines
-     (This  : GPS_Editor_Buffer;
-      Mark  : Editor_Mark'Class;
-      Lines : Integer) is abstract;
+     (This : GPS_Editor_Buffer; Mark : Editor_Mark'Class; Lines : Integer)
+   is abstract;
    --  Removes specified number of special lines at the specified mark. It
    --  doesn't delete the mark
 
    function Flatten_Area
      (This      : GPS_Editor_Buffer;
       From_Line : Editable_Line_Type;
-      To_Line   : Editable_Line_Type) return Boolean is abstract;
+      To_Line   : Editable_Line_Type) return Boolean
+   is abstract;
    --  Remove all special lines and unfold all blocks in the given range.
    --  Return True if there was actual unfolding or removal of special
    --  lines.
@@ -183,7 +184,8 @@ package GPS.Editors.Line_Information is
      (This      : GPS_Editor_Buffer;
       Line      : Integer;
       Column    : Positive;
-      Icon_Name : String := "") return Boolean is abstract;
+      Icon_Name : String := "") return Boolean
+   is abstract;
    --  Simulate a click on the editor's side icon identified with the
    --  given Icon_Name and present at the given Line and in the given side
    --  information Column.
@@ -193,9 +195,8 @@ package GPS.Editors.Line_Information is
    --  be executed.
 
    procedure Click_On_Line_Number
-     (This       : GPS_Editor_Buffer;
-      Line       : Integer;
-      Click_Type : Line_Click_Type) is abstract;
+     (This : GPS_Editor_Buffer; Line : Integer; Click_Type : Line_Click_Type)
+   is abstract;
    --  Simulate a click on the line number on the side of the editor.
    --  Click_Type is used to determine if it is a simple click or a click
    --  occurring while the editor is in hyper mode (i.e: when the ctrl key

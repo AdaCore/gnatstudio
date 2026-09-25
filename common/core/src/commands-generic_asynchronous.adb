@@ -23,8 +23,8 @@ package body Commands.Generic_Asynchronous is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (D : in out Generic_Asynchronous_Command) is
+   overriding
+   procedure Primitive_Free (D : in out Generic_Asynchronous_Command) is
    begin
       if D.Data /= null then
          Free (D.Data.all);
@@ -53,9 +53,9 @@ package body Commands.Generic_Asynchronous is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Generic_Asynchronous_Command)
-      return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Generic_Asynchronous_Command) return Command_Return_Type
    is
       Result : Command_Return_Type;
 
@@ -77,8 +77,9 @@ package body Commands.Generic_Asynchronous is
    -- Name --
    ----------
 
-   overriding function Name
-     (Command : access Generic_Asynchronous_Command) return String is
+   overriding
+   function Name (Command : access Generic_Asynchronous_Command) return String
+   is
    begin
       if Command.Description = null then
          return "Generic asynchronous command";
@@ -92,8 +93,7 @@ package body Commands.Generic_Asynchronous is
    --------------
 
    procedure Set_Data
-     (Command : access Generic_Asynchronous_Command;
-      Data    : Data_Type) is
+     (Command : access Generic_Asynchronous_Command; Data : Data_Type) is
    begin
       if Command.Data /= null then
          Free (Command.Data.all);
@@ -106,8 +106,8 @@ package body Commands.Generic_Asynchronous is
    -- Get_Data --
    --------------
 
-   function Get_Data (Command : access Generic_Asynchronous_Command)
-      return Data_Type is
+   function Get_Data
+     (Command : access Generic_Asynchronous_Command) return Data_Type is
    begin
       return Command.Data.all;
    end Get_Data;

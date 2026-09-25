@@ -18,60 +18,61 @@
 with Ada.Strings;
 with Ada.Strings.Fixed;
 
-with Glib;                       use Glib;
+with Glib;              use Glib;
 with Glib.Convert;
-with Glib.Object;                use Glib.Object;
-with Glib_Values_Utils;          use Glib_Values_Utils;
+with Glib.Object;       use Glib.Object;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Event;                  use Gdk.Event;
-with Gdk.Rectangle;              use Gdk.Rectangle;
-with Gdk.Types.Keysyms;          use Gdk.Types, Gdk.Types.Keysyms;
+with Gdk.Event;     use Gdk.Event;
+with Gdk.Rectangle; use Gdk.Rectangle;
+with Gdk.Types.Keysyms;
+use Gdk.Types, Gdk.Types.Keysyms;
 
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Menu;
-with Gtk.Separator_Menu_Item;    use Gtk.Separator_Menu_Item;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Toolbar;
-with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 
 with Gtkada.Handlers;
-with Gtkada.MDI;                 use Gtkada.MDI;
-with Gtkada.Tree_View;           use Gtkada.Tree_View;
+with Gtkada.MDI;       use Gtkada.MDI;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 with VSS.Strings.Conversions;
 
 with Commands;
-with Commands.Interactive;       use Commands.Interactive;
-with Default_Preferences;        use Default_Preferences;
-with Filter_Panels;              use Filter_Panels;
-with Generic_Views;              use Generic_Views;
-with GUI_Utils;                  use GUI_Utils;
-with Histories;                  use Histories;
-with Language_Handlers;          use Language_Handlers;
-with Language.Icons;             use Language.Icons;
-with Tooltips;                   use Tooltips;
+with Commands.Interactive; use Commands.Interactive;
+with Default_Preferences;  use Default_Preferences;
+with Filter_Panels;        use Filter_Panels;
+with Generic_Views;        use Generic_Views;
+with GUI_Utils;            use GUI_Utils;
+with Histories;            use Histories;
+with Language_Handlers;    use Language_Handlers;
+with Language.Icons;       use Language.Icons;
+with Tooltips;             use Tooltips;
 with Unchecked_Deallocation;
 
-with GPS.Editors;                use GPS.Editors;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Search;                 use GPS.Search;
+with GPS.Editors;            use GPS.Editors;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Search;             use GPS.Search;
 
 ------------------
 -- Outline_View --
@@ -95,9 +96,10 @@ package body Outline_View is
    type Outline_View_Module_Access is
      access all Outline_View_Module_Record'Class;
 
-   overriding procedure Destroy (Module : in out Outline_View_Module_Record);
+   overriding
+   procedure Destroy (Module : in out Outline_View_Module_Record);
 
-   Outline_View_Module : Outline_View_Module_Access := null;
+   Outline_View_Module      : Outline_View_Module_Access := null;
    Outline_View_Module_Name : constant String := "Outline_View";
 
    Show_Profile      : Boolean_Preference;
@@ -116,9 +118,9 @@ package body Outline_View is
 
    --  User defined preference values, used as a cache
 
-   Icon_Column           : constant := 0;
+   Icon_Column : constant := 0;
    --  icon representing the entity type
-   Name_Column           : constant := 1;
+   Name_Column : constant := 1;
    --  defining name + profile
 
    --  All the columns below should be hidden
@@ -127,57 +129,62 @@ package body Outline_View is
    Def_Start_Col_Column  : constant := 3;
    --  column of the defining name
 
-   Def_End_Line_Column   : constant := 4;
+   Def_End_Line_Column : constant := 4;
    --  defining name end symbol line
-   Def_End_Col_Column    : constant := 5;
+   Def_End_Col_Column  : constant := 5;
    --  defining name end symbol column
 
-   End_Line_Column       : constant := 6;
+   End_Line_Column : constant := 6;
    --  end of the block
-   Category_Column       : constant := 7;
+   Category_Column : constant := 7;
    --  integer representing the weight of the category
 
-   Id_Column             : constant := 8;
+   Id_Column : constant := 8;
    --  Id defined by QGEN plugin, can be refered by the python API
 
-   Start_Line_Column     : constant := 9;
+   Start_Line_Column : constant := 9;
    --  startof the block
 
    type Outline_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Outline_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
    --  See inherited documentation
 
    type On_Context_Changed is new Context_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : On_Context_Changed;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context);
    --  Called when the context has changed
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  React to changes in the preferences
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_Project_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class);
+   overriding
+   procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
 
    type On_File_Closed is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Closed;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been closed
 
    type On_Buffer_Modified is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Buffer_Modified;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
@@ -185,15 +192,17 @@ package body Outline_View is
    --  editing it.
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been opened
 
    type On_Location_Changed is new File_Location_Hooks_Function
-      with null record;
-   overriding procedure Execute
+   with null record;
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -205,43 +214,46 @@ package body Outline_View is
       Filter : GPS.Search.Search_Pattern_Access := null;
    end record;
    type Outline_Tree_View is access all Outline_Tree_Record'Class;
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Outline_Tree_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Boolean;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
 
    type Outline_View_Record is new Generic_Views.View_Record with record
-      Tree       : Gtkada.Tree_View.Tree_View;
-      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Prev_File  : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Filter     : Tree_Filter;
+      Tree      : Gtkada.Tree_View.Tree_View;
+      File      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Prev_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Filter    : Tree_Filter;
    end record;
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Outline_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Create_Menu
-     (View    : not null access Outline_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Create_Menu
+     (View : not null access Outline_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Outline_View_Record;
       Pattern : in out Search_Pattern_Access);
 
    function Initialize
-     (Outline : access Outline_View_Record'Class)
-     return Gtk.Widget.Gtk_Widget;
+     (Outline : access Outline_View_Record'Class) return Gtk.Widget.Gtk_Widget;
    --  Create a new outline view, and return the focus widget.
 
-   package Outline_Views is new Generic_Views.Simple_Views
-     (Module_Name        => Outline_View_Module_Name,
-      View_Name          => "Outline",
-      Formal_View_Record => Outline_View_Record,
-      Formal_MDI_Child   => Outline_Child_Record,
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Position           => Position_Left,
-      Initialize         => Initialize);
+   package Outline_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => Outline_View_Module_Name,
+        View_Name          => "Outline",
+        Formal_View_Record => Outline_View_Record,
+        Formal_MDI_Child   => Outline_Child_Record,
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Position           => Position_Left,
+        Initialize         => Initialize);
    use Outline_Views;
    subtype Outline_View_Access is Outline_Views.View_Access;
 
@@ -249,8 +261,7 @@ package body Outline_View is
      (Data : in out Callback_Data'Class; Command : String);
 
    procedure Refresh
-     (View     : access Gtk_Widget_Record'Class;
-      Only_LSP : Boolean := False);
+     (View : access Gtk_Widget_Record'Class; Only_LSP : Boolean := False);
    --  Ask the provider to refresh the model.
    --  If Only_LSP, only try to refresh the model using the LSP_Provider:
    --  do nothing if the LSP_Provider doesn't support the current context.
@@ -271,23 +282,21 @@ package body Outline_View is
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Gint;
    --  Insertion sort
 
-   procedure On_Destroy
-     (Self : access Gtk_Widget_Record'Class);
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Called when the outline is destroyed
 
    procedure On_Changed
-     (Outline : not null Outline_View_Access;
-      Context : Selection_Context);
+     (Outline : not null Outline_View_Access; Context : Selection_Context);
    --  Update outline with given Context.
 
    function On_Key_Press
-     (Outline : access GObject_Record'Class;
-      Event   : Gdk_Event_Key) return Boolean;
+     (Outline : access GObject_Record'Class; Event : Gdk_Event_Key)
+      return Boolean;
    --  Handle key events in the outline
 
    function On_Button_Press
-     (Self  : access GObject_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean;
+     (Self : access GObject_Record'Class; Event : Gdk.Event.Gdk_Event_Button)
+      return Boolean;
    --  Handle mouse click in the outline
 
    procedure Location_Changed
@@ -306,9 +315,7 @@ package body Outline_View is
    --  Select the Outline's node corresponding editor context
 
    function Get_Enclosing_Path
-     (Model  : Gtk_Tree_Model;
-      Line   : Natural;
-      Column : Integer)
+     (Model : Gtk_Tree_Model; Line : Natural; Column : Integer)
       return Gtk_Tree_Path;
    --  Find the nearest path enclosing Line and Column
 
@@ -320,8 +327,7 @@ package body Outline_View is
    function Is_Visible
      (Filter         : Tree_Filter;
       Category       : Language_Category;
-      Is_Declaration : Boolean)
-      return Boolean;
+      Is_Declaration : Boolean) return Boolean;
 
    procedure Clear (Outline : access Outline_View_Record'Class);
 
@@ -345,31 +351,34 @@ package body Outline_View is
    -- Tooltips --
    --------------
 
-   type Outline_View_Tooltip_Handler is new Tooltips.Tooltip_Handler with
-   record
+   type Outline_View_Tooltip_Handler is new Tooltips.Tooltip_Handler
+   with record
       Outline : Outline_View_Access;
    end record;
    type Outline_View_Tooltip_Handler_Access is
      access all Outline_View_Tooltip_Handler'Class;
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access Outline_View_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
-   overriding function Show_Tooltip_On_Create_Contents
+   overriding
+   function Show_Tooltip_On_Create_Contents
      (Tooltip : not null access Outline_View_Tooltip_Handler) return Boolean
-   is
-     (if Outline_View_Module /= null
-      then Outline_View_Module.Synchronous_Tooltips
-      else False);
+   is (if Outline_View_Module /= null
+       then Outline_View_Module.Synchronous_Tooltips
+       else False);
 
    -------------
    -- Actions --
    -------------
 
-   type Outline_Collapse_Or_Expand_Command
-     (Is_Expand : Boolean) is new Interactive_Command with null record;
-   overriding function Execute
+   type Outline_Collapse_Or_Expand_Command (Is_Expand : Boolean) is
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Self    : access Outline_Collapse_Or_Expand_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
@@ -379,7 +388,8 @@ package body Outline_View is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access Outline_View_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
@@ -408,12 +418,12 @@ package body Outline_View is
 
          Tooltip.Set_Tip_Area (Area);
          declare
-            Name : constant String := Decode_Name
-              (Get_String (Model, Iter, Name_Column));
+            Name : constant String :=
+              Decode_Name (Get_String (Model, Iter, Name_Column));
          begin
-            Line   := Integer (Get_Int (Model, Iter, Def_Start_Line_Column));
-            Column := Visible_Column
-              (Get_Int (Model, Iter, Def_Start_Col_Column));
+            Line := Integer (Get_Int (Model, Iter, Def_Start_Line_Column));
+            Column :=
+              Visible_Column (Get_Int (Model, Iter, Def_Start_Col_Column));
 
             if Ada.Strings.Fixed.Index (Name, ".") in Name'Range then
                --  Dotted notation, getting the corresponding buffer
@@ -421,11 +431,13 @@ package body Outline_View is
                   Buf          : constant Editor_Buffer'Class :=
                     Tooltip.Outline.Kernel.Get_Buffer_Factory.Get
                       (Tooltip.Outline.File,
-                       Open_View => False, Focus => False);
-                  Def_End_Line : constant Integer := Integer
-                    (Get_Int (Model, Iter, Def_End_Line_Column));
-                  Def_End_Col  : constant Visible_Column := Visible_Column
-                    (Get_Int (Model, Iter, Def_End_Col_Column) - 1);
+                       Open_View => False,
+                       Focus     => False);
+                  Def_End_Line : constant Integer :=
+                    Integer (Get_Int (Model, Iter, Def_End_Line_Column));
+                  Def_End_Col  : constant Visible_Column :=
+                    Visible_Column
+                      (Get_Int (Model, Iter, Def_End_Col_Column) - 1);
                begin
                   --  use the position of the last symbol in the name if
                   --  we did not get the buffer
@@ -438,19 +450,23 @@ package body Outline_View is
                      --  last word in dotted notation
                      declare
                         Loc : constant Editor_Location'Class :=
-                          Buf.New_Location (Def_End_Line, Def_End_Col).
-                          Backward_To_Word_Start;
+                          Buf.New_Location (Def_End_Line, Def_End_Col)
+                            .Backward_To_Word_Start;
                      begin
-                        Line   := Loc.Line;
+                        Line := Loc.Line;
                         Column := Loc.Column;
                      end;
                   end if;
                end;
             end if;
 
-            return Outline_View_Module.Tooltip_Factory
-              (Tooltip.Outline.Kernel,
-               Tooltip.Outline.File, Name, Line, Column);
+            return
+              Outline_View_Module.Tooltip_Factory
+                (Tooltip.Outline.Kernel,
+                 Tooltip.Outline.File,
+                 Name,
+                 Line,
+                 Column);
          end;
       end if;
       return null;
@@ -460,14 +476,15 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Outline_Collapse_Or_Expand_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Outline : constant Outline_View_Access
-        := Outline_Views.Retrieve_View (Kernel);
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
    begin
       if Outline /= null then
          if Self.Is_Expand then
@@ -484,10 +501,10 @@ package body Outline_View is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Outline_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       Outline : constant Outline_View_Access :=
         Outline_View_Access (GPS_MDI_Child (Self).Get_Actual_Widget);
@@ -535,7 +552,8 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : On_Context_Changed;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context)
@@ -561,7 +579,8 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -615,9 +634,7 @@ package body Outline_View is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy
-     (Self : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
       Outline : constant Outline_View_Access := Outline_View_Access (Self);
    begin
       if Outline /= null then
@@ -630,8 +647,7 @@ package body Outline_View is
    ----------------
 
    procedure On_Changed
-     (Outline : not null Outline_View_Access;
-      Context : Selection_Context)
+     (Outline : not null Outline_View_Access; Context : Selection_Context)
    is
       File : Virtual_File;
    begin
@@ -639,8 +655,9 @@ package body Outline_View is
          File := File_Information (Context);
       elsif Outline.File = No_File then
          --  Fallback to last used editor
-         File := Get_Kernel (Context).Get_Buffer_Factory
-           .Get (Open_View => False).File;
+         File :=
+           Get_Kernel (Context).Get_Buffer_Factory.Get (Open_View => False)
+             .File;
       end if;
 
       if File /= No_File and then File /= Outline.File then
@@ -655,8 +672,8 @@ package body Outline_View is
    ------------------
 
    function On_Key_Press
-     (Outline : access GObject_Record'Class;
-      Event   : Gdk_Event_Key) return Boolean
+     (Outline : access GObject_Record'Class; Event : Gdk_Event_Key)
+      return Boolean
    is
       View : constant Outline_View_Access := Outline_View_Access (Outline);
    begin
@@ -673,8 +690,8 @@ package body Outline_View is
    ---------------------
 
    function On_Button_Press
-     (Self  : access GObject_Record'Class;
-      Event : Gdk.Event.Gdk_Event_Button) return Boolean
+     (Self : access GObject_Record'Class; Event : Gdk.Event.Gdk_Event_Button)
+      return Boolean
    is
       View    : constant Outline_View_Access := Outline_View_Access (Self);
       Cell_X  : Gint;
@@ -723,8 +740,13 @@ package body Outline_View is
            or else Event.The_Type = Gdk_2button_Press)
       then
          View.Tree.Get_Path_At_Pos
-           (Gint (Event.X), Gint (Event.Y), Path,
-            Column, Cell_X, Cell_Y, Success);
+           (Gint (Event.X),
+            Gint (Event.Y),
+            Path,
+            Column,
+            Cell_X,
+            Cell_Y,
+            Success);
 
          if Success then
             --  Get the area of the column
@@ -760,8 +782,7 @@ package body Outline_View is
       -- Compare_Name --
       ------------------
 
-      function Compare_Name (Col : Gint) return Gint
-      is
+      function Compare_Name (Col : Gint) return Gint is
          S_A    : constant String := Get_String (Model, A, Col);
          S_B    : constant String := Get_String (Model, B, Col);
          Name_A : constant String := Decode_Name (S_A);
@@ -792,8 +813,7 @@ package body Outline_View is
       -- Compare_Value --
       -------------------
 
-      function Compare_Value (Col : Gint) return Gint
-      is
+      function Compare_Value (Col : Gint) return Gint is
          Val_A : constant Gint := Get_Int (Model, A, Col);
          Val_B : constant Gint := Get_Int (Model, B, Col);
       begin
@@ -897,8 +917,7 @@ package body Outline_View is
             if Path /= Null_Gtk_Tree_Path then
                if Get_Depth (Path) = 1 then
                   --  This is a root node: make its children visible
-                  Dummy :=
-                    Expand_Row (Outline.Tree, Path, Open_All => False);
+                  Dummy := Expand_Row (Outline.Tree, Path, Open_All => False);
                else
                   declare
                      Parent_Iter : constant Gtk_Tree_Iter :=
@@ -927,9 +946,7 @@ package body Outline_View is
    ------------------------
 
    function Get_Enclosing_Path
-     (Model  : Gtk_Tree_Model;
-      Line   : Natural;
-      Column : Integer)
+     (Model : Gtk_Tree_Model; Line : Natural; Column : Integer)
       return Gtk_Tree_Path
    is
       function Safe_Get_Path (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path;
@@ -964,8 +981,7 @@ package body Outline_View is
       -- "<=" --
       ----------
 
-      function "<=" (A, B : Gtk_Tree_Iter) return Boolean
-      is
+      function "<=" (A, B : Gtk_Tree_Iter) return Boolean is
          L_A : constant Gint := Get_Int (Model, A, Start_Line_Column);
          L_B : constant Gint := Get_Int (Model, B, Start_Line_Column);
       begin
@@ -991,8 +1007,7 @@ package body Outline_View is
       -- Tree_Search --
       -----------------
 
-      function Tree_Search (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path
-      is
+      function Tree_Search (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path is
          Cur : Gtk_Tree_Iter := Iter;
       begin
          while Cur /= Null_Iter loop
@@ -1006,8 +1021,8 @@ package body Outline_View is
                if Start_Line <= Line and then Line <= End_Line then
                   --  Check the entity category with a special handling for
                   --  data entities
-                  if Natural (Get_Int (Model, Cur, Category_Column)) /=
-                    Sort_Entities (Data_Category'First)
+                  if Natural (Get_Int (Model, Cur, Category_Column))
+                    /= Sort_Entities (Data_Category'First)
                   then
                      --  Normal entity => look at the children
                      Child_Path := Tree_Search (Children (Model, Cur));
@@ -1036,8 +1051,7 @@ package body Outline_View is
       -- Flat_Search --
       -----------------
 
-      function Flat_Search (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path
-      is
+      function Flat_Search (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path is
          Cur          : Gtk_Tree_Iter := Iter;
          Nearest_Iter : Gtk_Tree_Iter := Null_Iter;
          Smart        : constant Boolean :=
@@ -1052,7 +1066,8 @@ package body Outline_View is
                end if;
             end if;
 
-            exit when Smart
+            exit when
+              Smart
               and then
                 Natural (Get_Int (Model, Cur, Start_Line_Column)) > Line;
 
@@ -1066,8 +1081,7 @@ package body Outline_View is
       -- Group_Search --
       ------------------
 
-      function Group_Search (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path
-      is
+      function Group_Search (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path is
          Cur          : Gtk_Tree_Iter := Iter;
          Nearest_Iter : Gtk_Tree_Iter := Null_Iter;
       begin
@@ -1118,8 +1132,7 @@ package body Outline_View is
    -- Goto_Selected --
    -------------------
 
-   procedure Goto_Selected (Outline : access Outline_View_Record'Class)
-   is
+   procedure Goto_Selected (Outline : access Outline_View_Record'Class) is
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
    begin
@@ -1140,19 +1153,19 @@ package body Outline_View is
               Decode_Name (Get_String (Model, Iter, Name_Column));
             Unique_ID    : constant String :=
               Get_String (Model, Iter, Id_Column);
-            Lang         : constant Language_Access := Get_Language_From_File
-              (Outline.Kernel.Get_Language_Handler, Outline.File);
+            Lang         : constant Language_Access :=
+              Get_Language_From_File
+                (Outline.Kernel.Get_Language_Handler, Outline.File);
          begin
 
             --  Does the language have a special handling for constructs ?
             if Lang.Clicked_On_Construct
-              (File      => Outline.File,
-               Unique_ID => Unique_ID,
-               Name      => Name,
-               Start_Loc => Language.Sloc_T'
-                 (Line   => Start_Line,
-                  Column => Start_Column,
-                  Index  => 0))
+                 (File      => Outline.File,
+                  Unique_ID => Unique_ID,
+                  Name      => Name,
+                  Start_Loc =>
+                    Language.Sloc_T'
+                      (Line => Start_Line, Column => Start_Column, Index => 0))
             then
                return;
             end if;
@@ -1160,18 +1173,20 @@ package body Outline_View is
             --  If not, just go to the editor location corresponding to the
             --  selected node.
             declare
-               Buffer       : constant Editor_Buffer'Class :=
-                 Get (Get_Buffer_Factory (Outline.Kernel).all,
-                      Outline.File, Open_View => True);
-               Editor       : constant Editor_View'Class :=
-                 Current_View (Buffer);
-               Start_Loc    : constant Editor_Location'Class :=
+               Buffer    : constant Editor_Buffer'Class :=
+                 Get
+                   (Get_Buffer_Factory (Outline.Kernel).all,
+                    Outline.File,
+                    Open_View => True);
+               Editor    : constant Editor_View'Class := Current_View (Buffer);
+               Start_Loc : constant Editor_Location'Class :=
                  New_Location (Buffer, Start_Line, Start_Column);
-               End_Loc      : constant Editor_Location'Class :=
+               End_Loc   : constant Editor_Location'Class :=
                  (if End_Line > -1 and then End_Column > -1
                   then New_Location (Buffer, End_Line, End_Column)
-                  else New_Location
-                    (Buffer, Start_Line, Start_Column + Name'Length));
+                  else
+                    New_Location
+                      (Buffer, Start_Line, Start_Column + Name'Length));
             begin
                Editor.Cursor_Goto (Start_Loc, Raise_View => True);
                Select_Text (Buffer, Start_Loc, End_Loc);
@@ -1186,18 +1201,18 @@ package body Outline_View is
 
    procedure Refresh_Filter (Outline : access Outline_View_Record'Class) is
    begin
-      Outline.Filter.Show_Profile      := Show_Profile.Get_Pref;
+      Outline.Filter.Show_Profile := Show_Profile.Get_Pref;
       Outline.Filter.Sort_Alphabetical := Sort_Alphabetical.Get_Pref;
-      Outline.Filter.Sort_Category     := Sort_Category.Get_Pref;
-      Outline.Filter.Editor_Link       := Editor_Link.Get_Pref;
-      Outline.Filter.Show_Decls        := Show_Decls.Get_Pref;
-      Outline.Filter.Show_Types        := Show_Types.Get_Pref;
-      Outline.Filter.Show_Fields       := Show_Fields.Get_Pref;
-      Outline.Filter.Show_Tasks        := Show_Tasks.Get_Pref;
-      Outline.Filter.Show_Objects      := Show_Objects.Get_Pref;
-      Outline.Filter.Show_With         := Show_With.Get_Pref;
-      Outline.Filter.Show_Pragmas      := Show_Pragmas.Get_Pref;
-      Outline.Filter.Flat_View         := Flat_View.Get_Pref;
+      Outline.Filter.Sort_Category := Sort_Category.Get_Pref;
+      Outline.Filter.Editor_Link := Editor_Link.Get_Pref;
+      Outline.Filter.Show_Decls := Show_Decls.Get_Pref;
+      Outline.Filter.Show_Types := Show_Types.Get_Pref;
+      Outline.Filter.Show_Fields := Show_Fields.Get_Pref;
+      Outline.Filter.Show_Tasks := Show_Tasks.Get_Pref;
+      Outline.Filter.Show_Objects := Show_Objects.Get_Pref;
+      Outline.Filter.Show_With := Show_With.Get_Pref;
+      Outline.Filter.Show_Pragmas := Show_Pragmas.Get_Pref;
+      Outline.Filter.Flat_View := Flat_View.Get_Pref;
       Outline.Filter.Group_By_Category := Group_By_Category.Get_Pref;
    end Refresh_Filter;
 
@@ -1207,8 +1222,7 @@ package body Outline_View is
 
    function Get_Id
      (Self : not null access Gtkada.Tree_View.Tree_View_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return String is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return String is
    begin
       if Iter /= Null_Iter then
          declare
@@ -1228,9 +1242,10 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_Project_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class)
+   overriding
+   procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
       Outline : constant Outline_View_Access :=
@@ -1245,7 +1260,8 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Closed;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1266,7 +1282,8 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Buffer_Modified;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1286,7 +1303,8 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -1308,7 +1326,8 @@ package body Outline_View is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Location_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -1324,10 +1343,10 @@ package body Outline_View is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Outline_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       View.Build_Filter
         (Toolbar     => Toolbar,
@@ -1343,12 +1362,13 @@ package body Outline_View is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Outline_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   overriding
+   procedure Create_Menu
+     (View : not null access Outline_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      K        : constant Kernel_Handle := View.Kernel;
-      Sep      : Gtk_Separator_Menu_Item;
+      K   : constant Kernel_Handle := View.Kernel;
+      Sep : Gtk_Separator_Menu_Item;
    begin
       Append_Menu (Menu, K, Show_Profile);
 
@@ -1379,8 +1399,7 @@ package body Outline_View is
    ----------------
 
    function Initialize
-     (Outline : access Outline_View_Record'Class)
-      return Gtk.Widget.Gtk_Widget
+     (Outline : access Outline_View_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       Scrolled    : Gtk_Scrolled_Window;
       Tree_Column : Gtk_Tree_View_Column;
@@ -1400,16 +1419,17 @@ package body Outline_View is
       Outline.Tree := new Outline_Tree_Record;
       Initialize
         (Outline.Tree,
-         Column_Types    => (Icon_Column           => GType_String,
-                             Name_Column           => GType_String,
-                             Def_Start_Line_Column => GType_Int,
-                             Def_Start_Col_Column  => GType_Int,
-                             Def_End_Line_Column   => GType_Int,
-                             Def_End_Col_Column    => GType_Int,
-                             End_Line_Column       => GType_Int,
-                             Category_Column       => GType_Int,
-                             Id_Column             => GType_String,
-                             Start_Line_Column     => GType_Int),
+         Column_Types     =>
+           (Icon_Column           => GType_String,
+            Name_Column           => GType_String,
+            Def_Start_Line_Column => GType_Int,
+            Def_Start_Col_Column  => GType_Int,
+            Def_End_Line_Column   => GType_Int,
+            Def_End_Col_Column    => GType_Int,
+            End_Line_Column       => GType_Int,
+            Category_Column       => GType_Int,
+            Id_Column             => GType_String,
+            Start_Line_Column     => GType_Int),
          Capability_Type  => Filtered_And_Sortable,
          Set_Visible_Func => True);
 
@@ -1471,8 +1491,7 @@ package body Outline_View is
       Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
 
       Setup_Contextual_Menu
-        (Kernel          => Outline.Kernel,
-         Event_On_Widget => Outline.Tree);
+        (Kernel => Outline.Kernel, Event_On_Widget => Outline.Tree);
 
       Tooltip := new Outline_View_Tooltip_Handler;
       Tooltip.Outline := Outline_View_Access (Outline);
@@ -1480,8 +1499,7 @@ package body Outline_View is
 
       Outline.Tree.On_Button_Press_Event
         (On_Button_Press'Access, Slot => Outline);
-      Outline.Tree.On_Key_Press_Event
-        (On_Key_Press'Access, Slot => Outline);
+      Outline.Tree.On_Key_Press_Event (On_Key_Press'Access, Slot => Outline);
 
       Gtkada.Handlers.Widget_Callback.Connect
         (Outline, Signal_Destroy, On_Destroy'Access);
@@ -1506,25 +1524,26 @@ package body Outline_View is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Outline_Tree_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Boolean is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is
    begin
       return
         Iter = Null_Iter
         or else Self.Filter = null
         or else
           Self.Filter.Start
-            (Decode_Name
-               (Self.Model.Get_String (Iter, Name_Column))) /= No_Match;
+            (Decode_Name (Self.Model.Get_String (Iter, Name_Column)))
+          /= No_Match;
    end Is_Visible;
 
    --------------------
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Outline_View_Record;
       Pattern : in out Search_Pattern_Access) is
    begin
@@ -1538,8 +1557,7 @@ package body Outline_View is
    -------------
 
    procedure Refresh
-     (View     : access Gtk_Widget_Record'Class;
-      Only_LSP : Boolean := False)
+     (View : access Gtk_Widget_Record'Class; Only_LSP : Boolean := False)
    is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
    begin
@@ -1552,8 +1570,8 @@ package body Outline_View is
                Outline.Prev_File := Outline.File;
             end if;
             if Outline.File /= No_File then
-               Generic_Views.Abstract_View_Access
-                 (Outline).Set_Activity_Progress_Bar_Visibility (True);
+               Generic_Views.Abstract_View_Access (Outline)
+                 .Set_Activity_Progress_Bar_Visibility (True);
             end if;
 
             Start_Provider
@@ -1580,15 +1598,17 @@ package body Outline_View is
             Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
          begin
             if ID /= "" then
-               Iter := Find_Node
-                 (Model     => Outline.Tree.Model,
-                  Name      => ID,
-                  Column    => Id_Column,
-                  Recursive => True);
+               Iter :=
+                 Find_Node
+                   (Model     => Outline.Tree.Model,
+                    Name      => ID,
+                    Column    => Id_Column,
+                    Recursive => True);
 
                if Iter = Null_Iter then
                   Data.Set_Error_Msg
-                    ("No construct with ID " & ID
+                    ("No construct with ID "
+                     & ID
                      & " has been found in Outline view");
                else
                   Selection := Get_Selection (Outline.Tree);
@@ -1617,93 +1637,110 @@ package body Outline_View is
 
       Kernel.Scripts.Register_Command
         ("select_construct",
-         Params         => (1 => Param ("id")),
-         Class          => Outline_View_Class,
-         Static_Method  => True,
-         Handler        => Command_Handler'Access);
+         Params        => (1 => Param ("id")),
+         Class         => Outline_View_Class,
+         Static_Method => True,
+         Handler       => Command_Handler'Access);
 
       --  Register the Outline view's preferences
 
-      Show_Profile := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-profile",
-         Default => True,
-         Label   => -"Show profiles",
-         Doc     => -"Add procedure/function profile");
-      Sort_Alphabetical := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-alphabetical-sort",
-         Default => True,
-         Label   => -"Sort alphabetically",
-         Doc     =>
-           -("Sort alphabetically, can be combined with Sort by category"));
-      Sort_Category := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-category-sort",
-         Default => True,
-         Label   => -"Sort by category",
-         Doc     =>
-           -("Sort by category, can be combined with Sort alphabetically"));
-      Editor_Link := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-editor-link",
-         Default => True,
-         Label   => -"Dynamic link with editor",
-         Doc     => -"Modify the view selection accordingly to the context.");
-      Show_Decls := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-decls",
-         Default => True,
-         Label   => -"Show specifications");
-      Show_Types := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-types",
-         Default => True,
-         Label   => -"Show types");
-      Show_Tasks := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-tasks",
-         Default => True,
-         Label   => -"Show tasks, entries and protected types");
-      Show_Objects := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-objects",
-         Default => True,
-         Label   => -"Show objects",
-         Doc     =>
-           -("Show the top-level objects: variables,"
-           & " parameters, discriminants."));
-      Show_Fields := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-field",
-         Default => True,
-         Label   => -"Show fields");
-      Show_With := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-with",
-         Default => False,
-         Label   => -"Show with clauses");
-      Show_Pragmas := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-show-pragma",
-         Default => False,
-         Label   => -"Show pragmas");
-      Flat_View := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-flat-view",
-         Default => False,
-         Label   => -"Flat view",
-         Doc     =>
-           -("Flaten the view. Enabling this preference will "
-           & "disable Group names by category"));
-      Group_By_Category := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "outline-group-by-category",
-         Default => False,
-         Label   => -"Group names by category",
-         Doc     => -("Group by category. Enabling this preference will "
-           & "disable Flat view"));
+      Show_Profile :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-profile",
+           Default => True,
+           Label   => -"Show profiles",
+           Doc     => -"Add procedure/function profile");
+      Sort_Alphabetical :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-alphabetical-sort",
+           Default => True,
+           Label   => -"Sort alphabetically",
+           Doc     =>
+             -("Sort alphabetically, can be combined with Sort by category"));
+      Sort_Category :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-category-sort",
+           Default => True,
+           Label   => -"Sort by category",
+           Doc     =>
+             -("Sort by category, can be combined with Sort alphabetically"));
+      Editor_Link :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-editor-link",
+           Default => True,
+           Label   => -"Dynamic link with editor",
+           Doc     =>
+             -"Modify the view selection accordingly to the context.");
+      Show_Decls :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-decls",
+           Default => True,
+           Label   => -"Show specifications");
+      Show_Types :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-types",
+           Default => True,
+           Label   => -"Show types");
+      Show_Tasks :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-tasks",
+           Default => True,
+           Label   => -"Show tasks, entries and protected types");
+      Show_Objects :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-objects",
+           Default => True,
+           Label   => -"Show objects",
+           Doc     =>
+             -("Show the top-level objects: variables,"
+               & " parameters, discriminants."));
+      Show_Fields :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-field",
+           Default => True,
+           Label   => -"Show fields");
+      Show_With :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-with",
+           Default => False,
+           Label   => -"Show with clauses");
+      Show_Pragmas :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-show-pragma",
+           Default => False,
+           Label   => -"Show pragmas");
+      Flat_View :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-flat-view",
+           Default => False,
+           Label   => -"Flat view",
+           Doc     =>
+             -("Flaten the view. Enabling this preference will "
+               & "disable Group names by category"));
+      Group_By_Category :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          (Name    => "outline-group-by-category",
+           Default => False,
+           Label   => -"Group names by category",
+           Doc     =>
+             -("Group by category. Enabling this preference will "
+               & "disable Flat view"));
 
       Register_Action
-        (Kernel, "outline expand all",
+        (Kernel,
+         "outline expand all",
          new Outline_Collapse_Or_Expand_Command (True),
          -"Expand all the rows in the Outline view",
          Icon_Name => "gps-expand-all-symbolic",
-         Category => -"Outline");
+         Category  => -"Outline");
 
       Register_Action
-        (Kernel, "outline collapse all",
+        (Kernel,
+         "outline collapse all",
          new Outline_Collapse_Or_Expand_Command (False),
          -"Collapse all the rows in the Outline view",
          Icon_Name => "gps-collapse-all-symbolic",
-         Category => -"Outline");
+         Category  => -"Outline");
    end Register_Module;
 
    ---------------------------------
@@ -1733,8 +1770,8 @@ package body Outline_View is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Outline_View_Module_Record)
-   is
+   overriding
+   procedure Destroy (Module : in out Outline_View_Module_Record) is
       pragma Unreferenced (Module);
    begin
       --  The module itself will be freed in GPS.Kernel.Modules.Free_Modules
@@ -1754,8 +1791,8 @@ package body Outline_View is
             --  the profile (the full profile can be shown in the tooltips)
             Truncated_Profile : constant String :=
               Profile
-                (Profile'First ..
-                   Integer'Min (Profile'Last, Profile'First + 500));
+                (Profile'First
+                 .. Integer'Min (Profile'Last, Profile'First + 500));
          begin
             return
               Glib.Convert.Escape_Text (Name)
@@ -1772,8 +1809,7 @@ package body Outline_View is
    -- Decode_Name --
    -----------------
 
-   function Decode_Name (S : String) return String
-   is
+   function Decode_Name (S : String) return String is
       I : constant Integer := Ada.Strings.Fixed.Index (S, Span_Header);
    begin
       declare
@@ -1802,7 +1838,8 @@ package body Outline_View is
       return
         S (S'First + I + Span_Header'Length - 1 .. S'Last - Span_End'Length);
    exception
-         when others => return "";
+      when others =>
+         return "";
    end Decode_Profile;
 
    ----------------------
@@ -1825,8 +1862,7 @@ package body Outline_View is
    procedure Clear (Outline : access Outline_View_Record'Class) is
    begin
       declare
-         Is_Refresh : constant Boolean :=
-           Outline.File = Outline.Prev_File;
+         Is_Refresh : constant Boolean := Outline.File = Outline.Prev_File;
          Model      : constant Expansion.Detached_Model :=
            Expansion.Detach_Model_From_View
              (Self           => Outline.Tree,
@@ -1843,9 +1879,7 @@ package body Outline_View is
    -----------------------
 
    function Get_Outline_Model
-     (Kernel  : Kernel_Handle;
-      File    : Virtual_File;
-      Default : Boolean := False)
+     (Kernel : Kernel_Handle; File : Virtual_File; Default : Boolean := False)
       return Outline_Model_Access
    is
       Outline : constant Outline_View_Access :=
@@ -1854,8 +1888,9 @@ package body Outline_View is
       if Default
         and then Outline_View_Module /= null
         and then Outline_View_Module.LSP_Provider /= null
-        and then Outline_View_Module.LSP_Provider.Support_Language
-          (Get_Language_From_File (Get_Language_Handler (Kernel), File))
+        and then
+          Outline_View_Module.LSP_Provider.Support_Language
+            (Get_Language_From_File (Get_Language_Handler (Kernel), File))
       then
          --  This will be handled by the LSP provider
          return null;
@@ -1863,19 +1898,18 @@ package body Outline_View is
 
       if Outline /= null and then Outline.File = File then
          declare
-            Is_Refresh : constant Boolean :=
-              Outline.File = Outline.Prev_File;
-            Model : constant Outline_Model_Access :=
-              new Outline_Model'(Model        =>
-                                   Expansion.Detach_Model_From_View
-                                     (Self           => Outline.Tree,
-                                      Freeze         => True,
-                                      Save_Expansion => Is_Refresh,
-                                      Save_Scrolling => Is_Refresh),
-                                 Current_Path => Null_Gtk_Tree_Path,
-                                 Category_Map =>
-                                   Category_To_Path_Map.Empty_Map,
-                                 Filter       => Outline.Filter);
+            Is_Refresh : constant Boolean := Outline.File = Outline.Prev_File;
+            Model      : constant Outline_Model_Access :=
+              new Outline_Model'
+                (Model        =>
+                   Expansion.Detach_Model_From_View
+                     (Self           => Outline.Tree,
+                      Freeze         => True,
+                      Save_Expansion => Is_Refresh,
+                      Save_Scrolling => Is_Refresh),
+                 Current_Path => Null_Gtk_Tree_Path,
+                 Category_Map => Category_To_Path_Map.Empty_Map,
+                 Filter       => Outline.Filter);
          begin
             Outline.Prev_File := Outline.File;
             return Model;
@@ -1894,8 +1928,7 @@ package body Outline_View is
    function Is_Visible
      (Filter         : Tree_Filter;
       Category       : Language_Category;
-      Is_Declaration : Boolean)
-      return Boolean is
+      Is_Declaration : Boolean) return Boolean is
    begin
       if Category in Type_Category then
          return Filter.Show_Types;
@@ -1907,9 +1940,7 @@ package body Outline_View is
          return Filter.Show_Objects;
       elsif Category in Cat_Task | Cat_Protected then
          return Filter.Show_Tasks;
-      elsif Category in Subprogram_Category
-        and then Is_Declaration
-      then
+      elsif Category in Subprogram_Category and then Is_Declaration then
          return Filter.Show_Decls;
       elsif Category = Cat_With then
          return Filter.Show_With;
@@ -1947,8 +1978,7 @@ package body Outline_View is
       Iter   : Gtk_Tree_Iter;
 
       function Get_Parent
-        (Parent   : Gtk_Tree_Iter;
-         Category : Language_Category)
+        (Parent : Gtk_Tree_Iter; Category : Language_Category)
          return Gtk_Tree_Iter;
 
       ----------------
@@ -1956,8 +1986,7 @@ package body Outline_View is
       ----------------
 
       function Get_Parent
-        (Parent   : Gtk_Tree_Iter;
-         Category : Language_Category)
+        (Parent : Gtk_Tree_Iter; Category : Language_Category)
          return Gtk_Tree_Iter is
       begin
          if Self.Filter.Group_By_Category then
@@ -1971,10 +2000,11 @@ package body Outline_View is
                   Set_And_Clear
                     (Model,
                      Cat_Iter,
-                     (Icon_Column         => As_String
-                        (Stock_From_Category
-                           (False, Visibility_Public, Category)),
-                      Name_Column         =>
+                     (Icon_Column           =>
+                        As_String
+                          (Stock_From_Category
+                             (False, Visibility_Public, Category)),
+                      Name_Column           =>
                         As_String (Category_Name (Category)),
                       Def_Start_Line_Column => As_Int (-1),
                       Def_Start_Col_Column  => As_Int (-1),
@@ -2009,9 +2039,10 @@ package body Outline_View is
          Set_And_Clear
            (Model,
             Iter,
-            (Icon_Column         => As_String
+            (Icon_Column           =>
+               As_String
                  (Stock_From_Category (Is_Declaration, Visibility, Category)),
-             Name_Column         =>
+             Name_Column           =>
                As_String
                  (Encode_Name
                     (VSS.Strings.Conversions.To_UTF_8_String (Name), Profile)),
@@ -2032,8 +2063,7 @@ package body Outline_View is
    -----------------
 
    procedure Move_Cursor
-     (Self     : Outline_Model_Access;
-      Movement : Insertion_Movement) is
+     (Self : Outline_Model_Access; Movement : Insertion_Movement) is
    begin
       if Self.Current_Path /= Null_Gtk_Tree_Path then
          declare
@@ -2041,10 +2071,12 @@ package body Outline_View is
             Iter  : Gtk_Tree_Iter := Model.Get_Iter (Self.Current_Path);
          begin
             case Movement is
-               when Up =>
+               when Up   =>
                   Iter := Model.Parent (Iter);
+
                when Down =>
                   Iter := Model.Children (Iter);
+
                when Stay =>
                   null;
             end case;
@@ -2063,21 +2095,18 @@ package body Outline_View is
    ------------------------
 
    procedure Finished_Computing
-     (Kernel : Kernel_Handle;
-      Status : Computing_Status := Succeeded)
+     (Kernel : Kernel_Handle; Status : Computing_Status := Succeeded)
    is
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
    begin
-      if Outline /= null
-        and then Outline_View_Module /= null
-      then
-         Generic_Views.Abstract_View_Access
-           (Outline).Set_Activity_Progress_Bar_Visibility (False);
+      if Outline /= null and then Outline_View_Module /= null then
+         Generic_Views.Abstract_View_Access (Outline)
+           .Set_Activity_Progress_Bar_Visibility (False);
          case Status is
             when Failed    =>
                Outline.Prev_File := No_File;
-               Outline.File      := No_File;
+               Outline.File := No_File;
 
             when Succeeded =>
 
@@ -2092,8 +2121,9 @@ package body Outline_View is
                        (Outline.Tree.Model,
                         Iter,
                         (Icon_Column           => As_String (String'("")),
-                         Name_Column           => As_String
-                           (Span_Header & "No symbols available" & Span_End),
+                         Name_Column           =>
+                           As_String
+                             (Span_Header & "No symbols available" & Span_End),
                          Def_Start_Line_Column => As_Int (0),
                          Def_Start_Col_Column  => As_Int (0),
                          Def_End_Line_Column   => As_Int (0),
@@ -2114,7 +2144,7 @@ package body Outline_View is
                --  trigger the next python command in the testsuite
                Outline_Loaded_Hook.Run (Kernel, Outline.File);
 
-            when Stopped =>
+            when Stopped   =>
                null;
          end case;
       end if;
@@ -2137,8 +2167,8 @@ package body Outline_View is
    ----------
 
    procedure Free (Self : in out Outline_Model_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
-        (Outline_Model, Outline_Model_Access);
+      procedure Unchecked_Free is new
+        Unchecked_Deallocation (Outline_Model, Outline_Model_Access);
    begin
       if Self /= null then
          Trace (Me, "Free Outline_Access");
@@ -2193,9 +2223,7 @@ package body Outline_View is
    --------------------
 
    procedure Start_Provider
-     (Kernel   : Kernel_Handle;
-      File     : Virtual_File;
-      Only_LSP : Boolean := False)
+     (Kernel : Kernel_Handle; File : Virtual_File; Only_LSP : Boolean := False)
    is
       Lang     : constant Language.Language_Access :=
         Get_Language_From_File (Get_Language_Handler (Kernel), File);

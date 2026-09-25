@@ -29,11 +29,11 @@ with CodePeer.Module;
 package CodePeer.Multiple_Message_Review_Dialogs is
 
    type Message_Review_Dialog_Record is
-     new CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record
-     with private;
+     new CodePeer
+          .Message_Review_Dialogs
+          .Message_Review_Dialog_Record with private;
 
-   type Message_Review_Dialog is
-     access all Message_Review_Dialog_Record'Class;
+   type Message_Review_Dialog is access all Message_Review_Dialog_Record'Class;
 
    procedure Gtk_New
      (Dialog   : out Message_Review_Dialog;
@@ -49,14 +49,14 @@ package CodePeer.Multiple_Message_Review_Dialogs is
 private
 
    type Message_Review_Dialog_Record is
-     new CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record with
-   record
-      Module                : access CodePeer.Module.Module_Id_Record'Class;
+     new CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record
+   with record
+      Module : access CodePeer.Module.Module_Id_Record'Class;
 
       --  All messages list
-      All_Messages_Store    : Gtk.Tree_Store.Gtk_Tree_Store;
-      All_Messages_View     : Gtk.Tree_View.Gtk_Tree_View;
-      Set_Selection         : Boolean := False;
+      All_Messages_Store : Gtk.Tree_Store.Gtk_Tree_Store;
+      All_Messages_View  : Gtk.Tree_View.Gtk_Tree_View;
+      Set_Selection      : Boolean := False;
 
       --  Reviewing messages
       Messages              : CodePeer.Message_Vectors.Vector;
@@ -64,14 +64,15 @@ private
       Audit_Store           : Gtk.Tree_Store.Gtk_Tree_Store;
 
       --  GUI
-      New_Status            : Gtk.Combo_Box.Gtk_Combo_Box;
-      Comment_Buffer        : Gtk.Text_Buffer.Gtk_Text_Buffer;
-      Approved_Entry        : Gtk.GEntry.Gtk_Entry;
-      Next                  : Gtk.Widget.Gtk_Widget;
-      Previous              : Gtk.Widget.Gtk_Widget;
+      New_Status     : Gtk.Combo_Box.Gtk_Combo_Box;
+      Comment_Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
+      Approved_Entry : Gtk.GEntry.Gtk_Entry;
+      Next           : Gtk.Widget.Gtk_Widget;
+      Previous       : Gtk.Widget.Gtk_Widget;
    end record;
 
-   overriding function Get_Messages
+   overriding
+   function Get_Messages
      (Self : not null access constant Message_Review_Dialog_Record)
       return CodePeer.Message_Vectors.Vector;
    --  Returns set of reviewed messages.

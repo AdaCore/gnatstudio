@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with GNAT.Expect;             use GNAT.Expect;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with GNAT.Expect;       use GNAT.Expect;
 
 with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 with GNATCOLL.Python;         use GNATCOLL.Python;
@@ -25,10 +25,10 @@ with GNATCOLL.Scripts;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GNATCOLL.Scripts.Python; use GNATCOLL.Scripts.Python;
 
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Remote;       use GPS.Kernel.Remote;
-with Remote;                  use Remote;
-with String_Utils;            use String_Utils;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Remote;      use GPS.Kernel.Remote;
+with Remote;                 use Remote;
+with String_Utils;           use String_Utils;
 with VSS.Strings.Conversions;
 
 package body GVD.Proc_Utils is
@@ -39,11 +39,13 @@ package body GVD.Proc_Utils is
       --  Index of the start of the command
    end record;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Process_Record, Process_Handle);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Process_Record, Process_Handle);
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Process_Descriptor'Class, Process_Descriptor_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Process_Descriptor'Class,
+        Process_Descriptor_Access);
 
    ---------------------
    -- Close_Processes --
@@ -61,9 +63,7 @@ package body GVD.Proc_Utils is
    ------------------
 
    procedure Next_Process
-     (Handle  : Process_Handle;
-      Info    : out Process_Info;
-      Success : out Boolean)
+     (Handle : Process_Handle; Info : out Process_Info; Success : out Boolean)
    is
       Match : Expect_Match := 0;
    begin
@@ -74,7 +74,7 @@ package body GVD.Proc_Utils is
          declare
             use VSS.Strings.Conversions;
             S     : constant String :=
-                      Strip_CR (Expect_Out (Handle.Descriptor.all));
+              Strip_CR (Expect_Out (Handle.Descriptor.all));
             Index : Integer := S'First;
          begin
             Skip_Blanks (S, Index);
@@ -101,7 +101,8 @@ package body GVD.Proc_Utils is
       end if;
 
    exception
-      when Process_Died => null;
+      when Process_Died =>
+         null;
    end Next_Process;
 
    --------------------
@@ -109,8 +110,7 @@ package body GVD.Proc_Utils is
    --------------------
 
    procedure Open_Processes
-     (Handle : out Process_Handle;
-      Kernel : Kernel_Handle)
+     (Handle : out Process_Handle; Kernel : Kernel_Handle)
    is
       CL      : Arg_List;
       Match   : Expect_Match := 0;
@@ -120,11 +120,7 @@ package body GVD.Proc_Utils is
 
       --  ??? Get_Pref is not fine here, as this can be a remote call
       CL := Parse_String (List_Processes.Get_Pref, Separate_Args);
-      Spawn (Kernel,
-             CL,
-             Debug_Server,
-             Handle.Descriptor,
-             Success);
+      Spawn (Kernel, CL, Debug_Server, Handle.Descriptor, Success);
       if Success then
          --  Read header and discard it
          Expect (Handle.Descriptor.all, Match, "\n");
@@ -133,7 +129,7 @@ package body GVD.Proc_Utils is
             --  Let's keep the column where the command starts
             declare
                S : constant String :=
-                     Strip_CR (Expect_Out (Handle.Descriptor.all));
+                 Strip_CR (Expect_Out (Handle.Descriptor.all));
             begin
                --  GNU/Linux   TIME
                --  Solaris     TIME
@@ -147,16 +143,15 @@ package body GVD.Proc_Utils is
       end if;
 
    exception
-      when Process_Died => null;
+      when Process_Died =>
+         null;
    end Open_Processes;
 
    ----------------
    -- Py_PSUtils --
    ----------------
 
-   function Py_PSUtils
-     (Kernel : Kernel_Handle)
-      return Process_Info_List.List
+   function Py_PSUtils (Kernel : Kernel_Handle) return Process_Info_List.List
    is
       Script    : constant GNATCOLL.Scripts.Scripting_Language :=
         Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
@@ -165,25 +160,27 @@ package body GVD.Proc_Utils is
       Errors    : aliased Boolean;
       Res       : Process_Info_List.List;
    begin
-      Py_Import := Run_Command
-        (Python_Scripting (Script),
-         "import psutil",
-         Need_Output     => False,
-         Console         => null,
-         Show_Command    => False,
-         Hide_Output     => True,
-         Hide_Exceptions => False,
-         Errors          => Errors'Unchecked_Access);
+      Py_Import :=
+        Run_Command
+          (Python_Scripting (Script),
+           "import psutil",
+           Need_Output     => False,
+           Console         => null,
+           Show_Command    => False,
+           Hide_Output     => True,
+           Hide_Exceptions => False,
+           Errors          => Errors'Unchecked_Access);
 
-      Py_List := Run_Command
-        (Python_Scripting (Script),
-         "[p.info for p in psutil.process_iter(['pid', 'name'])]",
-         Need_Output     => True,
-         Console         => null,
-         Show_Command    => False,
-         Hide_Output     => True,
-         Hide_Exceptions => False,
-         Errors          => Errors'Unchecked_Access);
+      Py_List :=
+        Run_Command
+          (Python_Scripting (Script),
+           "[p.info for p in psutil.process_iter(['pid', 'name'])]",
+           Need_Output     => True,
+           Console         => null,
+           Show_Command    => False,
+           Hide_Output     => True,
+           Hide_Exceptions => False,
+           Errors          => Errors'Unchecked_Access);
 
       for I in 0 .. PyObject_Size (Py_List) - 1 loop
          --  Element of the list are dictionnaries indexed by "pid" and "name"
@@ -197,9 +194,9 @@ package body GVD.Proc_Utils is
             --  All these PyObjects are borrowed and should not be decrefed
          begin
             Res.Append
-              (Process_Info'(
-               Id   => To_Virtual_String (PyInt_AsLong (Id)'Image),
-               Name => To_Virtual_String (PyString_AsString (Name))));
+              (Process_Info'
+                 (Id   => To_Virtual_String (PyInt_AsLong (Id)'Image),
+                  Name => To_Virtual_String (PyString_AsString (Name))));
          end;
       end loop;
 

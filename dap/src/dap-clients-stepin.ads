@@ -17,29 +17,28 @@
 
 --  Concrete implementation of the DAP 'stepIn' request
 
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
-with DAP.Requests;        use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.StepIn;
 
 package DAP.Clients.StepIn is
 
    type Step_In_Request (<>) is
-     new DAP.Requests.StepIn.Step_In_DAP_Request
-   with private;
+     new DAP.Requests.StepIn.Step_In_DAP_Request with private;
    type Step_In_Request_Access is access all Step_In_Request'Class;
 
    function Create
      (Kernel      : not null Kernel_Handle;
       Thread_Id   : Integer;
-      Instruction : Boolean)
-      return Step_In_Request_Access;
+      Instruction : Boolean) return Step_In_Request_Access;
    --  Create a new DAP 'stepIn' request.
    --  Thread_Id specifies the thread for which to resume execution for one
    --  step-into (of the given granularity).
    --  If Instruction is True than step over one instruction only.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Step_In_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.StepInResponse;
@@ -55,7 +54,7 @@ package DAP.Clients.StepIn is
 
 private
 
-   type Step_In_Request is
-     new DAP.Requests.StepIn.Step_In_DAP_Request with null record;
+   type Step_In_Request is new DAP.Requests.StepIn.Step_In_DAP_Request
+   with null record;
 
 end DAP.Clients.StepIn;

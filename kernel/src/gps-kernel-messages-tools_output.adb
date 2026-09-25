@@ -16,26 +16,26 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Regpat;
-with GNAT.Strings;                    use GNAT.Strings;
+with GNAT.Strings;          use GNAT.Strings;
 
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with VSS.Strings.Conversions;
 
 with Glib.Convert;
 
-with GPS.Default_Styles;              use GPS.Default_Styles;
-with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
+with GPS.Default_Styles;            use GPS.Default_Styles;
+with GPS.Kernel.Messages.Hyperlink; use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;
-with GPS.Kernel.Messages.Simple;      use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
-with String_Utils;                    use String_Utils;
-with GPS.Editors;                     use GPS.Editors;
-with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
-with GPS.Intl;                        use GPS.Intl;
-with UTF8_Utils;                      use UTF8_Utils;
+with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
+with String_Utils;                  use String_Utils;
+with GPS.Editors;                   use GPS.Editors;
+with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
+with GPS.Intl;                      use GPS.Intl;
+with UTF8_Utils;                    use UTF8_Utils;
 
 package body GPS.Kernel.Messages.Tools_Output is
 
@@ -62,8 +62,8 @@ package body GPS.Kernel.Messages.Tools_Output is
    use Locations_List;
 
    function Extract_Locations
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Message : String) return Locations_List.Vector;
+     (Kernel : not null access Kernel_Handle_Record'Class; Message : String)
+      return Locations_List.Vector;
 
    function Get_Duplicated_Message
      (Container : not null access Messages_Container'Class;
@@ -71,8 +71,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Column    : Basic_Types.Visible_Column_Type;
-      Text      : String)
-      return Message_Access;
+      Text      : String) return Message_Access;
    --  Try to find a message matching the parameters. Will return null if the
    --  message doesn't exist.
 
@@ -94,8 +93,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Column    : Basic_Types.Visible_Column_Type;
-      Text      : String)
-      return Message_Access
+      Text      : String) return Message_Access
    is
       Category_Position : constant Category_Maps.Cursor :=
         Container.Category_Map.Find (Category);
@@ -162,7 +160,7 @@ package body GPS.Kernel.Messages.Tools_Output is
             Loc.First,
             Loc.Last,
             (Editor_Side => True,
-             Locations  => Show_In_Locations,
+             Locations   => Show_In_Locations,
              Editor_Line => False));
       end loop;
 
@@ -174,17 +172,17 @@ package body GPS.Kernel.Messages.Tools_Output is
    ----------------------
 
    function Add_Tool_Message
-     (Container          : not null access Messages_Container'Class;
-      Category           : VSS.Strings.Virtual_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Positive;
-      Column             : Basic_Types.Visible_Column_Type;
-      Text               : String;
-      Importance         : Message_Importance_Type;
-      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
-      Length             : Highlight_Length;
-      Look_For_Secondary : Boolean;
-      Show_In_Locations  : Boolean;
+     (Container                : not null access Messages_Container'Class;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Positive;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Highlight_Category       : GPS.Kernel.Style_Manager.Style_Access;
+      Length                   : Highlight_Length;
+      Look_For_Secondary       : Boolean;
+      Show_In_Locations        : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access
    is
       Locs                   : Locations_List.Vector;
@@ -193,12 +191,13 @@ package body GPS.Kernel.Messages.Tools_Output is
    begin
       --  Looking for existent message
       if Get_Duplicated_Message
-        (Container => Container,
-         Category  => Category,
-         File      => File,
-         Line      => Line,
-         Column    => Column,
-         Text      => Text) /= null
+           (Container => Container,
+            Category  => Category,
+            File      => File,
+            Line      => Line,
+            Column    => Column,
+            Text      => Text)
+        /= null
       then
          return null;
       end if;
@@ -231,17 +230,17 @@ package body GPS.Kernel.Messages.Tools_Output is
             Primary :=
               Message_Access
                 (Create_Simple_Message
-                     (Messages_Container_Access (Container),
-                      Category,
-                      File,
-                      Line,
-                      Column,
-                      VSS.Strings.Conversions.To_Virtual_String (Text),
-                      Importance,
-                      (Editor_Side => True,
-                       Editor_Line => False,
-                       Locations   => Show_In_Locations),
-                      Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
+                   (Messages_Container_Access (Container),
+                    Category,
+                    File,
+                    Line,
+                    Column,
+                    VSS.Strings.Conversions.To_Virtual_String (Text),
+                    Importance,
+                    (Editor_Side => True,
+                     Editor_Line => False,
+                     Locations   => Show_In_Locations),
+                    Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
             Returned := Primary;
 
             if Highlight_Category /= null then
@@ -274,18 +273,18 @@ package body GPS.Kernel.Messages.Tools_Output is
    -------------------------
 
    procedure Create_Tool_Message
-     (Self               : not null access Abstract_Message'Class;
-      Container          : not null access Messages_Container'Class;
-      Category           : VSS.Strings.Virtual_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Positive;
-      Column             : Basic_Types.Visible_Column_Type;
-      Text               : String;
-      Importance         : Message_Importance_Type;
-      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
-      Length             : Highlight_Length;
-      Look_For_Secondary : Boolean;
-      Show_In_Locations  : Boolean;
+     (Self                     : not null access Abstract_Message'Class;
+      Container                : not null access Messages_Container'Class;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Positive;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Highlight_Category       : GPS.Kernel.Style_Manager.Style_Access;
+      Length                   : Highlight_Length;
+      Look_For_Secondary       : Boolean;
+      Show_In_Locations        : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True)
    is
       Locs : Locations_List.Vector;
@@ -331,11 +330,11 @@ package body GPS.Kernel.Messages.Tools_Output is
    -----------------------
 
    function Extract_Locations
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Message : String) return Locations_List.Vector
+     (Kernel : not null access Kernel_Handle_Record'Class; Message : String)
+      return Locations_List.Vector
    is
       SFP     : constant Pattern_Matcher :=
-                  Compile (Secondary_File_Pattern.Get_Pref);
+        Compile (Secondary_File_Pattern.Get_Pref);
       SFF     : constant Natural := Secondary_File_Pattern_Index.Get_Pref;
       SFL     : constant Natural := Secondary_Line_Pattern_Index.Get_Pref;
       SFC     : constant Natural := Secondary_Column_Pattern_Index.Get_Pref;
@@ -357,16 +356,17 @@ package body GPS.Kernel.Messages.Tools_Output is
 
          exit when Matched (0) = No_Match;
 
-         Loc.File := Create
-           (+Message (Matched (SFF).First .. Matched (SFF).Last),
-            Kernel);
+         Loc.File :=
+           Create
+             (+Message (Matched (SFF).First .. Matched (SFF).Last), Kernel);
          Loc.First := Matched (1).First;
-         Loc.Last  := Matched (1).Last;
+         Loc.Last := Matched (1).Last;
 
          if Matched (SFL) /= No_Match then
             declare
-               Val : constant Integer := Safe_Value
-                (Message (Matched (SFL).First .. Matched (SFL).Last), 1);
+               Val : constant Integer :=
+                 Safe_Value
+                   (Message (Matched (SFL).First .. Matched (SFL).Last), 1);
 
             begin
                if Val >= 1 then
@@ -379,11 +379,12 @@ package body GPS.Kernel.Messages.Tools_Output is
 
          if Matched (SFC) /= No_Match then
             declare
-               Val : constant Integer := Safe_Value
-                 (Message (Matched (SFF).First .. Matched (SFF).Last), 1);
+               Val : constant Integer :=
+                 Safe_Value
+                   (Message (Matched (SFF).First .. Matched (SFF).Last), 1);
             begin
                if Val >= 1 then
-                  Loc.Column :=  Visible_Column_Type (Val);
+                  Loc.Column := Visible_Column_Type (Val);
                else
                   Loc.Column := 1;
                end if;
@@ -406,11 +407,12 @@ package body GPS.Kernel.Messages.Tools_Output is
             exit when Matched (0) = No_Match;
 
             Loc.First := Matched (1).First;
-            Loc.Last  := Matched (1).Last;
+            Loc.Last := Matched (1).Last;
 
             declare
-               Val : constant Integer := Safe_Value
-                 (Message (Matched (ASFL).First .. Matched (ASFL).Last), 1);
+               Val : constant Integer :=
+                 Safe_Value
+                   (Message (Matched (ASFL).First .. Matched (ASFL).Last), 1);
 
             begin
                if Val >= 1 then
@@ -434,15 +436,13 @@ package body GPS.Kernel.Messages.Tools_Output is
    --------------------------
 
    procedure Parse_File_Locations
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Text              : Basic_Types.UTF8_String;
-      Category          : VSS.Strings.Virtual_String;
-      Highlight         : Boolean := False;
-      Styles            : Message_Styles_Array :=
-        (others => null);
-      Show_In_Locations : Boolean := True;
-      Allow_Auto_Jump_To_First : Boolean := True)
-   is
+     (Kernel                   : access Kernel_Handle_Record'Class;
+      Text                     : Basic_Types.UTF8_String;
+      Category                 : VSS.Strings.Virtual_String;
+      Highlight                : Boolean := False;
+      Styles                   : Message_Styles_Array := (others => null);
+      Show_In_Locations        : Boolean := True;
+      Allow_Auto_Jump_To_First : Boolean := True) is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
         (Kernel,
@@ -458,7 +458,7 @@ package body GPS.Kernel.Messages.Tools_Output is
          -1,
          -1,
          -1,
-         Show_In_Locations => Show_In_Locations,
+         Show_In_Locations        => Show_In_Locations,
          Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
    end Parse_File_Locations;
 
@@ -536,35 +536,29 @@ package body GPS.Kernel.Messages.Tools_Output is
       end Get_Index;
 
       File_Location : constant GNAT.Regpat.Pattern_Matcher :=
-                        Get_File_Location;
+        Get_File_Location;
       File_Index    : constant Integer :=
-                        Get_Index
-                          (GPS.Kernel.Preferences.File_Pattern_Index,
-                           File_Index_In_Regexp);
+        Get_Index
+          (GPS.Kernel.Preferences.File_Pattern_Index, File_Index_In_Regexp);
       Line_Index    : constant Integer :=
-                        Get_Index
-                         (GPS.Kernel.Preferences.Line_Pattern_Index,
-                          Line_Index_In_Regexp);
+        Get_Index
+          (GPS.Kernel.Preferences.Line_Pattern_Index, Line_Index_In_Regexp);
       Col_Index     : constant Integer :=
-                        Get_Index
-                          (GPS.Kernel.Preferences.Column_Pattern_Index,
-                           Col_Index_In_Regexp);
+        Get_Index
+          (GPS.Kernel.Preferences.Column_Pattern_Index, Col_Index_In_Regexp);
       Msg_Index     : constant Integer :=
-                        Get_Index
-                          (GPS.Kernel.Preferences.Message_Pattern_Index,
-                           Msg_Index_In_Regexp);
+        Get_Index
+          (GPS.Kernel.Preferences.Message_Pattern_Index, Msg_Index_In_Regexp);
       Style_Index   : constant Integer :=
-                        Get_Index
-                          (GPS.Kernel.Preferences.Style_Pattern_Index,
-                           Style_Index_In_Regexp);
-      Info_Index   : constant Integer :=
-                        Get_Index
-                          (GPS.Kernel.Preferences.Info_Pattern_Index,
-                           Info_Index_In_Regexp);
+        Get_Index
+          (GPS.Kernel.Preferences.Style_Pattern_Index, Style_Index_In_Regexp);
+      Info_Index    : constant Integer :=
+        Get_Index
+          (GPS.Kernel.Preferences.Info_Pattern_Index, Info_Index_In_Regexp);
       Warning_Index : constant Integer :=
-                        Get_Index
-                          (GPS.Kernel.Preferences.Warning_Pattern_Index,
-                           Warning_Index_In_Regexp);
+        Get_Index
+          (GPS.Kernel.Preferences.Warning_Pattern_Index,
+           Warning_Index_In_Regexp);
       Matched       : GNAT.Regpat.Match_Array (0 .. Max);
       Start         : Natural := Text'First;
       Last          : Natural;
@@ -582,8 +576,8 @@ package body GPS.Kernel.Messages.Tools_Output is
       function Get_Message (Last : Natural) return Glib.UTF8_String is
       begin
          if Matched (Msg_Index) /= GNAT.Regpat.No_Match then
-            return Text
-              (Matched (Msg_Index).First .. Matched (Msg_Index).Last);
+            return
+              Text (Matched (Msg_Index).First .. Matched (Msg_Index).Last);
          else
             return Text (Last + 1 .. Real_Last);
          end if;
@@ -603,8 +597,7 @@ package body GPS.Kernel.Messages.Tools_Output is
          --  Parse Text line by line and look for file locations
 
          while Start < Text'Last
-           and then (Text (Start) = ASCII.CR
-                     or else Text (Start) = ASCII.LF)
+           and then (Text (Start) = ASCII.CR or else Text (Start) = ASCII.LF)
          loop
             Start := Start + 1;
          end loop;
@@ -622,9 +615,11 @@ package body GPS.Kernel.Messages.Tools_Output is
 
          if Matched (0) /= GNAT.Regpat.No_Match then
             if Matched (Line_Index) /= GNAT.Regpat.No_Match then
-               Line := Integer'Value
-                 (Text
-                    (Matched (Line_Index).First .. Matched (Line_Index).Last));
+               Line :=
+                 Integer'Value
+                   (Text
+                      (Matched (Line_Index).First
+                       .. Matched (Line_Index).Last));
 
                if Line <= 0 then
                   Line := 1;
@@ -636,8 +631,9 @@ package body GPS.Kernel.Messages.Tools_Output is
 
             else
                Last := Matched (Col_Index).Last;
-               Column := Basic_Types.Visible_Column_Type
-                  (Safe_Value (Text (Matched (Col_Index).First .. Last)));
+               Column :=
+                 Basic_Types.Visible_Column_Type
+                   (Safe_Value (Text (Matched (Col_Index).First .. Last)));
 
                if Column <= 0 then
                   Column := 1;
@@ -647,9 +643,9 @@ package body GPS.Kernel.Messages.Tools_Output is
             if Highlight then
                if Matched (Warning_Index) /= GNAT.Regpat.No_Match then
                   Importance := Medium;
-               elsif  Matched (Style_Index) /= GNAT.Regpat.No_Match then
+               elsif Matched (Style_Index) /= GNAT.Regpat.No_Match then
                   Importance := Low;
-               elsif  Matched (Info_Index) /= GNAT.Regpat.No_Match then
+               elsif Matched (Info_Index) /= GNAT.Regpat.No_Match then
                   Importance := Informational;
                else
                   Importance := High;
@@ -668,24 +664,26 @@ package body GPS.Kernel.Messages.Tools_Output is
                   Action.Image := To_Unbounded_String (Get_Icon (Style));
                end if;
 
-               Message := Add_Tool_Message
-                 (Get_Messages_Container (Kernel),
-                  VSS.Strings.Conversions.To_Virtual_String
-                    (Glib.Convert.Escape_Text
+               Message :=
+                 Add_Tool_Message
+                   (Get_Messages_Container (Kernel),
+                    VSS.Strings.Conversions.To_Virtual_String
+                      (Glib.Convert.Escape_Text
                          (VSS.Strings.Conversions.To_UTF_8_String (Category))),
-                  Create
-                    (+Text (Matched
-                     (File_Index).First .. Matched (File_Index).Last),
-                     Kernel),
-                  Positive (Line),
-                  Column,
-                  Get_Message (Last),
-                  Importance,
-                  Style,
-                  Length,
-                  True,
-                  Show_In_Locations,
-                  Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+                    Create
+                      (+Text
+                          (Matched (File_Index).First
+                           .. Matched (File_Index).Last),
+                       Kernel),
+                    Positive (Line),
+                    Column,
+                    Get_Message (Last),
+                    Importance,
+                    Style,
+                    Length,
+                    True,
+                    Show_In_Locations,
+                    Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
                if Message /= null then
                   Action.Tooltip_Text := To_Unbounded_String (Msg);
@@ -712,23 +710,23 @@ package body GPS.Kernel.Messages.Tools_Output is
    -------------------------------------------
 
    procedure Parse_File_Locations_Unknown_Encoding
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
-      Category                : VSS.Strings.Virtual_String;
-      Highlight               : Boolean := False;
-      Highlight_Category      : String := "Builder results";
-      Style_Category          : String := "Style errors";
-      Warning_Category        : String := "Builder warnings";
-      Info_Category           : String := "Compiler info";
-      File_Location_Regexp    : String := "";
-      File_Index_In_Regexp    : Integer := -1;
-      Line_Index_In_Regexp    : Integer := -1;
-      Col_Index_In_Regexp     : Integer := -1;
-      Msg_Index_In_Regexp     : Integer := -1;
-      Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1;
-      Info_Index_In_Regexp    : Integer := -1;
-      Quiet                   : Boolean := False;
+     (Kernel                   : access Kernel_Handle_Record'Class;
+      Text                     : String;
+      Category                 : VSS.Strings.Virtual_String;
+      Highlight                : Boolean := False;
+      Highlight_Category       : String := "Builder results";
+      Style_Category           : String := "Style errors";
+      Warning_Category         : String := "Builder warnings";
+      Info_Category            : String := "Compiler info";
+      File_Location_Regexp     : String := "";
+      File_Index_In_Regexp     : Integer := -1;
+      Line_Index_In_Regexp     : Integer := -1;
+      Col_Index_In_Regexp      : Integer := -1;
+      Msg_Index_In_Regexp      : Integer := -1;
+      Style_Index_In_Regexp    : Integer := -1;
+      Warning_Index_In_Regexp  : Integer := -1;
+      Info_Index_In_Regexp     : Integer := -1;
+      Quiet                    : Boolean := False;
       Allow_Auto_Jump_To_First : Boolean := True)
    is
       pragma Unreferenced (Quiet);
@@ -746,54 +744,50 @@ package body GPS.Kernel.Messages.Tools_Output is
       else
          --   ??? reuse existing styles defined in Style_Manager?
          Styles (High) :=
-           Get_Style_Manager
-             (Kernel_Handle (Kernel)).Get (Highlight_Category);
+           Get_Style_Manager (Kernel_Handle (Kernel)).Get (Highlight_Category);
 
          Styles (Medium) :=
-           Get_Style_Manager
-             (Kernel_Handle (Kernel)).Get (Warning_Category);
+           Get_Style_Manager (Kernel_Handle (Kernel)).Get (Warning_Category);
 
          Styles (Low) :=
-           Get_Style_Manager
-             (Kernel_Handle (Kernel)).Get (Style_Category);
+           Get_Style_Manager (Kernel_Handle (Kernel)).Get (Style_Category);
 
          Styles (Informational) :=
-           Get_Style_Manager
-             (Kernel_Handle (Kernel)).Get (Info_Category);
+           Get_Style_Manager (Kernel_Handle (Kernel)).Get (Info_Category);
 
          if Output = null then
             Parse_File_Locations
-              (Kernel                  => Kernel,
-               Text                    => Text,
-               Category                => Category,
-               Highlight               => Highlight,
-               Styles                  => Styles,
-               File_Location_Regexp    => File_Location_Regexp,
-               File_Index_In_Regexp    => File_Index_In_Regexp,
-               Line_Index_In_Regexp    => Line_Index_In_Regexp,
-               Col_Index_In_Regexp     => Col_Index_In_Regexp,
-               Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
-               Style_Index_In_Regexp   => Style_Index_In_Regexp,
-               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
-               Info_Index_In_Regexp    => Info_Index_In_Regexp,
-               Show_In_Locations       => True,
+              (Kernel                   => Kernel,
+               Text                     => Text,
+               Category                 => Category,
+               Highlight                => Highlight,
+               Styles                   => Styles,
+               File_Location_Regexp     => File_Location_Regexp,
+               File_Index_In_Regexp     => File_Index_In_Regexp,
+               Line_Index_In_Regexp     => Line_Index_In_Regexp,
+               Col_Index_In_Regexp      => Col_Index_In_Regexp,
+               Msg_Index_In_Regexp      => Msg_Index_In_Regexp,
+               Style_Index_In_Regexp    => Style_Index_In_Regexp,
+               Warning_Index_In_Regexp  => Warning_Index_In_Regexp,
+               Info_Index_In_Regexp     => Info_Index_In_Regexp,
+               Show_In_Locations        => True,
                Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
          else
             Parse_File_Locations
-              (Kernel                  => Kernel,
-               Text                    => Output.all,
-               Category                => Category,
-               Highlight               => Highlight,
-               Styles                  => Styles,
-               File_Location_Regexp    => File_Location_Regexp,
-               File_Index_In_Regexp    => File_Index_In_Regexp,
-               Line_Index_In_Regexp    => Line_Index_In_Regexp,
-               Col_Index_In_Regexp     => Col_Index_In_Regexp,
-               Msg_Index_In_Regexp     => Msg_Index_In_Regexp,
-               Style_Index_In_Regexp   => Style_Index_In_Regexp,
-               Warning_Index_In_Regexp => Warning_Index_In_Regexp,
-               Info_Index_In_Regexp    => Info_Index_In_Regexp,
-               Show_In_Locations       => True,
+              (Kernel                   => Kernel,
+               Text                     => Output.all,
+               Category                 => Category,
+               Highlight                => Highlight,
+               Styles                   => Styles,
+               File_Location_Regexp     => File_Location_Regexp,
+               File_Index_In_Regexp     => File_Index_In_Regexp,
+               Line_Index_In_Regexp     => Line_Index_In_Regexp,
+               Col_Index_In_Regexp      => Col_Index_In_Regexp,
+               Msg_Index_In_Regexp      => Msg_Index_In_Regexp,
+               Style_Index_In_Regexp    => Style_Index_In_Regexp,
+               Warning_Index_In_Regexp  => Warning_Index_In_Regexp,
+               Info_Index_In_Regexp     => Info_Index_In_Regexp,
+               Show_In_Locations        => True,
                Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
             Free (Output);
          end if;

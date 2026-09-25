@@ -24,7 +24,8 @@ package body DAP.Requests.Threads is
    -- Write --
    -----------
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Threads_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
@@ -35,7 +36,8 @@ package body DAP.Requests.Threads is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Threads_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -47,8 +49,8 @@ package body DAP.Requests.Threads is
       DAP.Tools.Inputs.Input_ThreadsResponse (Stream, Response, Success);
 
       if Success then
-         Threads_DAP_Request'Class
-           (Self).On_Result_Message (Client, Response, New_Request);
+         Threads_DAP_Request'Class (Self).On_Result_Message
+           (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 
@@ -56,9 +58,8 @@ package body DAP.Requests.Threads is
    -- Set_Seq --
    -------------
 
-   overriding procedure Set_Seq
-     (Self : in out Threads_DAP_Request;
-      Id   : Integer) is
+   overriding
+   procedure Set_Seq (Self : in out Threads_DAP_Request; Id : Integer) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;

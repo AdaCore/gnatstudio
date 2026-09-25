@@ -31,8 +31,8 @@ with Gtk.Widget; use Gtk.Widget;
 
 package GPS.Kernel.Hyper_Mode is
 
-   type Simple_Callback is access procedure
-     (Widget : access Gtk_Widget_Record'Class);
+   type Simple_Callback is
+     access procedure (Widget : access Gtk_Widget_Record'Class);
 
    procedure Enable_Hyper_Mode
      (Kernel              : Kernel_Handle;

@@ -22,10 +22,10 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Indefinite_Ordered_Maps;
 
-with GNAT.Strings;     use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 with Ada_Semantic_Tree.Generics; use Ada_Semantic_Tree.Generics;
-with Ada_Semantic_Tree.Units; use Ada_Semantic_Tree.Units;
+with Ada_Semantic_Tree.Units;    use Ada_Semantic_Tree.Units;
 
 private with Ada.Unchecked_Deallocation;
 
@@ -71,8 +71,7 @@ package Ada_Semantic_Tree.Dependency_Tree is
       Visibility : not null access Visibility_Resolver;
       Filter     : Entity_Filter;
       Use_Wise   : Boolean := True;
-      Is_Partial : Boolean := False)
-      return Entity_Array;
+      Is_Partial : Boolean := False) return Entity_Array;
    --  Return the constructs visible from the location given in parameter.
    --  Visiblity_Resolver will be used and updated during this process. It's
    --  expected to be cleared at the beginning, and will be set to the
@@ -93,16 +92,15 @@ package Ada_Semantic_Tree.Dependency_Tree is
    --  use of the expensive Get_Local_Visible_Constructs, and could even be
    --  used for datababase wide entities. To be investigated.
 
-   Null_Local_Visible_Construct_Iterator : constant
-     Local_Visible_Construct_Iterator;
+   Null_Local_Visible_Construct_Iterator :
+     constant Local_Visible_Construct_Iterator;
 
    function First
      (File       : Structured_File_Access;
       Offset     : String_Index_Type;
       Name       : String;
       Use_Wise   : Boolean := True;
-      Is_Partial : Boolean := False)
-      return Local_Visible_Construct_Iterator;
+      Is_Partial : Boolean := False) return Local_Visible_Construct_Iterator;
    --  Return the first match from the location given in parameter
 
    procedure Next (It : in out Local_Visible_Construct_Iterator);
@@ -150,13 +148,13 @@ private
 
    type Unit_Array_Access is access all Unit_Array;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Unit_Array, Unit_Array_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Unit_Array, Unit_Array_Access);
 
    function Is_Before (Left, Right : Entity_Access) return Boolean;
 
-   package Ordered_Entities is new Ada.Containers.Ordered_Sets
-     (Entity_Access, Is_Before);
+   package Ordered_Entities is new
+     Ada.Containers.Ordered_Sets (Entity_Access, Is_Before);
 
    use Ordered_Entities;
 
@@ -164,7 +162,8 @@ private
 
    procedure Free is new
      Ada.Unchecked_Deallocation
-       (Ordered_Entities.Set, Ordered_Entities_Access);
+       (Ordered_Entities.Set,
+        Ordered_Entities_Access);
 
    type Local_Visible_Construct_Iterator is record
       Units              : Unit_Array_Access;
@@ -178,8 +177,8 @@ private
       It                 : Ordered_Entities.Cursor;
    end record;
 
-   Null_Local_Visible_Construct_Iterator : constant
-     Local_Visible_Construct_Iterator :=
+   Null_Local_Visible_Construct_Iterator :
+     constant Local_Visible_Construct_Iterator :=
        (Units              => null,
         It_In_Units        => 0,
         Name               => null,
@@ -192,8 +191,8 @@ private
 
    type Entity_List_Access is access all Entity_List.List;
 
-   package Named_Entities is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, Entity_List_Access);
+   package Named_Entities is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, Entity_List_Access);
 
    use Named_Entities;
 
@@ -204,7 +203,7 @@ private
    end record;
 
    type Clause_Info is record
-      Entity : Entity_Persistent_Access;
+      Entity          : Entity_Persistent_Access;
       Generic_Context : Persistent_Instance_Info :=
         Null_Persistent_Instance_Info;
    end record;

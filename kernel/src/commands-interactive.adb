@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with Gdk.Event;    use Gdk.Event;
-with GPS.Intl;     use GPS.Intl;
-with GPS.Kernel;   use GPS.Kernel;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Gdk.Event;   use Gdk.Event;
+with GPS.Intl;    use GPS.Intl;
+with GPS.Kernel;  use GPS.Kernel;
 
 package body Commands.Interactive is
 
@@ -27,8 +27,7 @@ package body Commands.Interactive is
    -------------------------
 
    function Create_Null_Context
-     (From : GPS.Kernel.Selection_Context)
-      return Interactive_Command_Context
+     (From : GPS.Kernel.Selection_Context) return Interactive_Command_Context
    is
    begin
       return
@@ -47,12 +46,14 @@ package body Commands.Interactive is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Interactive_Command) return Command_Return_Type is
    begin
-      return Execute
-        (Interactive_Command_Access (Command),
-         Create_Null_Context (No_Context));
+      return
+        Execute
+          (Interactive_Command_Access (Command),
+           Create_Null_Context (No_Context));
    end Execute;
 
    ------------------
@@ -64,12 +65,12 @@ package body Commands.Interactive is
       Context : Interactive_Command_Context) return Command_Access
    is
       C : constant Interactive_Command_Proxy_Access :=
-            new Interactive_Command_Proxy;
+        new Interactive_Command_Proxy;
    begin
-      C.Command := (if Command /= null then
-                       Interactive_Command (Command.all)'Unchecked_Access
-                    else
-                       null);
+      C.Command :=
+        (if Command /= null
+         then Interactive_Command (Command.all)'Unchecked_Access
+         else null);
       C.Context := Context;
 
       if Context.Event /= null then
@@ -83,9 +84,9 @@ package body Commands.Interactive is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Interactive_Command_Proxy) return Command_Return_Type
-   is
+   overriding
+   function Execute
+     (Command : access Interactive_Command_Proxy) return Command_Return_Type is
    begin
       return Execute (Command.Command, Command.Context);
    end Execute;
@@ -94,8 +95,8 @@ package body Commands.Interactive is
    -- Name --
    ----------
 
-   overriding function Name
-     (Command : access Interactive_Command_Proxy) return String is
+   overriding
+   function Name (Command : access Interactive_Command_Proxy) return String is
    begin
       if Command.Context.Label = null then
          --  ??? Could ask the name for the proxied command, but in most
@@ -110,8 +111,8 @@ package body Commands.Interactive is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (X : in out Interactive_Command_Proxy) is
+   overriding
+   procedure Primitive_Free (X : in out Interactive_Command_Proxy) is
    begin
       Free (X.Context);
    end Primitive_Free;
@@ -141,7 +142,8 @@ package body Commands.Interactive is
    -- Progress --
    --------------
 
-   overriding function Progress
+   overriding
+   function Progress
      (Command : access Interactive_Command_Proxy) return Progress_Record is
    begin
       return Progress (Command.Command);
@@ -151,9 +153,10 @@ package body Commands.Interactive is
    -- Set_Progress --
    ------------------
 
-   overriding procedure Set_Progress
-     (Command  : access Interactive_Command_Proxy;
-      Progress : Progress_Record) is
+   overriding
+   procedure Set_Progress
+     (Command : access Interactive_Command_Proxy; Progress : Progress_Record)
+   is
    begin
       Set_Progress (Command.Command, Progress);
    end Set_Progress;
@@ -162,8 +165,8 @@ package body Commands.Interactive is
    -- Undo --
    ----------
 
-   overriding function Undo
-     (Command : access Interactive_Command_Proxy) return Boolean is
+   overriding
+   function Undo (Command : access Interactive_Command_Proxy) return Boolean is
    begin
       return Undo (Command.Command);
    end Undo;
@@ -172,8 +175,8 @@ package body Commands.Interactive is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt
-     (Command : in out Interactive_Command_Proxy) is
+   overriding
+   procedure Interrupt (Command : in out Interactive_Command_Proxy) is
    begin
       Interrupt (Command.Command.all);
    end Interrupt;

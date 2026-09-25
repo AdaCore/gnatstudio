@@ -19,9 +19,9 @@ with Ada.Containers.Vectors;
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 with VSS.Strings;      use VSS.Strings;
 
-with GPS.Kernel;       use GPS.Kernel;
-with DAP.Clients;      use DAP.Clients;
-with DAP.Tools;        use DAP.Tools;
+with GPS.Kernel;  use GPS.Kernel;
+with DAP.Clients; use DAP.Clients;
+with DAP.Tools;   use DAP.Tools;
 
 with DAP.Clients.Variables;
 
@@ -35,8 +35,8 @@ package DAP.Modules.Scripts is
       Data      : DAP.Tools.Variable;
    end record;
 
-   package Variable_Data_Vector is
-     new Ada.Containers.Vectors (Positive, Variable_Data);
+   package Variable_Data_Vector is new
+     Ada.Containers.Vectors (Positive, Variable_Data);
 
    procedure Create_Debugger_Variable_For_Callback
      (Callback : GNATCOLL.Scripts.Subprogram_Type;
@@ -64,8 +64,7 @@ package DAP.Modules.Scripts is
    --  if Rejected is not set) when the request was rejected.
 
    procedure Call_With_String
-     (Callback : not null GNATCOLL.Scripts.Subprogram_Type;
-      Value    : String);
+     (Callback : not null GNATCOLL.Scripts.Subprogram_Type; Value : String);
    --  Calls callback with String as a parameter.
 
 end DAP.Modules.Scripts;

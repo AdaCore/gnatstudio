@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.Widget;                     use Gtk.Widget;
+with Gtk.Enums;  use Gtk.Enums;
+with Gtk.Widget; use Gtk.Widget;
 
 with Basic_Types;                    use Basic_Types;
 with Commands;                       use Commands;
@@ -39,13 +39,13 @@ package body GPS.Kernel.Messages.Shell is
    Class         : constant String := "Message";
    Message_Class : Class_Type;
 
-   Action_Cst        : aliased constant String := "action";
-   Subprogram_Cst    : aliased constant String := "subprogram";
-   Tooltip_Cst       : aliased constant String := "tooltip";
-   Image_Cst         : aliased constant String := "image";
-   Category_Cst      : aliased constant String := "category";
-   File_Cst          : aliased constant String := "file";
-   Hint_Cst          : aliased constant String := "hint";
+   Action_Cst     : aliased constant String := "action";
+   Subprogram_Cst : aliased constant String := "subprogram";
+   Tooltip_Cst    : aliased constant String := "tooltip";
+   Image_Cst      : aliased constant String := "image";
+   Category_Cst   : aliased constant String := "category";
+   File_Cst       : aliased constant String := "file";
+   Hint_Cst       : aliased constant String := "hint";
 
    type Message_Property_Record is new Instance_Property_Record with record
       Message : Message_Reference;
@@ -58,10 +58,12 @@ package body GPS.Kernel.Messages.Shell is
    end record;
    type Subprogram_Command is access all Subprogram_Command_Record'Class;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Subprogram_Command_Record) return Command_Return_Type;
 
-   overriding procedure Primitive_Free (X : in out Subprogram_Command_Record);
+   overriding
+   procedure Primitive_Free (X : in out Subprogram_Command_Record);
 
    -----------------------
    -- Local subprograms --
@@ -75,8 +77,7 @@ package body GPS.Kernel.Messages.Shell is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the Message commands
 
-   procedure Accessors
-     (Data : in out Callback_Data'Class; Command : String);
+   procedure Accessors (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the simple Message commands which simply access the fields
    --  of a message or run parameterless commands
 
@@ -88,8 +89,9 @@ package body GPS.Kernel.Messages.Shell is
      (Script  : not null access Scripting_Language_Record'Class;
       Message : not null Message_Access) return Class_Instance is
    begin
-      return Result : constant Class_Instance :=
-        New_Instance (Script, Message_Class)
+      return
+         Result : constant Class_Instance :=
+           New_Instance (Script, Message_Class)
       do
          Set_Data (Result, Message);
       end return;
@@ -122,10 +124,11 @@ package body GPS.Kernel.Messages.Shell is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Subprogram_Command_Record) return Command_Return_Type
    is
-      C : Callback_Data'Class :=
+      C   : Callback_Data'Class :=
         Create (Get_Script (Command.Sub.all), Arguments_Count => 1);
       Tmp : Boolean;
    begin
@@ -144,8 +147,8 @@ package body GPS.Kernel.Messages.Shell is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-      (X : in out Subprogram_Command_Record) is
+   overriding
+   procedure Primitive_Free (X : in out Subprogram_Command_Record) is
    begin
       Free (X.Sub);
       Root_Command (X).Primitive_Free;
@@ -155,9 +158,7 @@ package body GPS.Kernel.Messages.Shell is
    -- Set_Data --
    --------------
 
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Message  : Message_Access) is
+   procedure Set_Data (Instance : Class_Instance; Message : Message_Access) is
    begin
       Set_Data
         (Instance,
@@ -173,8 +174,9 @@ package body GPS.Kernel.Messages.Shell is
       Prop : Message_Property_Access;
    begin
       if Instance /= No_Class_Instance then
-         Prop := Message_Property_Access
-           (Instance_Property'(Get_Data (Instance, Class)));
+         Prop :=
+           Message_Property_Access
+             (Instance_Property'(Get_Data (Instance, Class)));
 
          if Prop /= null then
             return Prop.Message.Message;
@@ -188,9 +190,7 @@ package body GPS.Kernel.Messages.Shell is
    -- Accessors --
    ---------------
 
-   procedure Accessors
-     (Data : in out Callback_Data'Class; Command : String)
-   is
+   procedure Accessors (Data : in out Callback_Data'Class; Command : String) is
       Inst    : constant Class_Instance := Nth_Arg (Data, 1, Message_Class);
       Message : constant Message_Access := Get_Message (Inst);
    begin
@@ -225,16 +225,14 @@ package body GPS.Kernel.Messages.Shell is
 
       elsif Command = "get_children" then
          declare
-            Nested : constant Message_Array :=
-              Message.Get_Children;
+            Nested : constant Message_Array := Message.Get_Children;
          begin
             Set_Return_Value_As_List (Data);
 
             for J in Nested'Range loop
                Set_Return_Value
                  (Data,
-                  Create_Message_Instance
-                    (Get_Script (Data), Nested (J)));
+                  Create_Message_Instance (Get_Script (Data), Nested (J)));
             end loop;
          end;
 
@@ -243,7 +241,7 @@ package body GPS.Kernel.Messages.Shell is
 
       elsif Command = "set_style" then
          declare
-            Length     : Integer := Nth_Arg (Data, 3, -1);
+            Length : Integer := Nth_Arg (Data, 3, -1);
          begin
             if Length < 0 then
                --  Reuse the previous length of the message
@@ -255,14 +253,13 @@ package body GPS.Kernel.Messages.Shell is
          end;
       elsif Command = "execute_action" then
          declare
-            Action  : constant GPS.Editors.Line_Information.
-              Line_Information_Access := Message.Get_Action;
+            Action  :
+              constant GPS.Editors.Line_Information.Line_Information_Access :=
+                Message.Get_Action;
             Success : Command_Return_Type;
             pragma Unreferenced (Success);
          begin
-            if Action /= null
-              and then Action.Associated_Command /= null
-            then
+            if Action /= null and then Action.Associated_Command /= null then
                Success := Execute (Action.Associated_Command);
             end if;
          end;
@@ -290,9 +287,13 @@ package body GPS.Kernel.Messages.Shell is
               VSS.Strings.Conversions.To_Virtual_String
                 (String'(Nth_Arg (Data, 2)));
             File       : constant Virtual_File :=
-              Get_Data (Nth_Arg
-                        (Data, 3, Get_File_Class (Kernel),
-                         Default => No_Class_Instance, Allow_Null => False));
+              Get_Data
+                (Nth_Arg
+                   (Data,
+                    3,
+                    Get_File_Class (Kernel),
+                    Default    => No_Class_Instance,
+                    Allow_Null => False));
             Line       : constant Natural := Nth_Arg (Data, 4);
             Column     : constant Natural := Nth_Arg (Data, 5);
             Text       : constant String := Nth_Arg (Data, 6);
@@ -325,9 +326,13 @@ package body GPS.Kernel.Messages.Shell is
             Parent  : constant Message_Access :=
               Get_Message (Nth_Arg (Data, 1, Message_Class));
             File    : constant Virtual_File :=
-              Get_Data (Nth_Arg
-                        (Data, 2, Get_File_Class (Kernel),
-                         Default => No_Class_Instance, Allow_Null => False));
+              Get_Data
+                (Nth_Arg
+                   (Data,
+                    2,
+                    Get_File_Class (Kernel),
+                    Default    => No_Class_Instance,
+                    Allow_Null => False));
             Line    : constant Natural := Nth_Arg (Data, 3);
             Column  : constant Natural := Nth_Arg (Data, 4);
             Text    : constant VSS.Strings.Virtual_String :=
@@ -374,22 +379,23 @@ package body GPS.Kernel.Messages.Shell is
                The_Action := Lookup_Action (Kernel, Action_Str);
 
                if The_Action = null then
-                  Set_Error_Msg (Data, "Could not find action for "
-                                 & Action_Str);
+                  Set_Error_Msg
+                    (Data, "Could not find action for " & Action_Str);
                else
                   Command := Command_Access (Get_Command (The_Action));
                   Ref (Command);
                end if;
             end if;
 
-            Action := new Line_Information_Record'
-              (Text                     => Null_Unbounded_String,
-               Tooltip_Text             => To_Unbounded_String (Tooltip_Str),
-               Image                    => To_Unbounded_String (Image_Str),
-               Category                 => <>,
-               Message                  => <>,
-               Associated_Command       => Command,
-               Display_Popup_When_Alone => False);
+            Action :=
+              new Line_Information_Record'
+                (Text                     => Null_Unbounded_String,
+                 Tooltip_Text             => To_Unbounded_String (Tooltip_Str),
+                 Image                    => To_Unbounded_String (Image_Str),
+                 Category                 => <>,
+                 Message                  => <>,
+                 Associated_Command       => Command,
+                 Display_Popup_When_Alone => False);
 
             Message.Set_Action (Action);
          end;
@@ -413,17 +419,18 @@ package body GPS.Kernel.Messages.Shell is
             end if;
 
             Command := new Subprogram_Command_Record;
-            Command.Sub  := Nth_Arg (Data, 2);
+            Command.Sub := Nth_Arg (Data, 2);
             Command.Inst := Nth_Arg (Data, 1, Message_Class);
 
-            Action := new Line_Information_Record'
-              (Text                     => Null_Unbounded_String,
-               Tooltip_Text             => To_Unbounded_String (Tooltip_Str),
-               Image                    => To_Unbounded_String (Image_Str),
-               Category                 => <>,
-               Message                  => <>,
-               Associated_Command       => Command_Access (Command),
-               Display_Popup_When_Alone => False);
+            Action :=
+              new Line_Information_Record'
+                (Text                     => Null_Unbounded_String,
+                 Tooltip_Text             => To_Unbounded_String (Tooltip_Str),
+                 Image                    => To_Unbounded_String (Image_Str),
+                 Category                 => <>,
+                 Message                  => <>,
+                 Associated_Command       => Command_Access (Command),
+                 Display_Popup_When_Alone => False);
 
             Message.Set_Action (Action);
          end;
@@ -433,9 +440,7 @@ package body GPS.Kernel.Messages.Shell is
 
       elsif Command = "set_sort_order_hint" then
          Name_Parameters
-           (Data,
-            (1 => Category_Cst'Access,
-             2 => Hint_Cst'Access));
+           (Data, (1 => Category_Cst'Access, 2 => Hint_Cst'Access));
 
          declare
             Category : constant VSS.Strings.Virtual_String :=
@@ -450,9 +455,7 @@ package body GPS.Kernel.Messages.Shell is
 
       elsif Command = "list" then
          Name_Parameters
-           (Data,
-            (1 => Category_Cst'Access,
-             2 => File_Cst'Access));
+           (Data, (1 => Category_Cst'Access, 2 => File_Cst'Access));
 
          Set_Return_Value_As_List (Data);
 
@@ -462,12 +465,14 @@ package body GPS.Kernel.Messages.Shell is
                 (Nth_Arg (Data, 1, ""));
             File_Inst : constant Class_Instance :=
               Nth_Arg
-                (Data, 2, Get_File_Class (Kernel),
-                 Default => No_Class_Instance, Allow_Null => True);
+                (Data,
+                 2,
+                 Get_File_Class (Kernel),
+                 Default    => No_Class_Instance,
+                 Allow_Null => True);
 
             procedure Add_Messages_For_Category_File
-              (C : VSS.Strings.Virtual_String;
-               F : Virtual_File);
+              (C : VSS.Strings.Virtual_String; F : Virtual_File);
             --  Add to the return list messages for category C and file F.
 
             procedure Add_Messages_For_Category
@@ -480,8 +485,7 @@ package body GPS.Kernel.Messages.Shell is
             ------------------------------------
 
             procedure Add_Messages_For_Category_File
-              (C : VSS.Strings.Virtual_String;
-               F : Virtual_File)
+              (C : VSS.Strings.Virtual_String; F : Virtual_File)
             is
                Messages : constant Message_Array :=
                  Get_Messages (Container, C, F);
@@ -539,7 +543,7 @@ package body GPS.Kernel.Messages.Shell is
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params =>
+         Params  =>
            (Param ("category"),
             Param ("file"),
             Param ("line"),
@@ -547,32 +551,44 @@ package body GPS.Kernel.Messages.Shell is
             Param ("text"),
             Param ("show_on_editor_side", Optional => True),
             Param ("show_in_locations", Optional => True),
-            Param ("allow_auto_jump_to_first",  Optional => True),
-            Param ("importance",  Optional => True)),
+            Param ("allow_auto_jump_to_first", Optional => True),
+            Param ("importance", Optional => True)),
          Handler => Message_Command_Handler'Access,
-         Class => Message_Class);
+         Class   => Message_Class);
 
       Kernel.Scripts.Register_Command
         (Command => "create_nested_message",
          Params  =>
-           (Param ("file"),
-            Param ("line"),
-            Param ("column"),
-            Param ("text")),
+           (Param ("file"), Param ("line"), Param ("column"), Param ("text")),
          Handler => Message_Command_Handler'Access,
          Class   => Message_Class);
 
       Register_Command
-        (Kernel, Destructor_Method, 0, 0, Accessors'Access,
-         Message_Class, False);
+        (Kernel,
+         Destructor_Method,
+         0,
+         0,
+         Accessors'Access,
+         Message_Class,
+         False);
 
       Register_Command
-        (Kernel, "list", 0, 2, Message_Command_Handler'Access,
-         Message_Class, True);
+        (Kernel,
+         "list",
+         0,
+         2,
+         Message_Command_Handler'Access,
+         Message_Class,
+         True);
 
       Register_Command
-        (Kernel, "set_sort_order_hint", 2, 2, Message_Command_Handler'Access,
-         Message_Class, True);
+        (Kernel,
+         "set_sort_order_hint",
+         2,
+         2,
+         Message_Command_Handler'Access,
+         Message_Class,
+         True);
 
       Register_Command
         (Kernel, "get_file", 0, 0, Accessors'Access, Message_Class);
@@ -602,17 +618,25 @@ package body GPS.Kernel.Messages.Shell is
         (Kernel, "remove", 0, 0, Accessors'Access, Message_Class);
 
       Register_Command
-        (Kernel, "set_action", 1, 3, Message_Command_Handler'Access,
+        (Kernel,
+         "set_action",
+         1,
+         3,
+         Message_Command_Handler'Access,
          Message_Class);
 
       Register_Command
-        (Kernel, "set_subprogram", 1, 3, Message_Command_Handler'Access,
+        (Kernel,
+         "set_subprogram",
+         1,
+         3,
+         Message_Command_Handler'Access,
          Message_Class);
 
       Kernel.Scripts.Register_Command
-        (Command       => "cancel_subprogram",
-         Handler       => Message_Command_Handler'Access,
-         Class         => Message_Class);
+        (Command => "cancel_subprogram",
+         Handler => Message_Command_Handler'Access,
+         Class   => Message_Class);
 
       Register_Command
         (Kernel, "set_style", 1, 2, Accessors'Access, Message_Class);

@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;             use Ada.Characters.Handling;
-with Ada.Strings.Fixed;                   use Ada.Strings.Fixed;
-with Ada.Tags;                            use Ada.Tags;
-with GNAT.Strings;                        use GNAT.Strings;
-with GNATCOLL.Utils;                      use GNATCOLL.Utils;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Tags;                use Ada.Tags;
+with GNAT.Strings;            use GNAT.Strings;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
 
 with GVD.Variables.Types.Arrays;          use GVD.Variables.Types.Arrays;
 with GVD.Variables.Types.Classes;         use GVD.Variables.Types.Classes;
@@ -36,16 +36,16 @@ with GPS.Intl;                            use GPS.Intl;
 with GPS.Markers;
 
 with GVD.Consoles;
-with GVD.Dialogs;                         use GVD.Dialogs;
-with GVD.Trace;                           use GVD.Trace;
+with GVD.Dialogs; use GVD.Dialogs;
+with GVD.Trace;   use GVD.Trace;
 
-pragma Warnings
-  (Off, "child unit * hides compilation unit with the same name");
-with Debugger.Base_Gdb.Ada;               use Debugger.Base_Gdb.Ada;
+pragma
+  Warnings (Off, "child unit * hides compilation unit with the same name");
+with Debugger.Base_Gdb.Ada; use Debugger.Base_Gdb.Ada;
 pragma Warnings (On, "child unit * hides compilation unit with the same name");
-with Debugger.Base_Gdb.C;                 use Debugger.Base_Gdb.C;
-with Debugger.Base_Gdb.Cpp;               use Debugger.Base_Gdb.Cpp;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
+with Debugger.Base_Gdb.C;   use Debugger.Base_Gdb.C;
+with Debugger.Base_Gdb.Cpp; use Debugger.Base_Gdb.Cpp;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 package body Debugger.Base_Gdb is
 
@@ -54,16 +54,16 @@ package body Debugger.Base_Gdb is
    No_Definition_Of : constant String := "No definition of";
    --  Another string used to detect undefined commands
 
-   Version_Pattern : constant Pattern_Matcher := Compile
-     ("GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(\.[.0-9]+)?.*");
+   Version_Pattern : constant Pattern_Matcher :=
+     Compile ("GNU gdb( \(GDB\))? ([0-9]+)\.([0-9]+)(\.[.0-9]+)?.*");
    --  To detect the version of GDB
    --
    --  Known formats:
    --    GNU gdb (GDB) 8.1 for GNAT Pro 19.0w
    --    GNU gdb (GDB) 8.1.90.20180726 for GNAT Pro 19.0w
 
-   Set_Register_Pattern : constant Pattern_Matcher := Compile
-     ("^\s*(set)?\s*\$\w+\s+:?=");
+   Set_Register_Pattern : constant Pattern_Matcher :=
+     Compile ("^\s*(set)?\s*\$\w+\s+:?=");
    --  Matching command which changes a register.
    --  Formats:
    --  set $eax := 3
@@ -83,7 +83,8 @@ package body Debugger.Base_Gdb is
       if Process.Current_Line = 0 then
          GVD.Consoles.Get_Debugger_Interactive_Console (Process).Insert
            ("Can't retrieve line information for the debugged executable:"
-            & " ensure that it has proper debug information.", Mode => Error);
+            & " ensure that it has proper debug information.",
+            Mode => Error);
       end if;
    end Should_Have_Current_Line;
 
@@ -150,9 +151,7 @@ package body Debugger.Base_Gdb is
       begin
          if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
             Index := Index + 1;
-            while Num /= 0
-              and then Index <= Type_Str'Last
-            loop
+            while Num /= 0 and then Index <= Type_Str'Last loop
                if Type_Str (Index) = ')' then
                   Num := Num - 1;
                elsif Type_Str (Index) = '(' then
@@ -171,12 +170,17 @@ package body Debugger.Base_Gdb is
    begin
       Repeat_Num := 1;
 
-      Trace (Me, "Internal_Parse_Value for " & Entity & " Tag:" &
-               Standard.Ada.Tags.Expanded_Name (Result.Get_Type'Tag));
+      Trace
+        (Me,
+         "Internal_Parse_Value for "
+         & Entity
+         & " Tag:"
+         & Standard.Ada.Tags.Expanded_Name (Result.Get_Type'Tag));
 
       if Looking_At (Type_Str, Index, "Cannot access memory at address") then
          while Index <= Type_Str'Last loop
-            exit when Type_Str (Index) = ','
+            exit when
+              Type_Str (Index) = ','
               or else Type_Str (Index) = ')'
               or else Type_Str (Index) = '}'
               or else Type_Str (Index) = '>';
@@ -225,8 +229,8 @@ package body Debugger.Base_Gdb is
 
                      if Type_Str (Index) = '"'
                        or else Type_Str (Index) = ']'
-                       or else (Index - 2 > Int
-                                and then Type_Str (Index - 2) = '[')
+                       or else
+                         (Index - 2 > Int and then Type_Str (Index - 2) = '[')
                      then
                         Index := Index + 1;
                      else
@@ -235,16 +239,17 @@ package body Debugger.Base_Gdb is
                   end loop;
 
                else
-                  Skip_Simple_Value (Type_Str, Index,
-                                     Array_Item_Separator => ',',
-                                     End_Of_Array         => Context.Array_End,
-                                     Repeat_Item_Start    => '<');
+                  Skip_Simple_Value
+                    (Type_Str,
+                     Index,
+                     Array_Item_Separator => ',',
+                     End_Of_Array         => Context.Array_End,
+                     Repeat_Item_Start    => '<');
                end if;
 
                GVD_Simple_Type_Access (Result.Get_Type).Set_Value
                  (Trim
-                    (Type_Str (Int .. Index - 1),
-                     Standard.Ada.Strings.Both));
+                    (Type_Str (Int .. Index - 1), Standard.Ada.Strings.Both));
             end;
          else
             GVD_Simple_Type_Access (Result.Get_Type).Set_Value ("<???>");
@@ -294,10 +299,11 @@ package body Debugger.Base_Gdb is
                   Skip_To_Char (Type_Str, Index, '>');
                   Index := Index + 1;
 
-                  --  Also keep string indications (for char* in C)
+               --  Also keep string indications (for char* in C)
                elsif Index < Type_Str'Last - 2
-                 and then (Type_Str (Index + 1) = '"'
-                           or else Type_Str (Index + 1) = ''')
+                 and then
+                   (Type_Str (Index + 1) = '"'
+                    or else Type_Str (Index + 1) = ''')
                then
                   declare
                      Str      : String (1 .. 0);
@@ -305,9 +311,12 @@ package body Debugger.Base_Gdb is
                   begin
                      Index := Index + 1;
                      Parse_Cst_String
-                       (Type_Str, Index, Str, Str_Last,
-                        Backslash_Special => Get_Language_Context
-                          (Lang).Quote_Character = '\');
+                       (Type_Str,
+                        Index,
+                        Str,
+                        Str_Last,
+                        Backslash_Special =>
+                          Get_Language_Context (Lang).Quote_Character = '\');
                      Index := Index - 1;
                   end;
                end if;
@@ -324,9 +333,7 @@ package body Debugger.Base_Gdb is
       elsif Result.Get_Type'Tag = GVD_Array_Type'Tag
         and then GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions = 1
         and then Type_Str'Length /= 0
-        and then
-          (Type_Str (Index) = '"'
-           or else Type_Str (Index) = ''')
+        and then (Type_Str (Index) = '"' or else Type_Str (Index) = ''')
       then
          Dim := GVD_Array_Type_Access (Result.Get_Type).Get_Dimensions (1);
 
@@ -335,8 +342,8 @@ package body Debugger.Base_Gdb is
 
          if Dim.Last < Dim.First then
             declare
-               Tmp : Natural := Index;
-               S   : String (1 .. 0);
+               Tmp    : Natural := Index;
+               S      : String (1 .. 0);
                S_Last : Natural;
             begin
                Parse_Cst_String (Type_Str, Tmp, S, S_Last);
@@ -351,11 +358,14 @@ package body Debugger.Base_Gdb is
 
          begin
             Parse_Cst_String
-              (Type_Str, Index, S, S_Last,
-               Backslash_Special => Get_Language_Context
-               (Lang).Quote_Character = '\');
-            Simple := GVD_Array_Type_Access
-              (Result.Get_Type).Get_Value (Dim.First);
+              (Type_Str,
+               Index,
+               S,
+               S_Last,
+               Backslash_Special =>
+                 Get_Language_Context (Lang).Quote_Character = '\');
+            Simple :=
+              GVD_Array_Type_Access (Result.Get_Type).Get_Value (Dim.First);
 
             if Simple = Empty_GVD_Type_Holder then
                Simple := New_Simple_Type;
@@ -368,8 +378,7 @@ package body Debugger.Base_Gdb is
             --  displaying it.
 
             GVD_Array_Type_Access (Result.Get_Type).Set_Value
-              (Elem_Value => Simple,
-               Elem_Index => 0);
+              (Elem_Value => Simple, Elem_Index => 0);
             GVD_Array_Type_Access (Result.Get_Type).Shrink_Values;
          end;
 
@@ -422,8 +431,9 @@ package body Debugger.Base_Gdb is
               (Lang, Entity, Type_Str, Index, Result, Repeat_Num, Parent);
 
          elsif Type_Str (Index) /= Context.Array_Start
-           or else (Index + 5 <= Type_Str'Last
-                    and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
+           or else
+             (Index + 5 <= Type_Str'Last
+              and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
          then
             --  If we have "(<ref> array (...) of string) @0xbffff5fc: ((null),
             --  (null))", this is still considered as an array, which is
@@ -435,8 +445,7 @@ package body Debugger.Base_Gdb is
                Skip_To_Char (Type_Str, Tmp, ')');
                Skip_To_Char (Type_Str, Tmp, ':');
 
-               if Tmp < Type_Str'Last
-                 and then Type_Str (Tmp .. Tmp + 1) = " ("
+               if Tmp < Type_Str'Last and then Type_Str (Tmp .. Tmp + 1) = " ("
                then
                   Index := Tmp;
                   Parse_Array_Value (Lang, Type_Str, Index, Result);
@@ -447,14 +456,20 @@ package body Debugger.Base_Gdb is
             --  Otherwise, we convert to an access type
 
             if Parent /= Empty_GVD_Type_Holder then
-               Result := GVD_Type_Holder
-                 (Parent.Get_Type.Replace (Result, New_Access_Type));
+               Result :=
+                 GVD_Type_Holder
+                   (Parent.Get_Type.Replace (Result, New_Access_Type));
             else
                Result := New_Access_Type;
             end if;
 
             Internal_Parse_Value
-              (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
+              (Lang,
+               Entity,
+               Type_Str,
+               Index,
+               Result,
+               Repeat_Num,
                Parent => Parent);
 
          else
@@ -483,20 +498,20 @@ package body Debugger.Base_Gdb is
                Close_Parentheses := True;
             end if;
 
-            for J in 1 .. GVD_Record_Type_Access
-              (Result.Get_Type).Num_Fields
+            for J in 1 .. GVD_Record_Type_Access (Result.Get_Type).Num_Fields
             loop
 
                exit when Index >= Type_Str'Last;
 
                --  If we are expecting a field
 
-               if GVD_Record_Type_Access
-                 (Result.Get_Type).Get_Variant_Parts (J) = 0
+               if GVD_Record_Type_Access (Result.Get_Type).Get_Variant_Parts
+                    (J)
+                 = 0
                then
                   declare
-                     V          : GVD_Type_Holder := GVD_Record_Type_Access
-                       (Result.Get_Type).Get_Value (J);
+                     V          : GVD_Type_Holder :=
+                       GVD_Record_Type_Access (Result.Get_Type).Get_Value (J);
                      Repeat_Num : Positive;
                   begin
                      --  Skips '=>'
@@ -511,9 +526,13 @@ package body Debugger.Base_Gdb is
                      Internal_Parse_Value
                        (Lang,
                         Lang.Record_Field_Name
-                          (Entity, GVD_Record_Type_Access
-                               (Result.Get_Type).Get_Field_Name (J)),
-                        Type_Str, Index, V, Repeat_Num,
+                          (Entity,
+                           GVD_Record_Type_Access (Result.Get_Type)
+                             .Get_Field_Name (J)),
+                        Type_Str,
+                        Index,
+                        V,
+                        Repeat_Num,
                         Parent => Result);
                   end;
 
@@ -545,10 +564,11 @@ package body Debugger.Base_Gdb is
                      Repeat_Num : Positive;
                      V          : GVD_Type_Holder;
                   begin
-                     V := GVD_Record_Type_Access
-                       (Result.Get_Type).Find_Variant_Part
-                       (Field    => J,
-                        Contains => Type_Str (Index .. Int - 1));
+                     V :=
+                       GVD_Record_Type_Access (Result.Get_Type)
+                         .Find_Variant_Part
+                            (Field    => J,
+                             Contains => Type_Str (Index .. Int - 1));
 
                      --  Variant part not found. This happens for instance when
                      --  gdb doesn't report the "when others" part of a variant
@@ -571,9 +591,13 @@ package body Debugger.Base_Gdb is
                         Internal_Parse_Value
                           (Lang,
                            Lang.Record_Field_Name
-                             (Entity, GVD_Record_Type_Access
-                               (Result.Get_Type).Get_Field_Name (J)),
-                           Type_Str, Index, V, Repeat_Num,
+                             (Entity,
+                              GVD_Record_Type_Access (Result.Get_Type)
+                                .Get_Field_Name (J)),
+                           Type_Str,
+                           Index,
+                           V,
+                           Repeat_Num,
                            Parent => Result);
                      end if;
                   end;
@@ -583,7 +607,8 @@ package body Debugger.Base_Gdb is
             Skip_Blanks (Type_Str, Index);
 
             --  Skip closing ')', if seen
-            if Close_Parentheses and then Index <= Type_Str'Last
+            if Close_Parentheses
+              and then Index <= Type_Str'Last
               and then Type_Str (Index) = Context.Record_End
             then
                Index := Index + 1;
@@ -597,7 +622,7 @@ package body Debugger.Base_Gdb is
 
       elsif Result.Get_Type.all in GVD_Class_Type'Class then
          declare
-            R : GVD_Type_Holder;
+            R                 : GVD_Type_Holder;
             Close_Parentheses : Boolean := False;
          begin
             --  Skip initial '(' if we are still looking at it (we might not
@@ -610,12 +635,17 @@ package body Debugger.Base_Gdb is
                Close_Parentheses := True;
             end if;
 
-            for A in 1 .. GVD_Class_Type_Access
-              (Result.Get_Type).Get_Num_Ancestors
+            for A in
+              1 .. GVD_Class_Type_Access (Result.Get_Type).Get_Num_Ancestors
             loop
                R := GVD_Class_Type_Access (Result.Get_Type).Get_Ancestor (A);
                Internal_Parse_Value
-                 (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                 (Lang,
+                  Entity,
+                  Type_Str,
+                  Index,
+                  R,
+                  Repeat_Num,
                   Parent => Result);
             end loop;
 
@@ -623,7 +653,12 @@ package body Debugger.Base_Gdb is
             if R /= Empty_GVD_Type_Holder then
                if GVD_Record_Type_Access (R.Get_Type).Num_Fields /= 0 then
                   Internal_Parse_Value
-                    (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                    (Lang,
+                     Entity,
+                     Type_Str,
+                     Index,
+                     R,
+                     Repeat_Num,
                      Parent => Result);
                end if;
             end if;
@@ -631,7 +666,8 @@ package body Debugger.Base_Gdb is
             Skip_Blanks (Type_Str, Index);
 
             --  Skip closing ')', if seen
-            if Close_Parentheses and then Index <= Type_Str'Last
+            if Close_Parentheses
+              and then Index <= Type_Str'Last
               and then Type_Str (Index) = Context.Record_End
             then
                Index := Index + 1;
@@ -640,8 +676,9 @@ package body Debugger.Base_Gdb is
 
          if Entity /= "" then
             declare
-               Cmd : constant String := GVD_Class_Type_Access
-                 (Result.Get_Type).Get_Value_Command (Entity);
+               Cmd : constant String :=
+                 GVD_Class_Type_Access (Result.Get_Type).Get_Value_Command
+                   (Entity);
             begin
                if Cmd /= "" then
                   GVD_Class_Type_Access (Result.Get_Type).Set_Value
@@ -660,10 +697,9 @@ package body Debugger.Base_Gdb is
       Skip_Blanks (Type_Str, Index);
       if Looking_At (Type_Str, Index, "<repeats ") then
          Index := Index + 9;
-         Parse_Num (Type_Str,
-                    Index,
-                    Long_Integer (Repeat_Num));
+         Parse_Num (Type_Str, Index, Long_Integer (Repeat_Num));
          Index := Index + 7;  --  skips " times>"
+
       end if;
    end Internal_Parse_Value;
 
@@ -671,10 +707,9 @@ package body Debugger.Base_Gdb is
    -- Is_Set_Register_Command --
    -----------------------------
 
-   overriding function Is_Set_Register_Command
-     (Debugger : access Base_Gdb_Debugger;
-      Command  : String)
-      return Boolean
+   overriding
+   function Is_Set_Register_Command
+     (Debugger : access Base_Gdb_Debugger; Command : String) return Boolean
    is
       pragma Unreferenced (Debugger);
    begin
@@ -685,8 +720,7 @@ package body Debugger.Base_Gdb is
    -- Parse_GDB_Version --
    -----------------------
 
-   function Parse_GDB_Version (Output : String) return Version_Number
-   is
+   function Parse_GDB_Version (Output : String) return Version_Number is
       Matched : Match_Array (0 .. 4);
 
    begin
@@ -706,13 +740,11 @@ package body Debugger.Base_Gdb is
    -----------------------------
 
    procedure Prepare_Target_For_Send
-     (Debugger : access Base_Gdb_Debugger;
-      Cmd      : String)
+     (Debugger : access Base_Gdb_Debugger; Cmd : String)
    is
       J, K : Integer;
    begin
-      if Cmd'Length > 10
-        and then Cmd (Cmd'First .. Cmd'First + 6) = "target "
+      if Cmd'Length > 10 and then Cmd (Cmd'First .. Cmd'First + 6) = "target "
       then
          J := Cmd'First + 7;
          Skip_Blanks (Cmd, J);
@@ -762,9 +794,7 @@ package body Debugger.Base_Gdb is
       end if;
 
       for Item of List loop
-         if Item.Num /= Num
-           and then Similar (Item.Location, Location)
-         then
+         if Item.Num /= Num and then Similar (Item.Location, Location) then
             declare
                List : Breakpoint_Identifier_Lists.List;
             begin
@@ -781,17 +811,17 @@ package body Debugger.Base_Gdb is
    -- Set_Register --
    ------------------
 
-   overriding procedure Set_Register
-     (Debugger : access Base_Gdb_Debugger;
-      Name     : String;
-      Value    : String) is
+   overriding
+   procedure Set_Register
+     (Debugger : access Base_Gdb_Debugger; Name : String; Value : String) is
    begin
       Debugger.Send
-        ("$" & Name &
-         (if To_Lower (Debugger.Get_Language.Get_Name) = "ada"
+        ("$"
+         & Name
+         & (if To_Lower (Debugger.Get_Language.Get_Name) = "ada"
             then " := "
-            else " = ") &
-           Value);
+            else " = ")
+         & Value);
    end Set_Register;
 
    -------------------------
@@ -807,9 +837,9 @@ package body Debugger.Base_Gdb is
    begin
       if Flag = Indeterminate then
          declare
-            S : constant String := Debugger_Root'Class
-              (Debugger.all).Send_And_Get_Clean_Output
-              ("help " & Command, Mode => GVD.Types.Internal);
+            S : constant String :=
+              Debugger_Root'Class (Debugger.all).Send_And_Get_Clean_Output
+                ("help " & Command, Mode => GVD.Types.Internal);
          begin
             if Starts_With (S, Undefined_Command)
               or else Starts_With (S, No_Definition_Of)
@@ -854,8 +884,8 @@ package body Debugger.Base_Gdb is
       --  useful for the automatic testsuite
 
       declare
-         Result : constant String := Debugger_Question_Action_Hook.Run
-            (Process.Kernel, Process, Str);
+         Result : constant String :=
+           Debugger_Question_Action_Hook.Run (Process.Kernel, Process, Str);
       begin
          if Result /= "" then
             Debugger.Send
@@ -910,7 +940,7 @@ package body Debugger.Base_Gdb is
       while Last < Index loop
          --  Skips the choice number ("[n] ")
          Skip_To_Char (Str, Last, ']');
-         Last  := Last + 1;
+         Last := Last + 1;
          while Str (Last) = ' ' loop
             Last := Last + 1;
          end loop;
@@ -925,20 +955,13 @@ package body Debugger.Base_Gdb is
          end loop;
 
          Num := Num + 1;
-         Choices (Num).Choice :=
-           new String'(Natural'Image (Num - 1));
-         Choices (Num).Description :=
-           new String'(Str (First .. Last - 1));
+         Choices (Num).Choice := new String'(Natural'Image (Num - 1));
+         Choices (Num).Description := new String'(Str (First .. Last - 1));
 
          Skip_To_Char (Str, Last, '[');
       end loop;
 
-      Gtk_New
-        (Dialog,
-         Process.Kernel,
-         Debugger,
-         True,
-         Choices (1 .. Num));
+      Gtk_New (Dialog, Process.Kernel, Debugger, True, Choices (1 .. Num));
       Dialog.Show_All;
 
       for J in 1 .. Num loop
@@ -973,16 +996,17 @@ package body Debugger.Base_Gdb is
       --  useful for the automatic testsuite
 
       declare
-         Output : constant String := Debugger_Question_Action_Hook.Run
-           (Process.Kernel, Process, Str);
+         Output : constant String :=
+           Debugger_Question_Action_Hook.Run (Process.Kernel, Process, Str);
       begin
          if Output /= "" then
-            Send (Debugger,
-                  Output & Gdb_Answer_Suffix,
-                  Mode            => Internal,
-                  Empty_Buffer    => False,
-                  Force_Send      => True,
-                  Wait_For_Prompt => False);
+            Send
+              (Debugger,
+               Output & Gdb_Answer_Suffix,
+               Mode            => Internal,
+               Empty_Buffer    => False,
+               Force_Send      => True,
+               Wait_For_Prompt => False);
             return;
          end if;
       end;

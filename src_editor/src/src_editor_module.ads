@@ -20,40 +20,40 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Unchecked_Deallocation;
 
-with Basic_Types;                 use Basic_Types;
+with Basic_Types;              use Basic_Types;
 with Commands.Controls;
 with GNAT.Expect;
 with GNAT.Strings;
-with GNATCOLL.JSON;               use GNATCOLL.JSON;
+with GNATCOLL.JSON;            use GNATCOLL.JSON;
 with GNATCOLL.Projects;
-with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
-with GPS.Editors;                 use GPS.Editors;
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
-with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
-with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
-with GPS.Kernel;                  use GPS.Kernel;
-with GPS.Markers;                 use GPS.Markers;
-with Glib;                        use Glib;
+with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Editors;              use GPS.Editors;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Markers;              use GPS.Markers;
+with Glib;                     use Glib;
 with Glib.Object;
-with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
-with Gtk.Text_View;               use Gtk.Text_View;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtkada.MDI;                  use Gtkada.MDI;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.MDI;               use Gtkada.MDI;
 with Language;
 with Src_Contexts;
 with Src_Editor_Box;
-with Src_Editor_Box.Tooltips;     use Src_Editor_Box.Tooltips;
-with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Src_Editor_Box.Tooltips;  use Src_Editor_Box.Tooltips;
+with Src_Editor_Buffer;        use Src_Editor_Buffer;
 with System;
-with XML_Utils;                   use XML_Utils;
+with XML_Utils;                use XML_Utils;
 with Pango.Font;
 
 package Src_Editor_Module is
 
-   Src_Editor_Module_Id : Module_ID;
+   Src_Editor_Module_Id   : Module_ID;
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
    Search_Result_Highlighting : constant String := "Search Results";
@@ -65,14 +65,14 @@ package Src_Editor_Module is
    -- Module-specific graphical objects --
    ---------------------------------------
 
-   Hide_Block_Pixbuf    : constant String := "gps-fold-block-symbolic";
-   Unhide_Block_Pixbuf  : constant String := "gps-unfold-block-symbolic";
+   Hide_Block_Pixbuf   : constant String := "gps-fold-block-symbolic";
+   Unhide_Block_Pixbuf : constant String := "gps-unfold-block-symbolic";
 
    File_Pixbuf          : constant String := "gps-emblem-file-unmodified";
    File_Modified_Pixbuf : constant String := "gps-emblem-file-modified";
    File_Unsaved_Pixbuf  : constant String := "gps-emblem-file-unsaved";
 
-   Locked_Suffix        : constant String := "-locked";
+   Locked_Suffix : constant String := "-locked";
 
    -----------------------
    -- Local subprograms --
@@ -90,8 +90,7 @@ package Src_Editor_Module is
 
    function Find_Current_Editor
      (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Only_If_Focused : Boolean := False)
-      return Gtkada.MDI.MDI_Child;
+      Only_If_Focused : Boolean := False) return Gtkada.MDI.MDI_Child;
    --  Return the source editor that has currently the focus in the MDI.
    --  If the focus in the MDI is not set on a source editor, then the top most
    --  editor is returned if Only_If_Focused is False, or null when it's True.
@@ -99,13 +98,13 @@ package Src_Editor_Module is
    procedure For_All_Views
      (Kernel   : not null access Kernel_Handle_Record'Class;
       File     : Virtual_File;
-      Callback : not null access procedure
-        (Child : not null access GPS_MDI_Child_Record'Class));
+      Callback :
+        not null access procedure
+          (Child : not null access GPS_MDI_Child_Record'Class));
    --  For all mdi children corresponding to an editor showing File
    --  (if File is No_File, returns all source editors).
 
-   procedure Cancel_Activity_Bar
-     (Kernel : Kernel_Handle; File : Virtual_File);
+   procedure Cancel_Activity_Bar (Kernel : Kernel_Handle; File : Virtual_File);
    --  Remove the activity bar for the editor opened for the given file,
    --  if any.
 
@@ -145,8 +144,8 @@ package Src_Editor_Module is
    --  actions (e.g: Go to declaration), clicks on the Locations view etc.
 
    function Get
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return Source_Buffer;
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+      return Source_Buffer;
    --  Return the editor for File
 
    function Get_Filename
@@ -163,8 +162,7 @@ package Src_Editor_Module is
    --  Return null if no such editor is found in the MDI.
 
    function Get_Source_Box_From_MDI
-     (Child : Gtkada.MDI.MDI_Child)
-      return Src_Editor_Box.Source_Editor_Box;
+     (Child : Gtkada.MDI.MDI_Child) return Src_Editor_Box.Source_Editor_Box;
    --  Return the source editor contained in a MDI_Child. Constraint_Error if
    --  Child doesn't contain an editor. null is returned Child is null.
 
@@ -205,7 +203,7 @@ package Src_Editor_Module is
    --  Will do nothing while executing the current global command.
 
    function Execute_Global_Command
-     return Standard.Commands.Command_Return_Type;
+      return Standard.Commands.Command_Return_Type;
    --  Safe way to execute the global command if any.
 
    --------------------------------
@@ -238,14 +236,15 @@ package Src_Editor_Module is
    -- Hyper Mode --
    ----------------
 
-   type Hyper_Mode_Click_Callback_Type is access procedure
-     (Kernel      : not null Kernel_Handle;
-      Buffer      : GPS.Editors.Editor_Buffer'Class;
-      Project     : GNATCOLL.Projects.Project_Type;
-      Line        : Editable_Line_Type;
-      Column      : Visible_Column_Type;
-      Entity_Name : String;
-      Alternate   : Boolean);
+   type Hyper_Mode_Click_Callback_Type is
+     access procedure
+       (Kernel      : not null Kernel_Handle;
+        Buffer      : GPS.Editors.Editor_Buffer'Class;
+        Project     : GNATCOLL.Projects.Project_Type;
+        Line        : Editable_Line_Type;
+        Column      : Visible_Column_Type;
+        Entity_Name : String;
+        Alternate   : Boolean);
    --  The type of callbacks that are called when users clicks on
    --  the given Entity_Name in Buffer at Line and Column in hyper mode
    --  (i.e: when pressing the ctrl key).
@@ -258,7 +257,7 @@ package Src_Editor_Module is
    --  Set the current hyper mode click callback.
 
    function Get_Hyper_Mode_Click_Callback
-     return Hyper_Mode_Click_Callback_Type;
+      return Hyper_Mode_Click_Callback_Type;
    --  Get the current hyper mode click callback.
 
    procedure Default_Hyper_Mode_Click_Callback
@@ -282,7 +281,7 @@ package Src_Editor_Module is
    --  newly created editor view.
 
    function Get_Editor_Tooltip_Handler_Factory
-     return Editor_Tooltip_Handler_Factory_Access;
+      return Editor_Tooltip_Handler_Factory_Access;
    --  Get the current editor tooltip handler factory.
 
    ------------------
@@ -305,10 +304,10 @@ package Src_Editor_Module is
    --  Free memory allocated for Self
 
    Null_Highlighter : constant Highlighter_Record :=
-                        (null, null, 0, null, null, 0);
+     (null, null, 0, null, null, 0);
 
-   package List_Of_Highlighters is new Ada.Containers.Doubly_Linked_Lists
-     (Highlighter_Record);
+   package List_Of_Highlighters is new
+     Ada.Containers.Doubly_Linked_Lists (Highlighter_Record);
 
    ----------------
    -- Hyper_Mode --
@@ -364,25 +363,27 @@ private
 
    No_Element : constant Element := (Child => null);
 
-   package Editors_Hash is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Element_Type    => Element,
-      Equivalent_Keys => GNATCOLL.VFS."=",
-      Hash            => GNATCOLL.VFS.Full_Name_Hash);
+   package Editors_Hash is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => Virtual_File,
+        Element_Type    => Element,
+        Equivalent_Keys => GNATCOLL.VFS."=",
+        Hash            => GNATCOLL.VFS.Full_Name_Hash);
 
    -----------
    -- Marks --
    -----------
 
    subtype Weak_Location_Marker is GPS.Markers.Markers.Weak_Ref;
-   package Marker_List is
-     new Ada.Containers.Doubly_Linked_Lists
-       (Weak_Location_Marker, GPS.Markers.Markers."=");
+   package Marker_List is new
+     Ada.Containers.Doubly_Linked_Lists
+       (Weak_Location_Marker,
+        GPS.Markers.Markers."=");
    --  These do not hold a reference to the marker, which therefore has its
    --  own independent life cycle.
 
-   package File_Marker_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package File_Marker_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (GNATCOLL.VFS.Virtual_File,
         Marker_List.List,
         GNATCOLL.VFS.Full_Name_Hash,
@@ -399,11 +400,13 @@ private
 
    type Highlighting_Category is access Highlighting_Category_Record;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Highlighting_Category_Record, Highlighting_Category);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Highlighting_Category_Record,
+        Highlighting_Category);
 
-   type Highlighting_Category_Array is array (Natural range <>) of
-     Highlighting_Category;
+   type Highlighting_Category_Array is
+     array (Natural range <>) of Highlighting_Category;
 
    type Highlighting_Category_Array_Access is
      access Highlighting_Category_Array;
@@ -411,8 +414,10 @@ private
    procedure Free (Categories : in out Highlighting_Category_Array);
    --   Free all categories in the array
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-      (Highlighting_Category_Array, Highlighting_Category_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Highlighting_Category_Array,
+        Highlighting_Category_Array_Access);
 
    ---------------------------
    --  Formatting Providers --
@@ -430,28 +435,28 @@ private
    Minimum_Character_Width : constant Gint := 1;
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
-      Font                  : Pango.Font.Pango_Font_Description;
-      Display_Line_Numbers  : Boolean    :=
-         GPS.Kernel.Preferences.Display_Line_Numbers.Get_Pref /= Never;
+      Font                 : Pango.Font.Pango_Font_Description;
+      Display_Line_Numbers : Boolean :=
+        GPS.Kernel.Preferences.Display_Line_Numbers.Get_Pref /= Never;
 
-      Character_Width       : Gint := Minimum_Character_Width;
+      Character_Width : Gint := Minimum_Character_Width;
       --  Width of the size column to display line numbers and breakpoint
       --  info. This is set to a minimum size so that we can always display
       --  breakpoint information.
 
-      Show_Subprogram_Names : Boolean    := Display_Subprogram_Names.Get_Pref;
+      Show_Subprogram_Names : Boolean := Display_Subprogram_Names.Get_Pref;
 
-      Stored_Marks          : File_Marker_Maps.Map;
+      Stored_Marks : File_Marker_Maps.Map;
       --  Lists of markers for files.
 
-      Recent_File_Actions   : Action_Lists.List;
+      Recent_File_Actions : Action_Lists.List;
       --  Actions registered dynamically for the list of recent files
 
-      Categories            : Highlighting_Category_Array_Access;
+      Categories : Highlighting_Category_Array_Access;
       --  Contains a list of registered categories
 
-      Editors               : Editors_Hash.Map;
-      Last_Focused_Editor   : Gtkada.MDI.MDI_Child;
+      Editors             : Editors_Hash.Map;
+      Last_Focused_Editor : Gtkada.MDI.MDI_Child;
       --  Pointer to editor that lost focus last
 
       Highlighting_Manager : System.Address := System.Null_Address;
@@ -459,39 +464,43 @@ private
 
       --  The following fields are related to the current search
 
-      Search_Context        : Src_Contexts.Files_Project_Context_Access;
-      Search_File           : GNATCOLL.VFS.Virtual_File;
-      Search_Pattern        : GNAT.Strings.String_Access;
+      Search_Context : Src_Contexts.Files_Project_Context_Access;
+      Search_File    : GNATCOLL.VFS.Virtual_File;
+      Search_Pattern : GNAT.Strings.String_Access;
 
-      Undo_Redo             : Standard.Commands.Controls.Undo_Redo;
+      Undo_Redo : Standard.Commands.Controls.Undo_Redo;
       --  Undo/redo controls
 
       --  The following fields are related to hyper mode
 
-      Highlighters          : List_Of_Highlighters.List;
+      Highlighters : List_Of_Highlighters.List;
 
-      Tooltip_Factory       : Editor_Tooltip_Handler_Factory_Access;
+      Tooltip_Factory : Editor_Tooltip_Handler_Factory_Access;
 
-      Hyper_Mode_Click_Cb   : Hyper_Mode_Click_Callback_Type;
+      Hyper_Mode_Click_Cb : Hyper_Mode_Click_Callback_Type;
 
-      Formatting_Providers  : Formatting_Providers_Lists.List :=
+      Formatting_Providers : Formatting_Providers_Lists.List :=
         Formatting_Providers_Lists.Empty_List;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
-   overriding procedure Destroy (Id : in out Source_Editor_Module_Record);
-   overriding function Save_Function
+   overriding
+   procedure Destroy (Id : in out Source_Editor_Module_Record);
+   overriding
+   function Save_Function
      (Module       : access Source_Editor_Module_Record;
       Child        : Glib.Object.GObject;
       Mode         : Save_Function_Mode;
       Single_Child : Boolean;
       Force        : Boolean) return Boolean;
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Source_Editor_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
-   overriding function Bookmark_Handler
+   overriding
+   function Bookmark_Handler
      (Module : access Source_Editor_Module_Record;
       Load   : XML_Utils.Node_Ptr := null;
       JSON   : JSON_Value := JSON_Null) return Location_Marker;
@@ -503,15 +512,15 @@ private
    --  These utilities are needed by child packages
 
    function Open_File
-     (Kernel     : access Kernel_Handle_Record'Class;
-      File       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Project    : GNATCOLL.Projects.Project_Type;
-      Create_New : Boolean := True;
-      Focus      : Boolean := True;
-      Line       : Editable_Line_Type;
-      Column     : Visible_Column_Type;
-      Column_End : Visible_Column_Type;
-      Group      : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
+     (Kernel           : access Kernel_Handle_Record'Class;
+      File             : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Project          : GNATCOLL.Projects.Project_Type;
+      Create_New       : Boolean := True;
+      Focus            : Boolean := True;
+      Line             : Editable_Line_Type;
+      Column           : Visible_Column_Type;
+      Column_End       : Visible_Column_Type;
+      Group            : Gtkada.MDI.Child_Group := Gtkada.MDI.Group_Default;
       Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic;
       Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;

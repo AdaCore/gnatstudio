@@ -35,18 +35,16 @@ package GNAThub.Filters is
    procedure Clear (Self : in out Message_Filter_Record);
 
    procedure Add_Tool
-     (Self : in out Message_Filter_Record;
-      Tool : Tool_Access);
+     (Self : in out Message_Filter_Record; Tool : Tool_Access);
 
    procedure Add_Severity
-     (Self     : in out Message_Filter_Record;
-      Severity : Severity_Access);
+     (Self : in out Message_Filter_Record; Severity : Severity_Access);
 
    procedure Add_Rule
-     (Self : in out Message_Filter_Record;
-      Rule : Rule_Access);
+     (Self : in out Message_Filter_Record; Rule : Rule_Access);
 
-   overriding function Apply
+   overriding
+   function Apply
      (Self    : in out Message_Filter_Record;
       Message : GPS.Kernel.Messages.Abstract_Message'Class)
       return GPS.Kernel.Messages.Filter_Result;
@@ -54,14 +52,13 @@ package GNAThub.Filters is
    type Metric_Filter is tagged private;
    type Metric_Filter_Access is access all Metric_Filter'Class;
 
-   procedure Fill
-     (Self    : in out Metric_Filter;
-      Metrics : Rule_Sets.Set);
+   procedure Fill (Self : in out Metric_Filter; Metrics : Rule_Sets.Set);
 
 private
 
    type Message_Filter_Record is
-     new GPS.Kernel.Messages.Abstract_Message_Filter with record
+     new GPS.Kernel.Messages.Abstract_Message_Filter
+   with record
       Tools      : Tools_Ordered_Sets.Set;
       Severities : Severities_Ordered_Sets.Set;
       Rules      : Rule_Sets.Set;

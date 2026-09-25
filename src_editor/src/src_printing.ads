@@ -17,7 +17,7 @@
 
 --  This package provides printing for Source_Buffers.
 
-with Basic_Types;         use Basic_Types;
+with Basic_Types; use Basic_Types;
 with Src_Editor_Box;
 
 package Src_Printing is
@@ -25,10 +25,11 @@ package Src_Printing is
    type Abstract_Printer is abstract tagged null record;
 
    procedure Print
-     (This       : Abstract_Printer;
-      Editor     : Src_Editor_Box.Source_Editor_Box;
-      From       : Editable_Line_Type := 1;
-      To         : Editable_Line_Type := Editable_Line_Type'Last) is abstract;
+     (This   : Abstract_Printer;
+      Editor : Src_Editor_Box.Source_Editor_Box;
+      From   : Editable_Line_Type := 1;
+      To     : Editable_Line_Type := Editable_Line_Type'Last)
+   is abstract;
    --  Print the contents of the buffer associated with the Source_Editor_Box
    --  using the indicated font.  Has no effect if the buffer is empty.
    --  Limit line range to From .. To if specified.

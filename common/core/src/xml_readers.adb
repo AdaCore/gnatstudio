@@ -35,9 +35,9 @@ package body XML_Readers is
 
    procedure Parse
      (Start_Line : Natural := 1;
-      Input : in out Input_Source'Class;
-      Tree  : out XML_Utils.Node_Ptr;
-      Error : out Unicode.CES.Byte_Sequence_Access);
+      Input      : in out Input_Source'Class;
+      Tree       : out XML_Utils.Node_Ptr;
+      Error      : out Unicode.CES.Byte_Sequence_Access);
    --  Parse an input stream.
    --  Input is freed before returning from this procedure
    --  Start_Line indicates the extra offset that should be added to line
@@ -48,7 +48,8 @@ package body XML_Readers is
    -- Start_Document --
    --------------------
 
-   overriding procedure Start_Document (Handler : in out Gtk_Reader) is
+   overriding
+   procedure Start_Document (Handler : in out Gtk_Reader) is
    begin
       Handler.Tree := null;
       Handler.Current_Node := null;
@@ -82,18 +83,19 @@ package body XML_Readers is
    -- Set_Document_Locator --
    --------------------------
 
-   overriding procedure Set_Document_Locator
+   overriding
+   procedure Set_Document_Locator
      (Handler : in out Gtk_Reader; Loc : in out Sax.Locators.Locator) is
    begin
-      Set_Line_Number (Loc,
-                       Get_Line_Number (Loc) + Handler.Start_Line - 1);
+      Set_Line_Number (Loc, Get_Line_Number (Loc) + Handler.Start_Line - 1);
    end Set_Document_Locator;
 
    -------------------
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
@@ -103,14 +105,15 @@ package body XML_Readers is
       pragma Unreferenced (Local_Name, Namespace_URI);
       N : Node_Ptr;
    begin
-      N := new XML_Utils.Node'
-        (Tag           => new String'(Qname),
-         Attributes    => Attributes_From_List (Atts),
-         Value         => new String'(""),
-         Parent        => null,
-         Child         => null,
-         Next          => null,
-         Specific_Data => 0);
+      N :=
+        new XML_Utils.Node'
+          (Tag           => new String'(Qname),
+           Attributes    => Attributes_From_List (Atts),
+           Value         => new String'(""),
+           Parent        => null,
+           Child         => null,
+           Next          => null,
+           Specific_Data => 0);
 
       if Handler.Current_Node /= null then
          Add_Child (Handler.Current_Node, N, Append => True);
@@ -125,8 +128,9 @@ package body XML_Readers is
    -- End_Element --
    -----------------
 
-   overriding procedure End_Element
-     (Handler : in out Gtk_Reader;
+   overriding
+   procedure End_Element
+     (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "")
@@ -142,7 +146,8 @@ package body XML_Readers is
    -- Characters --
    ----------------
 
-   overriding procedure Characters
+   overriding
+   procedure Characters
      (Handler : in out Gtk_Reader; Ch : Unicode.CES.Byte_Sequence)
    is
       S : XML_Utils.String_Ptr;
@@ -151,8 +156,8 @@ package body XML_Readers is
          if Handler.Current_Node.Value /= null then
             --  Take care not to allocate anything on the stack here, as
             --  read values might be very large.
-            S := new String
-              (1 .. Handler.Current_Node.Value'Length + Ch'Length);
+            S :=
+              new String (1 .. Handler.Current_Node.Value'Length + Ch'Length);
             S (1 .. Handler.Current_Node.Value'Length) :=
               Handler.Current_Node.Value.all;
             S (Handler.Current_Node.Value'Length + 1 .. S'Last) := Ch;
@@ -168,10 +173,9 @@ package body XML_Readers is
    -- Ignorable_Whitespace --
    --------------------------
 
-   overriding procedure Ignorable_Whitespace
-     (Handler : in out Gtk_Reader;
-      Ch      : Unicode.CES.Byte_Sequence)
-   is
+   overriding
+   procedure Ignorable_Whitespace
+     (Handler : in out Gtk_Reader; Ch : Unicode.CES.Byte_Sequence) is
    begin
       --  Consider that whitespace is significant in some of the nodes.
       --  Ideally, this should be done from the grammar for the XML files, but
@@ -196,7 +200,8 @@ package body XML_Readers is
    -- Error --
    -----------
 
-   overriding procedure Error
+   overriding
+   procedure Error
      (Handler : in out Gtk_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is
    begin
@@ -207,9 +212,10 @@ package body XML_Readers is
    -- Warning --
    -------------
 
-   overriding procedure Warning
+   overriding
+   procedure Warning
      (Handler : in out Gtk_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class) is
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class) is
    begin
       if Handler.Warnings_As_Error then
          Fatal_Error (Handler, Except);
@@ -270,9 +276,9 @@ package body XML_Readers is
 
    procedure Parse
      (Start_Line : Natural := 1;
-      Input : in out Input_Source'Class;
-      Tree  : out XML_Utils.Node_Ptr;
-      Error : out Unicode.CES.Byte_Sequence_Access)
+      Input      : in out Input_Source'Class;
+      Tree       : out XML_Utils.Node_Ptr;
+      Error      : out Unicode.CES.Byte_Sequence_Access)
    is
       Reader : Gtk_Reader;
    begin
@@ -282,7 +288,7 @@ package body XML_Readers is
       Reader.Start_Line := Start_Line;
 
       Parse (Reader, Input);
-      Tree  := Get_Tree (Reader);
+      Tree := Get_Tree (Reader);
       Error := null;
 
       Free (Reader);

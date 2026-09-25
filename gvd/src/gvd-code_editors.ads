@@ -19,8 +19,8 @@
 --  editors.
 
 with GNATCOLL.VFS;
-with GPS.Debuggers;            use GPS.Debuggers;
-with GPS.Kernel;               use GPS.Kernel;
+with GPS.Debuggers; use GPS.Debuggers;
+with GPS.Kernel;    use GPS.Kernel;
 
 package GVD.Code_Editors is
 
@@ -41,7 +41,7 @@ package GVD.Code_Editors is
    --  Move the cursor to the current line for Process
 
    procedure Unhighlight_Current_Line
-     (Kernel  : not null access Kernel_Handle_Record'Class);
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  Unhighlight the current line in the editor if it is highlighted.
    --  Do nothing otherwise.
 

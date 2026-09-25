@@ -18,42 +18,43 @@
 --  Declare parser to write each output item to console.
 
 with Ada.Calendar;
-with Commands;                  use Commands;
-with GPS.Tools_Output;          use GPS.Tools_Output;
+with Commands;         use Commands;
+with GPS.Tools_Output; use GPS.Tools_Output;
 with Interactive_Consoles;
 
 package Build_Command_Manager.Console_Writers is
 
    type Console_Writer is new Tools_Output_Parser with private;
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Console_Writer;
       Item    : String;
       Command : access Root_Command'Class);
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Console_Writer;
       Status  : Integer;
       Command : access Root_Command'Class);
-   overriding procedure Destroy
-     (Self : not null access Console_Writer);
+   overriding
+   procedure Destroy (Self : not null access Console_Writer);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set
-     (Self    : access Output_Parser_Fabric;
-      Builder : Builder_Context);
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context);
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
    --  Create new parser to write on given Console.
 
 private
 
-   type Output_Parser_Fabric is
-     new GPS.Tools_Output.Output_Parser_Fabric with record
+   type Output_Parser_Fabric is new GPS.Tools_Output.Output_Parser_Fabric
+   with record
       Builder : Builder_Context;
    end record;
 

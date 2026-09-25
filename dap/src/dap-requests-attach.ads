@@ -23,37 +23,36 @@ package DAP.Requests.Attach is
 
    type Attach_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.AttachRequest :=
-        DAP.Tools.AttachRequest'
-          (seq       => 0,
-           arguments =>
-             (others  => <>));
+        DAP.Tools.AttachRequest'(seq => 0, arguments => (others => <>));
    end record;
 
    type Attach_DAP_Request_Access is access all Attach_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Attach_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Attach_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
       Success     : in out Boolean;
       New_Request : in out DAP_Request_Access);
 
-   overriding function Method
-     (Self : in out Attach_DAP_Request)
-      return String is ("attach");
+   overriding
+   function Method (Self : in out Attach_DAP_Request) return String
+   is ("attach");
 
    procedure On_Result_Message
      (Self        : in out Attach_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.AttachResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out Attach_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Attach_DAP_Request; Id : Integer);
 
 end DAP.Requests.Attach;

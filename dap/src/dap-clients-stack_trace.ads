@@ -19,8 +19,8 @@
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with DAP.Types;    use DAP.Types;
-with DAP.Tools;    use DAP.Tools;
+with DAP.Types; use DAP.Types;
+with DAP.Tools; use DAP.Tools;
 
 package DAP.Clients.Stack_Trace is
 
@@ -28,8 +28,7 @@ package DAP.Clients.Stack_Trace is
    type Stack_Trace_Access is access all Stack_Trace'Class;
 
    function Get_Current_Frame_Id
-     (Self : Stack_Trace_Access)
-      return DAP.Tools.Optional_Integer;
+     (Self : Stack_Trace_Access) return DAP.Tools.Optional_Integer;
    --  Returns the currently selected frame ID
 
    function Get_Current_Frame_Id (Self : Stack_Trace_Access) return Integer;
@@ -50,13 +49,11 @@ package DAP.Clients.Stack_Trace is
    --  Returns loaded stack trace
 
    procedure Frame_Up
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class);
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class);
    --  Select the next frame as the current
 
    procedure Frame_Down
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class);
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class);
    --  Select the previous frame as the current
 
    procedure Select_Frame
@@ -77,13 +74,12 @@ package DAP.Clients.Stack_Trace is
    --  Set the frame as current. Used from notifications.
 
    procedure Send_Request
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class);
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class);
    --  Send the request to get the traces.
 
    function Can_Upload
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class) return Boolean;
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class)
+      return Boolean;
    --  Returns True when we don't load all frames and can send a request to
    --  upload the next chunk of data
 

@@ -18,36 +18,37 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Calendar;               use Ada.Calendar;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
-with GNAT.Strings;               use GNAT.Strings;
+with Ada.Calendar;          use Ada.Calendar;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;          use GNAT.Strings;
 
-with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
-with GNATCOLL.JSON;              use GNATCOLL.JSON;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.JSON;      use GNATCOLL.JSON;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Symbols;   use GNATCOLL.Symbols;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
 with Basic_Types;
-with Commands.Interactive;       use Commands, Commands.Interactive;
-with GPS.Editors;                use GPS.Editors;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;       use GPS.Kernel.Locations;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
-with GPS.Markers;                use GPS.Markers;
-with Language;                   use Language;
-with XML_Parsers;                use XML_Parsers;
-with XML_Utils;                  use XML_Utils;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with GPS.Editors;                     use GPS.Editors;
+with GPS.Intl;                        use GPS.Intl;
+with GPS.Kernel.Actions;              use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations;            use GPS.Kernel.Locations;
+with GPS.Kernel.Modules.UI;           use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
+with GPS.Kernel.Project;              use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;         use GPS.Kernel.Task_Manager;
+with GPS.Markers;                     use GPS.Markers;
+with Language;                        use Language;
+with XML_Parsers;                     use XML_Parsers;
+with XML_Utils;                       use XML_Utils;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Navigation_Module is
@@ -57,7 +58,7 @@ package body Navigation_Module is
    --  Maximum number of locations stored in the history
 
    Navigation_Module_Name : constant String := "Navigation";
-   Navigation_Module_ID : Module_ID;
+   Navigation_Module_ID   : Module_ID;
 
    type Location_Marker_Array is array (Positive range <>) of Location_Marker;
    type Location_Marker_Array_Access is access Location_Marker_Array;
@@ -67,34 +68,35 @@ package body Navigation_Module is
       Path   : Unbounded_String;
    end record;
 
-   package File_To_Action is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Element_Type    => Action_And_Path,
-      Hash            => Full_Name_Hash,
-      Equivalent_Keys => "=");
+   package File_To_Action is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Virtual_File,
+        Element_Type    => Action_And_Path,
+        Hash            => Full_Name_Hash,
+        Equivalent_Keys => "=");
    use File_To_Action;
 
    package File_List is new Ada.Containers.Doubly_Linked_Lists (Virtual_File);
    use File_List;
 
-   package Action_List is new Ada.Containers.Doubly_Linked_Lists
-     (Action_And_Path);
+   package Action_List is new
+     Ada.Containers.Doubly_Linked_Lists (Action_And_Path);
    use Action_List;
 
-   function "<" (Left, Right : Action_And_Path) return Boolean is
-      (Left.Path < Right.Path);
+   function "<" (Left, Right : Action_And_Path) return Boolean
+   is (Left.Path < Right.Path);
    --  Compare based on Path
 
    package Alpha_Sort is new Action_List.Generic_Sorting;
 
    type Navigation_Module_Record is new Module_ID_Record with record
-      Markers        : Location_Marker_Array_Access;
+      Markers : Location_Marker_Array_Access;
       --  The list of markers from the history of locations
 
       Current_Marker : Natural := 0;
       --  The current position in Markers
 
-      Last_Marker    : Natural := 0;
+      Last_Marker : Natural := 0;
       --  The last marker set in Markers
 
       Previous_Project : Virtual_File := No_File;
@@ -117,26 +119,31 @@ package body Navigation_Module is
       Script  : Scripting_Language;
       Command : GNAT.Strings.String_Access;
    end record;
-   overriding function Go_To
-     (Marker : not null access Shell_Marker_Data) return Boolean;
-   overriding function To_String
+   overriding
+   function Go_To (Marker : not null access Shell_Marker_Data) return Boolean;
+   overriding
+   function To_String
      (Marker : not null access Shell_Marker_Data) return String;
-   overriding function Save
+   overriding
+   function Save
      (Marker : not null access Shell_Marker_Data) return XML_Utils.Node_Ptr;
-   overriding procedure Save
+   overriding
+   procedure Save
      (Marker : not null access Shell_Marker_Data; Value : out JSON_Value);
-   overriding function Similar
+   overriding
+   function Similar
      (Left        : not null access Shell_Marker_Data;
       Dummy_Right : not null access Location_Marker_Data'Class) return Boolean
-     is (False);
-   overriding function Distance
+   is (False);
+   overriding
+   function Distance
      (Left        : not null access Shell_Marker_Data;
       Dummy_Right : not null access Location_Marker_Data'Class) return Integer
-     is (Integer'Last);
+   is (Integer'Last);
 
    function Create_Shell_Marker
-     (Script  : access Scripting_Language_Record'Class;
-      Command : String) return Location_Marker;
+     (Script : access Scripting_Language_Record'Class; Command : String)
+      return Location_Marker;
    --  Create a new marker associated with a shell command
 
    procedure Extract_Unit_Info
@@ -165,14 +172,16 @@ package body Navigation_Module is
       --  The actions which have been created from the above files, for
       --  which menus still need to be created.
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Runtime_Processor_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Open_File_Command is new Interactive_Command with record
       File : Virtual_File;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Open_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -180,94 +189,105 @@ package body Navigation_Module is
    -- Local subprograms --
    -----------------------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Location_Marker_Array, Location_Marker_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Location_Marker_Array,
+        Location_Marker_Array_Access);
 
-   overriding procedure Destroy (Id : in out Navigation_Module_Record);
+   overriding
+   procedure Destroy (Id : in out Navigation_Module_Record);
    --  Free memory associated to Id
 
    type Back_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Back_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Back_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Callbacks for the back buttons
 
    type Forward_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Forward_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Forward_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Callbacks for the forward buttons
 
    type Goto_Other_File_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open the spec if a body or separate is currently selected, and the spec
    --  otherwise.
 
-   type Next_Tag_Command is new Interactive_Command with
-    record
-       Backward    : Boolean;
-       --  If true, then go to a previous result
-       Same_Weight : Boolean;
-       --  If true, search the next node with the same weight
-    end record;
-   overriding function Execute
-     (Command : access Next_Tag_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   type Next_Tag_Command is new Interactive_Command with record
+      Backward    : Boolean;
+      --  If true, then go to a previous result
+      Same_Weight : Boolean;
+      --  If true, search the next node with the same weight
+   end record;
+   overriding
+   function Execute
+     (Command : access Next_Tag_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Callback for the "next result" action
 
    type Start_Statement_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Start_Statement_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for the "start statement" action
 
    type End_Statement_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access End_Statement_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for the "end statement" action
 
    type Next_Subprogram_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Next_Subprogram_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for the "next subprogram" action
 
-   type Previous_Subprogram_Command
-      is new Interactive_Command with null record;
-   overriding function Execute
+   type Previous_Subprogram_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Previous_Subprogram_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for the "previous subprogram" action
 
    type Has_Forward_Navigation is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Forward_Navigation;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Forward_Navigation; Context : Selection_Context)
+      return Boolean;
 
    type Has_Back_Navigation is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Back_Navigation;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Back_Navigation; Context : Selection_Context)
+      return Boolean;
 
    type Has_Other_File_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Has_Other_File_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  True if the current file has a spec/body
 
    procedure Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the navigation module
 
    --  Interfaces to GNAT Studio commands used by some navigation procedures
 
    function Get_Current_Line
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Natural;
+     (Kernel : Kernel_Handle; File : Virtual_File) return Natural;
    --  Returns current line in File
 
    procedure Set_Current_Line
@@ -279,39 +299,35 @@ package body Navigation_Module is
    --  on the view.
 
    function Get_Last_Line
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Natural;
+     (Kernel : Kernel_Handle; File : Virtual_File) return Natural;
    --  Returns last line index
 
    function Get_Block_Start
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      Line   : Natural) return Natural;
+     (Kernel : Kernel_Handle; File : Virtual_File; Line : Natural)
+      return Natural;
    --  Returns first line for block enclosing Line
 
    function Get_Block_End
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      Line   : Natural) return Natural;
+     (Kernel : Kernel_Handle; File : Virtual_File; Line : Natural)
+      return Natural;
    --  Returns last line for block enclosing Line
 
    function Get_Block_Type
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      Line   : Natural) return Language_Category;
+     (Kernel : Kernel_Handle; File : Virtual_File; Line : Natural)
+      return Language_Category;
    --  Returns type for block enclosing Line
 
    type On_Marker_Added_In_History is new Marker_Hooks_Function
-      with null record;
-   overriding procedure Execute
-     (Self     : On_Marker_Added_In_History;
-      Kernel   : not null access Kernel_Handle_Record'Class;
-      Marker  : Location_Marker);
+   with null record;
+   overriding
+   procedure Execute
+     (Self   : On_Marker_Added_In_History;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Marker : Location_Marker);
    --  Called when a new marker is added in the history
 
    procedure Move_In_Marker_History
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Move_Back : Boolean);
+     (Kernel : access Kernel_Handle_Record'Class; Move_Back : Boolean);
    --  Move backward or forward in the list of markers. The effect is
    --  immediately visible in the GNAT Studio interface.
 
@@ -325,18 +341,19 @@ package body Navigation_Module is
    --  If Old_Project is True, save the locations from the previous project
    --  rather than from the current project.
 
-   procedure Load_History_Markers
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Load_History_Markers (Kernel : access Kernel_Handle_Record'Class);
    --  Load all locations from an XML file
 
    type On_Project_Loaded is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Loaded;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when a project is loaded.
 
    type On_Desktop_Loaded is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Desktop_Loaded;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the desktop is loaded
@@ -352,18 +369,19 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self     : On_Marker_Added_In_History;
-      Kernel   : not null access Kernel_Handle_Record'Class;
-      Marker   : Location_Marker)
+   overriding
+   procedure Execute
+     (Self   : On_Marker_Added_In_History;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Marker : Location_Marker)
    is
       pragma Unreferenced (Self, Kernel);
       Module : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
    begin
       if Module.Markers = null then
-         Module.Markers := new Location_Marker_Array
-           (1 .. Max_Locations_In_History);
+         Module.Markers :=
+           new Location_Marker_Array (1 .. Max_Locations_In_History);
          Module.Current_Marker := 0;
          Module.Last_Marker := 0;
       end if;
@@ -392,16 +410,17 @@ package body Navigation_Module is
      (Kernel      : access Kernel_Handle_Record'Class;
       Old_Project : Boolean := False)
    is
-      M           : constant Navigation_Module :=
-                      Navigation_Module (Navigation_Module_ID);
-      Filename    : constant Virtual_File := M.Markers_File;
+      M                                                  :
+        constant Navigation_Module := Navigation_Module (Navigation_Module_ID);
+      Filename                                           :
+        constant Virtual_File := M.Markers_File;
       File, Child, Project, Prev, Free_Me, Project_Nodes : Node_Ptr;
 
-      Success     : Boolean;
+      Success : Boolean;
 
       Project_File : Virtual_File;
 
-      Error             : GNAT.Strings.String_Access;
+      Error : GNAT.Strings.String_Access;
 
       Current_Project : constant Virtual_File :=
         Get_Registry (Kernel).Tree.Root_Project.Project_Path;
@@ -425,7 +444,7 @@ package body Navigation_Module is
          end if;
 
          if File = null then
-            File     := new Node;
+            File := new Node;
             File.Tag := new String'("Locations");
          end if;
 
@@ -457,9 +476,7 @@ package body Navigation_Module is
          Child := File.Child;
 
          while Child /= null loop
-            if Child.Tag = null
-              or else Child.Tag.all /= "Project"
-            then
+            if Child.Tag = null or else Child.Tag.all /= "Project" then
                if Prev = null then
                   File.Child := Child.Next;
                else
@@ -516,22 +533,23 @@ package body Navigation_Module is
    -- Load_History_Markers --
    --------------------------
 
-   procedure Load_History_Markers
-     (Kernel : access Kernel_Handle_Record'Class)
+   procedure Load_History_Markers (Kernel : access Kernel_Handle_Record'Class)
    is
-      M             : constant Navigation_Module :=
-                        Navigation_Module (Navigation_Module_ID);
-      Project_Tree  : constant GNATCOLL.Projects.Project_Tree_Access :=
-                        Get_Registry (Kernel).Tree;
+      M            : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+      Project_Tree : constant GNATCOLL.Projects.Project_Tree_Access :=
+        Get_Registry (Kernel).Tree;
 
-      Root_Project  : constant Project_Type := Project_Tree.Root_Project;
-      Project_File  : constant Virtual_File := Root_Project.Project_Path;
-      Base_Name     : constant Filesystem_String :=
-                        Project_File.Base_Name (".gpr") & "-loc.xml";
-      Filename      : Virtual_File;
+      Root_Project         : constant Project_Type :=
+        Project_Tree.Root_Project;
+      Project_File         : constant Virtual_File :=
+        Root_Project.Project_Path;
+      Base_Name            : constant Filesystem_String :=
+        Project_File.Base_Name (".gpr") & "-loc.xml";
+      Filename             : Virtual_File;
       File, Child, Project : Node_Ptr;
-      Marker        : Location_Marker;
-      Err           : GNAT.Strings.String_Access;
+      Marker               : Location_Marker;
+      Err                  : GNAT.Strings.String_Access;
    begin
       --  Keep markers only for ordinary projects (not empty nor default)
 
@@ -570,8 +588,8 @@ package body Navigation_Module is
 
                Free (M.Markers);
 
-               M.Markers := new Location_Marker_Array
-                 (1 .. Max_Locations_In_History);
+               M.Markers :=
+                 new Location_Marker_Array (1 .. Max_Locations_In_History);
                M.Current_Marker := 0;
                M.Last_Marker := 0;
 
@@ -603,7 +621,8 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Loaded;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -623,7 +642,8 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Desktop_Loaded;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -637,12 +657,11 @@ package body Navigation_Module is
    ----------------------------
 
    procedure Move_In_Marker_History
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Move_Back : Boolean)
+     (Kernel : access Kernel_Handle_Record'Class; Move_Back : Boolean)
    is
       pragma Unreferenced (Kernel);
       Module : constant Navigation_Module :=
-                 Navigation_Module (Navigation_Module_ID);
+        Navigation_Module (Navigation_Module_ID);
    begin
       if Move_Back then
          if Module.Markers /= null
@@ -665,7 +684,7 @@ package body Navigation_Module is
 
    procedure Go_To_Current_Marker is
       Module : constant Navigation_Module :=
-                 Navigation_Module (Navigation_Module_ID);
+        Navigation_Module (Navigation_Module_ID);
    begin
       if Module.Markers /= null
         and then Module.Current_Marker >= Module.Markers'First
@@ -684,13 +703,12 @@ package body Navigation_Module is
    ----------------------
 
    function Get_Current_Line
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Natural
+     (Kernel : Kernel_Handle; File : Virtual_File) return Natural
    is
-      Editor : constant Editor_Buffer'Class :=
-                 Kernel.Get_Buffer_Factory.Get (File);
+      Editor   : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File);
       Location : constant Editor_Location'Class :=
-                   GPS.Editors.Cursor (Current_View (Editor));
+        GPS.Editors.Cursor (Current_View (Editor));
 
    begin
       return Line (Location);
@@ -706,9 +724,9 @@ package body Navigation_Module is
       Line   : Natural;
       Center : Boolean := False)
    is
-      Editor   : constant Editor_Buffer'Class :=
+      Editor    : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
-      Location : constant Editor_Location'Class :=
+      Location  : constant Editor_Location'Class :=
         New_Location_At_Line (Editor, Basic_Types.Editable_Line_Type (Line));
       Centering : Centering_Type := With_Margin;
    begin
@@ -716,10 +734,7 @@ package body Navigation_Module is
          Centering := GPS.Editors.Center;
       end if;
 
-      Cursor_Goto
-        (Current_View (Editor),
-         Location,
-         Centering => Centering);
+      Cursor_Goto (Current_View (Editor), Location, Centering => Centering);
    end Set_Current_Line;
 
    -------------------
@@ -727,13 +742,11 @@ package body Navigation_Module is
    -------------------
 
    function Get_Last_Line
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) return Natural
+     (Kernel : Kernel_Handle; File : Virtual_File) return Natural
    is
-      Editor : constant Editor_Buffer'Class :=
-                 Kernel.Get_Buffer_Factory.Get (File);
-      Location : constant Editor_Location'Class :=
-                   End_Of_Buffer (Editor);
+      Editor   : constant Editor_Buffer'Class :=
+        Kernel.Get_Buffer_Factory.Get (File);
+      Location : constant Editor_Location'Class := End_Of_Buffer (Editor);
 
    begin
       return Line (Location);
@@ -744,14 +757,13 @@ package body Navigation_Module is
    -------------------
 
    function Get_Block_End
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      Line   : Natural) return Natural
+     (Kernel : Kernel_Handle; File : Virtual_File; Line : Natural)
+      return Natural
    is
       Editor : constant Editor_Buffer'Class :=
-                 Kernel.Get_Buffer_Factory.Get (File);
+        Kernel.Get_Buffer_Factory.Get (File);
       Loc    : constant Editor_Location'Class :=
-         Editor.New_Location_At_Line (Basic_Types.Editable_Line_Type (Line));
+        Editor.New_Location_At_Line (Basic_Types.Editable_Line_Type (Line));
    begin
       return Loc.Block_End.Line;
    exception
@@ -764,9 +776,8 @@ package body Navigation_Module is
    ---------------------
 
    function Get_Block_Start
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      Line   : Natural) return Natural
+     (Kernel : Kernel_Handle; File : Virtual_File; Line : Natural)
+      return Natural
    is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
@@ -784,9 +795,8 @@ package body Navigation_Module is
    --------------------
 
    function Get_Block_Type
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File;
-      Line   : Natural) return Language_Category
+     (Kernel : Kernel_Handle; File : Virtual_File; Line : Natural)
+      return Language_Category
    is
       Editor : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File);
@@ -803,15 +813,16 @@ package body Navigation_Module is
    -- Go_To --
    -----------
 
-   overriding function Go_To
-     (Marker : not null access Shell_Marker_Data) return Boolean
+   overriding
+   function Go_To (Marker : not null access Shell_Marker_Data) return Boolean
    is
       Errors : Boolean;
    begin
       Execute_Command
         (Script       => Marker.Script,
-         CL           => Parse_String (Marker.Command.all,
-           Command_Line_Treatment (Marker.Script)),
+         CL           =>
+           Parse_String
+             (Marker.Command.all, Command_Line_Treatment (Marker.Script)),
          Hide_Output  => True,
          Show_Command => False,
          Errors       => Errors);
@@ -822,7 +833,8 @@ package body Navigation_Module is
    -- To_String --
    ---------------
 
-   overriding function To_String
+   overriding
+   function To_String
      (Marker : not null access Shell_Marker_Data) return String is
    begin
       return Marker.Command.all;
@@ -832,12 +844,13 @@ package body Navigation_Module is
    -- Save --
    ----------
 
-   overriding function Save
+   overriding
+   function Save
      (Marker : not null access Shell_Marker_Data) return XML_Utils.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
    begin
-      N.Tag   := new String'("shell_mark");
+      N.Tag := new String'("shell_mark");
       N.Value := new String'(Marker.Command.all);
       return N;
    end Save;
@@ -846,7 +859,8 @@ package body Navigation_Module is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Marker : not null access Shell_Marker_Data; Value : out JSON_Value) is
    begin
       Value := Create_Object;
@@ -859,13 +873,14 @@ package body Navigation_Module is
    -------------------------
 
    function Create_Shell_Marker
-     (Script  : access Scripting_Language_Record'Class;
-      Command : String) return Location_Marker is
+     (Script : access Scripting_Language_Record'Class; Command : String)
+      return Location_Marker is
    begin
       return L : Location_Marker do
-         L.Set (Shell_Marker_Data'
-                  (Script  => Scripting_Language (Script),
-                   Command => new String'(Command)));
+         L.Set
+           (Shell_Marker_Data'
+              (Script  => Scripting_Language (Script),
+               Command => new String'(Command)));
       end return;
    end Create_Shell_Marker;
 
@@ -881,15 +896,15 @@ package body Navigation_Module is
       Push_Marker_In_History
         (Get_Kernel (Data),
          Create_Shell_Marker
-           (Script => Get_Script (Data),
-            Command => Nth_Arg (Data, 1)));
+           (Script => Get_Script (Data), Command => Nth_Arg (Data, 1)));
    end Command_Handler;
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Has_Other_File_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -902,8 +917,7 @@ package body Navigation_Module is
             Other_File : constant Virtual_File :=
               Get_Registry (Kernel).Tree.Other_File (File);
          begin
-            return Other_File /= No_File
-              and then Other_File /= File;
+            return Other_File /= No_File and then Other_File /= File;
          end;
       end if;
       return False;
@@ -913,15 +927,17 @@ package body Navigation_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Back_Navigation;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Back_Navigation; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter, Context);
       Module : constant Navigation_Module :=
-                 Navigation_Module (Navigation_Module_ID);
+        Navigation_Module (Navigation_Module_ID);
    begin
-      return Module.Markers /= null
+      return
+        Module.Markers /= null
         and then Module.Current_Marker > Module.Markers'First;
    end Filter_Matches_Primitive;
 
@@ -929,15 +945,17 @@ package body Navigation_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Forward_Navigation;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Forward_Navigation; Context : Selection_Context)
+      return Boolean
    is
       Module : constant Navigation_Module :=
-                 Navigation_Module (Navigation_Module_ID);
+        Navigation_Module (Navigation_Module_ID);
       pragma Unreferenced (Filter, Context);
    begin
-      return Module.Markers /= null
+      return
+        Module.Markers /= null
         and then Module.Current_Marker < Module.Last_Marker;
    end Filter_Matches_Primitive;
 
@@ -954,12 +972,13 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Back_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Back_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Move_In_Marker_History (Kernel, Move_Back => True);
       Go_To_Current_Marker;
@@ -970,12 +989,13 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Forward_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Forward_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Move_In_Marker_History (Kernel, Move_Back => False);
       Go_To_Current_Marker;
@@ -986,7 +1006,8 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Start_Statement_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1002,7 +1023,7 @@ package body Navigation_Module is
       then
          File := File_Information (Context.Context);
 
-         Line   := Get_Current_Line (Kernel, File);
+         Line := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
 
          if B_Type in Construct_Category
@@ -1037,23 +1058,24 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access End_Statement_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File    : Virtual_File;
-      Line    : Natural;           -- Current line being processed
-      B_End   : Natural;           -- Block's first line
-      B_Type  : Language_Category; -- Block's category
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      File   : Virtual_File;
+      Line   : Natural;           -- Current line being processed
+      B_End  : Natural;           -- Block's first line
+      B_Type : Language_Category; -- Block's category
    begin
       if Has_File_Information (Context.Context)
         and then Has_Directory_Information (Context.Context)
       then
          File := File_Information (Context.Context);
 
-         Line   := Get_Current_Line (Kernel, File);
+         Line := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
 
          if B_Type in Construct_Category
@@ -1087,12 +1109,13 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Next_Subprogram_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
       File      : Virtual_File;
       Line      : Natural;           -- Current line being processed
       Last_Line : Natural;           -- Last line in the buffer
@@ -1104,14 +1127,14 @@ package body Navigation_Module is
       then
          File := File_Information (Context.Context);
 
-         Line      := Get_Current_Line (Kernel, File);
+         Line := Get_Current_Line (Kernel, File);
          Last_Line := Get_Last_Line (Kernel, File);
 
          while Line < Last_Line loop
             Line := Line + 1;
 
             B_Start := Get_Block_Start (Kernel, File, Line);
-            B_Type  := Get_Block_Type (Kernel, File, Line);
+            B_Type := Get_Block_Type (Kernel, File, Line);
 
             exit when B_Start = Line and then B_Type in Subprogram_Category;
          end loop;
@@ -1128,11 +1151,12 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Next_Tag_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Next_Tag_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Next_Item (Kernel, Command.Backward, Command.Same_Weight);
       return Commands.Success;
@@ -1142,7 +1166,8 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Previous_Subprogram_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1163,7 +1188,7 @@ package body Navigation_Module is
          while Line > 1 loop
             Line := Line - 1;
 
-            B_Type  := Get_Block_Type (Kernel, File, Line);
+            B_Type := Get_Block_Type (Kernel, File, Line);
             B_Start := Get_Block_Start (Kernel, File, Line);
 
             exit when B_Start = Line and then B_Type in Subprogram_Category;
@@ -1181,27 +1206,30 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Goto_Other_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       if Has_File_Information (Context.Context) then
          declare
-            File : constant Virtual_File := File_Information (Context.Context);
+            File       : constant Virtual_File :=
+              File_Information (Context.Context);
             Other_File : constant Virtual_File :=
               Get_Registry (Kernel).Tree.Other_File (File);
          begin
             if Dir_Name (Other_File) /= "" then
                Open_File_Action_Hook.Run
-                  (Kernel, File => Other_File,
-                   Project => Project_Information (Context.Context),
-                   Line => 0);
+                 (Kernel,
+                  File    => Other_File,
+                  Project => Project_Information (Context.Context),
+                  Line    => 0);
             else
-               Trace (Me, "Other file not found for "
-                      & File.Display_Full_Name);
+               Trace
+                 (Me, "Other file not found for " & File.Display_Full_Name);
             end if;
          end;
       else
@@ -1219,93 +1247,109 @@ package body Navigation_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Src_Action_Context : constant Action_Filter :=
-                             Lookup_Filter (Kernel, "Source editor");
+        Lookup_Filter (Kernel, "Source editor");
       File_Context       : constant Action_Filter :=
-                             Lookup_Filter (Kernel, "File");
-      Filter : Action_Filter;
+        Lookup_Filter (Kernel, "File");
+      Filter             : Action_Filter;
    begin
       Navigation_Module_ID := new Navigation_Module_Record;
 
       Register_Module
-        (Module       => Navigation_Module_ID,
-         Kernel       => Kernel,
-         Module_Name  => Navigation_Module_Name,
-         Priority     => High_Priority);
+        (Module      => Navigation_Module_ID,
+         Kernel      => Kernel,
+         Module_Name => Navigation_Module_Name,
+         Priority    => High_Priority);
 
       Register_Command
-        (Kernel, "add_location_command",
+        (Kernel,
+         "add_location_command",
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
 
       Filter := new Has_Other_File_Filter;
       Register_Action
-        (Kernel, "goto other file",
+        (Kernel,
+         "goto other file",
          Command     => new Goto_Other_File_Command,
          Description => -"Open the corresponding spec or body file",
          Filter      => Filter and File_Context);
 
       Register_Action
-        (Kernel, "start of statement", new Start_Statement_Command,
+        (Kernel,
+         "start of statement",
+         new Start_Statement_Command,
          -"Move to the beginning of the current statement",
-         Category   => -"Editor",
-         Filter     => Src_Action_Context);
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "end of statement", new End_Statement_Command,
+        (Kernel,
+         "end of statement",
+         new End_Statement_Command,
          -"Move to the end of the current statement",
-         Category   => -"Editor",
-         Filter     => Src_Action_Context);
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "previous subprogram", new Previous_Subprogram_Command,
+        (Kernel,
+         "previous subprogram",
+         new Previous_Subprogram_Command,
          -"Move to the previous subprogram",
          Category     => -"Editor",
          Filter       => Src_Action_Context,
          For_Learning => True);
 
       Register_Action
-        (Kernel, "next subprogram", new Next_Subprogram_Command,
+        (Kernel,
+         "next subprogram",
+         new Next_Subprogram_Command,
          -"Move to the next subprogram",
-         Category   => -"Editor",
-         Filter     => Src_Action_Context);
+         Category => -"Editor",
+         Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "previous tag",
-         new Next_Tag_Command'(Interactive_Command
-           with Backward => True, Same_Weight => False),
-         -"Move to the previous message in the category" &
-           " from the Locations window",
-         Category   => -"Locations");
+        (Kernel,
+         "previous tag",
+         new Next_Tag_Command'
+           (Interactive_Command with Backward => True, Same_Weight => False),
+         -"Move to the previous message in the category"
+         & " from the Locations window",
+         Category => -"Locations");
 
       Register_Action
-        (Kernel, "next tag",
-         new Next_Tag_Command'(Interactive_Command
-           with Backward => False, Same_Weight => False),
-         -"Move to the next message in the category from" &
-           " the Locations window",
-         Category   => -"Locations");
+        (Kernel,
+         "next tag",
+         new Next_Tag_Command'
+           (Interactive_Command with Backward => False, Same_Weight => False),
+         -"Move to the next message in the category from"
+         & " the Locations window",
+         Category => -"Locations");
 
       Register_Action
-        (Kernel, "previous tag (same weight)",
-         new Next_Tag_Command'(Interactive_Command
-           with Backward => True, Same_Weight => True),
+        (Kernel,
+         "previous tag (same weight)",
+         new Next_Tag_Command'
+           (Interactive_Command with Backward => True, Same_Weight => True),
          -("Move to the previous message from the Locations window with the "
            & "same weight (From error to error for example)"),
-         Category   => -"Locations");
+         Category => -"Locations");
 
       Register_Action
-        (Kernel, "next tag (same weight)",
-         new Next_Tag_Command'(Interactive_Command
-           with Backward => False, Same_Weight => True),
+        (Kernel,
+         "next tag (same weight)",
+         new Next_Tag_Command'
+           (Interactive_Command with Backward => False, Same_Weight => True),
          -("Move to the next message from the Locations window with the "
            & "same weight (From error to error for example)"),
-         Category   => -"Locations");
+         Category => -"Locations");
 
       Filter := new Has_Back_Navigation;
       Kernel.Register_Filter (Filter, "has back navigation");
       Register_Action
-        (Kernel, "backward locations history", new Back_Command,
+        (Kernel,
+         "backward locations history",
+         new Back_Command,
          Description => -"Goto previous location",
          Filter      => Filter,
          Category    => -"Editor",
@@ -1314,7 +1358,9 @@ package body Navigation_Module is
       Filter := new Has_Forward_Navigation;
       Kernel.Register_Filter (Filter, "has forward navigation");
       Register_Action
-        (Kernel, "forward locations history", new Forward_Command,
+        (Kernel,
+         "forward locations history",
+         new Forward_Command,
          Description => -"Goto next location",
          Filter      => Filter,
          Category    => -"Editor",
@@ -1342,7 +1388,8 @@ package body Navigation_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Id : in out Navigation_Module_Record) is
+   overriding
+   procedure Destroy (Id : in out Navigation_Module_Record) is
    begin
       Save_History_Markers (Get_Kernel (Id));
       Free (Id.Markers);
@@ -1358,18 +1405,17 @@ package body Navigation_Module is
       Unit_Name       : out Symbol;
       Unit_Visibility : out Construct_Visibility)
    is
-      Tree   : constant Semantic_Tree'Class :=
+      Tree : constant Semantic_Tree'Class :=
         Kernel.Get_Abstract_Tree_For_File ("INFO", File);
-      Root   : constant Semantic_Node_Array'Class := Tree.Root_Nodes;
+      Root : constant Semantic_Node_Array'Class := Tree.Root_Nodes;
    begin
-      Unit_Name       := No_Symbol;
+      Unit_Name := No_Symbol;
       Unit_Visibility := Visibility_Private;
 
       for J in 1 .. Root.Length loop
-         if Root.Get (J).Category in
-           Cat_Package | Cat_Procedure | Cat_Function
+         if Root.Get (J).Category in Cat_Package | Cat_Procedure | Cat_Function
          then
-            Unit_Name       := Root.Get (J).Name;
+            Unit_Name := Root.Get (J).Name;
             Unit_Visibility := Root.Get (J).Visibility;
             return;
          end if;
@@ -1380,7 +1426,8 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Runtime_Processor_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1402,8 +1449,7 @@ package body Navigation_Module is
          AP   : Action_And_Path;
       begin
          --  We are not interested in bodies
-         if Base'Length < 4
-           or else Base (Base'Last - 3 .. Base'Last) /= ".ads"
+         if Base'Length < 4 or else Base (Base'Last - 3 .. Base'Last) /= ".ads"
          then
             return;
          end if;
@@ -1423,9 +1469,7 @@ package body Navigation_Module is
             begin
                Extract_Unit_Info (Kernel, File, Name, Visibility);
 
-               if Name = No_Symbol
-                 or else Visibility /= Visibility_Public
-               then
+               if Name = No_Symbol or else Visibility /= Visibility_Public then
                   return;
                end if;
 
@@ -1437,20 +1481,19 @@ package body Navigation_Module is
                     (Kernel      => Kernel,
                      Name        => Unique_Name,
                      Command     =>
-                        new Open_File_Command'
-                          (Interactive_Command with File => File),
+                       new Open_File_Command'
+                         (Interactive_Command with File => File),
                      Description => Unique_Name,
                      Category    => "Runtime Menu");
 
                   AP.Action := Lookup_Action (Kernel, Unique_Name);
-                  AP.Path   := To_Unbounded_String (Get (Name).all);
+                  AP.Path := To_Unbounded_String (Get (Name).all);
 
                   Replace (AP.Path, ".", "/");
                   Replace (AP.Path, "_", "__");
 
                   --  Add the action we have just created to the store
-                  Module.Runtime_Actions.Insert (Key      => File,
-                                                 New_Item => AP);
+                  Module.Runtime_Actions.Insert (Key => File, New_Item => AP);
                end;
             end;
          end if;
@@ -1458,7 +1501,7 @@ package body Navigation_Module is
          Command.Menus_To_Create.Append (AP);
       end Process_File;
 
-      Start  : constant Time := Clock;
+      Start             : constant Time := Clock;
       Max_Idle_Duration : constant Duration := 0.05;
 
       File : Virtual_File;
@@ -1484,8 +1527,9 @@ package body Navigation_Module is
          if Clock - Start > Max_Idle_Duration then
             Command.Set_Progress
               ((Activity => Running,
-                Current  => Command.Total_Files -
-                  Integer (Command.Files_To_Process.Length),
+                Current  =>
+                  Command.Total_Files
+                  - Integer (Command.Files_To_Process.Length),
                 Total    => Command.Total_Files));
 
             --  We spent too much time already: come back at another time.
@@ -1512,14 +1556,14 @@ package body Navigation_Module is
       while Has_Element (C) loop
          Ele := Element (C);
          declare
-            Path : constant String := To_String (Ele.Path);
+            Path      : constant String := To_String (Ele.Path);
             Has_Slash : Boolean;
          begin
             --  Filter out "/Ada" for instance
             if not (Starts_With (Path, "Ada")
-                      or else Starts_With (Path, "GNAT")
-                      or else Starts_With (Path, "System")
-                      or else Starts_With (Path, "Interfaces"))
+                    or else Starts_With (Path, "GNAT")
+                    or else Starts_With (Path, "System")
+                    or else Starts_With (Path, "Interfaces"))
             then
                Ele.Path := Null_Unbounded_String;
                Command.Menus_To_Create.Replace_Element (C, Ele);
@@ -1534,7 +1578,8 @@ package body Navigation_Module is
                   for J in reverse Path'Range loop
                      if Path (J) = '/' then
                         Has_Slash := True;
-                        Ele.Path := To_Unbounded_String
+                        Ele.Path :=
+                          To_Unbounded_String
                             (Path & "/<" & Path (J + 1 .. Path'Last) & ">");
 
                         Command.Menus_To_Create.Replace_Element (C, Ele);
@@ -1544,8 +1589,8 @@ package body Navigation_Module is
 
                   --  Transform elements of the form "Ada" into "Ada/<Ada>"
                   if not Has_Slash then
-                     Ele.Path := To_Unbounded_String
-                       (Path & "/<" & Path & ">");
+                     Ele.Path :=
+                       To_Unbounded_String (Path & "/<" & Path & ">");
 
                      Command.Menus_To_Create.Replace_Element (C, Ele);
                   end if;
@@ -1557,17 +1602,16 @@ package body Navigation_Module is
       end loop;
 
       declare
-         Runtime : constant String := (if Kernel.Get_Runtime /= ""
-                                       then Kernel.Get_Runtime & "/"
-                                       else "");
+         Runtime : constant String :=
+           (if Kernel.Get_Runtime /= "" then Kernel.Get_Runtime & "/" else "");
          Root    : constant String := "/Help/GNAT Runtime/";
       begin
          for AP of Command.Menus_To_Create loop
             if AP.Path /= Null_Unbounded_String then
                Register_Menu
-                 (Kernel     => Kernel,
-                  Path       => Root & Runtime & To_String (AP.Path),
-                  Action     => Get_Name (AP.Action));
+                 (Kernel => Kernel,
+                  Path   => Root & Runtime & To_String (AP.Path),
+                  Action => Get_Name (AP.Action));
                Module.Actions_With_A_Menu.Append (AP);
             end if;
          end loop;
@@ -1583,19 +1627,18 @@ package body Navigation_Module is
    procedure Regenerate_Runtime_Menu
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Module : constant Navigation_Module :=
+      Module    : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Task_Name : constant String := "refreshing Runtime menu";
-      C : Interactive_Command_Access;
+      C         : Interactive_Command_Access;
    begin
       --  Interrupt running task, if needed
-      Interrupt_Queue (Kernel   => Kernel,
-                       Queue_Id => Task_Name);
+      Interrupt_Queue (Kernel => Kernel, Queue_Id => Task_Name);
 
       --  Remove old runtime menu
       for AP of Module.Actions_With_A_Menu loop
-         Remove_UI_For_Action (Kernel => Kernel,
-                               Action => Get_Name (AP.Action));
+         Remove_UI_For_Action
+           (Kernel => Kernel, Action => Get_Name (AP.Action));
       end loop;
       Module.Actions_With_A_Menu.Clear;
 
@@ -1616,7 +1659,8 @@ package body Navigation_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Open_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is

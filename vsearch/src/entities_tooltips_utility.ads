@@ -18,10 +18,10 @@
 --  This package provides functions to get informations representing entity
 --  informations and needed to display tooltips (in GNAT Studio & GNATbench).
 
-with Language; use Language;
-with GPS.Kernel;       use GPS.Kernel;
+with Language;               use Language;
+with GPS.Kernel;             use GPS.Kernel;
 with Language.Tree.Database; use Language.Tree.Database;
-with Xref; use Xref;
+with Xref;                   use Xref;
 
 package Entities_Tooltips_Utility is
 
@@ -32,8 +32,8 @@ package Entities_Tooltips_Utility is
    end record;
 
    function Get_Tooltip_Information
-     (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Root_Entity'Class) return Tooltip_Information;
+     (Kernel : access Kernel_Handle_Record'Class; Entity : Root_Entity'Class)
+      return Tooltip_Information;
    --  Return information to be able to display the right icon
    --  depending on category and visibility.
 
@@ -43,27 +43,25 @@ package Entities_Tooltips_Utility is
    --  depending on category and visibility.
 
    function Get_Tooltip_Header
+     (Kernel : access Kernel_Handle_Record'Class; Entity : Root_Entity'Class)
+      return String;
+   --  Return the header of the tooltip
+
+   function Get_Tooltip_Header (Entity : Entity_Access) return String;
+   --  Return the header of the tooltip
+
+   function Get_Tooltip_Documentation
      (Kernel : access Kernel_Handle_Record'Class;
-      Entity : Root_Entity'Class) return String;
-   --  Return the header of the tooltip
-
-   function Get_Tooltip_Header
-     (Entity      : Entity_Access) return String;
-   --  Return the header of the tooltip
-
-   function Get_Tooltip_Documentation
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Root_Entity'Class;
-      Ref           : Root_Entity_Reference'Class) return String;
+      Entity : Root_Entity'Class;
+      Ref    : Root_Entity_Reference'Class) return String;
    --  Return the documentation of the tooltip
 
    function Get_Tooltip_Documentation
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Entity  : Entity_Access) return String;
+     (Kernel : access Kernel_Handle_Record'Class; Entity : Entity_Access)
+      return String;
    --  Return the documentation of the tooltip
 
-   function Is_Guess
-     (Entity : Root_Entity'Class) return Boolean;
+   function Is_Guess (Entity : Root_Entity'Class) return Boolean;
    --  return true if entity information is a guess
 
    function Tooltip_Guess_Message return String;

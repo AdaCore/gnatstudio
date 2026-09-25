@@ -23,8 +23,8 @@ with Sax.Attributes;
 private package CodePeer.Bridge.Reader_Utilities is
 
    function Get_Value
-     (Attrs : Sax.Attributes.Attributes'Class;
-      Name  : String) return Ada.Strings.Unbounded.Unbounded_String;
+     (Attrs : Sax.Attributes.Attributes'Class; Name : String)
+      return Ada.Strings.Unbounded.Unbounded_String;
    --  Returns value of the attribute as Unbounded_String
 
    function Get_Lifeage

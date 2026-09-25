@@ -40,8 +40,8 @@ package body CodePeer.Bridge.Reader_Utilities is
    ---------------
 
    function Get_Value
-     (Attrs : Sax.Attributes.Attributes'Class;
-      Name  : String) return Ada.Strings.Unbounded.Unbounded_String is
+     (Attrs : Sax.Attributes.Attributes'Class; Name : String)
+      return Ada.Strings.Unbounded.Unbounded_String is
    begin
       return
         Ada.Strings.Unbounded.To_Unbounded_String (Attrs.Get_Value (Name));

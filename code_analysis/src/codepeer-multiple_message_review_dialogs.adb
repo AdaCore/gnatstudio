@@ -29,7 +29,7 @@ with Gtkada.Dialogs;
 with Gtk.Box;
 with Gtk.Button;
 with Gtk.Cell_Renderer_Text;
-with Gtk.Dialog; use Gtk.Dialog;
+with Gtk.Dialog;     use Gtk.Dialog;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;
@@ -96,9 +96,10 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       History_Model_Approved_Column  => Glib.GType_String,
       History_Model_Comment_Column   => Glib.GType_String);
 
-   package Message_Review_Callbacks is
-     new Gtk.Handlers.User_Callback
-       (Glib.Object.GObject_Record, Message_Review_Dialog);
+   package Message_Review_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Glib.Object.GObject_Record,
+        Message_Review_Dialog);
 
    procedure On_Close
      (Object : access Glib.Object.GObject_Record'Class;
@@ -133,9 +134,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
      (View : access Glib.Object.GObject_Record'Class);
    --  Called when another messages are selected in the all-list
 
-   function Get_Comment
-     (Self : Message_Review_Dialog)
-      return Unbounded_String;
+   function Get_Comment (Self : Message_Review_Dialog) return Unbounded_String;
 
    function Id_Sort_Func
      (Model : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -147,17 +146,16 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       A     : Gtk.Tree_Model.Gtk_Tree_Iter;
       B     : Gtk.Tree_Model.Gtk_Tree_Iter) return Glib.Gint;
 
-   procedure Emit_By_Name
-     (Object : System.Address;
-      Name   : Glib.Signal_Name);
+   procedure Emit_By_Name (Object : System.Address; Name : Glib.Signal_Name);
    pragma Import (C, Emit_By_Name, "ada_g_signal_emit_by_name");
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
+     Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-     (1 => Interfaces.C.Strings.New_String
-        (String (CodePeer.Message_Review_Dialogs.Signal_Ok_Activated)));
+     (1 =>
+        Interfaces.C.Strings.New_String
+          (String (CodePeer.Message_Review_Dialogs.Signal_Ok_Activated)));
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
      (1 => (1 => Glib.GType_None));
@@ -168,9 +166,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
    -- Get_Comment --
    -----------------
 
-   function Get_Comment
-     (Self : Message_Review_Dialog)
-      return Unbounded_String
+   function Get_Comment (Self : Message_Review_Dialog) return Unbounded_String
    is
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
@@ -219,7 +215,8 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
    -- Get_Messages --
    ------------------
 
-   overriding function Get_Messages
+   overriding
+   function Get_Messages
      (Self : not null access constant Message_Review_Dialog_Record)
       return CodePeer.Message_Vectors.Vector is
    begin
@@ -234,8 +231,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
      (Dialog   : out Message_Review_Dialog;
       Kernel   : not null access Kernel_Handle_Record'Class;
       Module   : access CodePeer.Module.Module_Id_Record'Class;
-      Messages : CodePeer.Message_Vectors.Vector)
-   is
+      Messages : CodePeer.Message_Vectors.Vector) is
    begin
       Dialog := new Message_Review_Dialog_Record;
       Initialize (Dialog, Kernel, Module, Messages);
@@ -259,8 +255,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       --  Create column for the tree
 
       procedure Create_Columns
-        (Tree     : Gtk.Tree_View.Gtk_Tree_View;
-         Sortable : Boolean);
+        (Tree : Gtk.Tree_View.Gtk_Tree_View; Sortable : Boolean);
       --  Create columns for the tree
 
       Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -293,19 +288,16 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       --------------------
 
       procedure Create_Columns
-        (Tree     : Gtk.Tree_View.Gtk_Tree_View;
-         Sortable : Boolean) is
+        (Tree : Gtk.Tree_View.Gtk_Tree_View; Sortable : Boolean) is
       begin
-         Create_Column
-           (Tree, "Id", Messages_Model_Id_Column, Sortable);
+         Create_Column (Tree, "Id", Messages_Model_Id_Column, Sortable);
          Create_Column
            (Tree, "Ranking", Messages_Model_Ranking_Column, Sortable);
          Create_Column
            (Tree, "Status", Messages_Model_Status_Column, Sortable);
          Create_Column
            (Tree, "Location", Messages_Model_Location_Column, Sortable);
-         Create_Column
-           (Tree, "Text", Messages_Model_Text_Column, Sortable);
+         Create_Column (Tree, "Text", Messages_Model_Text_Column, Sortable);
       end Create_Columns;
 
       Scrolled             : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
@@ -316,10 +308,10 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Audit_View           : Gtk.Tree_View.Gtk_Tree_View;
       Dummy_W              : Gtk.Widget.Gtk_Widget;
 
-      VPaned               : Gtk.Paned.Gtk_Paned;
-      Paned_2              : Gtk.Paned.Gtk_Paned;
-      Box                  : Gtk.Box.Gtk_Box;
-      Frame                : Gtk.Frame.Gtk_Frame;
+      VPaned  : Gtk.Paned.Gtk_Paned;
+      Paned_2 : Gtk.Paned.Gtk_Paned;
+      Box     : Gtk.Box.Gtk_Box;
+      Frame   : Gtk.Frame.Gtk_Frame;
 
    begin
       Glib.Object.Initialize_Class_Record
@@ -333,13 +325,13 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
         (Self,
          Title  =>
            -(VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-               & " message review"),
+             & " message review"),
          Kernel => Kernel,
          Typ    => Class_Record.The_Type);
       GPS.Main_Window.Set_Default_Size_From_History
         (Self,
          VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-           & " message review",
+         & " message review",
          Kernel,
          400,
          400);
@@ -395,8 +387,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Gtk.Tree_Store.Gtk_New
         (Self.Review_Messages_Store, Messages_Model_Types);
       Gtk.Tree_View.Gtk_New (Review_Messages_View, Self.Review_Messages_Store);
-      Review_Messages_View.Get_Selection.Set_Mode
-        (Gtk.Enums.Selection_None);
+      Review_Messages_View.Get_Selection.Set_Mode (Gtk.Enums.Selection_None);
       Scrolled.Add (Review_Messages_View);
       Create_Columns (Review_Messages_View, False);
 
@@ -576,24 +567,23 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          begin
             Self.All_Messages_Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
             Set_All_And_Clear
-              (Self.All_Messages_Store, Iter,
+              (Self.All_Messages_Store,
+               Iter,
                (Messages_Model_Id_Column       =>
                   As_String (Image (Message.Id)),
                 Messages_Model_Ranking_Column  =>
                   As_String (Image (Message.Ranking)),
                 Messages_Model_Status_Column   =>
                   As_String (Image (Message.Status)),
-                Messages_Model_Location_Column =>
-                  As_String (Location_Text),
+                Messages_Model_Location_Column => As_String (Location_Text),
                 Messages_Model_Text_Column     =>
                   As_String (To_String (Message.Get_Text)),
-                Messages_Model_File_Column      =>
+                Messages_Model_File_Column     =>
                   As_String (Message.Get_File.Display_Base_Name),
-                Messages_Model_Line_Column      =>
+                Messages_Model_Line_Column     =>
                   As_Int (Glib.Gint (Message.Get_Line)),
-                Messages_Model_Col_Column       =>
-                  As_Int (Glib.Gint (Message.Get_Column)))
-              );
+                Messages_Model_Col_Column      =>
+                  As_Int (Glib.Gint (Message.Get_Column))));
          end;
       end loop;
       Self.Set_Selection := False;
@@ -628,15 +618,15 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          begin
             Self.Review_Messages_Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
             Set_All_And_Clear
-              (Self.Review_Messages_Store, Iter,
-               (Messages_Model_Id_Column  =>
+              (Self.Review_Messages_Store,
+               Iter,
+               (Messages_Model_Id_Column       =>
                   As_String (Image (Message.Id)),
                 Messages_Model_Ranking_Column  =>
                   As_String (Image (Message.Ranking)),
                 Messages_Model_Status_Column   =>
                   As_String (Image (Message.Status)),
-                Messages_Model_Location_Column =>
-                  As_String (Location_Text),
+                Messages_Model_Location_Column => As_String (Location_Text),
                 Messages_Model_Text_Column     =>
                   As_String (To_String (Message.Get_Text))));
          end;
@@ -723,16 +713,17 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
                end if;
             end loop;
 
-            return VSS.Strings.Conversions.To_UTF_8_String
-              (Vector.Join_Lines
-                 (Terminator     => VSS.Strings.LF,
-                  Terminate_Last => False));
+            return
+              VSS.Strings.Conversions.To_UTF_8_String
+                (Vector.Join_Lines
+                   (Terminator => VSS.Strings.LF, Terminate_Last => False));
          end Unmask_New_Lines;
 
       begin
          Self.Audit_Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
          Set_All_And_Clear
-           (Self.Audit_Store, Iter,
+           (Self.Audit_Store,
+            Iter,
             (0 => As_String (Image (Current_Id)),
              1 => As_String (To_String (Audit.Timestamp)),
              2 => As_String (Image (Audit.Status)),
@@ -815,8 +806,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
    -- Fill_Data --
    ---------------
 
-   procedure Fill_Data (Self : Message_Review_Dialog)
-   is
+   procedure Fill_Data (Self : Message_Review_Dialog) is
       use GPS.Editors;
    begin
       Self.Fill_Messages;
@@ -850,14 +840,14 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       function Changed return Boolean;
       --  Return True if audit fields contain not default values
 
-      Model      : constant Gtk.Tree_Store.Gtk_Tree_Store :=
+      Model   : constant Gtk.Tree_Store.Gtk_Tree_Store :=
         -(Self.New_Status.Get_Model);
-      Iter       : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
+      Iter    : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
         Self.New_Status.Get_Active_Iter;
-      Status     : constant CodePeer.Audit_Status_Kinds := Get_Status
-        (Positive
-           (Model.Get_Int (Iter, Status_Model_Value_Column)));
-      Comment    : constant Unbounded_String := Self.Get_Comment;
+      Status  : constant CodePeer.Audit_Status_Kinds :=
+        Get_Status
+          (Positive (Model.Get_Int (Iter, Status_Model_Value_Column)));
+      Comment : constant Unbounded_String := Self.Get_Comment;
 
       -------------
       -- Changed --
@@ -873,7 +863,8 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
             return True;
          end if;
 
-         return Status.Category /= Uncategorized
+         return
+           Status.Category /= Uncategorized
            and then Self.Messages.First_Element.Status /= Status;
       end Changed;
 
@@ -886,11 +877,13 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
             Button : Message_Dialog_Buttons;
 
          begin
-            Button := GPS_Message_Dialog
-              (Msg     => -"Existing reviews were not applied yet."
-               & " Do you want to apply them or exit and discard them ?",
-               Buttons => Button_Yes or Button_No or Button_Cancel,
-               Parent  => GPS.Kernel.MDI.Get_Current_Window (Self.Kernel));
+            Button :=
+              GPS_Message_Dialog
+                (Msg     =>
+                   -"Existing reviews were not applied yet."
+                   & " Do you want to apply them or exit and discard them ?",
+                 Buttons => Button_Yes or Button_No or Button_Cancel,
+                 Parent  => GPS.Kernel.MDI.Get_Current_Window (Self.Kernel));
 
             if Button = Button_Yes then
                Self.Apply;
@@ -924,22 +917,21 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
    -- Apply --
    -----------
 
-   procedure Apply (Self : Message_Review_Dialog)
-   is
+   procedure Apply (Self : Message_Review_Dialog) is
       use type Glib.Signal_Name;
 
       Model      : constant Gtk.Tree_Store.Gtk_Tree_Store :=
-                     -(Self.New_Status.Get_Model);
+        -(Self.New_Status.Get_Model);
       Iter       : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-                     Self.New_Status.Get_Active_Iter;
+        Self.New_Status.Get_Active_Iter;
       Status     : constant CodePeer.Audit_Status_Kinds :=
-                     Get_Status (Positive
-                       (Model.Get_Int (Iter, Status_Model_Value_Column)));
+        Get_Status
+          (Positive (Model.Get_Int (Iter, Status_Model_Value_Column)));
       Timestamp  : constant Unbounded_String :=
-                     To_Unbounded_String
-                       (Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
+        To_Unbounded_String
+          (Ada.Calendar.Formatting.Image (Ada.Calendar.Clock));
       Approved   : constant Unbounded_String :=
-                     To_Unbounded_String (Self.Approved_Entry.Get_Text);
+        To_Unbounded_String (Self.Approved_Entry.Get_Text);
       Comment    : constant Unbounded_String := Self.Get_Comment;
       New_Record : CodePeer.Audit_Record_Access;
 
@@ -1048,20 +1040,20 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
    is
       use type Glib.Gint;
 
-      Name_A : constant String := Model.Get_String
-        (A, Messages_Model_File_Column);
-      Name_B : constant String := Model.Get_String
-        (B, Messages_Model_File_Column);
+      Name_A : constant String :=
+        Model.Get_String (A, Messages_Model_File_Column);
+      Name_B : constant String :=
+        Model.Get_String (B, Messages_Model_File_Column);
 
-      Line_A : constant Glib.Gint := Model.Get_Int
-        (A, Messages_Model_Line_Column);
-      Line_B : constant Glib.Gint := Model.Get_Int
-        (B, Messages_Model_Line_Column);
+      Line_A : constant Glib.Gint :=
+        Model.Get_Int (A, Messages_Model_Line_Column);
+      Line_B : constant Glib.Gint :=
+        Model.Get_Int (B, Messages_Model_Line_Column);
 
-      Col_A : constant Glib.Gint := Model.Get_Int
-        (A, Messages_Model_Col_Column);
-      Col_B : constant Glib.Gint := Model.Get_Int
-        (B, Messages_Model_Col_Column);
+      Col_A : constant Glib.Gint :=
+        Model.Get_Int (A, Messages_Model_Col_Column);
+      Col_B : constant Glib.Gint :=
+        Model.Get_Int (B, Messages_Model_Col_Column);
 
    begin
       if Name_A < Name_B then

@@ -21,8 +21,9 @@ with GPS.Core_Kernels;
 package GPS.Valgrind is
 
    type Valgrind_Module_Id_Record is
-     new GPS.Core_Kernels.Abstract_Module_Record with record
-      Kernel        : GPS.Core_Kernels.Core_Kernel;
+     new GPS.Core_Kernels.Abstract_Module_Record
+   with record
+      Kernel : GPS.Core_Kernels.Core_Kernel;
    end record;
 
    type Valgrind_Module_Id is access all Valgrind_Module_Id_Record'Class;

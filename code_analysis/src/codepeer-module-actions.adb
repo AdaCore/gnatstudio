@@ -52,8 +52,7 @@ package body CodePeer.Module.Actions is
      (Context   : Interactive_Command_Context;
       Target_ID : String;
       Title     : String;
-      Action    : CodePeer_Action)
-      return Command_Return_Type;
+      Action    : CodePeer_Action) return Command_Return_Type;
    --  Open a dialog to select a baseline and execute a BuiltTarget with
    --  the selected file.
 
@@ -85,9 +84,10 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Analyze_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Analyze_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Context);
 
@@ -95,8 +95,8 @@ package body CodePeer.Module.Actions is
       Self.Module.Review
         (False,
          "Run "
-           & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-           & "...");
+         & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+         & "...");
 
       return Success;
    end Execute;
@@ -105,9 +105,10 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Analyze_All_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Analyze_All_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Context);
 
@@ -115,7 +116,7 @@ package body CodePeer.Module.Actions is
       Self.Module.Review
         (True,
          "Run "
-           & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name));
+         & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name));
 
       return Success;
    end Execute;
@@ -124,7 +125,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Analyze_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -144,8 +146,8 @@ package body CodePeer.Module.Actions is
         (Force        => True,
          Build_Target =>
            "Run "
-             & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-             & " File");
+           & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+           & " File");
 
       return Success;
    end Execute;
@@ -154,7 +156,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Analyze_File_By_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -162,13 +165,13 @@ package body CodePeer.Module.Actions is
 
       Build_Target : constant String :=
         "Run "
-          & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-          & " File By File";
+        & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+        & " File By File";
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Project  : constant Project_Type  := Get_Project (Kernel);
-      Builder  : constant Builder_Context := Builder_Context
-        (Kernel.Module (Builder_Context_Record'Tag));
+      Project  : constant Project_Type := Get_Project (Kernel);
+      Builder  : constant Builder_Context :=
+        Builder_Context (Kernel.Module (Builder_Context_Record'Tag));
       Switches : String_List_Access;
 
    begin
@@ -182,8 +185,8 @@ package body CodePeer.Module.Actions is
 
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
-         Target_ID   => CodePeer.Shell_Commands.Build_Target
-           (Kernel, Build_Target),
+         Target_ID   =>
+           CodePeer.Shell_Commands.Build_Target (Kernel, Build_Target),
          Force       => False,
          Synchronous => False);
       return Success;
@@ -193,7 +196,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Display_Code_Review_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -226,8 +230,7 @@ package body CodePeer.Module.Actions is
      (Context   : Interactive_Command_Context;
       Target_ID : String;
       Title     : String;
-      Action    : CodePeer_Action)
-      return Command_Return_Type
+      Action    : CodePeer_Action) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dir    : constant Virtual_File :=
@@ -264,7 +267,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Display_Baseline_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
@@ -280,7 +284,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Baseline_Bump_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
@@ -301,7 +306,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Baseline_Set_Baseline_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
@@ -317,7 +323,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Baseline_Set_Current_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
@@ -333,7 +340,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Display_HTML_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -348,16 +356,17 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Generate_CSV_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Build_Target : constant String := "Generate CSV Report";
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Project  : constant Project_Type  := Get_Project (Kernel);
-      Builder  : constant Builder_Context := Builder_Context
-        (Kernel.Module (Builder_Context_Record'Tag));
+      Project  : constant Project_Type := Get_Project (Kernel);
+      Builder  : constant Builder_Context :=
+        Builder_Context (Kernel.Module (Builder_Context_Record'Tag));
       Switches : String_List_Access;
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
@@ -380,8 +389,8 @@ package body CodePeer.Module.Actions is
       Self.Module.Action := Load_CSV;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
-         Target_ID   => CodePeer.Shell_Commands.Build_Target
-           (Kernel, Build_Target),
+         Target_ID   =>
+           CodePeer.Shell_Commands.Build_Target (Kernel, Build_Target),
          Build_Mode  => CodePeer.Build_Mode,
          Synchronous => False,
          Dir         => Object_Dir);
@@ -393,16 +402,17 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Generate_HTML_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Build_Target : constant String := "Generate HTML Report";
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Project  : constant Project_Type  := Get_Project (Kernel);
-      Builder  : constant Builder_Context := Builder_Context
-        (Kernel.Module (Builder_Context_Record'Tag));
+      Project  : constant Project_Type := Get_Project (Kernel);
+      Builder  : constant Builder_Context :=
+        Builder_Context (Kernel.Module (Builder_Context_Record'Tag));
       Switches : String_List_Access;
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Kernel);
@@ -423,8 +433,8 @@ package body CodePeer.Module.Actions is
       Self.Module.Action := Open_HTML;
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel_Handle (Self.Module.Kernel),
-         Target_ID   => CodePeer.Shell_Commands.Build_Target
-           (Kernel, Build_Target),
+         Target_ID   =>
+           CodePeer.Shell_Commands.Build_Target (Kernel, Build_Target),
          Build_Mode  => CodePeer.Build_Mode,
          Synchronous => False,
          Dir         => Object_Dir);
@@ -435,7 +445,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Generate_SCIL_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -447,8 +458,7 @@ package body CodePeer.Module.Actions is
       CodePeer.Shell_Commands.Build_Target_Execute
         (Kernel      => Kernel,
          Target_ID   =>
-           CodePeer.Shell_Commands.Build_Target
-             (Kernel, "Generate SCIL"),
+           CodePeer.Shell_Commands.Build_Target (Kernel, "Generate SCIL"),
          Force       => False,
          Synchronous => False);
       return Success;
@@ -458,16 +468,17 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Log_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Log_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
 
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Log_File : constant Virtual_File :=
         Codepeer_Log_Directory (Kernel).Create_From_Dir
-        (if Is_GNATSAS then "gnatsas.log" else "Insepection.log");
+          (if Is_GNATSAS then "gnatsas.log" else "Insepection.log");
 
    begin
       if Log_File.Is_Regular_File then
@@ -493,7 +504,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Regenerate_Report_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -511,8 +523,8 @@ package body CodePeer.Module.Actions is
         (Self.Module,
          False,
          "Regenerate "
-           & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-           & " Report",
+         & VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
+         & " Report",
          Need_Reload => False);
 
       return Success;
@@ -522,18 +534,19 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Remove_Lock_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Remove_Lock_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
 
-      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Lock_File    : constant Virtual_File :=
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Lock_File : constant Virtual_File :=
         Inspector_Output_Directory (Kernel).Create_From_Dir ("inspector.lock");
-      Project      : constant Project_Type := Get_Project (Kernel);
-      Deleted      : Boolean;
-      Command      : Command_Return_Type;
+      Project   : constant Project_Type := Get_Project (Kernel);
+      Deleted   : Boolean;
+      Command   : Command_Return_Type;
       --  Try deleting lock files if they exist. If lock files remain after
       --  execution, fails. If no lock file exists, succeeds.
 
@@ -542,29 +555,23 @@ package body CodePeer.Module.Actions is
       ------------
 
       procedure Delete
-        (Lock_File : Virtual_File;
-         Command : in out Command_Return_Type);
+        (Lock_File : Virtual_File; Command : in out Command_Return_Type);
 
       procedure Delete
-        (Lock_File : Virtual_File;
-         Command : in out Command_Return_Type)
-      is
+        (Lock_File : Virtual_File; Command : in out Command_Return_Type) is
       begin
          if Is_Regular_File (Lock_File) then
             Delete (Lock_File, Deleted);
 
             if Deleted then
-               Kernel.Insert
-                 (-"deleted: " & Lock_File.Display_Full_Name);
+               Kernel.Insert (-"deleted: " & Lock_File.Display_Full_Name);
             else
                Kernel.Insert
-                 (-"could not delete: " &
-                    Lock_File.Display_Full_Name);
+                 (-"could not delete: " & Lock_File.Display_Full_Name);
                Command := Failure;
             end if;
          else
-            Kernel.Insert
-              (-"not found: " & Lock_File.Display_Full_Name);
+            Kernel.Insert (-"not found: " & Lock_File.Display_Full_Name);
          end if;
 
       end Delete;
@@ -578,15 +585,15 @@ package body CodePeer.Module.Actions is
          declare
             Lock_File_GNATSAS : constant Virtual_File :=
               Codepeer_GNATSAS_Directory (Kernel).Create_From_Dir
-              ("gnatsas.lock");
+                ("gnatsas.lock");
          begin
             Delete (Lock_File_GNATSAS, Command);
          end;
       else
          declare
             DB_Lock_File : constant Virtual_File :=
-              Codepeer_Database_Directory
-                (Project).Create_From_Dir ("Sqlite.db.lock");
+              Codepeer_Database_Directory (Project).Create_From_Dir
+                ("Sqlite.db.lock");
          begin
             Delete (DB_Lock_File, Command);
          end;
@@ -598,7 +605,7 @@ package body CodePeer.Module.Actions is
       else
          Kernel.Insert
            (-("Some locks could not be deleted, try manually deleting them "
-            & "before running an analysis."));
+              & "before running an analysis."));
       end if;
 
       return Command;
@@ -608,9 +615,10 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Remove_SCIL_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Remove_SCIL_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
 
@@ -621,11 +629,11 @@ package body CodePeer.Module.Actions is
 
       Temp_SCIL : constant Filesystem_String := "Insp_";
       Obj_Dirs  : constant GNATCOLL.VFS.File_Array :=
-                    Object_Path
-                      (Project             => Get_Project (Kernel),
-                       Recursive           => True,
-                       Including_Libraries => True,
-                       Exclude_Externally  => True);
+        Object_Path
+          (Project             => Get_Project (Kernel),
+           Recursive           => True,
+           Including_Libraries => True,
+           Exclude_Externally  => True);
       Dirs      : File_Array_Access;
       Ignore    : Boolean;
 
@@ -655,7 +663,7 @@ package body CodePeer.Module.Actions is
                       (Base'Length > Temp_SCIL'Length
                        and then
                          Base (Base'First .. Base'First + Temp_SCIL'Length - 1)
-                           = Temp_SCIL)
+                         = Temp_SCIL)
                   then
                      Remove_Dir (Dir, True, Ignore);
                   end if;
@@ -681,7 +689,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Remove_SCIL_DB_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -693,11 +702,11 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Ensure_Build_Mode);
 
       Obj_Dirs : constant GNATCOLL.VFS.File_Array :=
-                   Object_Path
-                     (Project             => Get_Project (Kernel),
-                      Recursive           => True,
-                      Including_Libraries => True,
-                      Exclude_Externally  => True);
+        Object_Path
+          (Project             => Get_Project (Kernel),
+           Recursive           => True,
+           Including_Libraries => True,
+           Exclude_Externally  => True);
       Ignore   : Boolean;
 
    begin
@@ -718,7 +727,8 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Remove_XML_Review_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -739,18 +749,19 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Hide_Annotations_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
          declare
             Project_Node : constant Code_Analysis.Project_Access :=
-                             Code_Analysis.Get_Or_Create
-                               (Self.Module.Tree,
-                                Projects.Views.Create_Project_View_Reference
-                                  (Get_Kernel (Context.Context),
-                                   Project_Information (Context.Context)));
+              Code_Analysis.Get_Or_Create
+                (Self.Module.Tree,
+                 Projects.Views.Create_Project_View_Reference
+                   (Get_Kernel (Context.Context),
+                    Project_Information (Context.Context)));
             File_Node    : constant Code_Analysis.File_Access :=
               Code_Analysis.Get_Or_Create
                 (Project_Node, File_Information (Context.Context));
@@ -768,18 +779,19 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Show_Annotations_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       if Is_Show_Hide_Allowed (Self.Module, Context.Context) then
          declare
             Project_Node : constant Code_Analysis.Project_Access :=
-                             Code_Analysis.Get_Or_Create
-                               (Self.Module.Tree,
-                                Projects.Views.Create_Project_View_Reference
-                                  (Get_Kernel (Context.Context),
-                                   Project_Information (Context.Context)));
+              Code_Analysis.Get_Or_Create
+                (Self.Module.Tree,
+                 Projects.Views.Create_Project_View_Reference
+                   (Get_Kernel (Context.Context),
+                    Project_Information (Context.Context)));
             File_Node    : constant Code_Analysis.File_Access :=
               Code_Analysis.Get_Or_Create
                 (Project_Node, File_Information (Context.Context));
@@ -797,14 +809,15 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Review_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       CodePeer.Module.Review_Messages
         (Self        => Self.Module,
-         Messages    => Get_Codepeer_Messages
-           (Messages_Information (Context.Context)),
+         Messages    =>
+           Get_Codepeer_Messages (Messages_Information (Context.Context)),
          Need_Reload => False);
 
       return Success;
@@ -814,14 +827,15 @@ package body CodePeer.Module.Actions is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Annotate_Messages_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       CodePeer.Module.Annotate_Messages
         (Self     => Self.Module,
-         Messages => Get_Codepeer_Messages
-           (Messages_Information (Context.Context)));
+         Messages =>
+           Get_Codepeer_Messages (Messages_Information (Context.Context)));
 
       return Success;
    end Execute;
@@ -830,9 +844,10 @@ package body CodePeer.Module.Actions is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Hide_Annotations_Filter;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Is_Hide_Annotations_Filter; Context : Selection_Context)
+      return Boolean is
    begin
       if not Is_Show_Hide_Allowed (Filter.Module, Context) then
          return False;
@@ -842,11 +857,10 @@ package body CodePeer.Module.Actions is
          use type GPS.Editors.Editor_Buffer'Class;
 
          Project_Node    : constant Code_Analysis.Project_Access :=
-                             Code_Analysis.Get_Or_Create
-                               (Filter.Module.Tree,
-                                Projects.Views.Create_Project_View_Reference
-                                  (Get_Kernel (Context),
-                                   Project_Information (Context)));
+           Code_Analysis.Get_Or_Create
+             (Filter.Module.Tree,
+              Projects.Views.Create_Project_View_Reference
+                (Get_Kernel (Context), Project_Information (Context)));
          File_Node       : constant Code_Analysis.File_Access :=
            Code_Analysis.Get_Or_Create
              (Project_Node, File_Information (Context));
@@ -855,8 +869,7 @@ package body CodePeer.Module.Actions is
          Kernel          : constant GPS.Kernel.Kernel_Handle :=
            GPS.Kernel.Get_Kernel (Context);
          Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
-           Kernel.Get_Buffer_Factory.Get
-             (File_Node.Name, False, False, False);
+           Kernel.Get_Buffer_Factory.Get (File_Node.Name, False, False, False);
 
       begin
          if not File_Node.Subprograms.Is_Empty then
@@ -882,9 +895,10 @@ package body CodePeer.Module.Actions is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Show_Annotations_Filter;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Is_Show_Annotations_Filter; Context : Selection_Context)
+      return Boolean is
    begin
       if not Is_Show_Hide_Allowed (Filter.Module, Context) then
          return False;
@@ -894,11 +908,10 @@ package body CodePeer.Module.Actions is
          use type GPS.Editors.Editor_Buffer'Class;
 
          Project_Node    : constant Code_Analysis.Project_Access :=
-                             Code_Analysis.Get_Or_Create
-                               (Filter.Module.Tree,
-                                Projects.Views.Create_Project_View_Reference
-                                  (Get_Kernel (Context),
-                                   Project_Information (Context)));
+           Code_Analysis.Get_Or_Create
+             (Filter.Module.Tree,
+              Projects.Views.Create_Project_View_Reference
+                (Get_Kernel (Context), Project_Information (Context)));
          File_Node       : constant Code_Analysis.File_Access :=
            Code_Analysis.Get_Or_Create
              (Project_Node, File_Information (Context));
@@ -907,8 +920,7 @@ package body CodePeer.Module.Actions is
          Kernel          : constant GPS.Kernel.Kernel_Handle :=
            GPS.Kernel.Get_Kernel (Context);
          Buffer          : constant GPS.Editors.Editor_Buffer'Class :=
-           Kernel.Get_Buffer_Factory.Get
-             (File_Node.Name, False, False, False);
+           Kernel.Get_Buffer_Factory.Get (File_Node.Name, False, False, False);
 
       begin
          if not File_Node.Subprograms.Is_Empty then
@@ -932,9 +944,10 @@ package body CodePeer.Module.Actions is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Local_Mode_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Local_Mode_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Context);
 
@@ -949,9 +962,10 @@ package body CodePeer.Module.Actions is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Review_Messages_Filter;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Is_Review_Messages_Filter; Context : Selection_Context)
+      return Boolean is
    begin
       if not Is_Show_Hide_Allowed (Filter.Module, Context) then
          return False;
@@ -976,15 +990,14 @@ package body CodePeer.Module.Actions is
    begin
       return
         Module.Tree /= null
-          and then GPS.Kernel.Contexts.Has_File_Information (Context);
+        and then GPS.Kernel.Contexts.Has_File_Information (Context);
    end Is_Show_Hide_Allowed;
 
    ----------------------
    -- Register_Actions --
    ----------------------
 
-   procedure Register_Actions (Module : not null CodePeer_Module_Id)
-   is
+   procedure Register_Actions (Module : not null CodePeer_Module_Id) is
       Is_Local_Mode : constant Action_Filter :=
         new Is_Local_Mode_Filter (Module);
       Is_Review     : constant Action_Filter :=
@@ -1007,8 +1020,8 @@ package body CodePeer.Module.Actions is
          Command => new Analyze_File_Command,
          Filter  =>
            Lookup_Filter (Module.Kernel, "File")
-             and Create (Language => "ada")
-             and Is_Local_Mode);
+           and Create (Language => "ada")
+           and Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
          Name    => CodePeer.Package_Name & " display code review",
@@ -1046,7 +1059,7 @@ package body CodePeer.Module.Actions is
         (Kernel  => Module.Kernel,
          Name    => CodePeer.Package_Name & " generate csv",
          Command => new Generate_CSV_Command (Module),
-         Filter => Is_Local_Mode);
+         Filter  => Is_Local_Mode);
       Register_Action
         (Kernel  => Module.Kernel,
          Name    => CodePeer.Package_Name & " generate html",
@@ -1102,7 +1115,7 @@ package body CodePeer.Module.Actions is
          Action => "show codepeer annotations",
          Label  =>
            VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-             & "/Show annotations");
+           & "/Show annotations");
 
       Register_Action
         (Kernel   => Module.Kernel,
@@ -1116,7 +1129,7 @@ package body CodePeer.Module.Actions is
          Action => "hide codepeer annotations",
          Label  =>
            VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-             & "/Hide annotations");
+           & "/Hide annotations");
 
       Register_Action
         (Kernel   => Module.Kernel,
@@ -1130,7 +1143,7 @@ package body CodePeer.Module.Actions is
          Action => "review codepeer messages",
          Label  =>
            VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-             & "/Review messages");
+           & "/Review messages");
 
       Register_Action
         (Kernel   => Module.Kernel,
@@ -1144,7 +1157,7 @@ package body CodePeer.Module.Actions is
          Action => "annotate codepeer messages",
          Label  =>
            VSS.Strings.Conversions.To_UTF_8_String (CodePeer.Module_Name)
-             & "/Annotate messages");
+           & "/Annotate messages");
    end Register_Actions;
 
 end CodePeer.Module.Actions;

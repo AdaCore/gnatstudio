@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel.Hooks;
-with GPS.Debuggers;     use GPS.Debuggers;
+with GPS.Debuggers; use GPS.Debuggers;
 
 with DAP.Clients.Stack_Trace.StackTrace;
 with DAP.Modules.Preferences;
@@ -26,16 +26,20 @@ with DAP.Utils;
 package body DAP.Clients.Stack_Trace is
 
    type On_Debug_Process_Terminated is
-     new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
-   overriding procedure Execute
+     new GPS.Kernel.Hooks.Debugger_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self     : On_Debug_Process_Terminated;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class);
    --  Called when the process has terminated
 
    type On_Debugger_State_Changed is
-     new GPS.Kernel.Hooks.Debugger_States_Hooks_Function with null record;
-   overriding procedure Execute
+     new GPS.Kernel.Hooks.Debugger_States_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self      : On_Debugger_State_Changed;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -58,7 +62,8 @@ package body DAP.Clients.Stack_Trace is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self     : On_Debug_Process_Terminated;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access GPS.Debuggers.Base_Visual_Debugger'Class)
@@ -67,9 +72,7 @@ package body DAP.Clients.Stack_Trace is
       Client : constant DAP_Client_Access :=
         DAP_Visual_Debugger_Access (Debugger).Client;
    begin
-      if Client /= null
-        and then Client.Get_Stack_Trace /= null
-      then
+      if Client /= null and then Client.Get_Stack_Trace /= null then
          Client.Get_Stack_Trace.Clear;
       end if;
    end Execute;
@@ -78,7 +81,8 @@ package body DAP.Clients.Stack_Trace is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self      : On_Debugger_State_Changed;
       Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger  : access GPS.Debuggers.Base_Visual_Debugger'Class;
@@ -103,9 +107,7 @@ package body DAP.Clients.Stack_Trace is
    function Get_Current_Frame_Id
      (Self : Stack_Trace_Access) return DAP.Tools.Optional_Integer is
    begin
-      if Self /= null
-        and then Self.Selected_Frame.Id >= 0
-      then
+      if Self /= null and then Self.Selected_Frame.Id >= 0 then
          return (Is_Set => True, Value => Self.Selected_Frame.Id);
       else
          return (Is_Set => False);
@@ -156,8 +158,8 @@ package body DAP.Clients.Stack_Trace is
    -- Get_Current_Address --
    -------------------------
 
-   function Get_Current_Address
-     (Self : Stack_Trace_Access) return Address_Type is
+   function Get_Current_Address (Self : Stack_Trace_Access) return Address_Type
+   is
    begin
       if Self /= null then
          return Self.Selected_Frame.Address;
@@ -170,8 +172,8 @@ package body DAP.Clients.Stack_Trace is
    -- Get_Trace --
    ---------------
 
-   function Get_Trace
-     (Self : Stack_Trace_Access) return Frames_Vectors.Vector is
+   function Get_Trace (Self : Stack_Trace_Access) return Frames_Vectors.Vector
+   is
    begin
       if Self /= null then
          return Self.Frames;
@@ -217,9 +219,7 @@ package body DAP.Clients.Stack_Trace is
       Frames : Frames_Vectors.Vector renames Self.Frames;
    begin
       if Id in Integer (Frames.First_Index) .. Integer (Frames.Last_Index) then
-         Self.Select_Frame
-           (Frame  => Frames (Id),
-            Client => Client);
+         Self.Select_Frame (Frame => Frames (Id), Client => Client);
       end if;
    end Select_Frame;
 
@@ -228,8 +228,7 @@ package body DAP.Clients.Stack_Trace is
    --------------
 
    procedure Frame_Up
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class)
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class)
    is
       Next : Boolean := False;
    begin
@@ -249,8 +248,7 @@ package body DAP.Clients.Stack_Trace is
    ----------------
 
    procedure Frame_Down
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class)
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class)
    is
       Next : Boolean := False;
    begin
@@ -277,8 +275,12 @@ package body DAP.Clients.Stack_Trace is
       Address : Address_Type) is
    begin
       Self.Selected_Frame :=
-        (Id, VSS.Strings.Empty_Virtual_String,
-         File, Line, Address, File.Is_Regular_File);
+        (Id,
+         VSS.Strings.Empty_Virtual_String,
+         File,
+         Line,
+         Address,
+         File.Is_Regular_File);
    end Set_Frame;
 
    -----------
@@ -297,15 +299,15 @@ package body DAP.Clients.Stack_Trace is
    ------------------
 
    procedure Send_Request
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class)
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class)
    is
       Req : DAP.Clients.Stack_Trace.StackTrace.StackTrace_Request_Access :=
         DAP.Clients.Stack_Trace.StackTrace.Create
           (Client => Client,
-           From   => (if Self.Frames.Is_Empty
-                      then 0
-                      else Self.Frames.Last_Element.Id + 1),
+           From   =>
+             (if Self.Frames.Is_Empty
+              then 0
+              else Self.Frames.Last_Element.Id + 1),
            Limit  => DAP.Modules.Preferences.Frames_Limit.Get_Pref);
    begin
       Client.Enqueue (DAP.Requests.DAP_Request_Access (Req), Force => True);
@@ -316,8 +318,8 @@ package body DAP.Clients.Stack_Trace is
    ----------------
 
    function Can_Upload
-     (Self   : Stack_Trace_Access;
-      Client : access DAP.Clients.DAP_Client'Class) return Boolean is
+     (Self : Stack_Trace_Access; Client : access DAP.Clients.DAP_Client'Class)
+      return Boolean is
    begin
       if Self = null then
          return False;
@@ -333,7 +335,8 @@ package body DAP.Clients.Stack_Trace is
          return False;
 
       else
-         return Self.Total_Count = 0
+         return
+           Self.Total_Count = 0
            or else Self.Total_Count > Integer (Self.Frames.Length);
       end if;
    end Can_Upload;

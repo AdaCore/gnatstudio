@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Basic_Types;
 with GNATTest_Module;
 with GPS.Kernel.Contexts;
 with Ada.Strings.Unbounded;
-with Xref;                      use Xref;
+with Xref;         use Xref;
 
 package body Commands.GNATTest is
 
@@ -28,7 +28,8 @@ package body Commands.GNATTest is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Go_To_Tested_Command_Type;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
@@ -43,9 +44,7 @@ package body Commands.GNATTest is
       Line            : Integer;
       Column          : Basic_Types.Visible_Column_Type;
    begin
-      if Entity /= No_Root_Entity
-        and then Is_Subprogram (Entity)
-      then
+      if Entity /= No_Root_Entity and then Is_Subprogram (Entity) then
          GNATTest_Module.Find_Tested
            (GPS.Kernel.Contexts.File_Information (Context.Context),
             File,
@@ -55,11 +54,11 @@ package body Commands.GNATTest is
 
          GNATTest_Module.Open_File
            (Kernel,
-            Project =>
+            Project         =>
               GPS.Kernel.Contexts.Project_Information (Context.Context),
-            File    => File,
-            Line    => Line,
-            Column  => Column,
+            File            => File,
+            Line            => Line,
+            Column          => Column,
             Subprogram_Name =>
               Ada.Strings.Unbounded.To_String (Subprogram_Name));
 

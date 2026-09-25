@@ -49,16 +49,18 @@ package GPS.Kernel.Messages.Multilines is
 private
 
    type Multiline_Message (Level : Message_Levels) is
-     new Simple_Message (Level) with record
+     new Simple_Message (Level)
+   with record
       End_Line   : Natural;
       End_Column : Basic_Types.Visible_Column_Type;
    end record;
 
-   overriding function Has_Multiline_Highlighting
-     (Self : not null access constant Multiline_Message)
-      return Boolean;
+   overriding
+   function Has_Multiline_Highlighting
+     (Self : not null access constant Multiline_Message) return Boolean;
 
-   overriding procedure Get_Multiline_Highlighting_Range
+   overriding
+   procedure Get_Multiline_Highlighting_Range
      (Self         : not null access constant Multiline_Message;
       Start_Line   : out Natural;
       Start_Column : out Basic_Types.Visible_Column_Type;

@@ -32,17 +32,19 @@ private
 
    type GNAThub_Interactive_Command
      (Module : not null access GNAThub_Module_Id_Record'Class)
-      is abstract new Interactive_Command with null record;
+   is abstract new Interactive_Command with null record;
 
    type Display_Command is new GNAThub_Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Display_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Display_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Called when "Display Data..." menu item is activated
 
-   type Remove_Database_Command is
-     new GNAThub_Interactive_Command with null record;
-   overriding function Execute
+   type Remove_Database_Command is new GNAThub_Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Self    : access Remove_Database_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Clean the GNAThub module by deleting the GNAThub database and its

@@ -24,26 +24,25 @@ with VSS.Strings.Conversions;
 
 with GNATCOLL.Scripts.Projects;
 with GNATCOLL.Templates;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 
-with GPS.Intl;                   use GPS.Intl;
-with Config;                     use Config;
+with GPS.Intl;      use GPS.Intl;
+with Config;        use Config;
 with Custom_Tools_Output;
-with Shared_Macros;              use Shared_Macros;
-with String_Utils;               use String_Utils;
+with Shared_Macros; use Shared_Macros;
+with String_Utils;  use String_Utils;
 
 package body Build_Command_Utils is
 
    Me : constant Trace_Handle := Create ("GPS.BUILD.BUILD_COMMAND_MANAGER");
 
    function Is_Server_In_Mode
-     (Registry   : Build_Config_Registry_Access;
-      Mode : String) return Boolean;
+     (Registry : Build_Config_Registry_Access; Mode : String) return Boolean;
 
    function Get_Mode_Server
-     (Registry   : Build_Config_Registry_Access;
-      Mode : String) return Remote.Server_Type;
+     (Registry : Build_Config_Registry_Access; Mode : String)
+      return Remote.Server_Type;
 
    function Scenario_Variables_Cmd_Line
      (Adapter           : Abstract_Build_Command_Adapter'Class;
@@ -58,20 +57,23 @@ package body Build_Command_Utils is
    end record;
    type Build_Command_Adapter_Access is access all Build_Command_Adapter;
 
-   overriding function Get_Last_Main_For_Background_Target
-     (Adapter : Build_Command_Adapter;
-      Target : Target_Access) return Virtual_File;
+   overriding
+   function Get_Last_Main_For_Background_Target
+     (Adapter : Build_Command_Adapter; Target : Target_Access)
+      return Virtual_File;
    --  Return the Main to use for building Target as a background build.
    --  This is either the last main that was used, if it exists, or the first
    --  main defined for this target, if it exists.
    --  The full path to the target is returned.
    --  If the target is not found, "" is returned.
 
-   overriding function Get_Background_Project_Full_Name
+   overriding
+   function Get_Background_Project_Full_Name
      (Adapter : Build_Command_Adapter) return Filesystem_String;
 
-   overriding function Substitute
-     (Adapter : Build_Command_Adapter;
+   overriding
+   function Substitute
+     (Adapter   : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
       Done      : access Boolean;
@@ -79,29 +81,35 @@ package body Build_Command_Utils is
       For_Shell : Boolean := False) return String;
    --  Wrapper around GPS.Kernel.Macros.Substitute
 
-   overriding procedure Console_Insert
+   overriding
+   procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
-      Text   : String;
-      Add_LF : Boolean := True;
-      Mode   : Message_Type := Info);
+      Text    : String;
+      Add_LF  : Boolean := True;
+      Mode    : Message_Type := Info);
 
-   overriding procedure Remove_Error_Builder_Message_From_File
-     (Adapter : Build_Command_Adapter;
-      File     : Virtual_File);
+   overriding
+   procedure Remove_Error_Builder_Message_From_File
+     (Adapter : Build_Command_Adapter; File : Virtual_File);
    --  Removes all messages for specified file in the error category.
    --  Do nothing when there is no such category or file.
 
-   overriding function Get_Background_Environment_File
+   overriding
+   function Get_Background_Environment_File
      (Adapter : Build_Command_Adapter) return Virtual_File;
 
-   overriding function Get_Scenario_Variables
+   overriding
+   function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
 
-   overriding function Get_Untyped_Variables
+   overriding
+   function Get_Untyped_Variables
      (Adapter : Build_Command_Adapter) return Untyped_Variable_Array;
 
-   procedure Free_Adapter is new Ada.Unchecked_Deallocation
-     (Build_Command_Adapter, Build_Command_Adapter_Access);
+   procedure Free_Adapter is new
+     Ada.Unchecked_Deallocation
+       (Build_Command_Adapter,
+        Build_Command_Adapter_Access);
 
    Invalid_Argument : exception;
    --  Raised by Expand_Arg below
@@ -133,18 +141,18 @@ package body Build_Command_Utils is
    function Get_Mains
      (Registry : Project_Registry_Access) return Project_And_Main_Vector
    is
-      Result       : Project_And_Main_Vector;
-      The_Project  : Project_Type;
-      M            : String_List_Access;
-      File         : Virtual_File;
+      Result      : Project_And_Main_Vector;
+      The_Project : Project_Type;
+      M           : String_List_Access;
+      File        : Virtual_File;
 
       --  The main units, when defined in an extended project, are
       --  always added for the extending project (since we always want
       --  to compile in the context of that project). So we always ignore
       --  extended projects in the loop.
 
-      Iterator     : Project_Iterator :=
-         Registry.Tree.Root_Project.Start (Include_Extended => False);
+      Iterator : Project_Iterator :=
+        Registry.Tree.Root_Project.Start (Include_Extended => False);
 
    begin
       --  The project Iterator starts with the leaf projects and ends with
@@ -160,9 +168,9 @@ package body Build_Command_Utils is
 
             --  Retrieve the list of mains either from the project itself or
             --  from the extended one, if any.
-            M := The_Project.Attribute_Value
-              (Attribute    => Main_Attribute,
-               Use_Extended => True);
+            M :=
+              The_Project.Attribute_Value
+                (Attribute => Main_Attribute, Use_Extended => True);
 
             if M /= null then
                declare
@@ -174,20 +182,23 @@ package body Build_Command_Utils is
                         --  Resolve to full path
 
                         if GNAT.Directory_Operations.File_Extension
-                          (Basename.all) = ""
+                             (Basename.all)
+                          = ""
                         then
                            --  The project files used to support the form
                            --     for Main use ("basename");
                            --  If this is the case here, add ".adb" to get the
                            --  real name of  the source unit.
-                           File := Registry.Tree.Create
-                             (Filesystem_String (Basename.all & ".adb"),
-                              Use_Object_Path => False);
+                           File :=
+                             Registry.Tree.Create
+                               (Filesystem_String (Basename.all & ".adb"),
+                                Use_Object_Path => False);
                         else
-                           File := Registry.Tree.Create
-                             (Name            => Filesystem_String
-                                (Basename.all),
-                              Use_Object_Path => False);
+                           File :=
+                             Registry.Tree.Create
+                               (Name            =>
+                                  Filesystem_String (Basename.all),
+                                Use_Object_Path => False);
                         end if;
 
                         if File = GNATCOLL.VFS.No_File then
@@ -224,12 +235,11 @@ package body Build_Command_Utils is
    -- Get_Mains_Files_Only --
    --------------------------
 
-   function Get_Mains_Files_Only (Registry : Project_Registry_Access)
-      return GNATCOLL.VFS.File_Array
+   function Get_Mains_Files_Only
+     (Registry : Project_Registry_Access) return GNATCOLL.VFS.File_Array
    is
-      Mains        : constant Project_And_Main_Vector := Get_Mains (Registry);
-      Result       : GNATCOLL.VFS.File_Array
-        (Mains.First_Index .. Mains.Last_Index);
+      Mains  : constant Project_And_Main_Vector := Get_Mains (Registry);
+      Result : GNATCOLL.VFS.File_Array (Mains.First_Index .. Mains.Last_Index);
    begin
       for J in Mains.First_Index .. Mains.Last_Index loop
          Result (J) := Mains (J).Main;
@@ -242,8 +252,10 @@ package body Build_Command_Utils is
    ----------------
 
    procedure Initialize
-     (Adapter                    : in out Abstract_Build_Command_Adapter'Class;
-      Kernel                     : not null access Core_Kernel_Record'Class;
+     (Adapter                         :
+        in out Abstract_Build_Command_Adapter'Class;
+      Kernel                          :
+        not null access Core_Kernel_Record'Class;
       Context_Project                 : Project_Type;
       Context_Toolchains_Manager      : Toolchain_Manager;
       Context_File_Information        : Virtual_File;
@@ -257,10 +269,10 @@ package body Build_Command_Utils is
       Adapter.Context_Toolchains_Manager := Context_Toolchains_Manager;
       Adapter.Context_File_Information := Context_File_Information;
       Adapter.Kernel_Macros_Special_Character :=
-         Kernel_Macros_Special_Character;
+        Kernel_Macros_Special_Character;
       Adapter.Trusted_Mode_Preference := Trusted_Mode_Preference;
       Adapter.Execute_Command_Preference :=
-         To_Unbounded_String (Execute_Command_Preference);
+        To_Unbounded_String (Execute_Command_Preference);
       Adapter.Multi_Language_Builder := Multi_Language_Builder;
    end Initialize;
 
@@ -284,8 +296,7 @@ package body Build_Command_Utils is
    --------------------------------
 
    procedure Interrupt_Background_Build
-     (Self    : access Builder_Context_Record;
-      Command : out Command_Access) is
+     (Self : access Builder_Context_Record; Command : out Command_Access) is
    begin
       Command := Self.Background_Build_Command;
       Self.Background_Build_Command := null;
@@ -296,8 +307,8 @@ package body Build_Command_Utils is
    -------------------------
 
    function Get_Kernel_Registry
-     (Adapter : Abstract_Build_Command_Adapter)
-        return Project_Registry_Access is
+     (Adapter : Abstract_Build_Command_Adapter) return Project_Registry_Access
+   is
    begin
       return Adapter.Kernel.Registry;
    end Get_Kernel_Registry;
@@ -317,8 +328,7 @@ package body Build_Command_Utils is
    ------------------------------------
 
    function Get_Context_Toolchains_Manager
-     (Adapter : Abstract_Build_Command_Adapter)
-      return Toolchain_Manager is
+     (Adapter : Abstract_Build_Command_Adapter) return Toolchain_Manager is
    begin
       return Adapter.Context_Toolchains_Manager;
    end Get_Context_Toolchains_Manager;
@@ -338,8 +348,7 @@ package body Build_Command_Utils is
    -----------------------------------------
 
    function Get_Kernel_Macros_Special_Character
-     (Adapter : Abstract_Build_Command_Adapter)
-      return Character is
+     (Adapter : Abstract_Build_Command_Adapter) return Character is
    begin
       return Adapter.Kernel_Macros_Special_Character;
    end Get_Kernel_Macros_Special_Character;
@@ -349,7 +358,7 @@ package body Build_Command_Utils is
    ---------------------------------
 
    function Get_Trusted_Mode_Preference
-     (Adapter :  Abstract_Build_Command_Adapter) return Boolean is
+     (Adapter : Abstract_Build_Command_Adapter) return Boolean is
    begin
       return Adapter.Trusted_Mode_Preference;
    end Get_Trusted_Mode_Preference;
@@ -359,7 +368,7 @@ package body Build_Command_Utils is
    ------------------------------------
 
    function Get_Execute_Command_Preference
-     (Adapter :  Abstract_Build_Command_Adapter) return String is
+     (Adapter : Abstract_Build_Command_Adapter) return String is
    begin
       return To_String (Adapter.Execute_Command_Preference);
    end Get_Execute_Command_Preference;
@@ -369,7 +378,7 @@ package body Build_Command_Utils is
    --------------------------------
 
    function Get_Multi_Language_Builder
-     (Adapter :  Abstract_Build_Command_Adapter)
+     (Adapter : Abstract_Build_Command_Adapter)
       return Multi_Language_Builder_Policy is
    begin
       return Adapter.Multi_Language_Builder;
@@ -386,17 +395,16 @@ package body Build_Command_Utils is
    is
       Scenario_Vars : constant Scenario_Variable_Array :=
         Get_Scenario_Variables (Adapter);
-      Untyped_Vars  : constant Untyped_Variable_Array  :=
+      Untyped_Vars  : constant Untyped_Variable_Array :=
         Get_Untyped_Variables (Adapter);
-      Res : Arg_List;
+      Res           : Arg_List;
 
    begin
       --  Process all typed variables...
       for Var of Scenario_Vars loop
          --  Do not emit a "-X" switch is the value known to GNAT Studio
          --  is the default value.
-         if Explicit_Scenario
-           or else External_Default (Var) /= Value (Var)
+         if Explicit_Scenario or else External_Default (Var) /= Value (Var)
          then
             declare
                V : constant String := Value (Var);
@@ -411,8 +419,7 @@ package body Build_Command_Utils is
 
       --  ... and do the same for untyped variables.
       for Var of Untyped_Vars loop
-         if Explicit_Scenario
-           or else External_Default (Var) /= Value (Var)
+         if Explicit_Scenario or else External_Default (Var) /= Value (Var)
          then
             declare
                V : constant String := Value (Var);
@@ -453,7 +460,7 @@ package body Build_Command_Utils is
            (if Main_Project = No_Project
             then Kernel.Registry.Tree.Root_Project
             else Main_Project),
-         Context_Toolchains_Manager   => Kernel.Get_Toolchains_Manager,
+         Context_Toolchains_Manager      => Kernel.Get_Toolchains_Manager,
          Context_File_Information        => No_File,
          Kernel_Macros_Special_Character => '%',
          Trusted_Mode_Preference         => True,
@@ -462,9 +469,18 @@ package body Build_Command_Utils is
 
       Failed := False;
       begin
-         Result := Expand_Arg
-           (Abstract_Build_Command_Adapter_Access (Adapter), Target, Arg,
-            Server, Force_File, Main, Main_Project, Subdir, False, False);
+         Result :=
+           Expand_Arg
+             (Abstract_Build_Command_Adapter_Access (Adapter),
+              Target,
+              Arg,
+              Server,
+              Force_File,
+              Main,
+              Main_Project,
+              Subdir,
+              False,
+              False);
       exception
          when Invalid_Argument =>
             Failed := True;
@@ -494,8 +510,7 @@ package body Build_Command_Utils is
       function Get_File return Virtual_File;
       --  Return the current file in the context
 
-      function Substitution
-        (Param  : String; Quoted : Boolean) return String;
+      function Substitution (Param : String; Quoted : Boolean) return String;
       --  Wrapper around GPS.Kernel.Macros.Substitute
 
       function Get_Attr_Value (Arg : String; Skip : Natural) return String;
@@ -517,11 +532,9 @@ package body Build_Command_Utils is
       --  Whether to protect special characters when expanding a macro
 
       function Get_Python_Full_Name (File : Virtual_File) return String
-      is
-        (if Protect_Python then
-            Protect (+File.Full_Name)
-         else
-            +File.Full_Name);
+      is (if Protect_Python
+          then Protect (+File.Full_Name)
+          else +File.Full_Name);
       --  If the Target uses python, Return a suitable python string from the
       --  file's full name, escaping the backslashes when needed.
       --  Otherwise, return the file's full name without any replacing.
@@ -548,9 +561,7 @@ package body Build_Command_Utils is
 
       function Get_File return Virtual_File is
       begin
-         if not Simulate
-           and then Force_File /= No_File
-         then
+         if not Simulate and then Force_File /= No_File then
             return Force_File;
          end if;
 
@@ -584,16 +595,17 @@ package body Build_Command_Utils is
                   --  Do not normalize through VFS so as to preserve the
                   --  state of the file (since otherwise we would cache
                   --  the normalized value)
-                  if File.Display_Full_Name /=
-                    Normalize_Pathname
-                      (Get_Python_Full_Name (File), Resolve_Links => True)
-                      and then Get_Trusted_Mode_Preference (Adapter.all)
+                  if File.Display_Full_Name
+                    /= Normalize_Pathname
+                         (Get_Python_Full_Name (File), Resolve_Links => True)
+                    and then Get_Trusted_Mode_Preference (Adapter.all)
                   then
                      Console_Insert
-                       (Adapter.all, -("You should check the project's"
-                        & " scenario variable's values"
-                        & " or disable the preference Fast Project"
-                        & " Loading (for full support of symbolic links)"));
+                       (Adapter.all,
+                        -("You should check the project's"
+                          & " scenario variable's values"
+                          & " or disable the preference Fast Project"
+                          & " Loading (for full support of symbolic links)"));
                   end if;
 
                   raise Invalid_Argument;
@@ -621,9 +633,7 @@ package body Build_Command_Utils is
       -- Substitution --
       ------------------
 
-      function Substitution
-        (Param : String; Quoted : Boolean) return String
-      is
+      function Substitution (Param : String; Quoted : Boolean) return String is
          Done : aliased Boolean := False;
       begin
          if Param = "subdir" then
@@ -664,10 +674,11 @@ package body Build_Command_Utils is
 
                begin
                   if Get_Properties (Target).Target_Type /= "executable" then
-                     Executable := Create_From_Dir
-                       (Adapter.Context_Project.Executables_Directory,
-                        Adapter.Context_Project.Executable_Name
-                          (+Get_Python_Full_Name (Main)));
+                     Executable :=
+                       Create_From_Dir
+                         (Adapter.Context_Project.Executables_Directory,
+                          Adapter.Context_Project.Executable_Name
+                            (+Get_Python_Full_Name (Main)));
                   else
                      Executable := Main;
                   end if;
@@ -688,8 +699,9 @@ package body Build_Command_Utils is
             end if;
 
          elsif Param = "TP" then
-            return Get_Python_Full_Name
-              (Main_Project.Project_Path.To_Remote (Get_Nickname (Server)));
+            return
+              Get_Python_Full_Name
+                (Main_Project.Project_Path.To_Remote (Get_Nickname (Server)));
 
          elsif Param = "T" then
             if Main /= No_File then
@@ -705,7 +717,8 @@ package body Build_Command_Utils is
                         Console_Insert
                           (Adapter.all,
                            (-"Could not launch background build: no main(s)"
-                            & " found for target ") & Get_Name (Target),
+                            & " found for target ")
+                           & Get_Name (Target),
                            Mode => Error);
                         raise Invalid_Argument;
                      else
@@ -714,7 +727,8 @@ package body Build_Command_Utils is
                   end;
                else
                   Console_Insert
-                    (Adapter.all, -"Could not determine the target to build.",
+                    (Adapter.all,
+                     -"Could not determine the target to build.",
                      Mode => Error);
                   raise Invalid_Argument;
                end if;
@@ -722,8 +736,8 @@ package body Build_Command_Utils is
 
          elsif Param = "TT" then
             if Main /= No_File then
-               return Get_Python_Full_Name
-                 (Main.To_Remote (Get_Nickname (Server)));
+               return
+                 Get_Python_Full_Name (Main.To_Remote (Get_Nickname (Server)));
             else
                if Background then
                   declare
@@ -735,17 +749,20 @@ package body Build_Command_Utils is
                         Console_Insert
                           (Adapter.all,
                            (-"Could not launch background build: no main(s)"
-                            & " found for target ") & Get_Name (Target),
+                            & " found for target ")
+                           & Get_Name (Target),
                            Mode => Error);
                         raise Invalid_Argument;
                      else
-                        return Get_Python_Full_Name
-                          (M.To_Remote (Get_Nickname (Server)));
+                        return
+                          Get_Python_Full_Name
+                            (M.To_Remote (Get_Nickname (Server)));
                      end if;
                   end;
                else
                   Console_Insert
-                    (Adapter.all, -"Could not determine the target to build.",
+                    (Adapter.all,
+                     -"Could not determine the target to build.",
                      Mode => Error);
                   raise Invalid_Argument;
                end if;
@@ -757,8 +774,9 @@ package body Build_Command_Utils is
             then
                return "";
             else
-               return "--config="
-                  & Get_Python_Full_Name (Environment.Get_Config_File);
+               return
+                 "--config="
+                 & Get_Python_Full_Name (Environment.Get_Config_File);
             end if;
 
          elsif Param = "autoconf" then
@@ -767,7 +785,8 @@ package body Build_Command_Utils is
             then
                return "";
             else
-               return "--autoconf="
+               return
+                 "--autoconf="
                  & Get_Python_Full_Name (Environment.Get_Config_File);
             end if;
 
@@ -803,8 +822,9 @@ package body Build_Command_Utils is
 
          else
             declare
-               Result : constant String := Adapter.Substitute
-                 (Param, Quoted, Done'Access, Server => Server);
+               Result : constant String :=
+                 Adapter.Substitute
+                   (Param, Quoted, Done'Access, Server => Server);
             begin
                if Done then
                   return Result;
@@ -822,29 +842,31 @@ package body Build_Command_Utils is
       --------------------
 
       function Get_Attr_Value (Arg : String; Skip : Natural) return String is
-         J    : constant Natural := Get_Index
-           (Ada.Strings.Fixed.Index (Arg, "'"), Arg'First + Skip);
-         K    : constant Natural := Get_Index
-           (Ada.Strings.Fixed.Index (Arg (J .. Arg'Last), ","), Arg'Last);
+         J    : constant Natural :=
+           Get_Index (Ada.Strings.Fixed.Index (Arg, "'"), Arg'First + Skip);
+         K    : constant Natural :=
+           Get_Index
+             (Ada.Strings.Fixed.Index (Arg (J .. Arg'Last), ","), Arg'Last);
          Pkg  : constant String := Arg (Arg'First + Skip + 1 .. J - 1);
          Attr : constant String := Arg (J + 1 .. K - 1);
       begin
-         return Get_Context_Project (Adapter.all).Attribute_Value
-           (Build (Pkg, Attr), Default => Arg (K + 1 .. Arg'Last - 1));
+         return
+           Get_Context_Project (Adapter.all).Attribute_Value
+             (Build (Pkg, Attr), Default => Arg (K + 1 .. Arg'Last - 1));
       end Get_Attr_Value;
 
       --------------------------
       -- Multi_Language_Build --
       --------------------------
 
-      function Multi_Language_Build return Boolean
-      is
+      function Multi_Language_Build return Boolean is
          Policy : constant Multi_Language_Builder_Policy :=
            Get_Multi_Language_Builder (Adapter.all);
       begin
          case Policy is
             when Gprbuild =>
                return True;
+
             when Gnatmake =>
                return False;
          end case;
@@ -900,21 +922,23 @@ package body Build_Command_Utils is
       elsif Starts_With (Arg, "%dirattr(") and then Arg (Arg'Last) = ')' then
          Result.Args := Parse_String (Get_Attr_Value (Arg, 8), Separate_Args);
          Set_Nth_Arg
-           (Result.Args, 0,
+           (Result.Args,
+            0,
             GNAT.Directory_Operations.Dir_Name (Nth_Arg (Result.Args, 0)));
 
       elsif Starts_With (Arg, "%baseattr(") and then Arg (Arg'Last) = ')' then
          Result.Args := Parse_String (Get_Attr_Value (Arg, 9), Separate_Args);
          Set_Nth_Arg
-           (Result.Args, 0,
+           (Result.Args,
+            0,
             GNAT.Directory_Operations.Base_Name (Nth_Arg (Result.Args, 0)));
 
       elsif Starts_With (Arg, "%switches(") and then Arg (Arg'Last) = ')' then
          declare
             List : GNAT.Strings.String_List_Access :=
-                    Get_Context_Project (Adapter.all).Attribute_Value
-                      (Build ("IDE", "Default_Switches"),
-                       Index => Arg (Arg'First + 10 .. Arg'Last - 1));
+              Get_Context_Project (Adapter.all).Attribute_Value
+                (Build ("IDE", "Default_Switches"),
+                 Index => Arg (Arg'First + 10 .. Arg'Last - 1));
          begin
             if List /= null and then List'Length /= 0 then
                Result.Args := Create (List (List'First).all);
@@ -933,8 +957,8 @@ package body Build_Command_Utils is
          declare
             Prj   : constant Project_Type := Get_Context_Project (Adapter.all);
             Tc    : constant Toolchains.Toolchain :=
-                      Get_Toolchain
-                        (Get_Context_Toolchains_Manager (Adapter.all), Prj);
+              Get_Toolchain
+                (Get_Context_Toolchains_Manager (Adapter.all), Prj);
             Res   : Expansion_Result;
             Clean : constant Boolean := Arg = "%gprclean";
 
@@ -949,9 +973,10 @@ package body Build_Command_Utils is
                end if;
             else
                if Clean then
-                  Res.Args := Create
-                    (Prj.Attribute_Value
-                       (GNAT_Attribute, Default => "gnat"));
+                  Res.Args :=
+                    Create
+                      (Prj.Attribute_Value
+                         (GNAT_Attribute, Default => "gnat"));
                   Append_Argument (Res.Args, "clean", One_Arg);
                else
                   --  Compiler ("Ada") is the gnatmake command
@@ -981,13 +1006,13 @@ package body Build_Command_Utils is
          end;
 
       elsif Arg = "%external" then
-         Result.Args := Parse_String
-           (Get_Execute_Command_Preference (Adapter.all), Separate_Args);
+         Result.Args :=
+           Parse_String
+             (Get_Execute_Command_Preference (Adapter.all), Separate_Args);
 
       elsif Arg = "[exec_dir]" then
          declare
-            Prj : constant Project_Type :=
-              Get_Context_Project (Adapter.all);
+            Prj : constant Project_Type := Get_Context_Project (Adapter.all);
          begin
             Result.Dir := Executables_Directory (Prj);
          end;
@@ -998,10 +1023,13 @@ package body Build_Command_Utils is
         and then Adapter.Kernel.Scripts /= null
       then
          declare
-            Cmd : constant String := Arg (Arg'First + 8 .. Arg'Last - 1);
+            Cmd                : constant String :=
+              Arg (Arg'First + 8 .. Arg'Last - 1);
             Old_Protect_Python : constant Boolean := Protect_Python;
-            Data               : Callback_Data'Class := Create
-              (Adapter.Kernel.Scripts.Lookup_Scripting_Language ("python"), 0);
+            Data               : Callback_Data'Class :=
+              Create
+                (Adapter.Kernel.Scripts.Lookup_Scripting_Language ("python"),
+                 0);
 
          begin
             --  Expand some macros recursively
@@ -1009,9 +1037,10 @@ package body Build_Command_Utils is
             Execute_Expression
               (Data,
                GNATCOLL.Templates.Substitute
-                 (Cmd, Delimiter =>
-                      Get_Kernel_Macros_Special_Character (Adapter.all),
-                  Callback       => Substitution'Unrestricted_Access),
+                 (Cmd,
+                  Delimiter =>
+                    Get_Kernel_Macros_Special_Character (Adapter.all),
+                  Callback  => Substitution'Unrestricted_Access),
                Hide_Output => True);
             Protect_Python := Old_Protect_Python;
 
@@ -1033,8 +1062,7 @@ package body Build_Command_Utils is
                   begin
                      --  Did we receive a list of strings ?
                      declare
-                        L : constant List_Instance'Class :=
-                          Data.Return_Value;
+                        L : constant List_Instance'Class := Data.Return_Value;
                      begin
                         for S in 1 .. L.Number_Of_Arguments loop
                            if String'(L.Nth_Arg (S)) /= "" then
@@ -1062,19 +1090,24 @@ package body Build_Command_Utils is
             Free (Data);
          exception
             when E : others =>
-               Trace (Me, E,
-                      "Error while executing python command from"
-                      & " command line argument: " & Arg & ASCII.LF);
+               Trace
+                 (Me,
+                  E,
+                  "Error while executing python command from"
+                  & " command line argument: "
+                  & Arg
+                  & ASCII.LF);
          end;
 
       else
          --  Handle all macros that expand as a single string
          Result.Args :=
-           Create (GNATCOLL.Templates.Substitute
-                   (Str       => Arg,
-                    Delimiter => Get_Kernel_Macros_Special_Character
-                       (Adapter.all),
-                    Callback  => Substitution'Unrestricted_Access));
+           Create
+             (GNATCOLL.Templates.Substitute
+                (Str       => Arg,
+                 Delimiter =>
+                   Get_Kernel_Macros_Special_Character (Adapter.all),
+                 Callback  => Substitution'Unrestricted_Access));
       end if;
 
       return Result;
@@ -1097,21 +1130,30 @@ package body Build_Command_Utils is
       Simulate          : Boolean;
       Explicit_Scenario : Boolean := True) return Expansion_Result
    is
-      CL      : GNAT.Strings.String_List_Access :=
+      CL     : GNAT.Strings.String_List_Access :=
         Cmd_Line.To_String_List (Expanded => False);
-      Result  : Expansion_Result;
-      Final   : Expansion_Result;
-      Failed  : Boolean := False;
+      Result : Expansion_Result;
+      Final  : Expansion_Result;
+      Failed : Boolean := False;
 
    begin
       for J in CL'Range loop
          declare
             Arg : constant String := CL (J).all;
          begin
-            Result := Expand_Arg
-              (Adapter, Target, CL (J).all, Server, Force_File,
-               Main, Main_Project, Subdir, Background, Simulate,
-               Explicit_Scenario);
+            Result :=
+              Expand_Arg
+                (Adapter,
+                 Target,
+                 CL (J).all,
+                 Server,
+                 Force_File,
+                 Main,
+                 Main_Project,
+                 Subdir,
+                 Background,
+                 Simulate,
+                 Explicit_Scenario);
          exception
             when Invalid_Argument =>
                Console_Insert
@@ -1141,8 +1183,7 @@ package body Build_Command_Utils is
 
       if Failed then
          Console_Insert
-           (Adapter.all, (-"Build command not launched."),
-            Mode => Error);
+           (Adapter.all, (-"Build command not launched."), Mode => Error);
          return
            (Empty_Command_Line, No_File, No_File, To_Unbounded_String (""));
       end if;
@@ -1157,8 +1198,9 @@ package body Build_Command_Utils is
 
    overriding
    function Get_Last_Main_For_Background_Target
-     (Adapter : Build_Command_Adapter;
-      Target : Target_Access) return Virtual_File is
+     (Adapter : Build_Command_Adapter; Target : Target_Access)
+      return Virtual_File
+   is
       pragma Unreferenced (Adapter);
       pragma Unreferenced (Target);
    begin
@@ -1169,7 +1211,8 @@ package body Build_Command_Utils is
    -- Get_Background_Project_Full_Name --
    --------------------------------------
 
-   overriding function Get_Background_Project_Full_Name
+   overriding
+   function Get_Background_Project_Full_Name
      (Adapter : Build_Command_Adapter) return Filesystem_String is
    begin
       return Adapter.Project_File.Full_Name.all;
@@ -1179,7 +1222,8 @@ package body Build_Command_Utils is
    -- Get_Scenario_Variables --
    ----------------------------
 
-   overriding function Get_Scenario_Variables
+   overriding
+   function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array is
    begin
       return Adapter.Kernel.Registry.Tree.Scenario_Variables;
@@ -1189,7 +1233,8 @@ package body Build_Command_Utils is
    -- Get_Untyped_Variables --
    ---------------------------
 
-   overriding function Get_Untyped_Variables
+   overriding
+   function Get_Untyped_Variables
      (Adapter : Build_Command_Adapter) return Untyped_Variable_Array is
    begin
       return Adapter.Kernel.Registry.Tree.Untyped_Variables;
@@ -1199,41 +1244,41 @@ package body Build_Command_Utils is
    -- Substitute --
    ----------------
 
-   overriding function Substitute
+   overriding
+   function Substitute
      (Adapter   : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
       Done      : access Boolean;
       Server    : Server_Type := GPS_Server;
-      For_Shell : Boolean := False) return String
-   is
+      For_Shell : Boolean := False) return String is
    begin
-      return Shared_Macros_Substitute
-        (Project_From_Kernel => Get_Context_Project (Adapter),
-         Project_From_Param  => Get_Context_Project (Adapter),
-         File_Information    => Get_Context_File_Information (Adapter),
-         Param               => Param,
-         Quoted              => Quoted,
-         Done                => Done,
-         Server              => Server,
-         For_Shell           => For_Shell,
-         Opened_Files        => Adapter.Kernel.Opened_Files);
+      return
+        Shared_Macros_Substitute
+          (Project_From_Kernel => Get_Context_Project (Adapter),
+           Project_From_Param  => Get_Context_Project (Adapter),
+           File_Information    => Get_Context_File_Information (Adapter),
+           Param               => Param,
+           Quoted              => Quoted,
+           Done                => Done,
+           Server              => Server,
+           For_Shell           => For_Shell,
+           Opened_Files        => Adapter.Kernel.Opened_Files);
    end Substitute;
 
    --------------------
    -- Console_Insert --
    --------------------
 
-   overriding procedure Console_Insert
+   overriding
+   procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
-      Text   : String;
-      Add_LF : Boolean := True;
-      Mode   : Message_Type := Info) is
+      Text    : String;
+      Add_LF  : Boolean := True;
+      Mode    : Message_Type := Info) is
    begin
       Adapter.Kernel.Messages_Window.Insert
-        (Text,
-         Add_LF => Add_LF,
-         Mode   => Mode);
+        (Text, Add_LF => Add_LF, Mode => Mode);
       Trace (Me, Mode'Img & " : " & Text);
       if Mode = Error then
          Adapter.Status := Adapter.Status & Text;
@@ -1248,8 +1293,8 @@ package body Build_Command_Utils is
    --------------
 
    function Registry
-     (Self : access Builder_Context_Record)
-      return Build_Config_Registry_Access is
+     (Self : access Builder_Context_Record) return Build_Config_Registry_Access
+   is
    begin
       return Self.Registry;
    end Registry;
@@ -1260,8 +1305,7 @@ package body Build_Command_Utils is
 
    overriding
    procedure Remove_Error_Builder_Message_From_File
-     (Adapter : Build_Command_Adapter;
-      File     : Virtual_File) is
+     (Adapter : Build_Command_Adapter; File : Virtual_File) is
    begin
       null;
    end Remove_Error_Builder_Message_From_File;
@@ -1272,7 +1316,8 @@ package body Build_Command_Utils is
 
    overriding
    function Get_Background_Environment_File
-     (Adapter : Build_Command_Adapter) return Virtual_File is
+     (Adapter : Build_Command_Adapter) return Virtual_File
+   is
       pragma Unreferenced (Adapter);
    begin
       return No_File;
@@ -1283,8 +1328,8 @@ package body Build_Command_Utils is
    -----------------------
 
    function Is_Server_In_Mode
-     (Registry   : Build_Config_Registry_Access;
-      Mode : String) return Boolean  is
+     (Registry : Build_Config_Registry_Access; Mode : String) return Boolean
+   is
       U : constant Unbounded_String := To_Unbounded_String (Mode);
    begin
       return Element_Mode (Registry, U).Is_Server;
@@ -1295,8 +1340,9 @@ package body Build_Command_Utils is
    ---------------------
 
    function Get_Mode_Server
-     (Registry   : Build_Config_Registry_Access;
-      Mode : String) return Remote.Server_Type is
+     (Registry : Build_Config_Registry_Access; Mode : String)
+      return Remote.Server_Type
+   is
       U : constant Unbounded_String := To_Unbounded_String (Mode);
    begin
       return Element_Mode (Registry, U).Server;
@@ -1307,9 +1353,10 @@ package body Build_Command_Utils is
    ----------------
 
    function Get_Server
-     (Registry   : Build_Config_Registry_Access;
-      Mode       : String;
-      Target     : Target_Access) return Server_Type is
+     (Registry : Build_Config_Registry_Access;
+      Mode     : String;
+      Target   : Target_Access) return Server_Type
+   is
       Server : Server_Type;
    begin
       if Is_Server_In_Mode (Registry, Mode) then
@@ -1325,12 +1372,12 @@ package body Build_Command_Utils is
    ---------------------
 
    function Get_Mode_Subdir
-     (Registry : Build_Config_Registry_Access;
-      Mode     : String) return Filesystem_String is
+     (Registry : Build_Config_Registry_Access; Mode : String)
+      return Filesystem_String is
    begin
-      return +To_String
-        (Element_Mode
-           (Registry, To_Unbounded_String (Mode)).Subdir);
+      return
+        +To_String
+           (Element_Mode (Registry, To_Unbounded_String (Mode)).Subdir);
    end Get_Mode_Subdir;
 
    -------------------------
@@ -1338,19 +1385,19 @@ package body Build_Command_Utils is
    -------------------------
 
    function Expand_Command_Line
-     (Builder    : Builder_Context;
-      CL         : Command_Line;
-      Target     : Target_Access;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
+     (Builder      : Builder_Context;
+      CL           : Command_Line;
+      Target       : Target_Access;
+      Server       : Server_Type;
+      Force_File   : Virtual_File;
+      Main         : Virtual_File;
       Main_Project : Project_Type;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean) return Expansion_Result
+      Subdir       : Filesystem_String;
+      Background   : Boolean;
+      Simulate     : Boolean) return Expansion_Result
    is
-      Adapter   : Build_Command_Adapter_Access := new Build_Command_Adapter;
-      Res       : Expansion_Result;
+      Adapter : Build_Command_Adapter_Access := new Build_Command_Adapter;
+      Res     : Expansion_Result;
    begin
       Initialize
         (Adapter.all,
@@ -1359,16 +1406,26 @@ package body Build_Command_Utils is
            (if Main_Project = No_Project
             then Builder.Kernel.Registry.Tree.Root_Project
             else Main_Project),
-         Context_Toolchains_Manager   => Builder.Kernel.Get_Toolchains_Manager,
+         Context_Toolchains_Manager      =>
+           Builder.Kernel.Get_Toolchains_Manager,
          Context_File_Information        => No_File,
          Kernel_Macros_Special_Character => '%',
          Trusted_Mode_Preference         => True,
          Execute_Command_Preference      => "",
          Multi_Language_Builder          => Gprbuild);
 
-      Res := Expand_Command_Line
-        (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
-         Force_File, Main, Main_Project, Subdir, Background, Simulate);
+      Res :=
+        Expand_Command_Line
+          (Abstract_Build_Command_Adapter_Access (Adapter),
+           CL,
+           Target,
+           Server,
+           Force_File,
+           Main,
+           Main_Project,
+           Subdir,
+           Background,
+           Simulate);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
@@ -1387,8 +1444,8 @@ package body Build_Command_Utils is
    ------------
 
    function Kernel
-     (Self : access Builder_Context_Record)
-      return GPS.Core_Kernels.Core_Kernel is
+     (Self : access Builder_Context_Record) return GPS.Core_Kernels.Core_Kernel
+   is
    begin
       return Self.Kernel;
    end Kernel;
@@ -1448,8 +1505,8 @@ package body Build_Command_Utils is
    -------------------
 
    function Get_Last_Main
-     (Self   : access Builder_Context_Record;
-      Target : String) return Virtual_File
+     (Self : access Builder_Context_Record; Target : String)
+      return Virtual_File
    is
       Key : constant Unbounded_String := To_Unbounded_String (Target);
       Cur : Files.Cursor;
@@ -1477,7 +1534,7 @@ package body Build_Command_Utils is
       --  The first available element in Result;
 
       use Mode_Map;
-      C : Mode_Map.Cursor;
+      C    : Mode_Map.Cursor;
       Mode : Mode_Record;
    begin
       if Result'Length = 0 then
@@ -1496,9 +1553,7 @@ package body Build_Command_Utils is
       while Has_Element (C) loop
          Mode := Element (C);
 
-         if Mode.Shadow
-           and then Mode.Active
-         then
+         if Mode.Shadow and then Mode.Active then
             declare
                use Model_List;
                C2 : Model_List.Cursor;
@@ -1527,8 +1582,8 @@ package body Build_Command_Utils is
    ---------------------------------
 
    function Current_Background_Build_Id
-     (Self : access Builder_Context_Record)
-      return VSS.Strings.Virtual_String is
+     (Self : access Builder_Context_Record) return VSS.Strings.Virtual_String
+   is
    begin
       return
         VSS.Strings.Conversions.To_Virtual_String
@@ -1540,8 +1595,8 @@ package body Build_Command_Utils is
    ----------------------------------
 
    function Previous_Background_Build_Id
-     (Self : access Builder_Context_Record)
-      return VSS.Strings.Virtual_String is
+     (Self : access Builder_Context_Record) return VSS.Strings.Virtual_String
+   is
    begin
       return
         VSS.Strings.Conversions.To_Virtual_String
@@ -1552,8 +1607,8 @@ package body Build_Command_Utils is
    -- Background_Build_Finished --
    -------------------------------
 
-   procedure Background_Build_Finished
-     (Self : access Builder_Context_Record) is
+   procedure Background_Build_Finished (Self : access Builder_Context_Record)
+   is
    begin
       if Self.Background_Build_ID = Integer'Last then
          --  Very very unlikely, but just in case.
@@ -1570,8 +1625,7 @@ package body Build_Command_Utils is
    ------------------------------
 
    procedure Background_Build_Started
-     (Self    : access Builder_Context_Record;
-      Command : Command_Access) is
+     (Self : access Builder_Context_Record; Command : Command_Access) is
    begin
       Self.Background_Build_Command := Command;
    end Background_Build_Started;
@@ -1580,7 +1634,8 @@ package body Build_Command_Utils is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : in out Builder_Context_Record) is
+   overriding
+   procedure Destroy (Self : in out Builder_Context_Record) is
    begin
       for T in Target_Output_Type loop
          Self.Outputs (T).Clear;
@@ -1602,8 +1657,8 @@ package body Build_Command_Utils is
       Background : Boolean)
    is
       Inserted : Boolean := True;
-      C : Target_Outputs.Cursor;
-      T : Target_Output_Type;
+      C        : Target_Outputs.Cursor;
+      T        : Target_Output_Type;
       use Target_Outputs;
    begin
       if Shadow then
@@ -1616,19 +1671,18 @@ package body Build_Command_Utils is
          T := Normal_Output;
       end if;
 
-      C := Self.Outputs (T).Find
-        (To_Unbounded_String (Target));
+      C := Self.Outputs (T).Find (To_Unbounded_String (Target));
 
       if C = Target_Outputs.No_Element then
          Self.Outputs (T).Insert
-           (Key       => To_Unbounded_String (Target),
-            New_Item  => To_Unbounded_String (Line & ASCII.LF),
-            Position  => C,
-            Inserted  => Inserted);
+           (Key      => To_Unbounded_String (Target),
+            New_Item => To_Unbounded_String (Line & ASCII.LF),
+            Position => C,
+            Inserted => Inserted);
       else
          declare
-            procedure Local_Append (Key : Unbounded_String;
-                                    E   : in out Unbounded_String);
+            procedure Local_Append
+              (Key : Unbounded_String; E : in out Unbounded_String);
             --  Auxiliary subprogram to append to an unbounded string
             --  in place in the container.
 
@@ -1636,16 +1690,15 @@ package body Build_Command_Utils is
             -- Local_Append --
             ------------------
 
-            procedure Local_Append (Key : Unbounded_String;
-                                    E   : in out Unbounded_String)
+            procedure Local_Append
+              (Key : Unbounded_String; E : in out Unbounded_String)
             is
                pragma Unreferenced (Key);
             begin
                Append (E, Line & ASCII.LF);
             end Local_Append;
          begin
-            Self.Outputs (T).Update_Element
-              (C, Local_Append'Access);
+            Self.Outputs (T).Update_Element (C, Local_Append'Access);
          end;
       end if;
    end Append_To_Build_Output;
@@ -1752,8 +1805,7 @@ package body Build_Command_Utils is
    ---------------------
 
    procedure Set_Last_Build
-     (Self   : access Builder_Context_Record;
-      Build  : Build_Information) is
+     (Self : access Builder_Context_Record; Build : Build_Information) is
    begin
       Self.Build := Build;
    end Set_Last_Build;
@@ -1763,43 +1815,53 @@ package body Build_Command_Utils is
    -------------------------
 
    function Expand_Command_Line
-     (Build_Registry   : Build_Config_Registry_Access;
-      Kernel           : not null access Core_Kernel_Record'Class;
-      Proj_Type        : Project_Type;
-      Toolchains       : Toolchain_Manager;
-      Command_Line     : String;
-      Target_Name      : String;
-      Mode_Name        : String;
-      Project_File     : Virtual_File;
-      Force_File       : Virtual_File;
-      Main_File        : Virtual_File;
-      Simulate         : Boolean;
-      Trusted_Mode     : Boolean;
+     (Build_Registry         : Build_Config_Registry_Access;
+      Kernel                 : not null access Core_Kernel_Record'Class;
+      Proj_Type              : Project_Type;
+      Toolchains             : Toolchain_Manager;
+      Command_Line           : String;
+      Target_Name            : String;
+      Mode_Name              : String;
+      Project_File           : Virtual_File;
+      Force_File             : Virtual_File;
+      Main_File              : Virtual_File;
+      Simulate               : Boolean;
+      Trusted_Mode           : Boolean;
       Multi_Language_Builder : Multi_Language_Builder_Policy;
-      Execute_Command        : String)
-     return Expansion_Result
+      Execute_Command        : String) return Expansion_Result
    is
       Adapter   : Build_Command_Adapter_Access := new Build_Command_Adapter;
       T         : constant Target_Access :=
-         Get_Target_From_Name (Build_Registry, Target_Name);
+        Get_Target_From_Name (Build_Registry, Target_Name);
       CL_Args   : Argument_List_Access :=
-         Argument_String_To_List (Command_Line);
+        Argument_String_To_List (Command_Line);
       Mode_Args : constant Command_Lines.Command_Line :=
         T.Apply_Mode_Args (Mode_Name, CL_Args.all);
       Res       : Expansion_Result;
    begin
-      Initialize (Adapter.all, Kernel, Proj_Type, Toolchains,
-                  Force_File, '%', Trusted_Mode, Execute_Command,
-                  Multi_Language_Builder);
+      Initialize
+        (Adapter.all,
+         Kernel,
+         Proj_Type,
+         Toolchains,
+         Force_File,
+         '%',
+         Trusted_Mode,
+         Execute_Command,
+         Multi_Language_Builder);
       Adapter.Project_File := Project_File;
-      Res := Expand_Command_Line
-         (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args, T,
-          Get_Server (Build_Registry, Mode_Name, T), Force_File,
-          Main         => Main_File,
-          Main_Project => Proj_Type,
-          Subdir       => Get_Mode_Subdir (Build_Registry, Mode_Name),
-          Background   => False,
-          Simulate     => Simulate);
+      Res :=
+        Expand_Command_Line
+          (Abstract_Build_Command_Adapter_Access (Adapter),
+           Mode_Args,
+           T,
+           Get_Server (Build_Registry, Mode_Name, T),
+           Force_File,
+           Main         => Main_File,
+           Main_Project => Proj_Type,
+           Subdir       => Get_Mode_Subdir (Build_Registry, Mode_Name),
+           Background   => False,
+           Simulate     => Simulate);
       Res.Status := Adapter.Status;
       Free (CL_Args);
       Free_Adapter (Adapter);
@@ -1812,8 +1874,9 @@ package body Build_Command_Utils is
 
    function Get_Project (P : Project_And_Main) return Project_Type is
    begin
-      return GNATCOLL.Scripts.Projects.Project_Tree.Project_From_Path
-        (P.Project_Path);
+      return
+        GNATCOLL.Scripts.Projects.Project_Tree.Project_From_Path
+          (P.Project_Path);
    end Get_Project;
 
 end Build_Command_Utils;

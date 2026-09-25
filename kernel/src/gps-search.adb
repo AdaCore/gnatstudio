@@ -15,26 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Boyer_Moore;        use GNATCOLL.Boyer_Moore;
-with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Boyer_Moore;    use GNATCOLL.Boyer_Moore;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNAT.Expect;
-with GNAT.Regpat;                 use GNAT.Regpat;
-with GNAT.Strings;                use GNAT.Strings;
+with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Strings;            use GNAT.Strings;
 with Glib.Convert;
-with Gtkada.Style;                use Gtkada.Style;
-with Interfaces;                  use Interfaces;
-with Unicode.CES.Utf8;            use Unicode, Unicode.CES.Utf8;
+with Gtkada.Style;            use Gtkada.Style;
+with Interfaces;              use Interfaces;
+with Unicode.CES.Utf8;
+use Unicode, Unicode.CES.Utf8;
 
 with Default_Preferences;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body GPS.Search is
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH");
-   Memcheck_Handle : constant Trace_Handle := Create
-     ("TESTSUITE.MEM", Off);
+   Me              : constant Trace_Handle := Create ("GPS.KERNEL.SEARCH");
+   Memcheck_Handle : constant Trace_Handle := Create ("TESTSUITE.MEM", Off);
 
    type Boyer_Moore_Pattern_Access is access all GNATCOLL.Boyer_Moore.Pattern;
 
@@ -59,10 +59,9 @@ package body GPS.Search is
    Approximate_Max_Cost : constant :=
      Integer'Max
        (Integer'Max
-            (Integer'Max
-                 (Approximate_Insertion_Cost,
-                  Approximate_Substitution_Cost),
-             Approximate_Deletion_Cost),
+          (Integer'Max
+             (Approximate_Insertion_Cost, Approximate_Substitution_Cost),
+           Approximate_Deletion_Cost),
         Approximate_Max_Errors);
 
    subtype Mask is Interfaces.Unsigned_64;
@@ -101,64 +100,70 @@ package body GPS.Search is
       Allow_Highlight : Boolean;
       Negate          : Boolean;
       Max_Errors      : Integer := Approximate_Max_Errors)
-     return Approximate_Search_Access;
+      return Approximate_Search_Access;
    --  Compile the pattern
 
-   overriding function Start
+   overriding
+   function Start
      (Self        : Full_Text_Search;
       Buffer      : String;
       Start_Index : Natural;
       End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
-   overriding function Start
+   overriding
+   function Start
      (Self        : Regexp_Search;
       Buffer      : String;
       Start_Index : Natural;
       End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
-   overriding function Start
+   overriding
+   function Start
      (Self        : Fuzzy_Search;
       Buffer      : String;
       Start_Index : Natural;
       End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
-   overriding function Start
+   overriding
+   function Start
      (Self        : Approximate_Search;
       Buffer      : String;
       Start_Index : Natural;
       End_Index   : Natural;
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context;
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self    : Full_Text_Search;
       Buffer  : String;
       Context : in out Search_Context);
-   overriding procedure Next
-     (Self    : Regexp_Search;
-      Buffer  : String;
-      Context : in out Search_Context);
-   overriding procedure Next
-     (Self    : Fuzzy_Search;
-      Buffer  : String;
-      Context : in out Search_Context);
-   overriding procedure Next
+   overriding
+   procedure Next
+     (Self : Regexp_Search; Buffer : String; Context : in out Search_Context);
+   overriding
+   procedure Next
+     (Self : Fuzzy_Search; Buffer : String; Context : in out Search_Context);
+   overriding
+   procedure Next
      (Self    : Approximate_Search;
       Buffer  : String;
       Context : in out Search_Context);
-   overriding procedure Free (Self : in out Full_Text_Search);
-   overriding procedure Free (Self : in out Approximate_Search);
-   overriding procedure Free (Self : in out Regexp_Search);
-   overriding function Highlight_Match
-      (Self    : Fuzzy_Search;
-       Buffer  : String;
-       Context : Search_Context) return String;
+   overriding
+   procedure Free (Self : in out Full_Text_Search);
+   overriding
+   procedure Free (Self : in out Approximate_Search);
+   overriding
+   procedure Free (Self : in out Regexp_Search);
+   overriding
+   function Highlight_Match
+     (Self : Fuzzy_Search; Buffer : String; Context : Search_Context)
+      return String;
 
    procedure Update_Location
-     (Context : in out Search_Context;
-      Buffer  : String);
+     (Context : in out Search_Context; Buffer : String);
    --  Compute the (line, column) location for the match, based on previous
    --  knowledge in Context.
 
@@ -180,12 +185,15 @@ package body GPS.Search is
    function Get_Label (Kind : Search_Kind) return String is
    begin
       case Kind is
-         when Full_Text =>
+         when Full_Text   =>
             return "Full text";
-         when Regexp =>
+
+         when Regexp      =>
             return "Regular expression";
-         when Fuzzy =>
+
+         when Fuzzy       =>
             return "Fuzzy";
+
          when Approximate =>
             return "Approximate";
       end case;
@@ -195,9 +203,7 @@ package body GPS.Search is
    -- Update_Location --
    ---------------------
 
-   procedure Update_Location
-     (Context : in out Search_Context;
-      Buffer  : String)
+   procedure Update_Location (Context : in out Search_Context; Buffer : String)
    is
       use type Basic_Types.UTF8_Code_Unit_Count;
 
@@ -206,8 +212,8 @@ package body GPS.Search is
 
       type Unicode_Char is mod 2 ** 32;
 
-      C : Character;
-      C2 : Unicode_Char;
+      C   : Character;
+      C2  : Unicode_Char;
       Len : UTF8_Code_Unit_Count;
 
       M : UTF8_Code_Unit_Count :=
@@ -226,8 +232,7 @@ package body GPS.Search is
       end if;
 
       while Context.Ref.Index < M
-        and then Context.Ref.Index
-                   <= UTF8_Code_Unit_Count (Context.Buffer_End)
+        and then Context.Ref.Index <= UTF8_Code_Unit_Count (Context.Buffer_End)
       loop
          --  UTF-8 decoding for the current character.
 
@@ -266,11 +271,11 @@ package body GPS.Search is
          end if;
 
          if C = ASCII.LF
-           or else (C = ASCII.CR
-                    and then Context.Ref.Index
-                               < UTF8_Code_Unit_Count (Context.Buffer_End)
-                    and then Buffer (Byte_Index (Context.Ref) + 1)
-                               /= ASCII.LF)
+           or else
+             (C = ASCII.CR
+              and then
+                Context.Ref.Index < UTF8_Code_Unit_Count (Context.Buffer_End)
+              and then Buffer (Byte_Index (Context.Ref) + 1) /= ASCII.LF)
          then
             Context.Ref.Line := Context.Ref.Line + 1;
             Context.Ref.Column := 1;
@@ -279,8 +284,11 @@ package body GPS.Search is
 
          elsif C = ASCII.HT then
             Context.Ref.Column := Context.Ref.Column + 1;
-            Context.Ref.Visible_Column := Context.Ref.Visible_Column
-              + Tab_Width - (Context.Ref.Visible_Column mod Tab_Width) + 1;
+            Context.Ref.Visible_Column :=
+              Context.Ref.Visible_Column
+              + Tab_Width
+              - (Context.Ref.Visible_Column mod Tab_Width)
+              + 1;
             Context.Ref.Index := Context.Ref.Index + 1;
 
          else
@@ -306,8 +314,8 @@ package body GPS.Search is
    -----------------------
 
    function Search_Best_Match
-     (Self    : not null access Search_Pattern'Class;
-      Buffer  : String) return Search_Context
+     (Self : not null access Search_Pattern'Class; Buffer : String)
+      return Search_Context
    is
       Context : Search_Context := Self.Start (Buffer);
    begin
@@ -336,7 +344,8 @@ package body GPS.Search is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self        : Full_Text_Search;
       Buffer      : String;
       Start_Index : Natural;
@@ -344,25 +353,26 @@ package body GPS.Search is
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
-      Index : Integer;
-      S : constant Natural := Start_Index;
-      F : constant Natural := End_Index;
-      R : constant Buffer_Position :=
+      Index   : Integer;
+      S       : constant Natural := Start_Index;
+      F       : constant Natural := End_Index;
+      R       : constant Buffer_Position :=
         (if Ref.Defined then Ref else At_Index (Buffer'First));
       Context : Search_Context;
       S2      : Integer := S;
    begin
       loop
-         Index := GNATCOLL.Boyer_Moore.Search
-           (Self.Pattern.all, Buffer (S2 .. F));
+         Index :=
+           GNATCOLL.Boyer_Moore.Search (Self.Pattern.all, Buffer (S2 .. F));
 
-         exit when not Self.Whole_Word
+         exit when
+           not Self.Whole_Word
            or else Index = -1
            or else Index > Buffer'Last
            or else
-               --  Check we have word delimiters on either sides
-           ((Index = Buffer'First
-             or else Is_Word_Delimiter (Buffer (Index - 1)))
+             --  Check we have word delimiters on either sides
+             ((Index = Buffer'First
+               or else Is_Word_Delimiter (Buffer (Index - 1)))
               and then
                 (Index = Buffer'Last - Self.Length + 1
                  or else Is_Word_Delimiter (Buffer (Index + Self.Length))));
@@ -371,16 +381,17 @@ package body GPS.Search is
 
       if Index = -1 then
          if Self.Negate then
-            Context := Search_Context'
-              (Start        => At_Index (S),  --  line/col updated below
-               Finish       => At_Index (F),  --  line/col updated below
-               Score        => 50,
-               Groups       => (others => GNAT.Regpat.No_Match),
-               Color_String => Get_Default_Fg,
-               Buffer_Start => S,
-               Buffer_End   => F,
-               Ref          => R,
-               Tab_Width    => Tab_Width);
+            Context :=
+              Search_Context'
+                (Start        => At_Index (S),  --  line/col updated below
+                 Finish       => At_Index (F),  --  line/col updated below
+                 Score        => 50,
+                 Groups       => (others => GNAT.Regpat.No_Match),
+                 Color_String => Get_Default_Fg,
+                 Buffer_Start => S,
+                 Buffer_End   => F,
+                 Ref          => R,
+                 Tab_Width    => Tab_Width);
             Update_Location (Context, Buffer);
          else
             Context := No_Match;
@@ -388,16 +399,17 @@ package body GPS.Search is
       elsif Self.Negate then
          Context := No_Match;
       else
-         Context := Search_Context'
-           (Start        => At_Index (Index),  --  line/col updated below
-            Finish       => At_Index (Index + Self.Length - 1),
-            Score        => 100,
-            Groups       => (others => GNAT.Regpat.No_Match),
-            Color_String => Get_Default_Fg,
-            Buffer_Start => S,
-            Buffer_End   => F,
-            Ref          => R,
-            Tab_Width    => Tab_Width);
+         Context :=
+           Search_Context'
+             (Start        => At_Index (Index),  --  line/col updated below
+              Finish       => At_Index (Index + Self.Length - 1),
+              Score        => 100,
+              Groups       => (others => GNAT.Regpat.No_Match),
+              Color_String => Get_Default_Fg,
+              Buffer_Start => S,
+              Buffer_End   => F,
+              Ref          => R,
+              Tab_Width    => Tab_Width);
          Update_Location (Context, Buffer);
       end if;
 
@@ -408,7 +420,8 @@ package body GPS.Search is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self        : Regexp_Search;
       Buffer      : String;
       Start_Index : Natural;
@@ -416,20 +429,20 @@ package body GPS.Search is
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
-      S : constant Natural := Start_Index;
-      F : constant Natural := End_Index;
-      R : constant Buffer_Position :=
+      S       : constant Natural := Start_Index;
+      F       : constant Natural := End_Index;
+      R       : constant Buffer_Position :=
         (if Ref.Defined then Ref else At_Index (Buffer'First));
       Context : Search_Context :=
-          (Start              => <>,
-           Finish             => <>,
-           Score              => 100,
-           Groups             => <>,
-           Color_String       => Get_Default_Fg,
-           Buffer_Start       => S,
-           Buffer_End         => F,
-           Ref                => R,
-           Tab_Width          => Tab_Width);
+        (Start        => <>,
+         Finish       => <>,
+         Score        => 100,
+         Groups       => <>,
+         Color_String => Get_Default_Fg,
+         Buffer_Start => S,
+         Buffer_End   => F,
+         Ref          => R,
+         Tab_Width    => Tab_Width);
    begin
       --  An empty range has nothing to match. GNAT.Regpat given a start
       --  after its end reports matches taken from elsewhere in Buffer, so
@@ -440,7 +453,9 @@ package body GPS.Search is
       end if;
 
       Match
-        (Self.Pattern.all, Buffer, Context.Groups,
+        (Self.Pattern.all,
+         Buffer,
+         Context.Groups,
          Data_First => Context.Buffer_Start,
          Data_Last  => Context.Buffer_End);
 
@@ -450,7 +465,7 @@ package body GPS.Search is
         or else Context.Groups (0).First > Buffer'Last
       then
          if Self.Negate then
-            Context.Start  := At_Index (Context.Buffer_Start);
+            Context.Start := At_Index (Context.Buffer_Start);
             Context.Finish := At_Index (Context.Buffer_End);
             Update_Location (Context, Buffer);
             return Context;
@@ -468,7 +483,7 @@ package body GPS.Search is
          Context.Finish := At_Index (Context.Groups (0).Last);
       end if;
 
-      Context.Start  := At_Index (Context.Groups (0).First);
+      Context.Start := At_Index (Context.Groups (0).First);
       Update_Location (Context, Buffer);
       return Context;
    end Start;
@@ -477,7 +492,8 @@ package body GPS.Search is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self        : Fuzzy_Search;
       Buffer      : String;
       Start_Index : Natural;
@@ -485,32 +501,33 @@ package body GPS.Search is
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
-      S : constant Natural := Start_Index;
-      F : constant Natural := End_Index;
-      R : constant Buffer_Position :=
+      S            : constant Natural := Start_Index;
+      F            : constant Natural := End_Index;
+      R            : constant Buffer_Position :=
         (if Ref.Defined then Ref else At_Index (Buffer'First));
-      Start : Natural := Natural'Last;
+      Start        : Natural := Natural'Last;
       Score, Malus : Integer := 0;
 
-      T : Natural := Self.Text'First;
+      T       : Natural := Self.Text'First;
       Context : Search_Context;
 
-      B : Natural := S;
+      B                      : Natural := S;
       Orig_C, Orig_C2, C, C2 : Unicode_Char;
-      B1 : Natural;
+      B1                     : Natural;
 
    begin
       if Self.Text.all = "" then
-         Context := Search_Context'
-           (Start              => At_Index (S),
-            Finish             => At_Index (F),
-            Score              => Score,
-            Groups             => (others => GNAT.Regpat.No_Match),
-            Color_String       => Get_Default_Fg,
-            Buffer_Start       => S,
-            Buffer_End         => F,
-            Ref                => R,
-            Tab_Width          => Tab_Width);
+         Context :=
+           Search_Context'
+             (Start        => At_Index (S),
+              Finish       => At_Index (F),
+              Score        => Score,
+              Groups       => (others => GNAT.Regpat.No_Match),
+              Color_String => Get_Default_Fg,
+              Buffer_Start => S,
+              Buffer_End   => F,
+              Ref          => R,
+              Tab_Width    => Tab_Width);
          Update_Location (Context, Buffer);
          return Context;
       end if;
@@ -544,22 +561,23 @@ package body GPS.Search is
                --  The score should be higher when the characters are closer
                --  together, and when the first matching character is closer
                --  to the start of the pattern.
-               Score := Integer'Max
-                 (101 - (B - Start) - (Start - S) - Malus, 0);
+               Score :=
+                 Integer'Max (101 - (B - Start) - (Start - S) - Malus, 0);
 
                if Self.Negate then
                   return GPS.Search.No_Match;
                else
-                  Context := Search_Context'
-                    (Start              => At_Index (Start),
-                     Finish             => At_Index (B - 1),
-                     Score              => Score,
-                     Groups             => (others => GNAT.Regpat.No_Match),
-                     Color_String       => Get_Default_Fg,
-                     Buffer_Start       => S,
-                     Buffer_End         => F,
-                     Ref                => R,
-                     Tab_Width          => Tab_Width);
+                  Context :=
+                    Search_Context'
+                      (Start        => At_Index (Start),
+                       Finish       => At_Index (B - 1),
+                       Score        => Score,
+                       Groups       => (others => GNAT.Regpat.No_Match),
+                       Color_String => Get_Default_Fg,
+                       Buffer_Start => S,
+                       Buffer_End   => F,
+                       Ref          => R,
+                       Tab_Width    => Tab_Width);
                   Update_Location (Context, Buffer);
                   return Context;
                end if;
@@ -573,16 +591,17 @@ package body GPS.Search is
       end loop;
 
       if Self.Negate then
-         Context := Search_Context'
-           (Start              => At_Index (S),
-            Finish             => At_Index (F),
-            Score              => 100,
-            Groups             => (others => GNAT.Regpat.No_Match),
-            Color_String       => Get_Default_Fg,
-            Buffer_Start       => S,
-            Buffer_End         => F,
-            Ref                => R,
-            Tab_Width          => Tab_Width);
+         Context :=
+           Search_Context'
+             (Start        => At_Index (S),
+              Finish       => At_Index (F),
+              Score        => 100,
+              Groups       => (others => GNAT.Regpat.No_Match),
+              Color_String => Get_Default_Fg,
+              Buffer_Start => S,
+              Buffer_End   => F,
+              Ref          => R,
+              Tab_Width    => Tab_Width);
          Update_Location (Context, Buffer);
          return Context;
 
@@ -600,7 +619,8 @@ package body GPS.Search is
    -- Start --
    -----------
 
-   overriding function Start
+   overriding
+   function Start
      (Self        : Approximate_Search;
       Buffer      : String;
       Start_Index : Natural;
@@ -608,16 +628,16 @@ package body GPS.Search is
       Ref         : Buffer_Position := Unknown_Position;
       Tab_Width   : Natural := Default_Tab_Width) return Search_Context
    is
-      S : constant Natural := Start_Index;
-      F : constant Natural := End_Index;
-      R : constant Buffer_Position :=
+      S       : constant Natural := Start_Index;
+      F       : constant Natural := End_Index;
+      R       : constant Buffer_Position :=
         (if Ref.Defined then Ref else At_Index (Buffer'First));
       Context : Search_Context :=
         (Start        => At_Index (S),  --  first byte matched
          Finish       => At_Index (S - 1), --  last byte of last char read
          Score        => 100,
          Groups       => (others => GNAT.Regpat.No_Match),
-         Color_String       => Get_Default_Fg,
+         Color_String => Get_Default_Fg,
          Buffer_Start => S,
          Buffer_End   => F,
          Ref          => R,
@@ -650,14 +670,15 @@ package body GPS.Search is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self    : Approximate_Search;
       Buffer  : String;
       Context : in out Search_Context)
    is
-      C : Unicode_Char;
-      P, P1 : Natural;
-      Tmp_R : Approximate_Status;
+      C      : Unicode_Char;
+      P, P1  : Natural;
+      Tmp_R  : Approximate_Status;
       Offset : Mask;
    begin
       Context.Ref := At_Index (Buffer'First);
@@ -685,9 +706,12 @@ package body GPS.Search is
          for K in 1 .. Self.Max_Errors loop
             Self.Result (K) :=
               ((Shift_Left (Tmp_R (K), 1) or 1) and Offset)
-              or (Shift_Left (Tmp_R (K - Approximate_Substitution_Cost)
-                              or Self.Result (K - Approximate_Deletion_Cost),
-                              1) or 1)
+              or
+                (Shift_Left
+                   (Tmp_R (K - Approximate_Substitution_Cost)
+                    or Self.Result (K - Approximate_Deletion_Cost),
+                    1)
+                 or 1)
               or Tmp_R (K - Approximate_Insertion_Cost);
          end loop;
 
@@ -719,11 +743,14 @@ package body GPS.Search is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Approximate_Search) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Approximate_Status, Approximate_Status_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Character_Mask_Array, Character_Masks);
+   overriding
+   procedure Free (Self : in out Approximate_Search) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Approximate_Status,
+           Approximate_Status_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Character_Mask_Array, Character_Masks);
    begin
       Unchecked_Free (Self.Pattern);
       Unchecked_Free (Self.Result);
@@ -733,14 +760,13 @@ package body GPS.Search is
    -- Next --
    ----------
 
-   overriding procedure Next
-     (Self    : Fuzzy_Search;
-      Buffer  : String;
-      Context : in out Search_Context)
+   overriding
+   procedure Next
+     (Self : Fuzzy_Search; Buffer : String; Context : in out Search_Context)
    is
-      T : Natural := Self.Text'First;
-      B : Natural := Byte_Index (Context.Finish) + 1;
-      B1 : Natural;
+      T     : Natural := Self.Text'First;
+      B     : Natural := Byte_Index (Context.Finish) + 1;
+      B1    : Natural;
       C, C2 : Unicode_Char;
    begin
       Utf8_Get_Char (Self.Text.all, T, C2);  --  moves T forward
@@ -782,16 +808,16 @@ package body GPS.Search is
    -- Highlight_Match --
    ---------------------
 
-   overriding function Highlight_Match
-      (Self    : Fuzzy_Search;
-       Buffer  : String;
-       Context : Search_Context) return String
+   overriding
+   function Highlight_Match
+     (Self : Fuzzy_Search; Buffer : String; Context : Search_Context)
+      return String
    is
-      T : Natural := Self.Text'First;
+      T      : Natural := Self.Text'First;
       Result : Unbounded_String;
-      B : Natural := Byte_Index (Context.Start);
-      B1 : Natural;
-      C, C2 : Unicode_Char;
+      B      : Natural := Byte_Index (Context.Start);
+      B1     : Natural;
+      C, C2  : Unicode_Char;
    begin
       if not Self.Allow_Highlight
         or else Self.Negate
@@ -805,8 +831,9 @@ package body GPS.Search is
          C2 := To_Lower (C2);
       end if;
 
-      Result := To_Unbounded_String
-         (Glib.Convert.Escape_Text (Buffer (Buffer'First .. B - 1)));
+      Result :=
+        To_Unbounded_String
+          (Glib.Convert.Escape_Text (Buffer (Buffer'First .. B - 1)));
 
       while B <= Byte_Index (Context.Finish) loop
          B1 := B;
@@ -816,9 +843,11 @@ package body GPS.Search is
          end if;
 
          if C2 /= Unicode_Char'Last and then C = C2 then
-            Append (Result,
-                    Tag (Context, Glib.Convert.Escape_Text
-                      ("" & Buffer (B1 .. B - 1))));
+            Append
+              (Result,
+               Tag
+                 (Context,
+                  Glib.Convert.Escape_Text ("" & Buffer (B1 .. B - 1))));
 
             if T <= Self.Text'Last then
                Utf8_Get_Char (Self.Text.all, T, C2); --  moves T forward
@@ -841,7 +870,8 @@ package body GPS.Search is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self    : Full_Text_Search;
       Buffer  : String;
       Context : in out Search_Context)
@@ -851,14 +881,14 @@ package body GPS.Search is
       loop
          --  Perform a search from the character next to the last match's
          --  ending until the end of the buffer.
-         Index := GNATCOLL.Boyer_Moore.Search
-           (Self.Pattern.all,
-            Buffer
-               (Byte_Index (Context.Finish) + 1
-                .. Context.Buffer_End));
+         Index :=
+           GNATCOLL.Boyer_Moore.Search
+             (Self.Pattern.all,
+              Buffer (Byte_Index (Context.Finish) + 1 .. Context.Buffer_End));
 
          --  Check if we match a whole word. Exit in that case.
-         exit when not Self.Whole_Word
+         exit when
+           not Self.Whole_Word
            or else Index = -1
            or else Index > Buffer'Last
            or else
@@ -886,10 +916,9 @@ package body GPS.Search is
    -- Next --
    ----------
 
-   overriding procedure Next
-     (Self    : Regexp_Search;
-      Buffer  : String;
-      Context : in out Search_Context)
+   overriding
+   procedure Next
+     (Self : Regexp_Search; Buffer : String; Context : in out Search_Context)
    is
       First : Positive := Index_After_Match (Context);
    begin
@@ -940,10 +969,10 @@ package body GPS.Search is
    ---------------------------
 
    procedure Matched_Subexpression
-     (Result      : Search_Context;
-      Index       : Natural;
-      First       : out Natural;
-      Last        : out Natural) is
+     (Result : Search_Context;
+      Index  : Natural;
+      First  : out Natural;
+      Last   : out Natural) is
    begin
       if Index in Result.Groups'Range then
          First := Result.Groups (Index).First;
@@ -959,9 +988,8 @@ package body GPS.Search is
    ---------------------
 
    function Highlight_Match
-      (Self    : Search_Pattern;
-       Buffer  : String;
-       Context : Search_Context) return String
+     (Self : Search_Pattern; Buffer : String; Context : Search_Context)
+      return String
    is
       B, F, S, E : Natural;
    begin
@@ -975,7 +1003,8 @@ package body GPS.Search is
       E := Index_After_Match (Context) - 1;
       E := Integer'Min (E, Buffer'Last);
 
-      return Glib.Convert.Escape_Text (Buffer (B .. S - 1))
+      return
+        Glib.Convert.Escape_Text (Buffer (B .. S - 1))
         & Tag (Context, Glib.Convert.Escape_Text (Buffer (S .. E)))
         & Glib.Convert.Escape_Text (Buffer (E + 1 .. F));
    end Highlight_Match;
@@ -996,8 +1025,8 @@ package body GPS.Search is
    ----------
 
    procedure Free (Self : in out Search_Result_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Search_Result'Class, Search_Result_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Search_Result'Class, Search_Result_Access);
    begin
       if Self /= null then
          Free (Self.all);
@@ -1010,8 +1039,10 @@ package body GPS.Search is
    ----------
 
    procedure Free (Self : in out Search_Provider_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Search_Provider'Class, Search_Provider_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Search_Provider'Class,
+           Search_Provider_Access);
    begin
       if Self /= null then
          Free (Self.all);
@@ -1025,11 +1056,9 @@ package body GPS.Search is
 
    procedure Register
      (Self     : in out Search_Provider_Registry;
-      Template : not null access Search_Provider'Class)
-   is
+      Template : not null access Search_Provider'Class) is
    begin
-      Self.Providers.Append
-         ((Provider => Search_Provider_Access (Template)));
+      Self.Providers.Append ((Provider => Search_Provider_Access (Template)));
       Search_Provider_Registry'Class (Self).Sort_Providers;
    end Register;
 
@@ -1047,20 +1076,18 @@ package body GPS.Search is
    ---------
 
    function Get
-     (Self : Search_Provider_Registry;
-      N    : Positive) return Search_Provider_Access
+     (Self : Search_Provider_Registry; N : Positive)
+      return Search_Provider_Access
    is
       use Provider_Lists;
-      C : Provider_Lists.Cursor;
+      C     : Provider_Lists.Cursor;
       Count : Natural := 1;
    begin
       if N > Integer (Self.Providers.Length) then
          return null;
       else
          C := Self.Providers.First;
-         while Has_Element (C)
-            and then Count < N
-         loop
+         while Has_Element (C) and then Count < N loop
             Count := Count + 1;
             Next (C);
          end loop;
@@ -1078,8 +1105,8 @@ package body GPS.Search is
    ---------
 
    function Get
-     (Self : Search_Provider_Registry;
-      Name : String) return Search_Provider_Access is
+     (Self : Search_Provider_Registry; Name : String)
+      return Search_Provider_Access is
    begin
       for P of Self.Providers loop
          if P.Provider.Display_Name = Name then
@@ -1093,11 +1120,11 @@ package body GPS.Search is
    -- Free --
    ----------
 
-   procedure Free
-     (Self : in out Search_Provider_Registry_Access)
-   is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Search_Provider_Registry'Class, Search_Provider_Registry_Access);
+   procedure Free (Self : in out Search_Provider_Registry_Access) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Search_Provider_Registry'Class,
+           Search_Provider_Registry_Access);
    begin
       if Self /= null then
          for Provider_Info of Self.Providers loop
@@ -1113,9 +1140,12 @@ package body GPS.Search is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Full_Text_Search) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (GNATCOLL.Boyer_Moore.Pattern, Boyer_Moore_Pattern_Access);
+   overriding
+   procedure Free (Self : in out Full_Text_Search) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (GNATCOLL.Boyer_Moore.Pattern,
+           Boyer_Moore_Pattern_Access);
    begin
       GNATCOLL.Boyer_Moore.Free (Self.Pattern.all);
       Unchecked_Free (Self.Pattern);
@@ -1126,7 +1156,8 @@ package body GPS.Search is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Regexp_Search) is
+   overriding
+   procedure Free (Self : in out Regexp_Search) is
    begin
       Unchecked_Free (Self.Pattern);
       Free (Search_Pattern (Self));
@@ -1137,8 +1168,10 @@ package body GPS.Search is
    ----------
 
    procedure Free (Self : in out Search_Pattern_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Search_Pattern'Class, Search_Pattern_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Search_Pattern'Class,
+           Search_Pattern_Access);
    begin
       if Self /= null then
          Free (Self.all);
@@ -1157,24 +1190,25 @@ package body GPS.Search is
       Allow_Highlight : Boolean;
       Negate          : Boolean;
       Max_Errors      : Integer := Approximate_Max_Errors)
-     return Approximate_Search_Access
+      return Approximate_Search_Access
    is
-      Result : constant Approximate_Search_Access := new Approximate_Search'
-        (Text            => new String'(Pattern),
-         Case_Sensitive  => Case_Sensitive,
-         Whole_Word      => Whole_Word,
-         Kind            => Approximate,
-         Negate          => Negate,
-         Pattern         => null,
-         Max_Errors      => Max_Errors,
-         Result          => new Approximate_Status,
-         Allow_Highlight => Allow_Highlight,
-         Matched         =>  2 ** (Pattern'Length - 1));
+      Result : constant Approximate_Search_Access :=
+        new Approximate_Search'
+          (Text            => new String'(Pattern),
+           Case_Sensitive  => Case_Sensitive,
+           Whole_Word      => Whole_Word,
+           Kind            => Approximate,
+           Negate          => Negate,
+           Pattern         => null,
+           Max_Errors      => Max_Errors,
+           Result          => new Approximate_Status,
+           Allow_Highlight => Allow_Highlight,
+           Matched         => 2 ** (Pattern'Length - 1));
 
       Min : Unicode_Char := Unicode_Char'Last;
       Max : Unicode_Char := 0;
-      C : Unicode_Char;
-      P : Natural := Pattern'First;
+      C   : Unicode_Char;
+      P   : Natural := Pattern'First;
    begin
       while P <= Pattern'Last loop
          Utf8_Get_Char (Pattern, P, C);
@@ -1214,8 +1248,7 @@ package body GPS.Search is
       Whole_Word      : Boolean := False;
       Negate          : Boolean := False;
       Kind            : Search_Kind := Full_Text;
-      Allow_Highlight : Boolean := False)
-      return Search_Pattern_Access
+      Allow_Highlight : Boolean := False) return Search_Pattern_Access
    is
       BM    : Boyer_Moore_Pattern_Access;
       Re    : GNAT.Expect.Pattern_Matcher_Access;
@@ -1223,42 +1256,45 @@ package body GPS.Search is
       WD    : constant String := "\b";  --  word delimiter
    begin
       case Kind is
-         when Full_Text =>
+         when Full_Text   =>
             BM := new GNATCOLL.Boyer_Moore.Pattern;
             Compile (BM.all, Pattern, Case_Sensitive => Case_Sensitive);
-            return new Full_Text_Search'
-              (Pattern         => BM,
-               Text            => new String'(Pattern),
-               Case_Sensitive  => Case_Sensitive,
-               Negate          => Negate,
-               Allow_Highlight => Allow_Highlight,
-               Whole_Word      => Whole_Word,
-               Kind            => Kind,
-               Length          => Pattern'Length);
+            return
+              new Full_Text_Search'
+                (Pattern         => BM,
+                 Text            => new String'(Pattern),
+                 Case_Sensitive  => Case_Sensitive,
+                 Negate          => Negate,
+                 Allow_Highlight => Allow_Highlight,
+                 Whole_Word      => Whole_Word,
+                 Kind            => Kind,
+                 Length          => Pattern'Length);
 
-         when Fuzzy =>
-            return new Fuzzy_Search'
-              (Text            => new String'(Pattern),
-               Allow_Highlight => Allow_Highlight,
-               Case_Sensitive  => Case_Sensitive,
-               Whole_Word      => Whole_Word,
-               Negate          => Negate,
-               Kind            => Kind);
+         when Fuzzy       =>
+            return
+              new Fuzzy_Search'
+                (Text            => new String'(Pattern),
+                 Allow_Highlight => Allow_Highlight,
+                 Case_Sensitive  => Case_Sensitive,
+                 Whole_Word      => Whole_Word,
+                 Negate          => Negate,
+                 Kind            => Kind);
 
          when Approximate =>
             if Pattern'Length <= 4 or else Pattern'Length > 64 then
                --  Fallback to Full_Text, pattern is too long or too short
                BM := new GNATCOLL.Boyer_Moore.Pattern;
                Compile (BM.all, Pattern, Case_Sensitive => Case_Sensitive);
-               return new Full_Text_Search'
-                 (Pattern         => BM,
-                  Text            => new String'(Pattern),
-                  Allow_Highlight => Allow_Highlight,
-                  Case_Sensitive  => Case_Sensitive,
-                  Whole_Word      => Whole_Word,
-                  Kind            => Kind,
-                  Negate          => Negate,
-                  Length          => Pattern'Length);
+               return
+                 new Full_Text_Search'
+                   (Pattern         => BM,
+                    Text            => new String'(Pattern),
+                    Allow_Highlight => Allow_Highlight,
+                    Case_Sensitive  => Case_Sensitive,
+                    Whole_Word      => Whole_Word,
+                    Kind            => Kind,
+                    Negate          => Negate,
+                    Length          => Pattern'Length);
 
             else
                --  The maximum number of errors depends on the length of the
@@ -1267,50 +1303,57 @@ package body GPS.Search is
                --  instance "naa" would match "nmi", which is surprising to
                --  users). As the length of the pattern extends, allow more
                --  errors.
-               return Search_Pattern_Access (Compile_Approximate
-                 (Pattern,
-                  Allow_Highlight => Allow_Highlight,
-                  Case_Sensitive  => Case_Sensitive,
-                  Negate          => Negate,
-                  Whole_Word      => Whole_Word,
-                  Max_Errors      =>
-                     (if Pattern'Length <= 4 then 0
-                      elsif Pattern'Length <= 10 then 1
-                      else 2)));
+               return
+                 Search_Pattern_Access
+                   (Compile_Approximate
+                      (Pattern,
+                       Allow_Highlight => Allow_Highlight,
+                       Case_Sensitive  => Case_Sensitive,
+                       Negate          => Negate,
+                       Whole_Word      => Whole_Word,
+                       Max_Errors      =>
+                         (if Pattern'Length <= 4
+                          then 0
+                          elsif Pattern'Length <= 10
+                          then 1
+                          else 2)));
             end if;
 
-         when Regexp =>
+         when Regexp      =>
             if not Case_Sensitive then
                Flags := Flags or Case_Insensitive;
             end if;
 
             begin
                if Whole_Word then
-                  Re := new GNAT.Regpat.Pattern_Matcher'
-                    (Compile (WD & Pattern & WD, Flags));
+                  Re :=
+                    new GNAT.Regpat.Pattern_Matcher'
+                      (Compile (WD & Pattern & WD, Flags));
                else
-                  Re := new GNAT.Regpat.Pattern_Matcher'
-                    (Compile (Pattern, Flags));
+                  Re :=
+                    new GNAT.Regpat.Pattern_Matcher'(Compile (Pattern, Flags));
                end if;
 
-               return new Regexp_Search'
-                 (Pattern        => Re,
-                  Text           => new String'(Pattern),
-                  Allow_Highlight => False,
-                  Case_Sensitive => Case_Sensitive,
-                  Whole_Word     => Whole_Word,
-                  Kind           => Kind,
-                  Negate         => Negate);
+               return
+                 new Regexp_Search'
+                   (Pattern         => Re,
+                    Text            => new String'(Pattern),
+                    Allow_Highlight => False,
+                    Case_Sensitive  => Case_Sensitive,
+                    Whole_Word      => Whole_Word,
+                    Kind            => Kind,
+                    Negate          => Negate);
 
             exception
                when GNAT.Regpat.Expression_Error =>
-                  return Build
-                    (Pattern         => Pattern,
-                     Case_Sensitive  => Case_Sensitive,
-                     Whole_Word      => Whole_Word,
-                     Kind            => Full_Text,
-                     Negate          => Negate,
-                     Allow_Highlight => Allow_Highlight);
+                  return
+                    Build
+                      (Pattern         => Pattern,
+                       Case_Sensitive  => Case_Sensitive,
+                       Whole_Word      => Whole_Word,
+                       Kind            => Full_Text,
+                       Negate          => Negate,
+                       Allow_Highlight => Allow_Highlight);
             end;
       end case;
    end Build;
@@ -1320,16 +1363,17 @@ package body GPS.Search is
    -----------
 
    function Build
-      (Pattern : not null access Search_Pattern'Class;
-       Text    : String) return Search_Pattern_Access is
+     (Pattern : not null access Search_Pattern'Class; Text : String)
+      return Search_Pattern_Access is
    begin
-      return Build
-         (Pattern         => Text,
-          Case_Sensitive  => Pattern.Case_Sensitive,
-          Allow_Highlight => Pattern.Allow_Highlight,
-          Whole_Word      => Pattern.Whole_Word,
-          Negate          => Pattern.Negate,
-          Kind            => Pattern.Kind);
+      return
+        Build
+          (Pattern         => Text,
+           Case_Sensitive  => Pattern.Case_Sensitive,
+           Allow_Highlight => Pattern.Allow_Highlight,
+           Whole_Word      => Pattern.Whole_Word,
+           Negate          => Pattern.Negate,
+           Kind            => Pattern.Kind);
    end Build;
 
    -----------
@@ -1337,16 +1381,17 @@ package body GPS.Search is
    -----------
 
    function Build
-      (Pattern : not null access Search_Pattern'Class;
-       Kind    : Search_Kind) return Search_Pattern_Access is
+     (Pattern : not null access Search_Pattern'Class; Kind : Search_Kind)
+      return Search_Pattern_Access is
    begin
-      return Build
-         (Pattern         => Pattern.Text.all,
-          Case_Sensitive  => Pattern.Case_Sensitive,
-          Whole_Word      => Pattern.Whole_Word,
-          Allow_Highlight => Pattern.Allow_Highlight,
-          Negate          => Pattern.Negate,
-          Kind            => Kind);
+      return
+        Build
+          (Pattern         => Pattern.Text.all,
+           Case_Sensitive  => Pattern.Case_Sensitive,
+           Whole_Word      => Pattern.Whole_Word,
+           Allow_Highlight => Pattern.Allow_Highlight,
+           Negate          => Pattern.Negate,
+           Kind            => Kind);
    end Build;
 
    ---------------------
@@ -1354,10 +1399,10 @@ package body GPS.Search is
    ---------------------
 
    function Build_If_Needed
-     (Pattern    : not null access Search_Pattern'Class;
-      Kind       : Search_Kind;
-      New_Kind   : Search_Kind;
-      Built      : out Boolean) return Search_Pattern_Access is
+     (Pattern  : not null access Search_Pattern'Class;
+      Kind     : Search_Kind;
+      New_Kind : Search_Kind;
+      Built    : out Boolean) return Search_Pattern_Access is
    begin
       if Pattern.Kind = Kind then
          Built := True;
@@ -1383,7 +1428,7 @@ package body GPS.Search is
    ------------------------
 
    function Get_Case_Sensitive
-     (Pattern    : not null access Search_Pattern'Class) return Boolean is
+     (Pattern : not null access Search_Pattern'Class) return Boolean is
    begin
       return Pattern.Case_Sensitive;
    end Get_Case_Sensitive;
@@ -1393,7 +1438,7 @@ package body GPS.Search is
    --------------------
 
    function Get_Whole_Word
-     (Pattern    : not null access Search_Pattern'Class) return Boolean is
+     (Pattern : not null access Search_Pattern'Class) return Boolean is
    begin
       return Pattern.Whole_Word;
    end Get_Whole_Word;
@@ -1403,7 +1448,7 @@ package body GPS.Search is
    --------------
 
    function Get_Kind
-      (Pattern : not null access Search_Pattern'Class) return Search_Kind is
+     (Pattern : not null access Search_Pattern'Class) return Search_Kind is
    begin
       return Pattern.Kind;
    end Get_Kind;
@@ -1413,7 +1458,7 @@ package body GPS.Search is
    --------------
 
    function Get_Text
-      (Pattern : not null access Search_Pattern'Class) return String is
+     (Pattern : not null access Search_Pattern'Class) return String is
    begin
       return Pattern.Text.all;
    end Get_Text;
@@ -1431,7 +1476,8 @@ package body GPS.Search is
    -- "=" --
    ---------
 
-   overriding function "=" (P1, P2 : Search_Pattern) return Boolean is
+   overriding
+   function "=" (P1, P2 : Search_Pattern) return Boolean is
    begin
       if P1.Text = null or else P2.Text = null then
          return False;
@@ -1443,8 +1489,7 @@ package body GPS.Search is
    -- Equals --
    ------------
 
-   function Equals
-     (P1, P2 : Search_Pattern_Access) return Boolean is
+   function Equals (P1, P2 : Search_Pattern_Access) return Boolean is
    begin
       if P1 = null then
          return P2 = null;
@@ -1469,8 +1514,9 @@ package body GPS.Search is
       T : constant String := To_String (Suffix);
    begin
       if T = "" then
-         Suffix := To_Unbounded_String
-           (Text (Byte_Index (Context.Finish) + 1 .. Text'Last));
+         Suffix :=
+           To_Unbounded_String
+             (Text (Byte_Index (Context.Finish) + 1 .. Text'Last));
          Suffix_Last := Length (Suffix);
       else
          for S in 1 .. Suffix_Last loop
@@ -1482,8 +1528,9 @@ package body GPS.Search is
                    and then T (S) /= Text (Byte_Index (Context.Finish) + S))
                  or else
                    (not Self.Case_Sensitive
-                    and then To_Lower (T (S)) /=
-                      To_Lower (Text (Byte_Index (Context.Finish) + S)))
+                    and then
+                      To_Lower (T (S))
+                      /= To_Lower (Text (Byte_Index (Context.Finish) + S)))
                then
                   Suffix_Last := S - 1;
                   exit;
@@ -1492,8 +1539,12 @@ package body GPS.Search is
          end loop;
 
          if Suffix_Last = 0 then
-            Trace (Me, "No suffix completion, previous candidate was "
-                   & T & " and new attempt was " & Text);
+            Trace
+              (Me,
+               "No suffix completion, previous candidate was "
+               & T
+               & " and new attempt was "
+               & Text);
          end if;
       end if;
    end Compute_Suffix;
@@ -1503,7 +1554,7 @@ package body GPS.Search is
    --------------------------
 
    function Get_Allow_Highlights
-     (Self  : not null access Search_Pattern'Class) return Boolean is
+     (Self : not null access Search_Pattern'Class) return Boolean is
    begin
       return Self.Allow_Highlight;
    end Get_Allow_Highlights;
@@ -1518,8 +1569,16 @@ package body GPS.Search is
          return "(undefined)";
       end if;
 
-      return '(' & Pos.Index'Img & "," & Pos.Line'Img
-        & "," & Pos.Column'Img & "," & Pos.Visible_Column'Img & ')';
+      return
+        '('
+        & Pos.Index'Img
+        & ","
+        & Pos.Line'Img
+        & ","
+        & Pos.Column'Img
+        & ","
+        & Pos.Visible_Column'Img
+        & ')';
    end Image;
 
    --------------------
@@ -1556,16 +1615,15 @@ package body GPS.Search is
 
    function Tag (Self : Search_Context; Text : String) return String is
    begin
-      return "<span foreground=""" & Self.Color_String & """>"
-        & Text & "</span>";
+      return
+        "<span foreground=""" & Self.Color_String & """>" & Text & "</span>";
    end Tag;
 
    --------------------
    -- Reset_Progress --
    --------------------
 
-   procedure Reset_Progress
-     (Self : not null access Search_Provider) is
+   procedure Reset_Progress (Self : not null access Search_Provider) is
    begin
       Self.Searched_Count := 0;
    end Reset_Progress;

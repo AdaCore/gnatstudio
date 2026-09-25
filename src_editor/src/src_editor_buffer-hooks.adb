@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtkada.MDI;                use Gtkada.MDI;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Module;         use Src_Editor_Module;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with Gtkada.MDI;        use Gtkada.MDI;
+with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
+with Src_Editor_Box;    use Src_Editor_Box;
+with Src_Editor_Module; use Src_Editor_Module;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package body Src_Editor_Buffer.Hooks is
 
@@ -30,20 +30,20 @@ package body Src_Editor_Buffer.Hooks is
    procedure Location_Changed (Buffer : Source_Buffer) is
       --  Should let all views known, whichever project
       Project : constant Project_Type := No_Project;
-      Child : constant MDI_Child :=
+      Child   : constant MDI_Child :=
         Find_Editor (Get_Kernel (Buffer), Buffer.Filename, Project);
-      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
-      Line : Editable_Line_Type;
-      Column : Character_Index;
+      Box     : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
+      Line    : Editable_Line_Type;
+      Column  : Character_Index;
    begin
       if Box /= null then
          Get_Cursor_Position (Get_Buffer (Box), Line, Column);
          Location_Changed_Hook.Run
-            (Kernel  => Buffer.Kernel,
-             File    => Buffer.Filename,
-             Line    => Integer (Line),
-             Column  => Integer (Column),
-             Project => Project);
+           (Kernel  => Buffer.Kernel,
+            File    => Buffer.Filename,
+            Line    => Integer (Line),
+            Column  => Integer (Column),
+            Project => Project);
       end if;
    end Location_Changed;
 
@@ -52,9 +52,7 @@ package body Src_Editor_Buffer.Hooks is
    ----------------
 
    procedure Word_Added
-     (Buffer      : Source_Buffer;
-      Character   : Gunichar;
-      Interactive : Boolean) is
+     (Buffer : Source_Buffer; Character : Gunichar; Interactive : Boolean) is
    begin
       Word_Added_Hook.Run
         (Buffer.Kernel,
@@ -68,13 +66,13 @@ package body Src_Editor_Buffer.Hooks is
    ---------------------
 
    procedure Character_Added
-     (Buffer      : Source_Buffer;
-      Character   : Gunichar;
-      Interactive : Boolean) is
+     (Buffer : Source_Buffer; Character : Gunichar; Interactive : Boolean) is
    begin
       Character_Added_Hook.Run
-         (Buffer.Kernel, File => Buffer.Filename,
-          Char => Character, Interactive => Interactive);
+        (Buffer.Kernel,
+         File        => Buffer.Filename,
+         Char        => Character,
+         Interactive => Interactive);
    end Character_Added;
 
    ---------------------

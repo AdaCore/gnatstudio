@@ -32,7 +32,7 @@ with Gtk.Style_Context; use Gtk.Style_Context;
 with Gtk.Widget;        use Gtk.Widget;
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
-with Gtkada.Handlers;   use Gtkada.Handlers;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
 package body Informational_Popups is
    Me : constant Trace_Handle := Create ("GPS.COMMON.POPUPS");
@@ -49,15 +49,15 @@ package body Informational_Popups is
       --  Color used for the informational popup's background when transparency
       --  is not supported.
 
-      Timeout               : G_Source_Id := No_Source_Id;
+      Timeout : G_Source_Id := No_Source_Id;
       --  When gtk+ animations are disabled
    end record;
    type Informational_Popup is access all Informational_Popup_Record'Class;
    --  Type representing informational popups
 
    function On_Draw
-     (Self : access Gtk_Widget_Record'Class;
-      Cr   : Cairo.Cairo_Context) return Boolean;
+     (Self : access Gtk_Widget_Record'Class; Cr : Cairo.Cairo_Context)
+      return Boolean;
    --  Called when an informational popup is about to be drawn.
    --  Used to set the transparency of the informational popup.
 
@@ -124,17 +124,14 @@ package body Informational_Popups is
    -------------
 
    function On_Draw
-     (Self : access Gtk_Widget_Record'Class;
-      Cr   : Cairo.Cairo_Context) return Boolean
+     (Self : access Gtk_Widget_Record'Class; Cr : Cairo.Cairo_Context)
+      return Boolean
    is
       pragma Unreferenced (Cr);
       Info_Popup : constant Informational_Popup := Informational_Popup (Self);
       New_Cr     : constant Cairo.Cairo_Context := Create (Self.Get_Window);
       Alpha      : constant Gdouble :=
-                     (if Info_Popup.Supports_Transparency then
-                         0.0
-                      else
-                         1.0);
+        (if Info_Popup.Supports_Transparency then 0.0 else 1.0);
    begin
       Set_Source_Rgba
         (New_Cr,
@@ -197,9 +194,7 @@ package body Informational_Popups is
       Gtk_New_Hbox (Box, Homogeneous => False);
 
       Gtk_New_From_Icon_Name
-        (Icon,
-         Icon_Name => Icon_Name,
-         Size      => Icon_Size_Dialog);
+        (Icon, Icon_Name => Icon_Name, Size => Icon_Size_Dialog);
       Box.Pack_Start (Icon, Expand => False, Fill => False);
 
       if Text /= "" then
@@ -208,8 +203,7 @@ package body Informational_Popups is
          Box.Pack_Start (Label, Expand => False, Fill => False);
       end if;
 
-      if Get_Property (Get_Settings (Parent),
-                       Gtk_Enable_Animations_Property)
+      if Get_Property (Get_Settings (Parent), Gtk_Enable_Animations_Property)
       then
          Gtk_New (Revealer);
          Widget_Callback.Object_Connect
@@ -229,10 +223,9 @@ package body Informational_Popups is
          Trace (Me, "Animations are disabled, using fallback");
          Info_Popup.On_Destroy (On_Destroyed'Access);
          Info_Popup.Add (Box);
-         Info_Popup.Timeout := Popup_Sources.Timeout_Add
-           (Informational_Popup_Display_Time,
-            On_Timeout'Access,
-            Info_Popup);
+         Info_Popup.Timeout :=
+           Popup_Sources.Timeout_Add
+             (Informational_Popup_Display_Time, On_Timeout'Access, Info_Popup);
 
          Info_Popup.Show_All;
       end if;

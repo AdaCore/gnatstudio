@@ -23,8 +23,7 @@ with DAP.Tools;
 private package DAP.Clients.Variables.Evaluate is
 
    type Evaluate_Request (<>) is
-     new DAP.Requests.Evaluate.Evaluate_DAP_Request
-   with private;
+     new DAP.Requests.Evaluate.Evaluate_DAP_Request with private;
    type Evaluate_Request_Access is access all Evaluate_Request;
 
    procedure Send_Evaluate_Request
@@ -36,24 +35,26 @@ private
 
    type Evaluate_Request
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Kind   : Request_Params_Kind) is
-     new DAP.Requests.Evaluate.Evaluate_DAP_Request (Kernel)
-   with record
+      Kind   : Request_Params_Kind)
+   is new DAP.Requests.Evaluate.Evaluate_DAP_Request (Kernel) with record
       Params : Request_Parameters (Kind);
    end record;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Evaluate_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Evaluate_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Evaluate_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 

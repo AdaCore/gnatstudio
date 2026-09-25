@@ -26,17 +26,16 @@ package body Codefix is
    -------------------
 
    function To_Char_Index
-     (Index     : Visible_Column_Type;
-      Str       : String;
-      Tab_Width : Integer)
+     (Index : Visible_Column_Type; Str : String; Tab_Width : Integer)
       return String_Index_Type
    is
       Current_Index : Integer := Str'First;
    begin
-      Skip_To_Column (Str       => Str,
-                      Columns   => Integer (Index),
-                      Index     => Current_Index,
-                      Tab_Width => Tab_Width);
+      Skip_To_Column
+        (Str       => Str,
+         Columns   => Integer (Index),
+         Index     => Current_Index,
+         Tab_Width => Tab_Width);
       return String_Index_Type (Current_Index);
    end To_Char_Index;
 
@@ -45,18 +44,17 @@ package body Codefix is
    -------------------
 
    function To_Char_Index
-     (Index     : Visible_Column_Type;
-      Str       : Unbounded_String;
-      Tab_Width : Integer)
+     (Index : Visible_Column_Type; Str : Unbounded_String; Tab_Width : Integer)
       return String_Index_Type
    is
       Current_Index : Integer := 1;
 
    begin
-      Skip_To_Column (Str       => To_String (Str),
-                      Columns   => Integer (Index),
-                      Index     => Current_Index,
-                      Tab_Width => Tab_Width);
+      Skip_To_Column
+        (Str       => To_String (Str),
+         Columns   => Integer (Index),
+         Index     => Current_Index,
+         Tab_Width => Tab_Width);
       return String_Index_Type (Current_Index);
    end To_Char_Index;
 
@@ -65,9 +63,7 @@ package body Codefix is
    ---------------------
 
    function To_Column_Index
-     (Index     : String_Index_Type;
-      Str       : String;
-      Tab_Width : Integer)
+     (Index : String_Index_Type; Str : String; Tab_Width : Integer)
       return Visible_Column_Type
    is
       Current_Index : String_Index_Type := String_Index_Type (Str'First);
@@ -88,12 +84,10 @@ package body Codefix is
    ---------------------
 
    function To_Column_Index
-     (Index     : String_Index_Type;
-      Str       : Unbounded_String;
-      Tab_Width : Integer)
+     (Index : String_Index_Type; Str : Unbounded_String; Tab_Width : Integer)
       return Visible_Column_Type
    is
-      Current_Index : String_Index_Type   := 1;
+      Current_Index : String_Index_Type := 1;
       Current_Col   : Visible_Column_Type := 1;
 
    begin
@@ -115,8 +109,7 @@ package body Codefix is
      (Column     : Visible_Column_Type;
       Str        : String;
       From_Width : Natural;
-      To_Width   : Natural)
-      return Visible_Column_Type
+      To_Width   : Natural) return Visible_Column_Type
    is
       use type GNATCOLL.Xref.Visible_Column;
 
@@ -135,14 +128,16 @@ package body Codefix is
          if Natural (Index) < Str'Last
            and then Str (Natural (Index)) = ASCII.HT
          then
-            Current_Col := Current_Col
-              + (From_Width - (Current_Col - 1) mod From_Width);
+            Current_Col :=
+              Current_Col + (From_Width - (Current_Col - 1) mod From_Width);
 
-            Result := Result + GNATCOLL.Xref.Visible_Column
-              (To_Width - Integer (Result - 1) mod To_Width);
+            Result :=
+              Result
+              + GNATCOLL.Xref.Visible_Column
+                  (To_Width - Integer (Result - 1) mod To_Width);
          else
             Current_Col := Current_Col + 1;
-            Result      := Result + 1;
+            Result := Result + 1;
          end if;
 
          Index := Forward_UTF8_Char (Str, Natural (Index));
@@ -156,9 +151,8 @@ package body Codefix is
    ------------
 
    function Is_Set
-     (Mask : Useless_Entity_Operations;
-      Flag : Useless_Entity_Operations) return Boolean
-   is
+     (Mask : Useless_Entity_Operations; Flag : Useless_Entity_Operations)
+      return Boolean is
    begin
       return (Mask and Flag) = Flag;
    end Is_Set;
@@ -171,10 +165,12 @@ package body Codefix is
      (Policy : Codefix_Remove_Policy) return Useless_Entity_Operations is
    begin
       case Policy is
-         when Always_Remove =>
+         when Always_Remove        =>
             return Remove_Entity;
-         when Always_Comment =>
+
+         when Always_Comment       =>
             return Comment_Entity;
+
          when Propose_Both_Choices =>
             return Comment_Entity or Remove_Entity;
       end case;

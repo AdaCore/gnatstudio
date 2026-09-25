@@ -45,54 +45,54 @@ package Engine_Wrappers is
 
    function Get_Label
      (Proposal : Root_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return String is abstract;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is abstract;
    function Get_Sort_Text
      (Proposal : Root_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return String is abstract;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is abstract;
    function Get_Filter_Text
      (Proposal : Root_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return String is abstract;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is abstract;
    function Get_Completion
      (Proposal : Root_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return String
-      is abstract;
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is abstract;
    function Get_Visibility
-     (Proposal : Root_Proposal) return Construct_Visibility is abstract;
-   function Get_Category
-     (Proposal : Root_Proposal) return Language_Category is abstract;
+     (Proposal : Root_Proposal) return Construct_Visibility
+   is abstract;
+   function Get_Category (Proposal : Root_Proposal) return Language_Category
+   is abstract;
    function Get_Caret_Offset
      (Proposal : Root_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return Character_Offset_Type is abstract;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return Character_Offset_Type
+   is abstract;
    function Get_Location
      (Proposal : Root_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return File_Location is abstract;
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return File_Location
+   is abstract;
 
-   function On_Documentation_Query
-     (Proposal : Root_Proposal) return Boolean is abstract;
+   function On_Documentation_Query (Proposal : Root_Proposal) return Boolean
+   is abstract;
 
    function Get_Documentation
      (Proposal : Root_Proposal;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return String is abstract;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) return String
+   is abstract;
    --  Some extra explanation on the proposal, to be displayed in the
    --  completion dialog. Typically, this will display the documentation for
    --  the corresponding entity if the proposal is based on a source code
    --  entity.
 
-   function Get_Custom_Icon_Name
-     (Proposal : Root_Proposal)
-      return String;
+   function Get_Custom_Icon_Name (Proposal : Root_Proposal) return String;
    --  If the proposal has a custom icon (not determined by the completion
    --  type), this function will return its name
 
-   function Is_Accessible
-     (Proposal : Root_Proposal)
-      return Boolean is (True);
+   function Is_Accessible (Proposal : Root_Proposal) return Boolean
+   is (True);
    --  Returns true if the proposal is accessible from the context of the
    --  current completion
 
@@ -102,12 +102,12 @@ package Engine_Wrappers is
    --  That is special version for use only with instances
    --  that obtained by call of Get_Proposal.
 
-   function Deep_Copy
-     (Proposal : Root_Proposal) return Root_Proposal'Class is abstract;
+   function Deep_Copy (Proposal : Root_Proposal) return Root_Proposal'Class
+   is abstract;
    --  Make a deep copy of Proposal. Result should be freed by the caller.
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Root_Proposal'Class, Root_Proposal_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Root_Proposal'Class, Root_Proposal_Access);
 
    --------------
    -- Iterator --
@@ -121,9 +121,10 @@ package Engine_Wrappers is
    function Is_Valid (Iter : Root_Iterator) return Boolean is abstract;
    procedure Next
      (Iter : in out Root_Iterator;
-      Db : access Xref.General_Xref_Database_Record'Class) is abstract;
-   function Get_Proposal
-     (Iter    : Root_Iterator) return Root_Proposal'Class is abstract;
+      Db   : access Xref.General_Xref_Database_Record'Class)
+   is abstract;
+   function Get_Proposal (Iter : Root_Iterator) return Root_Proposal'Class
+   is abstract;
    --  Get a proposal. The result should not be stored.
    --  If you want to store a copy, call Deep_Copy.
    --  You should call Shallow_Free on the result in any case.
@@ -142,44 +143,52 @@ package Engine_Wrappers is
 
    type Comp_Proposal is new Root_Proposal with private;
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : Comp_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : Comp_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : Comp_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Visibility
+      Db       : access Xref.General_Xref_Database_Record'Class) return String;
+   overriding
+   function Get_Visibility
      (Proposal : Comp_Proposal) return Construct_Visibility;
-   overriding function Get_Category
-     (Proposal : Comp_Proposal) return Language_Category;
-   overriding function Get_Caret_Offset
+   overriding
+   function Get_Category (Proposal : Comp_Proposal) return Language_Category;
+   overriding
+   function Get_Caret_Offset
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return Character_Offset_Type;
-   overriding function Get_Location
+   overriding
+   function Get_Location
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return File_Location;
-   overriding function On_Documentation_Query
-     (Proposal : Comp_Proposal) return Boolean;
-   overriding function Get_Documentation
+   overriding
+   function On_Documentation_Query (Proposal : Comp_Proposal) return Boolean;
+   overriding
+   function Get_Documentation
      (Proposal : Comp_Proposal;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return String;
-   overriding function Get_Custom_Icon_Name
-     (Proposal : Comp_Proposal) return String;
-   overriding function Is_Accessible
-     (Proposal : Comp_Proposal)
-      return Boolean;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) return String;
+   overriding
+   function Get_Custom_Icon_Name (Proposal : Comp_Proposal) return String;
+   overriding
+   function Is_Accessible (Proposal : Comp_Proposal) return Boolean;
 
-   overriding procedure Free (X : in out Comp_Proposal);
-   overriding procedure Shallow_Free (X : in out Comp_Proposal);
+   overriding
+   procedure Free (X : in out Comp_Proposal);
+   overriding
+   procedure Shallow_Free (X : in out Comp_Proposal);
 
    function Get_Underlying_Proposal
      (C : Comp_Proposal) return Completion_Proposal_Access;
@@ -191,19 +200,22 @@ package Engine_Wrappers is
       I : Completion_Iterator;
    end record;
 
-   overriding procedure Free (Iter : in out Comp_Iterator);
+   overriding
+   procedure Free (Iter : in out Comp_Iterator);
 
    procedure Set_Completion_Iterator
-     (Comp_Iter : in out Comp_Iterator;
-      Completion_Iter : Completion_Iterator);
+     (Comp_Iter : in out Comp_Iterator; Completion_Iter : Completion_Iterator);
 
-   overriding function At_End (Iter : Comp_Iterator) return Boolean;
-   overriding function Is_Valid (Iter : Comp_Iterator) return Boolean;
-   overriding procedure Next
+   overriding
+   function At_End (Iter : Comp_Iterator) return Boolean;
+   overriding
+   function Is_Valid (Iter : Comp_Iterator) return Boolean;
+   overriding
+   procedure Next
      (Iter : in out Comp_Iterator;
       Db   : access Xref.General_Xref_Database_Record'Class);
-   overriding function Get_Proposal
-     (Iter    : Comp_Iterator) return Root_Proposal'Class;
+   overriding
+   function Get_Proposal (Iter : Comp_Iterator) return Root_Proposal'Class;
 
    -------------------------------------------------
    -- Implementation for the entity search engine --
@@ -213,36 +225,43 @@ package Engine_Wrappers is
 
    type Entity_Proposal is new Root_Proposal with private;
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : Entity_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : Entity_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : Entity_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return String;
-   overriding function Get_Visibility
+      Db       : access Xref.General_Xref_Database_Record'Class) return String;
+   overriding
+   function Get_Visibility
      (Proposal : Entity_Proposal) return Construct_Visibility;
-   overriding function Get_Category
-     (Proposal : Entity_Proposal) return Language_Category;
-   overriding function Get_Caret_Offset
+   overriding
+   function Get_Category (Proposal : Entity_Proposal) return Language_Category;
+   overriding
+   function Get_Caret_Offset
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return Character_Offset_Type;
-   overriding function Get_Location
+   overriding
+   function Get_Location
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return File_Location;
-   overriding function On_Documentation_Query
-     (Proposal : Entity_Proposal) return Boolean;
-   overriding function Get_Documentation
+   overriding
+   function On_Documentation_Query (Proposal : Entity_Proposal) return Boolean;
+   overriding
+   function Get_Documentation
      (Proposal : Entity_Proposal;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return String;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) return String;
 
    --  Iterator
 
@@ -250,15 +269,19 @@ package Engine_Wrappers is
       I : Ada_Semantic_Tree.Entity_Iterator;
    end record;
 
-   overriding procedure Free (Iter : in out Entity_Iterator);
+   overriding
+   procedure Free (Iter : in out Entity_Iterator);
 
-   overriding function At_End (Iter : Entity_Iterator) return Boolean;
-   overriding function Is_Valid (Iter : Entity_Iterator) return Boolean;
-   overriding procedure Next
+   overriding
+   function At_End (Iter : Entity_Iterator) return Boolean;
+   overriding
+   function Is_Valid (Iter : Entity_Iterator) return Boolean;
+   overriding
+   procedure Next
      (Iter : in out Entity_Iterator;
-      Db : access Xref.General_Xref_Database_Record'Class);
-   overriding function Get_Proposal
-     (Iter    : Entity_Iterator) return Root_Proposal'Class;
+      Db   : access Xref.General_Xref_Database_Record'Class);
+   overriding
+   function Get_Proposal (Iter : Entity_Iterator) return Root_Proposal'Class;
 
 private
 
@@ -266,15 +289,15 @@ private
       P : Completion_Proposal_Access;
    end record;
 
-   overriding function Deep_Copy
-     (Proposal : Comp_Proposal) return Root_Proposal'Class;
+   overriding
+   function Deep_Copy (Proposal : Comp_Proposal) return Root_Proposal'Class;
 
    type Entity_Proposal is new Root_Proposal with record
       File      : Virtual_File;
       Construct : Simple_Construct_Information;
    end record;
 
-   overriding function Deep_Copy
-     (Proposal : Entity_Proposal) return Root_Proposal'Class;
+   overriding
+   function Deep_Copy (Proposal : Entity_Proposal) return Root_Proposal'Class;
 
 end Engine_Wrappers;

@@ -21,12 +21,12 @@ with GPS.Kernel.Task_Manager;
 
 package body GNAThub.Loader is
 
-   type Loader_Command
-     (Loader : not null access Loader_Type'Class) is
-     new Commands.Root_Command with null record;
-   overriding function Execute
-     (Self : access Loader_Command)
-      return Commands.Command_Return_Type;
+   type Loader_Command (Loader : not null access Loader_Type'Class) is
+     new Commands.Root_Command
+   with null record;
+   overriding
+   function Execute
+     (Self : access Loader_Command) return Commands.Command_Return_Type;
    --  Used to load GNAThub messages in the background
 
    ----------------
@@ -126,9 +126,9 @@ package body GNAThub.Loader is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self : access Loader_Command)
-      return Commands.Command_Return_Type is
+   overriding
+   function Execute
+     (Self : access Loader_Command) return Commands.Command_Return_Type is
    begin
       Self.Loader.Load_Data;
 
@@ -165,8 +165,8 @@ package body GNAThub.Loader is
      (Self     : not null access Loader_Type'Class;
       Listener : not null access Loader_Listener_Interface'Class)
    is
-      Position : Loader_Listener_Vectors.Cursor := Self.Listeners.Find
-        (GNAThub.Module.Loader_Listener_Access (Listener));
+      Position : Loader_Listener_Vectors.Cursor :=
+        Self.Listeners.Find (GNAThub.Module.Loader_Listener_Access (Listener));
 
    begin
       if Loader_Listener_Vectors.Has_Element (Position) then
@@ -179,15 +179,15 @@ package body GNAThub.Loader is
    --------------------
 
    procedure Insert_Message
-     (Self    : in out Loader_Type'Class;
-      Message : GNAThub_Message_Access)
+     (Self : in out Loader_Type'Class; Message : GNAThub_Message_Access)
    is
       M_Ref : Message_Reference;
    begin
       --  Add this message to the ones already loaded by the loader
 
-      M_Ref := GPS.Kernel.Messages.References.Create
-        (GPS.Kernel.Messages.Message_Access (Message));
+      M_Ref :=
+        GPS.Kernel.Messages.References.Create
+          (GPS.Kernel.Messages.Message_Access (Message));
       Self.Messages.Append (M_Ref);
 
       --  Increment the message's total counters

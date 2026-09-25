@@ -23,8 +23,9 @@ package body GPS.Editors is
    -- "=" --
    ---------
 
-   overriding function "="
-     (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean is
+   overriding
+   function "=" (This : Editor_Buffer; Buffer : Editor_Buffer) return Boolean
+   is
    begin
       --  ??? this body is provided so that the type is correctly bound to
       --  java, waiting for J617-004 to be removed
@@ -34,7 +35,8 @@ package body GPS.Editors is
 
    --  Dummy bodies for implementation of Nil values.
 
-   overriding function Beginning_Of_Line
+   overriding
+   function Beginning_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -42,7 +44,8 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end Beginning_Of_Line;
 
-   overriding function End_Of_Line
+   overriding
+   function End_Of_Line
      (This : Dummy_Editor_Location) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -50,51 +53,55 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end End_Of_Line;
 
-   overriding function Block_Start
-     (This : Dummy_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class
+   overriding
+   function Block_Start
+     (This : Dummy_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Update_Tree);
    begin
       return Nil_Editor_Location;
    end Block_Start;
 
-   overriding function Block_End
-     (This : Dummy_Editor_Location;
-      Update_Tree : Boolean := True) return Editor_Location'Class
+   overriding
+   function Block_End
+     (This : Dummy_Editor_Location; Update_Tree : Boolean := True)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Update_Tree);
    begin
       return Nil_Editor_Location;
    end Block_End;
 
-   overriding function Block_Type
-     (This : Dummy_Editor_Location;
-      Update_Tree : Boolean := True) return Language_Category
+   overriding
+   function Block_Type
+     (This : Dummy_Editor_Location; Update_Tree : Boolean := True)
+      return Language_Category
    is
       pragma Unreferenced (This, Update_Tree);
    begin
       return Cat_Unknown;
    end Block_Type;
 
-   overriding function Buffer
-     (This : Dummy_Editor_Location) return Editor_Buffer'Class
-   is
+   overriding
+   function Buffer (This : Dummy_Editor_Location) return Editor_Buffer'Class is
       pragma Unreferenced (This);
    begin
       return Nil_Editor_Buffer;
    end Buffer;
 
-   overriding function Forward_Char
-     (This : Dummy_Editor_Location;
-      Count : Integer) return Editor_Location'Class
+   overriding
+   function Forward_Char
+     (This : Dummy_Editor_Location; Count : Integer)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Count);
    begin
       return Nil_Editor_Location;
    end Forward_Char;
 
-   overriding function Backward_To_Word_Start
+   overriding
+   function Backward_To_Word_Start
      (This : Dummy_Editor_Location) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -102,7 +109,8 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end Backward_To_Word_Start;
 
-   overriding function Forward_To_Word_End
+   overriding
+   function Forward_To_Word_End
      (This : Dummy_Editor_Location) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -110,73 +118,71 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end Forward_To_Word_End;
 
-   overriding function Line (This : Dummy_Editor_Mark) return Integer is
+   overriding
+   function Line (This : Dummy_Editor_Mark) return Integer is
       pragma Unreferenced (This);
    begin
       return 0;
    end Line;
 
-   overriding function Column
-     (This : Dummy_Editor_Mark) return Visible_Column_Type is
+   overriding
+   function Column (This : Dummy_Editor_Mark) return Visible_Column_Type is
       pragma Unreferenced (This);
    begin
       return 0;
    end Column;
 
-   overriding function Location
-     (This : Dummy_Editor_Mark;
-      Open : Boolean) return Editor_Location'Class
+   overriding
+   function Location
+     (This : Dummy_Editor_Mark; Open : Boolean) return Editor_Location'Class
    is
       pragma Unreferenced (This, Open);
    begin
       return Nil_Editor_Location;
    end Location;
 
-   overriding function New_Location
-     (This   : Dummy_Editor_Buffer;
-      Line   : Integer;
-      Column : Visible_Column_Type) return Editor_Location'Class
+   overriding
+   function New_Location
+     (This : Dummy_Editor_Buffer; Line : Integer; Column : Visible_Column_Type)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Line, Column);
    begin
       return Nil_Editor_Location;
    end New_Location;
 
-   overriding function New_View
-     (This : Dummy_Editor_Buffer) return Editor_View'Class
-   is
+   overriding
+   function New_View (This : Dummy_Editor_Buffer) return Editor_View'Class is
       pragma Unreferenced (This);
    begin
       return Nil_Editor_View;
    end New_View;
 
-   overriding function Open
-     (This : Dummy_Editor_Buffer) return Editor_View'Class
-   is
+   overriding
+   function Open (This : Dummy_Editor_Buffer) return Editor_View'Class is
       pragma Unreferenced (This);
    begin
       return Nil_Editor_View;
    end Open;
 
-   overriding function Current_View
-     (This : Dummy_Editor_Buffer) return Editor_View'Class
+   overriding
+   function Current_View (This : Dummy_Editor_Buffer) return Editor_View'Class
    is
       pragma Unreferenced (This);
    begin
       return Nil_Editor_View;
    end Current_View;
 
-   overriding function Lines_Count
-     (This : Dummy_Editor_Buffer) return Editable_Line_Type
+   overriding
+   function Lines_Count (This : Dummy_Editor_Buffer) return Editable_Line_Type
    is
       pragma Unreferenced (This);
    begin
       return 0;
    end Lines_Count;
 
-   overriding function Characters_Count
-     (This : Dummy_Editor_Buffer) return Natural
-   is
+   overriding
+   function Characters_Count (This : Dummy_Editor_Buffer) return Natural is
       pragma Unreferenced (This);
    begin
       return 0;
@@ -186,17 +192,18 @@ package body GPS.Editors is
    -- Get_Entity_Name --
    ---------------------
 
-   overriding function Get_Entity_Name
+   overriding
+   function Get_Entity_Name
      (This     : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class := Nil_Editor_Location)
-      return String
+      Location : Editor_Location'Class := Nil_Editor_Location) return String
    is
       pragma Unreferenced (This, Location);
    begin
       return "";
    end Get_Entity_Name;
 
-   overriding function Get_Chars_U
+   overriding
+   function Get_Chars_U
      (This                 : Dummy_Editor_Buffer;
       From                 : Editor_Location'Class := Nil_Editor_Location;
       To                   : Editor_Location'Class := Nil_Editor_Location;
@@ -207,7 +214,8 @@ package body GPS.Editors is
       return Null_Unbounded_String;
    end Get_Chars_U;
 
-   overriding function Beginning_Of_Buffer
+   overriding
+   function Beginning_Of_Buffer
      (This : Dummy_Editor_Buffer) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -215,7 +223,8 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end Beginning_Of_Buffer;
 
-   overriding function End_Of_Buffer
+   overriding
+   function End_Of_Buffer
      (This : Dummy_Editor_Buffer) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -223,34 +232,35 @@ package body GPS.Editors is
       return Nil_Editor_Location;
    end End_Of_Buffer;
 
-   overriding function Get_Mark
-     (This : Dummy_Editor_Buffer;
-      Name : String) return Editor_Mark'Class
+   overriding
+   function Get_Mark
+     (This : Dummy_Editor_Buffer; Name : String) return Editor_Mark'Class
    is
       pragma Unreferenced (This, Name);
    begin
       return Nil_Editor_Mark;
    end Get_Mark;
 
-   overriding function Get_Subprogram_Name
-     (This     : Dummy_Editor_Buffer;
-      Location : Editor_Location'Class) return String
+   overriding
+   function Get_Subprogram_Name
+     (This : Dummy_Editor_Buffer; Location : Editor_Location'Class)
+      return String
    is
       pragma Unreferenced (This, Location);
    begin
       return "";
    end Get_Subprogram_Name;
 
-   overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean is
+   overriding
+   function Is_Present (This : Dummy_Editor_Mark) return Boolean is
       pragma Unreferenced (This);
 
    begin
       return False;
    end Is_Present;
 
-   overriding function Cursor
-     (This : Dummy_Editor_View) return Editor_Location'Class
-   is
+   overriding
+   function Cursor (This : Dummy_Editor_View) return Editor_Location'Class is
       pragma Unreferenced (This);
    begin
       return Nil_Editor_Location;
@@ -260,8 +270,8 @@ package body GPS.Editors is
    -- Get_MDI_Child --
    -------------------
 
-   overriding function Get_MDI_Child
-     (This : Dummy_Editor_View) return System.Address is
+   overriding
+   function Get_MDI_Child (This : Dummy_Editor_View) return System.Address is
       pragma Unreferenced (This);
    begin
       return System.Null_Address;
@@ -271,7 +281,8 @@ package body GPS.Editors is
    -- File --
    ----------
 
-   overriding function File (This : Dummy_Editor_Buffer) return Virtual_File is
+   overriding
+   function File (This : Dummy_Editor_Buffer) return Virtual_File is
       pragma Unreferenced (This);
    begin
       return No_File;
@@ -281,9 +292,8 @@ package body GPS.Editors is
    -- Is_Read_Only --
    ------------------
 
-   overriding function Is_Read_Only
-     (This : Dummy_Editor_Buffer) return Boolean
-   is
+   overriding
+   function Is_Read_Only (This : Dummy_Editor_Buffer) return Boolean is
       pragma Unreferenced (This);
    begin
       return False;  --  Most operations would raise an error if we return True
@@ -293,7 +303,8 @@ package body GPS.Editors is
    -- Selection_Start --
    ---------------------
 
-   overriding function Selection_Start
+   overriding
+   function Selection_Start
      (This : Dummy_Editor_Buffer) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -305,7 +316,8 @@ package body GPS.Editors is
    -- Selection_End --
    -------------------
 
-   overriding function Selection_End
+   overriding
+   function Selection_End
      (This : Dummy_Editor_Buffer) return Editor_Location'Class
    is
       pragma Unreferenced (This);
@@ -317,9 +329,8 @@ package body GPS.Editors is
    -- Is_Modified --
    -----------------
 
-   overriding function Is_Modified
-     (This : Dummy_Editor_Buffer) return Boolean
-   is
+   overriding
+   function Is_Modified (This : Dummy_Editor_Buffer) return Boolean is
       pragma Unreferenced (This);
    begin
       return False;
@@ -359,9 +370,8 @@ package body GPS.Editors is
    -- Is_Read_Only --
    ------------------
 
-   overriding function Is_Read_Only
-     (This : Dummy_Editor_View) return Boolean
-   is
+   overriding
+   function Is_Read_Only (This : Dummy_Editor_View) return Boolean is
       pragma Unreferenced (This);
    begin
       return False;
@@ -371,9 +381,8 @@ package body GPS.Editors is
    -- Title --
    -----------
 
-   overriding function Title
-     (This : Dummy_Editor_View; Short : Boolean) return String
-   is
+   overriding
+   function Title (This : Dummy_Editor_View; Short : Boolean) return String is
       pragma Unreferenced (This, Short);
    begin
       return "";
@@ -383,9 +392,8 @@ package body GPS.Editors is
    -- Buffer --
    ------------
 
-   overriding function Buffer
-     (This : Dummy_Editor_View) return Editor_Buffer'Class
-   is
+   overriding
+   function Buffer (This : Dummy_Editor_View) return Editor_Buffer'Class is
       pragma Unreferenced (This);
    begin
       return Nil_Editor_Buffer;
@@ -395,7 +403,8 @@ package body GPS.Editors is
    -- Name --
    ----------
 
-   overriding function Name (This : Dummy_Editor_Mark) return String is
+   overriding
+   function Name (This : Dummy_Editor_Mark) return String is
       pragma Unreferenced (This);
    begin
       return "";
@@ -405,10 +414,10 @@ package body GPS.Editors is
    -- Create_Instance --
    ---------------------
 
-   overriding function Create_Instance
+   overriding
+   function Create_Instance
      (This   : Dummy_Editor_Mark;
-      Script : access Scripting_Language_Record'Class)
-      return Class_Instance
+      Script : access Scripting_Language_Record'Class) return Class_Instance
    is
       pragma Unreferenced (This, Script);
    begin
@@ -419,9 +428,10 @@ package body GPS.Editors is
    -- Forward_Word --
    ------------------
 
-   overriding function Forward_Word
-     (This  : Dummy_Editor_Location;
-      Count : Integer) return Editor_Location'Class
+   overriding
+   function Forward_Word
+     (This : Dummy_Editor_Location; Count : Integer)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Count);
    begin
@@ -432,9 +442,10 @@ package body GPS.Editors is
    -- Forward_Line --
    ------------------
 
-   overriding function Forward_Line
-     (This  : Dummy_Editor_Location;
-      Count : Integer) return Editor_Location'Class
+   overriding
+   function Forward_Line
+     (This : Dummy_Editor_Location; Count : Integer)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Count);
    begin
@@ -445,9 +456,8 @@ package body GPS.Editors is
    -- Starts_Word --
    -----------------
 
-   overriding function Starts_Word
-     (This : Dummy_Editor_Location) return Boolean
-   is
+   overriding
+   function Starts_Word (This : Dummy_Editor_Location) return Boolean is
       pragma Unreferenced (This);
    begin
       return False;
@@ -457,9 +467,8 @@ package body GPS.Editors is
    -- Ends_Word --
    ---------------
 
-   overriding function Ends_Word
-     (This : Dummy_Editor_Location) return Boolean
-   is
+   overriding
+   function Ends_Word (This : Dummy_Editor_Location) return Boolean is
       pragma Unreferenced (This);
    begin
       return False;
@@ -469,8 +478,8 @@ package body GPS.Editors is
    -- Inside_Word --
    -----------------
 
-   overriding function Inside_Word
-     (This : Dummy_Editor_Location) return Boolean is
+   overriding
+   function Inside_Word (This : Dummy_Editor_Location) return Boolean is
       pragma Unreferenced (This);
    begin
       return False;
@@ -480,8 +489,8 @@ package body GPS.Editors is
    -- Is_End_Of_Line --
    --------------------
 
-   overriding function Is_End_Of_Line
-     (This : Dummy_Editor_Location) return Boolean is
+   overriding
+   function Is_End_Of_Line (This : Dummy_Editor_Location) return Boolean is
    begin
       return False;
    end Is_End_Of_Line;
@@ -490,7 +499,8 @@ package body GPS.Editors is
    -- Block_Name --
    ----------------
 
-   overriding function Block_Name
+   overriding
+   function Block_Name
      (This        : Dummy_Editor_Location;
       Subprogram  : Boolean;
       Update_Tree : Boolean := True) return String
@@ -504,9 +514,8 @@ package body GPS.Editors is
    -- Block_Level --
    -----------------
 
-   overriding function Block_Level
-     (This : Dummy_Editor_Location) return Natural
-   is
+   overriding
+   function Block_Level (This : Dummy_Editor_Location) return Natural is
       pragma Unreferenced (This);
    begin
       return 0;
@@ -516,7 +525,8 @@ package body GPS.Editors is
    -- Offset --
    ------------
 
-   overriding function Offset (This : Dummy_Editor_Location) return Natural is
+   overriding
+   function Offset (This : Dummy_Editor_Location) return Natural is
       pragma Unreferenced (This);
    begin
       return 0;
@@ -526,7 +536,8 @@ package body GPS.Editors is
    -- Search --
    ------------
 
-   overriding procedure Search
+   overriding
+   procedure Search
      (This              : Dummy_Editor_Location;
       Pattern           : String;
       Backward          : Boolean := False;
@@ -539,21 +550,30 @@ package body GPS.Editors is
       Starts            : out Dummy_Editor_Location;
       Ends              : out Dummy_Editor_Location)
    is
-      pragma Unreferenced (This, Pattern, Backward, Case_Sensitive, Regexp,
-                           Whole_Word, Scope, Dialog_On_Failure);
+      pragma
+        Unreferenced
+          (This,
+           Pattern,
+           Backward,
+           Case_Sensitive,
+           Regexp,
+           Whole_Word,
+           Scope,
+           Dialog_On_Failure);
    begin
       Success := False;
-      Starts  := Dummy_Editor_Location (Nil_Editor_Location);
-      Ends    := Dummy_Editor_Location (Nil_Editor_Location);
+      Starts := Dummy_Editor_Location (Nil_Editor_Location);
+      Ends := Dummy_Editor_Location (Nil_Editor_Location);
    end Search;
 
    --------------------
    -- Create_Overlay --
    --------------------
 
-   overriding function Create_Overlay
-     (This : Dummy_Editor_Buffer;
-      Name : String := "") return Editor_Overlay'Class
+   overriding
+   function Create_Overlay
+     (This : Dummy_Editor_Buffer; Name : String := "")
+      return Editor_Overlay'Class
    is
       pragma Unreferenced (This, Name);
    begin
@@ -564,7 +584,8 @@ package body GPS.Editors is
    -- Name --
    ----------
 
-   overriding function Name (This : Dummy_Editor_Overlay) return String is
+   overriding
+   function Name (This : Dummy_Editor_Overlay) return String is
       pragma Unreferenced (This);
    begin
       return "";
@@ -574,7 +595,8 @@ package body GPS.Editors is
    -- Get_Property --
    ------------------
 
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Dummy_Editor_Overlay; Name : String) return String
    is
       pragma Unreferenced (This, Name);
@@ -582,7 +604,8 @@ package body GPS.Editors is
       return "";
    end Get_Property;
 
-   overriding function Get_Property
+   overriding
+   function Get_Property
      (This : Dummy_Editor_Overlay; Name : String) return Boolean
    is
       pragma Unreferenced (This, Name);
@@ -594,9 +617,10 @@ package body GPS.Editors is
    -- Has_Overlay --
    -----------------
 
-   overriding function Has_Overlay
-     (This    : Dummy_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Boolean
+   overriding
+   function Has_Overlay
+     (This : Dummy_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Boolean
    is
       pragma Unreferenced (This, Overlay);
    begin
@@ -607,9 +631,10 @@ package body GPS.Editors is
    -- Forward_Overlay --
    ---------------------
 
-   overriding function Forward_Overlay
-     (This    : Dummy_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class
+   overriding
+   function Forward_Overlay
+     (This : Dummy_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Overlay);
    begin
@@ -620,9 +645,10 @@ package body GPS.Editors is
    -- Backward_Overlay --
    ----------------------
 
-   overriding function Backward_Overlay
-     (This    : Dummy_Editor_Location;
-      Overlay : Editor_Overlay'Class) return Editor_Location'Class
+   overriding
+   function Backward_Overlay
+     (This : Dummy_Editor_Location; Overlay : Editor_Overlay'Class)
+      return Editor_Location'Class
    is
       pragma Unreferenced (This, Overlay);
    begin
@@ -633,8 +659,9 @@ package body GPS.Editors is
    -- Get_Overlays --
    ------------------
 
-   overriding function Get_Overlays
-     (This    : Dummy_Editor_Location) return Overlay_Lists.List
+   overriding
+   function Get_Overlays
+     (This : Dummy_Editor_Location) return Overlay_Lists.List
    is
       pragma Unreferenced (This);
    begin
@@ -645,9 +672,8 @@ package body GPS.Editors is
    -- Views --
    -----------
 
-   overriding function Views
-     (This : Dummy_Editor_Buffer) return View_Lists.List
-   is
+   overriding
+   function Views (This : Dummy_Editor_Buffer) return View_Lists.List is
       pragma Unreferenced (This);
    begin
       return View_Lists.Empty_List;
@@ -657,7 +683,8 @@ package body GPS.Editors is
    -- "=" --
    ---------
 
-   overriding function "="
+   overriding
+   function "="
      (This : Dummy_Editor_Buffer; Buffer : Dummy_Editor_Buffer) return Boolean
    is
       pragma Unreferenced (This, Buffer);
@@ -670,7 +697,8 @@ package body GPS.Editors is
    -- Create_Instance --
    ---------------------
 
-   overriding function Create_Instance
+   overriding
+   function Create_Instance
      (This   : Dummy_Editor_Location;
       Script : access Scripting_Language_Record'Class) return Class_Instance
    is
@@ -684,9 +712,8 @@ package body GPS.Editors is
    --------------------------
 
    function New_Location_At_Line
-     (This   : Editor_Buffer'Class;
-      Line   : Basic_Types.Editable_Line_Type) return Editor_Location'Class
-   is
+     (This : Editor_Buffer'Class; Line : Basic_Types.Editable_Line_Type)
+      return Editor_Location'Class is
    begin
       return This.New_Location (Integer (Line), Visible_Column_Type'(1));
    end New_Location_At_Line;
@@ -697,11 +724,12 @@ package body GPS.Editors is
 
    pragma Warnings (Off); --  Kill the "unreachable code" warning
 
-   function Current_Undo_Group
-     (This : Editor_Buffer) return Group_Block is
+   function Current_Undo_Group (This : Editor_Buffer) return Group_Block is
    begin
       raise Program_Error; --  Intended: this should be overriden
-      return G : Group_Block do null; end return;
+      return G : Group_Block do
+         null;
+      end return;
    end Current_Undo_Group;
 
    --------------------
@@ -711,7 +739,9 @@ package body GPS.Editors is
    function New_Undo_Group (This : Editor_Buffer) return Group_Block is
    begin
       raise Program_Error; --  Intended: this should be overriden
-      return G : Group_Block do null; end return;
+      return G : Group_Block do
+         null;
+      end return;
    end New_Undo_Group;
 
    pragma Warnings (On);
@@ -721,8 +751,7 @@ package body GPS.Editors is
    ------------
 
    function Editor
-     (Self : Controlled_Editor_Buffer_Holder)
-      return Editor_Buffer'Class is
+     (Self : Controlled_Editor_Buffer_Holder) return Editor_Buffer'Class is
    begin
       return Self.Buffer.all;
    end Editor;
@@ -731,15 +760,15 @@ package body GPS.Editors is
    -- Free --
    ----------
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Editor_Buffer'Class, Editor_Buffer_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Editor_Buffer'Class, Editor_Buffer_Access);
 
    --------------
    -- Finalize --
    --------------
 
-   overriding procedure Finalize
-     (Self : in out Controlled_Editor_Buffer_Holder) is
+   overriding
+   procedure Finalize (Self : in out Controlled_Editor_Buffer_Holder) is
    begin
       if Self.Buffer /= null then
          --  Close the buffer if the holder was the first opening it and no
@@ -756,36 +785,39 @@ package body GPS.Editors is
    ----------------
 
    function Get_Holder
-     (This : Editor_Buffer_Factory'Class;
-      File : Virtual_File)
+     (This : Editor_Buffer_Factory'Class; File : Virtual_File)
       return Controlled_Editor_Buffer_Holder
    is
-      Buffer : constant Editor_Buffer'Class := This.Get
-        (File            => File,
-         Force           => False,
-         Open_Buffer     => False,
-         Open_View       => False,
-         Focus           => False,
-         Only_If_Focused => False);
+      Buffer : constant Editor_Buffer'Class :=
+        This.Get
+          (File            => File,
+           Force           => False,
+           Open_Buffer     => False,
+           Open_View       => False,
+           Focus           => False,
+           Only_If_Focused => False);
 
    begin
       if Buffer = Nil_Editor_Buffer then
-         return Controlled_Editor_Buffer_Holder'
-           (Standard.Ada.Finalization.Limited_Controlled with
-            Close  => True,
-            Buffer => new Editor_Buffer'Class'
-              (This.Get
-                   (File            => File,
-                    Force           => False,
-                    Open_Buffer     => True,
-                    Open_View       => False,
-                    Focus           => False,
-                    Only_If_Focused => False)));
+         return
+           Controlled_Editor_Buffer_Holder'
+             (Standard.Ada.Finalization.Limited_Controlled
+              with
+                Close  => True,
+                Buffer =>
+                  new Editor_Buffer'Class'
+                    (This.Get
+                       (File            => File,
+                        Force           => False,
+                        Open_Buffer     => True,
+                        Open_View       => False,
+                        Focus           => False,
+                        Only_If_Focused => False)));
       else
-         return Controlled_Editor_Buffer_Holder'
-           (Standard.Ada.Finalization.Limited_Controlled with
-            Close  => False,
-            Buffer => new Editor_Buffer'Class'(Buffer));
+         return
+           Controlled_Editor_Buffer_Holder'
+             (Standard.Ada.Finalization.Limited_Controlled
+              with Close => False, Buffer => new Editor_Buffer'Class'(Buffer));
       end if;
    end Get_Holder;
 

@@ -15,39 +15,39 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings;                use Ada.Strings;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings;        use Ada.Strings;
+with Ada.Strings.Fixed;  use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with GNAT.Expect;                use GNAT.Expect;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Regpat;                use GNAT.Regpat;
-with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNAT.Expect;        use GNAT.Expect;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+with GNAT.Regpat;        use GNAT.Regpat;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with System;
 
 with Glib.Convert;
-with Glib.Main;                  use Glib.Main;
+with Glib.Main;      use Glib.Main;
 with Gtk.Main;
-with Gtk.Window;                 use Gtk.Window;
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtk.Window;     use Gtk.Window;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
 
-with Config;                     use Config;
-with GVD.Code_Editors;           use GVD.Code_Editors;
-with GVD.Preferences;            use GVD.Preferences;
-with GVD.Process;                use GVD.Process;
-with GVD.Types;                  use GVD.Types;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with Config;              use Config;
+with GVD.Code_Editors;    use GVD.Code_Editors;
+with GVD.Preferences;     use GVD.Preferences;
+with GVD.Process;         use GVD.Process;
+with GVD.Types;           use GVD.Types;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;
-with GPS.Intl;                   use GPS.Intl;
-with GVD.Variables.Types;        use GVD.Variables.Types;
-with GUI_Utils;                  use GUI_Utils;
-with Language;                   use Language;
-with Language.Debugger;          use Language.Debugger;
-with Process_Proxies;            use Process_Proxies;
-with Remote;                     use Remote;
-with String_Utils;               use String_Utils;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GPS.Intl;            use GPS.Intl;
+with GVD.Variables.Types; use GVD.Variables.Types;
+with GUI_Utils;           use GUI_Utils;
+with Language;            use Language;
+with Language.Debugger;   use Language.Debugger;
+with Process_Proxies;     use Process_Proxies;
+with Remote;              use Remote;
+with String_Utils;        use String_Utils;
+with GNATCOLL.Traces;     use GNATCOLL.Traces;
 
 package body Debugger is
 
@@ -72,10 +72,10 @@ package body Debugger is
    ---------------------
 
    procedure Send_Internal_Pre
-     (Debugger         : access Debugger_Root'Class;
-      Cmd              : String;
-      Empty_Buffer     : Boolean := True;
-      Mode             : Command_Type);
+     (Debugger     : access Debugger_Root'Class;
+      Cmd          : String;
+      Empty_Buffer : Boolean := True;
+      Mode         : Command_Type);
    --  Internal procedure used by Send. This takes care of sending the
    --  command to the debugger, but doesn't parse or even read the output.
    --  The command is displayed in the command window and added to the
@@ -101,15 +101,14 @@ package body Debugger is
       Wait_For_Prompt : Boolean := True;
       Force_Send      : Boolean := False;
       Mode            : Command_Type := Hidden)
-     with Pre => (not Synchronous or else Wait_For_Prompt);
+   with Pre => (not Synchronous or else Wait_For_Prompt);
    --  Internal version of Send
    --  This version sends a command to the debugger, and will possibly wait for
    --  its output (if Synchronous is True, otherwise Output is always set to
    --  null).
    --  See Send for the explanation for the other parameters.
 
-   procedure On_Debugger_Died
-     (Debugger : not null access Debugger_Root'Class);
+   procedure On_Debugger_Died (Debugger : not null access Debugger_Root'Class);
    --  This is called when the debugger process has died.
    --  Diaplay a message dialog to prevent the user that the undelying debugger
    --  is dead and close the debugging session.
@@ -119,10 +118,10 @@ package body Debugger is
    ---------------------
 
    procedure Queue_Command
-     (Debugger        : access Debugger_Root'Class;
-      Cmd             : String;
-      Empty_Buffer    : Boolean;
-      Mode            : Command_Type);
+     (Debugger     : access Debugger_Root'Class;
+      Cmd          : String;
+      Empty_Buffer : Boolean;
+      Mode         : Command_Type);
    --  Queue a given command to be executed after the next call to Wait.
 
    function Process_Command
@@ -152,11 +151,11 @@ package body Debugger is
    ----------------
 
    function Parse_Type
-     (Debugger : access Debugger_Root'Class;
-      Entity   : String) return GVD_Type_Holder
+     (Debugger : access Debugger_Root'Class; Entity : String)
+      return GVD_Type_Holder
    is
       Result   : GVD_Type_Holder;
-      Type_Str : constant String  := Debugger.Type_Of (Entity);
+      Type_Str : constant String := Debugger.Type_Of (Entity);
       Index    : Natural := Type_Str'First;
 
    begin
@@ -220,8 +219,8 @@ package body Debugger is
    ------------------
 
    function Get_Language
-     (Debugger : access Debugger_Root;
-      Lang     : String := "") return Language.Language_Access
+     (Debugger : access Debugger_Root; Lang : String := "")
+      return Language.Language_Access
    is
       C : Language_Lists.Cursor;
    begin
@@ -258,12 +257,12 @@ package body Debugger is
    -------------------
 
    procedure General_Spawn
-     (Debugger       : access Debugger_Root'Class;
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Arguments      : GNAT.OS_Lib.Argument_List;
-      Debugger_Name  : String;
-      Debugger_Num   : Natural;
-      Proxy          : Process_Proxies.Process_Proxy_Access)
+     (Debugger      : access Debugger_Root'Class;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Arguments     : GNAT.OS_Lib.Argument_List;
+      Debugger_Name : String;
+      Debugger_Num  : Natural;
+      Proxy         : Process_Proxies.Process_Proxy_Access)
    is
       pragma Unreferenced (Debugger_Num);
       Descriptor : Process_Descriptor_Access;
@@ -280,7 +279,7 @@ package body Debugger is
       --  not control the length of what gdb will return...
 
       Debugger.Process := Proxy;
-      Debugger.Kernel  := Kernel_Handle (Kernel);
+      Debugger.Kernel := Kernel_Handle (Kernel);
 
       --   ??? Should use GPS.Kernel.Timeout instead
       GPS.Kernel.Remote.Spawn
@@ -290,9 +289,7 @@ package body Debugger is
          Pd        => Descriptor,
          Success   => Success);
 
-      if not Success
-        or else Descriptor.Get_Pid = GNAT.Expect.Invalid_Pid
-      then
+      if not Success or else Descriptor.Get_Pid = GNAT.Expect.Invalid_Pid then
          raise Spawn_Error;
       end if;
 
@@ -305,11 +302,11 @@ package body Debugger is
    ---------------------
 
    procedure Found_File_Name
-     (Debugger    : access Debugger_Root;
-      Str         : String;
-      Name        : out Unbounded_String;
-      Line        : out Natural;
-      Addr        : out GVD.Types.Address_Type)
+     (Debugger : access Debugger_Root;
+      Str      : String;
+      Name     : out Unbounded_String;
+      Line     : out Natural;
+      Addr     : out GVD.Types.Address_Type)
    is
       pragma Unreferenced (Debugger, Str);
    begin
@@ -323,14 +320,14 @@ package body Debugger is
    ----------------------
 
    procedure Found_Frame_Info
-     (Debugger    : access Debugger_Root;
-      Str         : String;
-      Frame       : out Unbounded_String;
-      Message     : out Frame_Info_Type)
+     (Debugger : access Debugger_Root;
+      Str      : String;
+      Frame    : out Unbounded_String;
+      Message  : out Frame_Info_Type)
    is
       pragma Unreferenced (Debugger, Str);
    begin
-      Frame   := Null_Unbounded_String;
+      Frame := Null_Unbounded_String;
       Message := Location_Not_Found;
    end Found_Frame_Info;
 
@@ -339,8 +336,7 @@ package body Debugger is
    -----------------
 
    function Get_Uniq_Id
-     (Debugger : access Debugger_Root;
-      Entity   : String) return String
+     (Debugger : access Debugger_Root; Entity : String) return String
    is
       pragma Unreferenced (Debugger);
    begin
@@ -393,7 +389,7 @@ package body Debugger is
             if Active (Me) then
                declare
                   S : constant String :=
-                        Strip_CR (Debugger.Get_Process.Expect_Out);
+                    Strip_CR (Debugger.Get_Process.Expect_Out);
                begin
                   --  Reduce noise in output
                   if S /= (1 => ASCII.LF) then
@@ -496,11 +492,14 @@ package body Debugger is
             --  change the current command in this case.
 
             if Process.Current_Command /= null then
-               Assert (Me, Process.Current_Command = null,
-                       "Memory leak, still has cmd="
-                       & Process.Current_Command.all
-                       & " while sending " & Cmd,
-                       Raise_Exception => True);
+               Assert
+                 (Me,
+                  Process.Current_Command = null,
+                  "Memory leak, still has cmd="
+                  & Process.Current_Command.all
+                  & " while sending "
+                  & Cmd,
+                  Raise_Exception => True);
             end if;
 
             Process.Current_Command := new String'(Cmd);
@@ -508,9 +507,7 @@ package body Debugger is
 
          Debugger.Get_Process.Set_Command_In_Process;
 
-         if Mode /= Internal
-           and then Kind = Execution_Command
-         then
+         if Mode /= Internal and then Kind = Execution_Command then
             Process.Current_File := No_File;
             Process.Current_Line := 0;
             Unhighlight_Current_Line (Debugger.Kernel);
@@ -534,9 +531,10 @@ package body Debugger is
         and then Mode /= Internal
         and then Process /= null
       then
-         Data.Mode    := Mode;
-         Data.Command := new String'
-           (Cmd (Index_Non_Blank (Cmd) .. Index_Non_Blank (Cmd, Backward)));
+         Data.Mode := Mode;
+         Data.Command :=
+           new String'
+             (Cmd (Index_Non_Blank (Cmd) .. Index_Non_Blank (Cmd, Backward)));
          Append (Process.Command_History, Data);
       end if;
 
@@ -546,9 +544,7 @@ package body Debugger is
 
       --  Set the debuggee as started after sending an execution command
 
-      if not Debugger.Is_Started
-        and then Kind = Execution_Command
-      then
+      if not Debugger.Is_Started and then Kind = Execution_Command then
          Debugger.Set_Is_Started (Launched);
       end if;
    end Send_Internal_Pre;
@@ -562,7 +558,8 @@ package body Debugger is
       Mode              : Command_Type;
       Always_Emit_Hooks : Boolean)
    is
-      Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
+      Process               : constant Visual_Debugger :=
+        GVD.Process.Convert (Debugger);
       Bp_Might_Have_Changed : Boolean;
       Register_Changed      : Boolean;
       Kind                  : Command_Category;
@@ -577,10 +574,10 @@ package body Debugger is
          --  Compute whether breakpoints might have changed before running
          --  hooks and e.g. running other debugger commands as a side effect.
 
-         Bp_Might_Have_Changed := Debugger.Breakpoints_Changed
-           (Process.Current_Command.all);
-         Register_Changed := Debugger.Is_Set_Register_Command
-           (Process.Current_Command.all);
+         Bp_Might_Have_Changed :=
+           Debugger.Breakpoints_Changed (Process.Current_Command.all);
+         Register_Changed :=
+           Debugger.Is_Set_Register_Command (Process.Current_Command.all);
          Kind := Debugger.Command_Kind (Process.Current_Command.all);
 
          Free (Process.Current_Command);
@@ -623,10 +620,10 @@ package body Debugger is
       Mode            : Command_Type := Hidden)
    is
       Full_Output : Unbounded_String;
-      Process  : constant Visual_Debugger := GVD.Process.Convert (Debugger);
-      Last     : Positive := Cmd'First;
-      Cmd_Last : Natural;
-      First    : Positive;
+      Process     : constant Visual_Debugger := GVD.Process.Convert (Debugger);
+      Last        : Positive := Cmd'First;
+      Cmd_Last    : Natural;
+      First       : Positive;
 
       procedure Wait_For_Prompt_And_Get_Output;
       --  Wait for the prompt synchronously, then get the full debugger
@@ -646,7 +643,8 @@ package body Debugger is
       procedure Retrieve_Output_Filter
         (Descriptor : Process_Descriptor'Class;
          Str        : String;
-         Process    : System.Address := System.Null_Address) is
+         Process    : System.Address := System.Null_Address)
+      is
          pragma Unreferenced (Descriptor, Process);
       begin
          Full_Output := Full_Output & Str;
@@ -657,7 +655,7 @@ package body Debugger is
       ------------------------------------
 
       procedure Wait_For_Prompt_And_Get_Output is
-         Dummy   : Boolean;
+         Dummy : Boolean;
       begin
          Debugger_Access (Debugger).Wait_Prompt;
          Debugger.Continuation_Line := False;
@@ -667,8 +665,8 @@ package body Debugger is
             Free (Output);
 
             declare
-               S : String := Glib.Convert.Locale_To_UTF8
-                 (Debugger.Get_Process.Expect_Out);
+               S : String :=
+                 Glib.Convert.Locale_To_UTF8 (Debugger.Get_Process.Expect_Out);
                L : Natural;
             begin
                --  Strip CRs in remote mode, as we can't know in advance if the
@@ -703,10 +701,15 @@ package body Debugger is
 
       if Debugger.Get_Process.Command_In_Process then
          if Synchronous then
-            Trace (Me, "Cannot send command " & Cmd & " since debugger is"
-                   & " already processing"
-                   & (if Process = null or else  Process.Current_Command = null
-                     then "" else " " & Process.Current_Command.all));
+            Trace
+              (Me,
+               "Cannot send command "
+               & Cmd
+               & " since debugger is"
+               & " already processing"
+               & (if Process = null or else Process.Current_Command = null
+                  then ""
+                  else " " & Process.Current_Command.all));
             return;
 
          elsif not Force_Send then
@@ -740,12 +743,14 @@ package body Debugger is
          --  might execute or queue commands (by ultimately calling this same
          --  Internal_Send procedure).
 
-         if Debugger.Kernel /= null then   --  not in the testsuite
+         if Debugger.Kernel /= null then
+            --  not in the testsuite
             declare
-               Tmp : constant String := Debugger_Command_Action_Hook.Run
-                  (Kernel   => Debugger.Kernel,
-                   Debugger => Process,
-                   Str      => Cmd (First .. Last - 1));
+               Tmp : constant String :=
+                 Debugger_Command_Action_Hook.Run
+                   (Kernel   => Debugger.Kernel,
+                    Debugger => Process,
+                    Str      => Cmd (First .. Last - 1));
             begin
                if Tmp = Command_Intercepted then
                   if Mode >= Visible then
@@ -758,9 +763,7 @@ package body Debugger is
                     and then not Debugger_Console_All_Interactions.Get_Pref
                   then
                      Process.Output_Text
-                       (Tmp,
-                        Is_Command   => False,
-                        Set_Position => True);
+                       (Tmp, Is_Command => False, Set_Position => True);
 
                      Debugger_Root'Class (Debugger.all).Display_Prompt;
                   end if;
@@ -784,9 +787,7 @@ package body Debugger is
          Send_Internal_Pre
            (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
 
-         if Wait_For_Prompt
-           or else Process = null
-         then
+         if Wait_For_Prompt or else Process = null then
 
             --  If we should wait for the prompt, always make the command
             --  synchronous when there is no visual debugger.
@@ -806,8 +807,7 @@ package body Debugger is
 
                Process.Idle_Output_Monitor_Func :=
                  Debugger_Sources.Idle_Add
-                   (Func => Idle_Output_Monitor'Access,
-                    Data => Process);
+                   (Func => Idle_Output_Monitor'Access, Data => Process);
 
                --  Add an output filter to retrieve the command's output
                --  and wait until the end of its execution without
@@ -815,9 +815,8 @@ package body Debugger is
 
                declare
                   Descriptor : constant Process_Descriptor_Access :=
-                                 Get_Descriptor (Get_Process (Debugger));
-                  User_Data  : constant System.Address :=
-                                 System.Null_Address;
+                    Get_Descriptor (Get_Process (Debugger));
+                  User_Data  : constant System.Address := System.Null_Address;
                begin
                   Add_Filter
                     (Descriptor.all,
@@ -848,8 +847,7 @@ package body Debugger is
 
             Process.Idle_Output_Monitor_Func :=
               Debugger_Sources.Idle_Add
-                (Func => Idle_Output_Monitor'Access,
-                 Data => Process);
+                (Func => Idle_Output_Monitor'Access, Data => Process);
 
          end if;
 
@@ -868,8 +866,7 @@ package body Debugger is
    -- On_Debugger_Died --
    ----------------------
 
-   procedure On_Debugger_Died
-     (Debugger : not null access Debugger_Root'Class)
+   procedure On_Debugger_Died (Debugger : not null access Debugger_Root'Class)
    is
       Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
       Dummy   : Message_Dialog_Buttons;
@@ -887,9 +884,12 @@ package body Debugger is
 
          Dummy :=
            GPS_Message_Dialog
-             (Debugger.Get_Process.Expect_Out & ASCII.LF &
-              (-"The underlying debugger died unexpectedly. Closing it"),
-              Error, Button_OK, Button_OK,
+             (Debugger.Get_Process.Expect_Out
+              & ASCII.LF
+              & (-"The underlying debugger died unexpectedly. Closing it"),
+              Error,
+              Button_OK,
+              Button_OK,
               Parent => Debugger.Kernel.Get_Main_Window);
          Process.Close_Debugger (Has_Died => True);
       end if;
@@ -971,9 +971,8 @@ package body Debugger is
    -------------------
 
    function Get_Type_Info
-     (Debugger  : access Debugger_Root;
-      Entity    : String;
-      Default   : String) return String
+     (Debugger : access Debugger_Root; Entity : String; Default : String)
+      return String
    is
       pragma Unreferenced (Debugger, Entity);
    begin
@@ -1008,8 +1007,7 @@ package body Debugger is
    function Get_Start_Method
      (Debugger : not null access Debugger_Root)
       return Debuggee_Start_Method_Kind
-   is
-     (Debugger.Start_Method);
+   is (Debugger.Start_Method);
 
    --------------------
    -- Set_Is_Started --
@@ -1023,7 +1021,8 @@ package body Debugger is
    begin
       Debugger.Start_Method := Start_Method;
 
-      if Process /= null then   --  null in testsuite
+      if Process /= null then
+         --  null in testsuite
          if Debugger.Is_Started then
             Debuggee_Started_Hook.Run (Process.Kernel, Process);
          else
@@ -1037,16 +1036,14 @@ package body Debugger is
    ------------------
 
    procedure Set_Variable
-     (Debugger : access Debugger_Root;
-      Var_Name : String;
-      Value    : String)
+     (Debugger : access Debugger_Root; Var_Name : String; Value : String)
    is
-      Block : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
       S : constant String :=
         Language_Debugger_Access (Debugger.Get_Language).Set_Variable
-        (Var_Name, Value);
+          (Var_Name, Value);
    begin
       if S /= "" then
          --  We need to send the command in hidden mode (synchronously)
@@ -1071,8 +1068,8 @@ package body Debugger is
       Tmp             : Boolean;
       pragma Unreferenced (Tmp);
 
-      Num_Events      : Positive;
-      Max_Events      : constant := 30;
+      Num_Events : Positive;
+      Max_Events : constant := 30;
       --  Limit the number of events to process in one iteration
 
    begin
@@ -1091,9 +1088,7 @@ package body Debugger is
       loop
          Num_Events := 1;
 
-         while Gtk.Main.Events_Pending
-           and then Num_Events <= Max_Events
-         loop
+         while Gtk.Main.Events_Pending and then Num_Events <= Max_Events loop
             Tmp := Gtk.Main.Main_Iteration;
             Num_Events := Num_Events + 1;
          end loop;
@@ -1107,20 +1102,21 @@ package body Debugger is
    -------------------
 
    procedure Queue_Command
-     (Debugger        : access Debugger_Root'Class;
-      Cmd             : String;
-      Empty_Buffer    : Boolean;
-      Mode            : Command_Type)
+     (Debugger     : access Debugger_Root'Class;
+      Cmd          : String;
+      Empty_Buffer : Boolean;
+      Mode         : Command_Type)
    is
       Tmp     : Command_Access := Debugger.Command_Queue;
       Command : Command_Access;
 
    begin
-      Command := new Command_Record'
-        (Cmd             => new String'(Cmd),
-         Empty_Buffer    => Empty_Buffer,
-         Mode            => Mode,
-         Next            => null);
+      Command :=
+        new Command_Record'
+          (Cmd          => new String'(Cmd),
+           Empty_Buffer => Empty_Buffer,
+           Mode         => Mode,
+           Next         => null);
 
       if Tmp = null then
          Debugger.Command_Queue := Command;
@@ -1148,9 +1144,7 @@ package body Debugger is
 
       Debugger.Command_Queue := Command.Next;
       Debugger.Send
-        (Command.Cmd.all,
-         Command.Empty_Buffer,
-         Mode => Command.Mode);
+        (Command.Cmd.all, Command.Empty_Buffer, Mode => Command.Mode);
 
       Free (Command.Cmd);
       Free (Command);
@@ -1217,8 +1211,8 @@ package body Debugger is
    -- Continuation_Line --
    -----------------------
 
-   function Continuation_Line
-     (Debugger : access Debugger_Root) return Boolean is
+   function Continuation_Line (Debugger : access Debugger_Root) return Boolean
+   is
    begin
       return Debugger.Continuation_Line;
    end Continuation_Line;
@@ -1281,33 +1275,26 @@ package body Debugger is
    -- Get_Remote_Target --
    -----------------------
 
-   function Get_Remote_Target
-     (Debugger : access Debugger_Root) return String
-   is
-     (if Debugger.Remote_Target /= null then
-         Debugger.Remote_Target.all
-      else
-         "");
+   function Get_Remote_Target (Debugger : access Debugger_Root) return String
+   is (if Debugger.Remote_Target /= null
+       then Debugger.Remote_Target.all
+       else "");
 
    -------------------------
    -- Get_Remote_Protocol --
    -------------------------
 
-   function Get_Remote_Protocol
-     (Debugger : access Debugger_Root) return String
-   is
-     (if Debugger.Remote_Protocol /= null then
-         Debugger.Remote_Protocol.all
-      else
-         "");
+   function Get_Remote_Protocol (Debugger : access Debugger_Root) return String
+   is (if Debugger.Remote_Protocol /= null
+       then Debugger.Remote_Protocol.all
+       else "");
 
    ----------------
    -- Get_Kernel --
    ----------------
 
    function Get_Kernel
-     (Debugger : access Debugger_Root'Class)
-      return GPS.Kernel.Kernel_Handle is
+     (Debugger : access Debugger_Root'Class) return GPS.Kernel.Kernel_Handle is
    begin
       return Debugger.Kernel;
    end Get_Kernel;
@@ -1359,8 +1346,7 @@ package body Debugger is
    ---------------------
 
    function VxWorks_Version
-     (Debugger : access Debugger_Root)
-      return GVD.Types.VxWorks_Version_Type
+     (Debugger : access Debugger_Root) return GVD.Types.VxWorks_Version_Type
    is
       pragma Unreferenced (Debugger);
    begin
@@ -1380,8 +1366,9 @@ package body Debugger is
       Debuggee_Output : out Unbounded_String;
       Results_Output  : out Unbounded_String)
    is
-      pragma Unreferenced
-        (Debugger, Mode, Log_Output, Debuggee_Output, Results_Output);
+      pragma
+        Unreferenced
+          (Debugger, Mode, Log_Output, Debuggee_Output, Results_Output);
    begin
       Set_Unbounded_String (Console_Output, Str);
    end Filter_Output;
@@ -1391,8 +1378,8 @@ package body Debugger is
    ---------------------
 
    function Is_Quit_Command
-     (Debugger : access Debugger_Root;
-      Command : String) return Boolean is
+     (Debugger : access Debugger_Root; Command : String) return Boolean
+   is
       pragma Unreferenced (Debugger, Command);
    begin
       return False;
@@ -1403,8 +1390,7 @@ package body Debugger is
    --------------------------
 
    function Is_Interrupt_Command
-     (Debugger : access Debugger_Root;
-      Command  : String) return Boolean
+     (Debugger : access Debugger_Root; Command : String) return Boolean
    is
       pragma Unreferenced (Debugger);
    begin
@@ -1416,8 +1402,7 @@ package body Debugger is
    -----------------------------
 
    function Is_Set_Register_Command
-     (Debugger : access Debugger_Root;
-      Command : String) return Boolean
+     (Debugger : access Debugger_Root; Command : String) return Boolean
    is
       pragma Unreferenced (Debugger, Command);
    begin

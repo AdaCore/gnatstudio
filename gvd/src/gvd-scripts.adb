@@ -15,33 +15,33 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with GNAT.Strings;            use GNAT.Strings;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;          use GNAT.Strings;
 
 with GNATCOLL.Any_Types;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Widget; use Gtk.Widget;
 
-with Basic_Types;             use Basic_Types;
-with Debugger;                use Debugger;
-with Glib;                    use Glib;
-with Glib.Object;             use Glib.Object;
-with GPS.Debuggers;           use GPS.Debuggers;
-with GPS.Editors;             use GPS.Editors;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Intl;                use GPS.Intl;
-with GVD.Breakpoints_List;    use GVD.Breakpoints_List;
-with GVD.Process;             use GVD.Process;
-with GVD.Preferences;         use GVD.Preferences;
-with GVD.Types;               use GVD.Types;
-with GVD_Module;              use GVD_Module;
-with Interactive_Consoles;    use Interactive_Consoles;
-with GVD.Consoles;            use GVD.Consoles;
-with GVD.Variables.Types;     use GVD.Variables.Types;
+with Basic_Types;          use Basic_Types;
+with Debugger;             use Debugger;
+with Glib;                 use Glib;
+with Glib.Object;          use Glib.Object;
+with GPS.Debuggers;        use GPS.Debuggers;
+with GPS.Editors;          use GPS.Editors;
+with GPS.Kernel.Project;   use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Intl;             use GPS.Intl;
+with GVD.Breakpoints_List; use GVD.Breakpoints_List;
+with GVD.Process;          use GVD.Process;
+with GVD.Preferences;      use GVD.Preferences;
+with GVD.Types;            use GVD.Types;
+with GVD_Module;           use GVD_Module;
+with Interactive_Consoles; use Interactive_Consoles;
+with GVD.Consoles;         use GVD.Consoles;
+with GVD.Variables.Types;  use GVD.Variables.Types;
 with Process_Proxies;
 
 package body GVD.Scripts is
@@ -67,27 +67,23 @@ package body GVD.Scripts is
    --  Class instances for a Debugger_Variable
 
    procedure Shell_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Interactive script handler for the debugger module
 
    procedure Info_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Hander for Debugger_Breakpoint class
 
    procedure Variable_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Hander for Debugger_Variable class
 
    ------------------
    -- Info_Handler --
    ------------------
 
-   procedure Info_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String) is
+   procedure Info_Handler (Data : in out Callback_Data'Class; Command : String)
+   is
    begin
       if Command = Constructor_Method then
          Data.Set_Error_Msg
@@ -101,11 +97,14 @@ package body GVD.Scripts is
          case Get_Breakpoint (Data.Nth_Arg (1)).The_Type is
             when Breakpoint =>
                Data.Set_Return_Value (String'("breakpoint"));
+
             when Watchpoint =>
                Data.Set_Return_Value (String'("watchpoint"));
+
             when Catchpoint =>
                Data.Set_Return_Value (String'("catchpoint"));
-            when Other =>
+
+            when Other      =>
                Data.Set_Return_Value
                  (To_String (Get_Breakpoint (Data.Nth_Arg (1)).The_Type_Name));
          end case;
@@ -125,8 +124,7 @@ package body GVD.Scripts is
 
       elsif Command = "line" then
          Data.Set_Return_Value
-           (Natural
-              (Get_Line (Get_Breakpoint (Data.Nth_Arg (1)).Location)));
+           (Natural (Get_Line (Get_Breakpoint (Data.Nth_Arg (1)).Location)));
       end if;
    end Info_Handler;
 
@@ -135,12 +133,10 @@ package body GVD.Scripts is
    ----------------------
 
    procedure Variable_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       function Get (Inst : Class_Instance) return GVD_Generic_Type_Access;
-      function Get (Inst : Class_Instance) return GVD_Generic_Type_Access
-      is
+      function Get (Inst : Class_Instance) return GVD_Generic_Type_Access is
          Data : constant Instance_Property :=
            Get_Data (Inst, Debugger_Variable_Type_Class_Name);
       begin
@@ -149,8 +145,7 @@ package body GVD.Scripts is
 
    begin
       if Command = Constructor_Method then
-         Data.Set_Error_Msg
-           ("Cannot construct instances of DebuggerVariable");
+         Data.Set_Error_Msg ("Cannot construct instances of DebuggerVariable");
 
       elsif Command = "simple_value" then
          Data.Set_Return_Value (Get (Data.Nth_Arg (1)).Get_Simple_Value);
@@ -187,11 +182,13 @@ package body GVD.Scripts is
      (Script : not null access Scripting_Language_Record'Class;
       Data   : Breakpoint_Data) return Class_Instance
    is
-      Inst : constant Class_Instance := Script.New_Instance
-        (Script.Get_Repository.New_Class (Debugger_Breakpoint_Class_Name));
+      Inst : constant Class_Instance :=
+        Script.New_Instance
+          (Script.Get_Repository.New_Class (Debugger_Breakpoint_Class_Name));
    begin
       Set_Data
-        (Inst, Debugger_Breakpoint_Class_Name,
+        (Inst,
+         Debugger_Breakpoint_Class_Name,
          Breakpoint_Info_Property'(Data => Data));
       return Inst;
    end Create_Debugger_Breakpoint;
@@ -204,11 +201,14 @@ package body GVD.Scripts is
      (Script : not null access Scripting_Language_Record'Class;
       Data   : GVD_Type_Holder) return Class_Instance
    is
-      Inst : constant Class_Instance := Script.New_Instance
-        (Script.Get_Repository.New_Class (Debugger_Variable_Type_Class_Name));
+      Inst : constant Class_Instance :=
+        Script.New_Instance
+          (Script.Get_Repository.New_Class
+             (Debugger_Variable_Type_Class_Name));
    begin
       Set_Data
-        (Inst, Debugger_Variable_Type_Class_Name,
+        (Inst,
+         Debugger_Variable_Type_Class_Name,
          Debugger_Variable_Property'(Data => Data));
       return Inst;
    end Create_Debugger_Variable;
@@ -229,18 +229,18 @@ package body GVD.Scripts is
    -------------------
 
    procedure Shell_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
-      Process    : Visual_Debugger;
-      Inst       : Class_Instance;
+      Kernel  : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
+      Process : Visual_Debugger;
+      Inst    : Class_Instance;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
-           (Data, -("Cannot create instances of Debugger directly"
-            & ASCII.LF
-            & "Use GPS.Debugger.get() or GPS.Debugger.spawn() instead"));
+           (Data,
+            -("Cannot create instances of Debugger directly"
+              & ASCII.LF
+              & "Use GPS.Debugger.get() or GPS.Debugger.spawn() instead"));
 
       elsif Command = "get" then
          declare
@@ -293,8 +293,9 @@ package body GVD.Scripts is
          exception
             when Invalid_Data =>
                --  We got pass a file as Id
-               File_Inst := Nth_Arg
-                 (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
+               File_Inst :=
+                 Nth_Arg
+                   (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
                File := Get_Data (File_Inst);
                For_Each_Debugger (Kernel, Process_By_File'Access);
          end;
@@ -339,15 +340,14 @@ package body GVD.Scripts is
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
 
          declare
-            Target   : constant String  := Nth_Arg (Data, 2, "");
+            Target   : constant String := Nth_Arg (Data, 2, "");
             Pid      : constant Integer := Nth_Arg (Data, 3, -1);
-            Protocol : constant String  :=
+            Protocol : constant String :=
               Nth_Arg (Data, 4, Process.Debugger.Get_Remote_Protocol);
             Force    : constant Boolean := Nth_Arg (Data, 5, False);
          begin
             if not Force and then Process.Debugger.Is_Connected_To_Target then
-               Set_Error_Msg
-                 (Data, "Already connected to a target.");
+               Set_Error_Msg (Data, "Already connected to a target.");
                return;
             end if;
 
@@ -360,8 +360,7 @@ package body GVD.Scripts is
                return;
             else
                Process.Debugger.Connect_To_Target
-                 (Process.Debugger.Get_Remote_Target,
-                  Protocol);
+                 (Process.Debugger.Get_Remote_Target, Protocol);
             end if;
          end;
 
@@ -411,12 +410,13 @@ package body GVD.Scripts is
                   Output_Command => False,  --  Done by Visible parameter
                   Mode           => GVD.Types.Visible);
             else
-               Result := To_Unbounded_String
-                 (Process_User_Command
-                    (Debugger       => Process,
-                     Command        => Nth_Arg (Data, 2),
-                     Output_Command => Nth_Arg (Data, 3, True),
-                     Mode           => GVD.Types.Hidden));
+               Result :=
+                 To_Unbounded_String
+                   (Process_User_Command
+                      (Debugger       => Process,
+                       Command        => Nth_Arg (Data, 2),
+                       Output_Command => Nth_Arg (Data, 3, True),
+                       Mode           => GVD.Types.Hidden));
 
                Set_Return_Value (Data, To_String (Result));
             end if;
@@ -450,7 +450,8 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Process_User_Command
-           (Process, Nth_Arg (Data, 2),
+           (Process,
+            Nth_Arg (Data, 2),
             Output_Command => Nth_Arg (Data, 3, True),
             Mode           => GVD.Types.User);
 
@@ -466,28 +467,25 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Process.Debugger.Set_Variable
-           (Var_Name => Data.Nth_Arg (2),
-            Value    => Data.Nth_Arg (3));
+           (Var_Name => Data.Nth_Arg (2), Value => Data.Nth_Arg (3));
 
       elsif Command = "break_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Break_Source
            (Kernel => Kernel,
-            File  => Nth_Arg (Data, 2),
+            File   => Nth_Arg (Data, 2),
             Line   => Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
 
       elsif Command = "break_at_exception" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         Break_At_Exception
-           (Kernel    => Kernel,
-            Unhandled => Nth_Arg (Data, 2));
+         Break_At_Exception (Kernel => Kernel, Unhandled => Nth_Arg (Data, 2));
 
       elsif Command = "unbreak_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Unbreak_Source
            (Kernel,
-            File  => Nth_Arg (Data, 2),
-            Line  => Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
+            File => Nth_Arg (Data, 2),
+            Line => Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
 
       elsif Command = "command" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -505,8 +503,7 @@ package body GVD.Scripts is
          if Process.Current_Command /= null then
             Set_Return_Value
               (Data,
-               Command_Kind
-                 (Process.Debugger, Process.Current_Command.all)
+               Command_Kind (Process.Debugger, Process.Current_Command.all)
                = Context_Command);
          else
             Set_Return_Value (Data, False);
@@ -563,8 +560,7 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Data.Set_Return_Value
-           (Create_File
-              (Data.Get_Script, Process.Current_File));
+           (Create_File (Data.Get_Script, Process.Current_File));
 
       elsif Command = "current_line" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -577,7 +573,7 @@ package body GVD.Scripts is
 
          declare
             Console : constant Interactive_Console :=
-                        Get_Debugger_Interactive_Console (Process);
+              Get_Debugger_Interactive_Console (Process);
          begin
             if Console /= null then
                Data.Set_Return_Value
@@ -601,22 +597,23 @@ package body GVD.Scripts is
 
       elsif Command = "spawn" then
          declare
-            File_Inst       : constant Class_Instance := Nth_Arg
-              (Data, 1, Get_File_Class (Kernel));
+            File_Inst       : constant Class_Instance :=
+              Nth_Arg (Data, 1, Get_File_Class (Kernel));
             File            : constant Virtual_File := Get_Data (File_Inst);
             Remote_Target   : constant String := Nth_Arg (Data, 3, "");
             Remote_Protocol : constant String := Nth_Arg (Data, 4, "");
             Load_Executable : constant Boolean := Nth_Arg (Data, 5, False);
          begin
-            Process := Spawn
-              (Kernel          => Kernel,
-               Prefered_Kind   => Debugger_Kind.Get_Pref,
-               File            => File,
-               Project         => Get_Project (Kernel),
-               Args            => Nth_Arg (Data, 2, ""),
-               Remote_Target   => Remote_Target,
-               Remote_Protocol => Remote_Protocol,
-               Load_Executable => Load_Executable);
+            Process :=
+              Spawn
+                (Kernel          => Kernel,
+                 Prefered_Kind   => Debugger_Kind.Get_Pref,
+                 File            => File,
+                 Project         => Get_Project (Kernel),
+                 Args            => Nth_Arg (Data, 2, ""),
+                 Remote_Target   => Remote_Target,
+                 Remote_Protocol => Remote_Protocol,
+                 Load_Executable => Load_Executable);
 
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
@@ -638,8 +635,10 @@ package body GVD.Scripts is
             Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
             Process := Visual_Debugger (GObject'(Get_Data (Inst)));
             declare
-               Block : Process_Proxies.Parse_File_Switch
-                 (Process.Debugger.Get_Process) with Unreferenced;
+               Block :
+                 Process_Proxies.Parse_File_Switch
+                   (Process.Debugger.Get_Process)
+               with Unreferenced;
             begin
                Process.Debugger.Backtrace (-1, 0, Bt);
             end;
@@ -668,12 +667,14 @@ package body GVD.Scripts is
                   end if;
 
                   if Frame.File /= No_File then
-                     Set_Nth_Arg (List, 4,
-                       (Create_File_Location
-                          (Script => Get_Script (Data),
-                           File   => Frame.File,
-                           Line   => Frame.Line,
-                           Column => 0)));
+                     Set_Nth_Arg
+                       (List,
+                        4,
+                        (Create_File_Location
+                           (Script => Get_Script (Data),
+                            File   => Frame.File,
+                            Line   => Frame.Line,
+                            Column => 0)));
                   else
                      Set_Nth_Arg (List, 4, Empty);
                   end if;
@@ -694,8 +695,9 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          declare
-            Block : Process_Proxies.Parse_File_Switch
-              (Process.Debugger.Get_Process) with Unreferenced;
+            Block :
+              Process_Proxies.Parse_File_Switch (Process.Debugger.Get_Process)
+            with Unreferenced;
          begin
             Data.Set_Return_Value (Process.Debugger.Current_Frame);
          end;
@@ -721,7 +723,7 @@ package body GVD.Scripts is
          Process.Interrupt;
 
       elsif Command = "get_variable_by_name" then
-         Inst    := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          declare
             Name     : constant String := String'(Data.Nth_Arg (2));
@@ -747,24 +749,18 @@ package body GVD.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Class    : constant Class_Type := New_Class (Kernel, "Debugger");
-      Info     : constant Class_Type := New_Class
-        (Kernel, Debugger_Breakpoint_Class_Name);
-      Variable : constant Class_Type := New_Class
-        (Kernel, Debugger_Variable_Type_Class_Name);
+      Info     : constant Class_Type :=
+        New_Class (Kernel, Debugger_Breakpoint_Class_Name);
+      Variable : constant Class_Type :=
+        New_Class (Kernel, Debugger_Variable_Type_Class_Name);
 
    begin
       Kernel.Scripts.Register_Command
-        (Constructor_Method,
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        (Constructor_Method, Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Property
-        ("current_file",
-         Class        => Class,
-         Getter       => Shell_Handler'Access);
+        ("current_file", Class => Class, Getter => Shell_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("current_line",
-         Class        => Class,
-         Getter       => Shell_Handler'Access);
+        ("current_line", Class => Class, Getter => Shell_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get",
          Params        => (1 => Param ("id", Optional => True)),
@@ -778,61 +774,46 @@ package body GVD.Scripts is
          Static_Method => True);
       Kernel.Scripts.Register_Command
         ("send",
-         Params =>
+         Params  =>
            (1 => Param ("cmd"),
             2 => Param ("output", Optional => True),
             3 => Param ("show_in_console", Optional => True),
             4 => Param ("on_result_message", Optional => True),
             5 => Param ("on_error_message", Optional => True),
             6 => Param ("on_rejected", Optional => True)),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
         ("non_blocking_send",
-         Params =>
-           (1 => Param ("cmd"),
-            2 => Param ("output", Optional => True)),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Params  =>
+           (1 => Param ("cmd"), 2 => Param ("output", Optional => True)),
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
-        ("get_executable",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("get_executable", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Property
-        ("remote_target",
-         Getter       => Shell_Handler'Access,
-         Class        => Class);
+        ("remote_target", Getter => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Property
-        ("remote_protocol",
-         Getter       => Shell_Handler'Access,
-         Class        => Class);
+        ("remote_protocol", Getter => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Property
         ("is_connected_remotely",
-         Getter       => Shell_Handler'Access,
-         Class        => Class);
+         Getter => Shell_Handler'Access,
+         Class  => Class);
       Kernel.Scripts.Register_Command
-        ("get_num",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("get_num", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
-        ("is_busy",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("is_busy", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
-        ("close",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("close", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
-        ("get_console",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("get_console", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
         ("get_debuggee_console",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
         ("spawn",
-         Params =>
+         Params        =>
            (1 => Param ("executable"),
             2 => Param ("args", Optional => True),
             3 => Param ("remote_target", Optional => True),
@@ -842,106 +823,81 @@ package body GVD.Scripts is
          Class         => Class,
          Static_Method => True);
       Kernel.Scripts.Register_Command
-        ("start",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("start", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
         ("connect_to_target",
-         Params        =>
+         Params  =>
            (1 => Param ("target", Optional => True),
             2 => Param ("pid", Optional => True),
             3 => Param ("protocol", Optional => True),
             4 => Param ("force", Optional => True)),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
         ("continue_execution",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
-        ("command",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("command", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
-        ("is_exec_command",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("is_exec_command", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
         ("is_context_command",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
-        ("is_break_command",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("is_break_command", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
         ("value_of",
-         Params       => (1 => Param ("expression")),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Params  => (1 => Param ("expression")),
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
         ("set_variable",
-         Params       => (1 => Param ("variable"),
-                          2 => Param ("value")),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Params  => (1 => Param ("variable"), 2 => Param ("value")),
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
         ("break_at_location",
-         Params       => (1 => Param ("file"),
-                          2 => Param ("line")),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Params  => (1 => Param ("file"), 2 => Param ("line")),
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
         ("break_at_exception",
-         Params       => (1 => Param ("unhandled")),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Params  => (1 => Param ("unhandled")),
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
         ("unbreak_at_location",
-         Params       => (1 => Param ("file"),
-                          2 => Param ("line")),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Params  => (1 => Param ("file"), 2 => Param ("line")),
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
-        ("frames",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("frames", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
-        ("current_frame",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("current_frame", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
-        ("frame_up",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("frame_up", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
-        ("frame_down",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("frame_down", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
         ("select_frame",
-         Params       => (1 => Param ("num")),
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+         Params  => (1 => Param ("num")),
+         Handler => Shell_Handler'Access,
+         Class   => Class);
       Kernel.Scripts.Register_Command
-        ("interrupt",
-         Handler      => Shell_Handler'Access,
-         Class        => Class);
+        ("interrupt", Handler => Shell_Handler'Access, Class => Class);
       Kernel.Scripts.Register_Command
         ("get_variable_by_name",
-         Handler      => Shell_Handler'Access,
-         Params       => (1 => Param ("name")),
-         Class        => Class);
+         Handler => Shell_Handler'Access,
+         Params  => (1 => Param ("name")),
+         Class   => Class);
 
       Kernel.Scripts.Register_Property
-        ("breakpoints",
-         Getter       => Shell_Handler'Access,
-         Class        => Class);
+        ("breakpoints", Getter => Shell_Handler'Access, Class => Class);
 
       Kernel.Scripts.Register_Command
-        (Constructor_Method,
-         Handler      => Info_Handler'Access,
-         Class        => Info);
+        (Constructor_Method, Handler => Info_Handler'Access, Class => Info);
       Kernel.Scripts.Register_Property
         ("num", Getter => Info_Handler'Access, Class => Info);
       Kernel.Scripts.Register_Property
@@ -959,23 +915,20 @@ package body GVD.Scripts is
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Handler      => Variable_Handler'Access,
-         Class        => Variable);
-
-      Kernel.Scripts.Register_Property
-        ("simple_value",
-         Getter => Variable_Handler'Access, Class => Variable);
-      Kernel.Scripts.Register_Property
-        ("type_description",
-         Getter => Variable_Handler'Access, Class => Variable);
-      Kernel.Scripts.Register_Property
-        ("type_name",
-         Getter => Variable_Handler'Access, Class => Variable);
-
-      Kernel.Scripts.Register_Command
-        ("children",
          Handler => Variable_Handler'Access,
          Class   => Variable);
+
+      Kernel.Scripts.Register_Property
+        ("simple_value", Getter => Variable_Handler'Access, Class => Variable);
+      Kernel.Scripts.Register_Property
+        ("type_description",
+         Getter => Variable_Handler'Access,
+         Class  => Variable);
+      Kernel.Scripts.Register_Property
+        ("type_name", Getter => Variable_Handler'Access, Class => Variable);
+
+      Kernel.Scripts.Register_Command
+        ("children", Handler => Variable_Handler'Access, Class => Variable);
    end Create_Hooks;
 
 end GVD.Scripts;

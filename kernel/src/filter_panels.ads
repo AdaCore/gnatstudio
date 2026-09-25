@@ -21,17 +21,17 @@
 
 with Glib;
 
-with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Handlers;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Radio_Menu_Item;  use Gtk.Radio_Menu_Item;
-with Gtk.Tool_Item;        use Gtk.Tool_Item;
-with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Menu;            use Gtk.Menu;
+with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
+with Gtk.Tool_Item;       use Gtk.Tool_Item;
+with Gtk.Widget;          use Gtk.Widget;
 
-with Gtkada.Search_Entry;  use Gtkada.Search_Entry;
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Search;           use GPS.Search;
-with Histories;            use Histories;
+with Gtkada.Search_Entry; use Gtkada.Search_Entry;
+with GPS.Kernel;          use GPS.Kernel;
+with GPS.Search;          use GPS.Search;
+with Histories;           use Histories;
 
 private with Ada.Strings.Unbounded;
 private with GNAT.Strings;
@@ -88,13 +88,11 @@ package Filter_Panels is
    --  This function should be called from Create_Toolbar.
 
    procedure Set_Filter
-     (Self : not null access Filter_Panel_Record;
-      Text : String);
+     (Self : not null access Filter_Panel_Record; Text : String);
    --  Change the text of the filter
 
    function Get_Focus_Widget
-     (Self : not null access Filter_Panel_Record'Class)
-      return Gtk_Widget;
+     (Self : not null access Filter_Panel_Record'Class) return Gtk_Widget;
    --  Returns a widget which should be focused by default
 
    function Get_Filter_Pattern
@@ -107,35 +105,35 @@ package Filter_Panels is
 
 private
    type Filter_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
-     with record
+   with record
       Pattern             : Gtkada.Search_Entry.Gtkada_Search_Entry;
       Options             : Filter_Options_Mask;
       Pattern_Config_Menu : Gtk.Menu.Gtk_Menu;
 
-      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
-      History_Prefix      : GNAT.Strings.String_Access;
+      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
+      History_Prefix : GNAT.Strings.String_Access;
       --  Prefix for the entries in the histories.ads API
 
-      Whole_Word          : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-      Negate              : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-      Case_Sensitive      : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-      Full_Text           : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-      Regexp              : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-      Fuzzy               : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-      Approximate         : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
-      Debounce_Mode       : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Whole_Word     : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Negate         : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Case_Sensitive : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Full_Text      : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+      Regexp         : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+      Fuzzy          : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+      Approximate    : Gtk.Radio_Menu_Item.Gtk_Radio_Menu_Item;
+      Debounce_Mode  : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
 
-      Activate_Id         : Gtk.Handlers.Handler_Id;
-      Search_Changed_Id   : Gtk.Handlers.Handler_Id;
+      Activate_Id       : Gtk.Handlers.Handler_Id;
+      Search_Changed_Id : Gtk.Handlers.Handler_Id;
 
       --  Current data for building filter pattern
 
-      Data_Pattern         : Ada.Strings.Unbounded.Unbounded_String;
-      Data_Whole_Word      : Boolean     := False;
-      Data_Negate          : Boolean     := False;
-      Data_Case_Sensitive  : Boolean     := False;
-      Data_Kind            : Search_Kind := GPS.Search.Full_Text;
-     end record;
+      Data_Pattern        : Ada.Strings.Unbounded.Unbounded_String;
+      Data_Whole_Word     : Boolean := False;
+      Data_Negate         : Boolean := False;
+      Data_Case_Sensitive : Boolean := False;
+      Data_Kind           : Search_Kind := GPS.Search.Full_Text;
+   end record;
 
    procedure Store_Filter_Data
      (Self : not null access Filter_Panel_Record'Class);

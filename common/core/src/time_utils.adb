@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar.Time_Zones;  use Ada.Calendar.Time_Zones;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
+with Ada.Calendar.Time_Zones; use Ada.Calendar.Time_Zones;
+with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 
 package body Time_Utils is
 
@@ -38,13 +38,14 @@ package body Time_Utils is
    is
       Ls : Boolean;
    begin
-      Ada.Calendar.Formatting.Split (Date        => Date,
-                                     Year        => Year,
-                                     Month       => Month,
-                                     Day         => Day,
-                                     Seconds     => Seconds,
-                                     Leap_Second => Ls,
-                                     Time_Zone   => TZ);
+      Ada.Calendar.Formatting.Split
+        (Date        => Date,
+         Year        => Year,
+         Month       => Month,
+         Day         => Day,
+         Seconds     => Seconds,
+         Leap_Second => Ls,
+         Time_Zone   => TZ);
    end Local_Split;
 
    procedure Local_Split
@@ -59,16 +60,17 @@ package body Time_Utils is
    is
       Ls : Boolean;
    begin
-      Ada.Calendar.Formatting.Split (Date        => Date,
-                                     Year        => Year,
-                                     Month       => Month,
-                                     Day         => Day,
-                                     Hour        => Hour,
-                                     Minute      => Minute,
-                                     Second      => Second,
-                                     Sub_Second  => Sub_Second,
-                                     Leap_Second => Ls,
-                                     Time_Zone   => TZ);
+      Ada.Calendar.Formatting.Split
+        (Date        => Date,
+         Year        => Year,
+         Month       => Month,
+         Day         => Day,
+         Hour        => Hour,
+         Minute      => Minute,
+         Second      => Second,
+         Sub_Second  => Sub_Second,
+         Leap_Second => Ls,
+         Time_Zone   => TZ);
    end Local_Split;
 
    ---------------------------
@@ -76,17 +78,25 @@ package body Time_Utils is
    ---------------------------
 
    function Local_Timestamp_Image (T : Ada.Calendar.Time) return String is
-      Y : Year_Number;
-      M : Month_Number;
-      D : Day_Number;
-      H : Hour_Number;
+      Y  : Year_Number;
+      M  : Month_Number;
+      D  : Day_Number;
+      H  : Hour_Number;
       Mi : Minute_Number;
-      S : Second_Number;
+      S  : Second_Number;
       Ss : Second_Duration;
    begin
       Local_Split (T, Y, M, D, H, Mi, S, Ss);
-      return Image (Y, 4) & Image (M, 2) & Image (D, 2) & "-" &
-        Image (H, 2) & ":" & Image (Mi, 2) & ":" & Image (S, 2);
+      return
+        Image (Y, 4)
+        & Image (M, 2)
+        & Image (D, 2)
+        & "-"
+        & Image (H, 2)
+        & ":"
+        & Image (Mi, 2)
+        & ":"
+        & Image (S, 2);
    end Local_Timestamp_Image;
 
    -------------
@@ -94,8 +104,8 @@ package body Time_Utils is
    -------------
 
    function Elapsed
-     (Start_Time : Ada.Calendar.Time;
-      End_Time   : Ada.Calendar.Time) return String
+     (Start_Time : Ada.Calendar.Time; End_Time : Ada.Calendar.Time)
+      return String
    is
       In_Day : Duration := End_Time - Start_Time;
       Days   : Integer := 0;
@@ -106,8 +116,9 @@ package body Time_Utils is
       end if;
 
       declare
-         Elapsed : constant String := Ada.Calendar.Formatting.Image
-           (In_Day, Include_Time_Fraction => True);
+         Elapsed       : constant String :=
+           Ada.Calendar.Formatting.Image
+             (In_Day, Include_Time_Fraction => True);
          Elapsed_Start : Natural := Elapsed'First;
       begin
          --  Do not show hours and minutes if they are 0. The output is
@@ -121,7 +132,8 @@ package body Time_Utils is
             Elapsed_Start := Elapsed_Start + 3;
          end if;
 
-         return (if Days > 0 then Image (Days, 1) & " days " else "")
+         return
+           (if Days > 0 then Image (Days, 1) & " days " else "")
            & Elapsed (Elapsed_Start .. Elapsed'Last);
       end;
    end Elapsed;

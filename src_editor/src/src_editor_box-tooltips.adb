@@ -15,35 +15,36 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
-with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with Glib;                            use Glib;
-with Gdk;                             use Gdk;
-with Gdk.Rectangle;                   use Gdk.Rectangle;
-with Gdk.Window;                      use Gdk.Window;
-with Gtk.Box;                         use Gtk.Box;
-with Gtk.Image;                       use Gtk.Image;
-with Gtk.Label;                       use Gtk.Label;
-with Gtk.Text_Iter;                   use Gtk.Text_Iter;
-with Gtk.Enums;                       use Gtk.Enums;
-with Gtk.Separator;                   use Gtk.Separator;
-with Gtk.Widget;                      use Gtk.Widget;
+with Glib;          use Glib;
+with Gdk;           use Gdk;
+with Gdk.Rectangle; use Gdk.Rectangle;
+with Gdk.Window;    use Gdk.Window;
+with Gtk.Box;       use Gtk.Box;
+with Gtk.Image;     use Gtk.Image;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Text_Iter; use Gtk.Text_Iter;
+with Gtk.Enums;     use Gtk.Enums;
+with Gtk.Separator; use Gtk.Separator;
+with Gtk.Widget;    use Gtk.Widget;
 
 with Entities_Tooltips;
-with GPS.Editors;                     use GPS.Editors;
-with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
-with GPS.Kernel.Contexts;             use GPS.Kernel, GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
-with GPS.Kernel.Modules.UI;           use GPS.Kernel.Modules.UI;
-with GUI_Utils;                       use GUI_Utils;
-with Src_Editor_View;                 use Src_Editor_View;
+with GPS.Editors;                        use GPS.Editors;
+with GPS.Editors.Line_Information;       use GPS.Editors.Line_Information;
+with GPS.Kernel.Contexts;
+use GPS.Kernel, GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;             use GPS.Kernel.Preferences;
+with GPS.Kernel.Modules.UI;              use GPS.Kernel.Modules.UI;
+with GUI_Utils;                          use GUI_Utils;
+with Src_Editor_View;                    use Src_Editor_View;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Tooltips;                        use Tooltips;
-with Xref;                            use Xref;
+with Tooltips;                           use Tooltips;
+with Xref;                               use Xref;
 
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
@@ -54,8 +55,8 @@ package body Src_Editor_Box.Tooltips is
    Me : constant Trace_Handle := Create ("GPS.SOURCE_Editor.Tooltips");
 
    function Get_Declaration_Info
-     (Context : Selection_Context;
-      Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class;
+     (Context : Selection_Context; Ref : out Root_Entity_Reference_Ref)
+      return Root_Entity'Class;
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
@@ -72,9 +73,10 @@ package body Src_Editor_Box.Tooltips is
      (Box : not null access Source_Editor_Box_Record'Class)
       return Editor_Tooltip_Handler_Access is
    begin
-      return new Editor_Tooltip_Handler'
-        (Standard.Tooltips.Tooltip_Handler
-         with Box => Source_Editor_Box (Box));
+      return
+        new Editor_Tooltip_Handler'
+          (Standard.Tooltips.Tooltip_Handler
+           with Box => Source_Editor_Box (Box));
    end Default_Editor_Tooltip_Handler_Factory;
 
    ---------------------------
@@ -104,8 +106,8 @@ package body Src_Editor_Box.Tooltips is
    --------------------------
 
    function Get_Declaration_Info
-     (Context : Selection_Context;
-      Ref     : out Root_Entity_Reference_Ref) return Root_Entity'Class is
+     (Context : Selection_Context; Ref : out Root_Entity_Reference_Ref)
+      return Root_Entity'Class is
    begin
       if not Contexts.Has_File_Information (Context) then
          return No_Root_Entity;
@@ -114,8 +116,9 @@ package body Src_Editor_Box.Tooltips is
       declare
          Result : constant Root_Entity'Class := Contexts.Get_Entity (Context);
       begin
-         Ref := Root_Entity_Reference_Refs.To_Holder
-           (Contexts.Get_Closest_Ref (Context));
+         Ref :=
+           Root_Entity_Reference_Refs.To_Holder
+             (Contexts.Get_Closest_Ref (Context));
          return Result;
       end;
 
@@ -134,8 +137,8 @@ package body Src_Editor_Box.Tooltips is
       Context : Selection_Context) return Gtk.Widget.Gtk_Widget
    is
       Tree       : constant Semantic_Tree'Class :=
-                     Tooltip.Box.Kernel.Get_Abstract_Tree_For_File
-                       ("XREF", Tooltip.Box.Get_Filename);
+        Tooltip.Box.Kernel.Get_Abstract_Tree_For_File
+          ("XREF", Tooltip.Box.Get_Filename);
       Entity_Ref : Root_Entity_Reference_Ref;
    begin
       --  We do not want to compute an xref-based tooltip if the source
@@ -145,16 +148,19 @@ package body Src_Editor_Box.Tooltips is
       end if;
 
       declare
-         Entity : constant Root_Entity'Class := Get_Declaration_Info
-           (Context, Entity_Ref);
+         Entity : constant Root_Entity'Class :=
+           Get_Declaration_Info (Context, Entity_Ref);
       begin
          if Entity = No_Root_Entity then
             return null;
          end if;
 
-         return Entities_Tooltips.Draw_Tooltip
-           (Tooltip.Box.Kernel, Entity, Entity_Ref.Element,
-            Draw_Border => False);
+         return
+           Entities_Tooltips.Draw_Tooltip
+             (Tooltip.Box.Kernel,
+              Entity,
+              Entity_Ref.Element,
+              Draw_Border => False);
       end;
    end Get_Tooltip_Widget_For_Entity;
 
@@ -162,7 +168,8 @@ package body Src_Editor_Box.Tooltips is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access Editor_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
@@ -285,8 +292,7 @@ package body Src_Editor_Box.Tooltips is
       if In_Side_Area then
          --  In the side column, see if a tooltip information is to be
          --  displayed.
-         Window_To_Buffer_Coords
-           (View, LX, LY, Line, Col, Out_Of_Bounds);
+         Window_To_Buffer_Coords (View, LX, LY, Line, Col, Out_Of_Bounds);
 
          declare
             Content  : Unbounded_String;
@@ -309,12 +315,10 @@ package body Src_Editor_Box.Tooltips is
                   return;
                end if;
 
-               if Image = null
-                 and then Action.Image /= Null_Unbounded_String
+               if Image = null and then Action.Image /= Null_Unbounded_String
                then
                   Gtk_New_From_Icon_Name
-                    (Image, To_String (Action.Image),
-                     Icon_Size_Large_Toolbar);
+                    (Image, To_String (Action.Image), Icon_Size_Large_Toolbar);
                end if;
 
                if Action.Tooltip_Text /= Null_Unbounded_String then
@@ -328,9 +332,9 @@ package body Src_Editor_Box.Tooltips is
             end Process;
 
          begin
-            Line_Info := Get_Side_Information
-              (Box.Source_Buffer,
-               Buffer_Line_Type (Line + 1));
+            Line_Info :=
+              Get_Side_Information
+                (Box.Source_Buffer, Buffer_Line_Type (Line + 1));
 
             --  Concatenate the tooltip information for all columns
 
@@ -358,9 +362,9 @@ package body Src_Editor_Box.Tooltips is
                end if;
 
                Append
-                 (Content, Get_Internal_Tooltip
-                    (Box.Source_Buffer,
-                     Buffer_Line_Type (Line + 1)));
+                 (Content,
+                  Get_Internal_Tooltip
+                    (Box.Source_Buffer, Buffer_Line_Type (Line + 1)));
             end if;
 
             if Has_Info then
@@ -372,10 +376,10 @@ package body Src_Editor_Box.Tooltips is
                --  Compute the area surrounding the line side area, relative
                --  to the pointer coordinates and set the area where the
                --  cursor may move without the necessity to redraw the tooltip.
-               Area.Width  := View_X - Box_X;
+               Area.Width := View_X - Box_X;
                Area.Height := Win_Y - Area.Y + Location.Height;
-               Area.X      := 1;
-               Area.Y      := Area.Y + Y - LY;
+               Area.X := 1;
+               Area.Y := Area.Y + Y - LY;
 
                Tooltip.Set_Tip_Area (Area);
 
@@ -397,7 +401,9 @@ package body Src_Editor_Box.Tooltips is
         (View,
          LX - Get_Border_Window_Size (View, Text_Window_Left),
          LY - Get_Border_Window_Size (View, Text_Window_Top),
-         Line, Col, Out_Of_Bounds);
+         Line,
+         Col,
+         Out_Of_Bounds);
 
       if Out_Of_Bounds then
          --  Do not display a tooltip in an invalid location,
@@ -406,15 +412,14 @@ package body Src_Editor_Box.Tooltips is
          return null;
       end if;
 
-      Line_Info := Get_Side_Information
-        (Box.Source_Buffer,
-         Buffer_Line_Type (Line + 1));
+      Line_Info :=
+        Get_Side_Information (Box.Source_Buffer, Buffer_Line_Type (Line + 1));
 
       Get_Line_Area;
 
       --  Compute the area surrounding the entity, relative to the pointer
       --  coordinates.
-      Area.Width  := Win_X - Area.X + Location.Width;
+      Area.Width := Win_X - Area.X + Location.Width;
       Area.Height := Win_Y - Area.Y + Location.Height;
       Area.X := Area.X + X - LX;
       Area.Y := Area.Y + Y - LY;
@@ -422,13 +427,13 @@ package body Src_Editor_Box.Tooltips is
       Tooltip.Set_Tip_Area (Area);
 
       declare
-         Context    : Selection_Context;
-         W          : Gtk_Widget;
-         Sep        : Gtk_Hseparator;
+         Context : Selection_Context;
+         W       : Gtk_Widget;
+         Sep     : Gtk_Hseparator;
       begin
-         Context := Build_Editor_Context
-           (View     => Box.Source_View,
-            Location => Location_Mouse);
+         Context :=
+           Build_Editor_Context
+             (View => Box.Source_View, Location => Location_Mouse);
 
          Trace (Me, "Tooltip on " & Entity_Name_Information (Context));
          W := Compute_Tooltip (Box.Kernel, Context);
@@ -516,8 +521,9 @@ package body Src_Editor_Box.Tooltips is
          --  No module wants to handle this tooltip. Default to built-in
          --  tooltip, based on cross references.
 
-         W := Editor_Tooltip_Handler'Class
-           (Tooltip.all).Get_Tooltip_Widget_For_Entity (Context);
+         W :=
+           Editor_Tooltip_Handler'Class (Tooltip.all)
+             .Get_Tooltip_Widget_For_Entity (Context);
 
          if W /= null then
             if Vbox = null then
@@ -539,9 +545,9 @@ package body Src_Editor_Box.Tooltips is
    -- Align_Tooltip_With_Tip_Area --
    ---------------------------------
 
-   overriding function Align_Tooltip_With_Tip_Area
+   overriding
+   function Align_Tooltip_With_Tip_Area
      (Tooltip : not null access Editor_Tooltip_Handler) return Boolean
-   is
-      (True);
+   is (True);
 
 end Src_Editor_Box.Tooltips;

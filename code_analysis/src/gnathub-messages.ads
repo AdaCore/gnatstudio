@@ -79,9 +79,9 @@ package GNAThub.Messages is
    --  Decrement the total counters of the severity/rule/tool associated to
    --  this message.
 
-   overriding function Get_Background_Color
-     (Self : not null access GNAThub_Message)
-      return Gdk.RGBA.Gdk_RGBA;
+   overriding
+   function Get_Background_Color
+     (Self : not null access GNAThub_Message) return Gdk.RGBA.Gdk_RGBA;
    --  Return the message's background color
 
    procedure Register_Module
@@ -91,15 +91,16 @@ package GNAThub.Messages is
 
 private
 
-   type GNAThub_Message is
-     new GPS.Kernel.Messages.Primary_Abstract_Message with record
-      Severity   : Severity_Access;
-      Rule       : Rule_Access;
-      Text       : Ada.Strings.Unbounded.Unbounded_String;
-      Entity     : Entity_Data;
+   type GNAThub_Message is new GPS.Kernel.Messages.Primary_Abstract_Message
+   with record
+      Severity : Severity_Access;
+      Rule     : Rule_Access;
+      Text     : Ada.Strings.Unbounded.Unbounded_String;
+      Entity   : Entity_Data;
    end record;
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant GNAThub_Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 

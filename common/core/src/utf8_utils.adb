@@ -39,12 +39,11 @@ package body UTF8_Utils is
    procedure Open is
    begin
       if not Is_Opened then
-         Locale_To_UTF_8 := Iconv_Open
-           (To_Code => UTF8, From_Code => Config.Default_Charset);
-         Latin1_To_UTF_8 := Iconv_Open
-           (From_Code => ISO_8859_1, To_Code => UTF8);
-         UTF_8_To_UTF_32 := Iconv_Open
-           (From_Code => UTF8, To_Code => UTF32);
+         Locale_To_UTF_8 :=
+           Iconv_Open (To_Code => UTF8, From_Code => Config.Default_Charset);
+         Latin1_To_UTF_8 :=
+           Iconv_Open (From_Code => ISO_8859_1, To_Code => UTF8);
+         UTF_8_To_UTF_32 := Iconv_Open (From_Code => UTF8, To_Code => UTF32);
          Is_Opened := True;
       end if;
    end Open;
@@ -78,8 +77,7 @@ package body UTF8_Utils is
    end Unknown_To_UTF8;
 
    function Unknown_To_UTF8
-     (Input   : String;
-      Success : access Boolean) return UTF8_String
+     (Input : String; Success : access Boolean) return UTF8_String
    is
       Output : GNAT.Strings.String_Access;
    begin
@@ -103,9 +101,7 @@ package body UTF8_Utils is
       end if;
    end Unknown_To_UTF8;
 
-   function Unknown_To_UTF8
-     (Input : String) return UTF8_String
-   is
+   function Unknown_To_UTF8 (Input : String) return UTF8_String is
       Success : aliased Boolean;
       S       : constant String := Unknown_To_UTF8 (Input, Success'Access);
    begin
@@ -134,8 +130,7 @@ package body UTF8_Utils is
       Next   : Positive := Input'First;
       Result : Wide_Wide_Character;
    begin
-      GNAT.Decode_UTF8_String.Decode_Wide_Wide_Character
-        (Input, Next, Result);
+      GNAT.Decode_UTF8_String.Decode_Wide_Wide_Character (Input, Next, Result);
       return Result;
    end UTF8_Get_Char;
 
@@ -155,18 +150,23 @@ package body UTF8_Utils is
          Byte : constant Character := Str (Index);
       begin
          case Byte is
-         when Character'Val (16#C0#) .. Character'Val (16#DF#) =>
-            return Index + 2;
-         when Character'Val (16#E0#) .. Character'Val (16#EF#) =>
-            return Index + 3;
-         when Character'Val (16#F0#) .. Character'Val (16#F7#) =>
-            return Index + 4;
-         when Character'Val (16#F8#) .. Character'Val (16#FB#) =>
-            return Index + 5;
-         when Character'Val (16#FC#) .. Character'Val (16#FD#) =>
-            return Index + 6;
-         when others =>
-            return Index + 1;
+            when Character'Val (16#C0#) .. Character'Val (16#DF#) =>
+               return Index + 2;
+
+            when Character'Val (16#E0#) .. Character'Val (16#EF#) =>
+               return Index + 3;
+
+            when Character'Val (16#F0#) .. Character'Val (16#F7#) =>
+               return Index + 4;
+
+            when Character'Val (16#F8#) .. Character'Val (16#FB#) =>
+               return Index + 5;
+
+            when Character'Val (16#FC#) .. Character'Val (16#FD#) =>
+               return Index + 6;
+
+            when others                                           =>
+               return Index + 1;
          end case;
       end;
    end UTF8_Next_Char;
@@ -183,15 +183,20 @@ package body UTF8_Utils is
       case Byte is
          when Character'Val (16#C0#) .. Character'Val (16#DF#) =>
             return Index + 2;
+
          when Character'Val (16#E0#) .. Character'Val (16#EF#) =>
             return Index + 3;
+
          when Character'Val (16#F0#) .. Character'Val (16#F7#) =>
             return Index + 4;
+
          when Character'Val (16#F8#) .. Character'Val (16#FB#) =>
             return Index + 5;
+
          when Character'Val (16#FC#) .. Character'Val (16#FD#) =>
             return Index + 6;
-         when others =>
+
+         when others                                           =>
             return Index + 1;
       end case;
    end UTF8_Next_Char;
@@ -200,8 +205,7 @@ package body UTF8_Utils is
    -- UTF8_Prev_Char --
    --------------------
 
-   function UTF8_Prev_Char
-     (Str : UTF8_String; Index : Natural) return Natural
+   function UTF8_Prev_Char (Str : UTF8_String; Index : Natural) return Natural
    is
       Result : Integer := Index - 1;
    begin
@@ -209,8 +213,9 @@ package body UTF8_Utils is
          return Index;
       end if;
 
-      while Result in Str'Range and then
-        Str (Result) in Character'Val (16#80#) .. Character'Val (16#BF#)
+      while Result in Str'Range
+        and then
+          Str (Result) in Character'Val (16#80#) .. Character'Val (16#BF#)
       loop
          Result := Result - 1;
       end loop;
@@ -232,8 +237,7 @@ package body UTF8_Utils is
    -- Validate --
    --------------
 
-   function Validate
-     (Object : Iconv_T; Input : Byte_Sequence) return Boolean
+   function Validate (Object : Iconv_T; Input : Byte_Sequence) return Boolean
    is
       Output       : Byte_Sequence (1 .. 4096);
       Input_Index  : Positive := Input'First;
@@ -250,9 +254,11 @@ package body UTF8_Utils is
          case Result is
             when Invalid_Multibyte_Sequence | Incomplete_Multibyte_Sequence =>
                return False;
-            when Success =>
+
+            when Success                                                    =>
                return True;
-            when Full_Buffer =>
+
+            when Full_Buffer                                                =>
                --  Continue convertion by rewriting output buffer
                Output_Index := Output'First;
          end case;
@@ -283,7 +289,7 @@ package body UTF8_Utils is
          return 0;
       end if;
 
-      for J in 2 .. Column  loop
+      for J in 2 .. Column loop
          Result := UTF8_Next_Char (Buffer, Result);
       end loop;
 

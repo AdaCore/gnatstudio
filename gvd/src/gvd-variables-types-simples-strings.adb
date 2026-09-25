@@ -23,9 +23,7 @@ package body GVD.Variables.Types.Simples.Strings is
 
    function New_String_Type return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
-        new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_String_Type);
+        new GVD_Type_Holder_Data'(Count => 1, Instance => new GVD_String_Type);
    begin
       return GVD_Type_Holder'(Ada.Finalization.Controlled with Data);
    end New_String_Type;

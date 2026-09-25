@@ -16,9 +16,9 @@
 ------------------------------------------------------------------------------
 
 with System;
-with Glib.Object;      use Glib.Object;
-with Gtk.Enums;        use Gtk.Enums;
-with Gtk.Widget;       use Gtk.Widget;
+with Glib.Object; use Glib.Object;
+with Gtk.Enums;   use Gtk.Enums;
+with Gtk.Widget;  use Gtk.Widget;
 
 package body Gtkada.Check_Button is
 
@@ -49,22 +49,22 @@ package body Gtkada.Check_Button is
    Class_Record : aliased Ada_GObject_Class := Uninitialized_Class;
 
    procedure Initialize
-     (Check : access Gtkada_Check_Button_Record'Class;
-      Label : UTF8_String := "";
+     (Check   : access Gtkada_Check_Button_Record'Class;
+      Label   : UTF8_String := "";
       Default : Boolean := False)
    is
       procedure Install_Clicked_Handler
-        (Obj     : GType;
-         Handler : System.Address);
-      pragma Import (C, Install_Clicked_Handler,
-                     "gtkada_check_button_install_handler");
+        (Obj : GType; Handler : System.Address);
+      pragma
+        Import
+          (C, Install_Clicked_Handler, "gtkada_check_button_install_handler");
 
    begin
       if Initialize_Class_Record
-        (Ancestor     => Gtk.Check_Button.Get_Type,
-         Signals      => (1 .. 0 => <>),
-         Class_Record => Class_Record'Access,
-         Type_Name    => "GtkadaCheckButton")
+           (Ancestor     => Gtk.Check_Button.Get_Type,
+            Signals      => (1 .. 0 => <>),
+            Class_Record => Class_Record'Access,
+            Type_Name    => "GtkadaCheckButton")
       then
          --  We replace the class handler for 'clicked' because this signal
          --  has the flag G_SIGNAL_RUN_FIRST which makes the class handler
@@ -72,7 +72,7 @@ package body Gtkada.Check_Button is
          --  handler with 'Last' set to false.
          --  We absolutely need to be called before the class handler.
          Install_Clicked_Handler
-            (Class_Record.The_Type, On_Button_Clicked'Address);
+           (Class_Record.The_Type, On_Button_Clicked'Address);
       end if;
 
       Glib.Object.G_New (Check, Class_Record.The_Type);
@@ -91,8 +91,7 @@ package body Gtkada.Check_Button is
    -----------------
 
    procedure Set_Default
-     (Check : access Gtkada_Check_Button_Record;
-      State : Boolean) is
+     (Check : access Gtkada_Check_Button_Record; State : Boolean) is
    begin
       if State = Check.Default then
          return;
@@ -101,7 +100,7 @@ package body Gtkada.Check_Button is
       Check.Default := State;
 
       case Check.State is
-         when State_Unchecked =>
+         when State_Unchecked       =>
             --  Old default was 'unset', new is 'set' so change the state to
             --  checked default
             if Check.Default then
@@ -111,7 +110,7 @@ package body Gtkada.Check_Button is
          when State_Checked_Default =>
             Check.State := State_Unchecked;
 
-         when State_Checked =>
+         when State_Checked         =>
             if Check.Default then
                Check.State := State_Checked_Default;
             else
@@ -142,10 +141,9 @@ package body Gtkada.Check_Button is
    -- Set_Active --
    ----------------
 
-   overriding procedure Set_Active
-     (Check      : access Gtkada_Check_Button_Record;
-      State      : Boolean)
-   is
+   overriding
+   procedure Set_Active
+     (Check : access Gtkada_Check_Button_Record; State : Boolean) is
    begin
       if (State and then Check.State = State_Checked)
         or else (not State and then Check.State = State_Unchecked)
@@ -183,17 +181,16 @@ package body Gtkada.Check_Button is
    -- On_Button_Clicked --
    -----------------------
 
-   procedure On_Button_Clicked (Obj : System.Address)
-   is
+   procedure On_Button_Clicked (Obj : System.Address) is
       procedure Force_State (Check : System.Address; Val : Integer);
       pragma Import (C, Force_State, "gtkada_check_button_force_state");
       procedure Original_Handler (Check : System.Address);
       pragma Import (C, Original_Handler, "gtkada_check_button_clicked");
 
-      Stub  : Gtkada_Check_Button_Record;
+      Stub             : Gtkada_Check_Button_Record;
       pragma Warnings (Off, Stub);
-      Check : constant Gtkada_Check_Button :=
-                Gtkada_Check_Button (Get_User_Data (Obj, Stub));
+      Check            : constant Gtkada_Check_Button :=
+        Gtkada_Check_Button (Get_User_Data (Obj, Stub));
       Underlying_State : Boolean;
 
    begin
@@ -207,18 +204,18 @@ package body Gtkada.Check_Button is
       --  already in the desired state
       if not Check.Internal then
          case Check.State is
-         when State_Checked_Default =>
-            Check.State := State_Unchecked;
-
-         when State_Checked =>
-            if Check.Default then
-               Check.State := State_Checked_Default;
-            else
+            when State_Checked_Default =>
                Check.State := State_Unchecked;
-            end if;
 
-         when State_Unchecked =>
-            Check.State := State_Checked;
+            when State_Checked         =>
+               if Check.Default then
+                  Check.State := State_Checked_Default;
+               else
+                  Check.State := State_Unchecked;
+               end if;
+
+            when State_Unchecked       =>
+               Check.State := State_Checked;
 
          end case;
       end if;
@@ -256,7 +253,8 @@ package body Gtkada.Check_Button is
       case Check.State is
          when State_Checked | State_Unchecked =>
             Check.Set_Inconsistent (False);
-         when State_Checked_Default =>
+
+         when State_Checked_Default           =>
             Check.Set_Inconsistent (True);
       end case;
    end Redraw_State;

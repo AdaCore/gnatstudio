@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
 
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Scripts;                  use GPS.Scripts;
@@ -30,46 +30,48 @@ package body Memory_Usage_Views.Scripts is
    Memory_Usage_Provider_Class_Name : constant String := "MemoryUsageProvider";
 
    Provider_Task_Visitor_Class_Name : constant String :=
-                                        "MemoryUsageProviderVisitor";
+     "MemoryUsageProviderVisitor";
 
    -----------------------------------------
    -- Script Memory Usage Views Providers --
    -----------------------------------------
 
    type Memory_Usage_Provider_Proxy is new Script_Proxy with null record;
-   overriding function Class_Name
-     (Self : Memory_Usage_Provider_Proxy) return String
-   is
-     (Memory_Usage_Provider_Class_Name);
+   overriding
+   function Class_Name (Self : Memory_Usage_Provider_Proxy) return String
+   is (Memory_Usage_Provider_Class_Name);
 
-   type Script_Memory_Usage_Provider_Type is
-     new Memory_Usage_Provider_Type with record
+   type Script_Memory_Usage_Provider_Type is new Memory_Usage_Provider_Type
+   with record
       Script    : Scripting_Language;
       Instances : Memory_Usage_Provider_Proxy;
    end record;
    type Script_Memory_Usage_Provider is
      access all Script_Memory_Usage_Provider_Type'Class;
 
-   overriding function Is_Enabled
+   overriding
+   function Is_Enabled
      (Self : not null access Script_Memory_Usage_Provider_Type) return Boolean;
-   overriding procedure Async_Fetch_Memory_Usage_Data
+   overriding
+   procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Script_Memory_Usage_Provider_Type;
       Visitor : Provider_Task_Visitor);
 
    --  Type representing a memory usage provider created from Python
 
-   package Memory_Usage_Provider_Proxies is new Script_Proxies
-     (Element_Type => Script_Memory_Usage_Provider,
-      Proxy        => Memory_Usage_Provider_Proxy);
+   package Memory_Usage_Provider_Proxies is new
+     Script_Proxies
+       (Element_Type => Script_Memory_Usage_Provider,
+        Proxy        => Memory_Usage_Provider_Proxy);
 
    function Create_Provider_Instance
      (Script   : access Scripting_Language_Record'Class;
       Provider : not null access Script_Memory_Usage_Provider_Type'Class)
       return Class_Instance;
    function Get_Provider
-     (Inst   : Class_Instance)
+     (Inst : Class_Instance)
       return not null access Script_Memory_Usage_Provider_Type'Class
-     with Unreferenced;
+   with Unreferenced;
    procedure Set_Provider_Instance
      (Provider : not null access Script_Memory_Usage_Provider_Type'Class;
       Inst     : Class_Instance);
@@ -80,7 +82,7 @@ package body Memory_Usage_Views.Scripts is
    -----------------------
 
    type Provider_Task_Properties_Record is new Instance_Property_Record
-     with record
+   with record
       Visitor : Provider_Task_Visitor;
    end record;
 
@@ -119,7 +121,7 @@ package body Memory_Usage_Views.Scripts is
       Data   : in out Callback_Data'Class)
    is
       Inst  : constant Class_Instance :=
-                Create_Provider_Instance (Data.Get_Script, Self);
+        Create_Provider_Instance (Data.Get_Script, Self);
       F     : Subprogram_Type := Get_Method (Inst, Method);
       Dummy : Boolean;
    begin
@@ -141,11 +143,12 @@ package body Memory_Usage_Views.Scripts is
       Visitor : not null access Provider_Task_Visitor_Type'Class)
    is
       Script : constant Scripting_Language := Data.Get_Script;
-      Inst : Class_Instance;
+      Inst   : Class_Instance;
    begin
       --  First arg is the visitor
-      Inst := Script.New_Instance
-        (Script.Get_Repository.New_Class (Provider_Task_Visitor_Class_Name));
+      Inst :=
+        Script.New_Instance
+          (Script.Get_Repository.New_Class (Provider_Task_Visitor_Class_Name));
       Set_Data
         (Inst,
          Provider_Task_Visitor_Class_Name,
@@ -158,11 +161,12 @@ package body Memory_Usage_Views.Scripts is
    -- Is_Enabled --
    ----------------
 
-   overriding function Is_Enabled
+   overriding
+   function Is_Enabled
      (Self : not null access Script_Memory_Usage_Provider_Type) return Boolean
    is
       Inst   : constant Class_Instance :=
-                 Create_Provider_Instance (Self.Script, Self);
+        Create_Provider_Instance (Self.Script, Self);
       Data   : Callback_Data'Class := Create (Self.Script, 0);
       F      : Subprogram_Type := Get_Method (Inst, "is_enabled");
       Result : Boolean;
@@ -180,21 +184,17 @@ package body Memory_Usage_Views.Scripts is
    -- Async_Fetch_Memory_Usage_Data --
    -----------------------------------
 
-   overriding procedure Async_Fetch_Memory_Usage_Data
+   overriding
+   procedure Async_Fetch_Memory_Usage_Data
      (Self    : not null access Script_Memory_Usage_Provider_Type;
       Visitor : Provider_Task_Visitor)
    is
       Data : Callback_Data'Class := Create (Self.Script, 1);
    begin
-      Add_Visitor
-        (Data    => Data,
-         Nth     => 1,
-         Visitor => Visitor);
+      Add_Visitor (Data => Data, Nth => 1, Visitor => Visitor);
 
       Call_Method
-        (Self,
-         Method => "async_fetch_memory_usage_data",
-         Data   => Data);
+        (Self, Method => "async_fetch_memory_usage_data", Data => Data);
    end Async_Fetch_Memory_Usage_Data;
 
    ------------------------------
@@ -206,10 +206,11 @@ package body Memory_Usage_Views.Scripts is
       Provider : not null access Script_Memory_Usage_Provider_Type'Class)
       return Class_Instance is
    begin
-      return Memory_Usage_Provider_Proxies.Get_Or_Create_Instance
-        (Provider.Instances,
-         Obj    => Script_Memory_Usage_Provider (Provider),
-         Script => Script);
+      return
+        Memory_Usage_Provider_Proxies.Get_Or_Create_Instance
+          (Provider.Instances,
+           Obj    => Script_Memory_Usage_Provider (Provider),
+           Script => Script);
    end Create_Provider_Instance;
 
    ------------------
@@ -217,7 +218,7 @@ package body Memory_Usage_Views.Scripts is
    ------------------
 
    function Get_Provider
-     (Inst   : Class_Instance)
+     (Inst : Class_Instance)
       return not null access Script_Memory_Usage_Provider_Type'Class is
    begin
       return Memory_Usage_Provider_Proxies.From_Instance (Inst);
@@ -251,7 +252,7 @@ package body Memory_Usage_Views.Scripts is
             Name      : constant String := Data.Nth_Arg (1);
             Construct : Subprogram_Type := Data.Nth_Arg (2);
             Provider  : constant not null Script_Memory_Usage_Provider :=
-                          new Script_Memory_Usage_Provider_Type;
+              new Script_Memory_Usage_Provider_Type;
             Inst      : Class_Instance;
             Args      : Callback_Data'Class := Data.Get_Script.Create (0);
 
@@ -316,27 +317,26 @@ package body Memory_Usage_Views.Scripts is
                      Memory_Region.Length := Float'Last;
                   end if;
 
-                  Regions.Include
-                    (Key      => Name,
-                     New_Item => Memory_Region);
+                  Regions.Include (Key => Name, New_Item => Memory_Region);
                end;
             end loop;
 
             for J in 1 .. Sections_List.Number_Of_Arguments loop
                declare
                   Current     : constant List_Instance'Class :=
-                                  Sections_List.Nth_Arg (J);
+                    Sections_List.Nth_Arg (J);
                   Name        : constant String := Current.Nth_Arg (1);
                   Region_Name : constant String := Current.Nth_Arg (4);
                   Length      : constant Float := Current.Nth_Arg (3);
                begin
                   Regions (Region_Name).Sections.Include
-                    (Key => Name,
-                     New_Item => Memory_Section_Description'
-                       (Name        => To_Unbounded_String (Name),
-                        Origin      => Current.Nth_Arg (2),
-                        Length      => Length,
-                        Modules     => <>));
+                    (Key      => Name,
+                     New_Item =>
+                       Memory_Section_Description'
+                         (Name    => To_Unbounded_String (Name),
+                          Origin  => Current.Nth_Arg (2),
+                          Length  => Length,
+                          Modules => <>));
 
                   --  Calculate the used size of the memory region from the
                   --  contained memory sections.
@@ -348,16 +348,16 @@ package body Memory_Usage_Views.Scripts is
             for J in 1 .. Modules_List.Number_Of_Arguments loop
                declare
                   Current      : constant List_Instance'Class :=
-                                   Modules_List.Nth_Arg (J);
+                    Modules_List.Nth_Arg (J);
                   Region_Name  : constant String := Current.Nth_Arg (5);
                   Section_Name : constant String := Current.Nth_Arg (6);
                begin
                   Regions (Region_Name).Sections (Section_Name).Modules.Append
                     (Module_Description'
-                       (Obj_File => Create
-                           (Current.Nth_Arg (1), Normalize => True),
-                        Lib_File => Create
-                           (Current.Nth_Arg (2), Normalize => True),
+                       (Obj_File =>
+                          Create (Current.Nth_Arg (1), Normalize => True),
+                        Lib_File =>
+                          Create (Current.Nth_Arg (2), Normalize => True),
                         Origin   => Current.Nth_Arg (3),
                         Size     => Current.Nth_Arg (4)));
                end;
@@ -383,27 +383,25 @@ package body Memory_Usage_Views.Scripts is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       Memory_Usage_Provider_Class : constant Class_Type :=
-                                      Kernel.Scripts.New_Class
-                                        (Memory_Usage_Provider_Class_Name);
+        Kernel.Scripts.New_Class (Memory_Usage_Provider_Class_Name);
       Provider_Task_Visitor_Class : constant Class_Type :=
-                                      Kernel.Scripts.New_Class
-                                        (Provider_Task_Visitor_Class_Name);
+        Kernel.Scripts.New_Class (Provider_Task_Visitor_Class_Name);
    begin
       Kernel.Scripts.Register_Command
         ("_register",
-         Params        => (1 => Param ("name"),
-                           2 => Param ("construct")),
+         Params        => (1 => Param ("name"), 2 => Param ("construct")),
          Static_Method => True,
          Class         => Memory_Usage_Provider_Class,
          Handler       => Static_Memory_Usage_Provider_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("on_memory_usage_data_fetched",
-         Params        => (2 => Param ("regions"),
-                           3 => Param ("sections"),
-                           4 => Param ("modules")),
-         Class         => Provider_Task_Visitor_Class,
-         Handler       => Provider_Task_Visitor_Handler'Access);
+         Params  =>
+           (2 => Param ("regions"),
+            3 => Param ("sections"),
+            4 => Param ("modules")),
+         Class   => Provider_Task_Visitor_Class,
+         Handler => Provider_Task_Visitor_Handler'Access);
    end Register_Scripts;
 
 end Memory_Usage_Views.Scripts;

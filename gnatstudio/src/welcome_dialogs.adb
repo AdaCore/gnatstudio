@@ -18,25 +18,25 @@
 with VSS.String_Vectors;
 with VSS.Strings;
 
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 with GNATCOLL.VFS.VSS_Utils;
 
 with Glib.Object;
-with Gdk.Event;              use Gdk.Event;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Button;             use Gtk.Button;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Image;              use Gtk.Image;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.List_Box;           use Gtk.List_Box;
-with Gtk.List_Box_Row;       use Gtk.List_Box_Row;
+with Gdk.Event;           use Gdk.Event;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Image;           use Gtk.Image;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.List_Box;        use Gtk.List_Box;
+with Gtk.List_Box_Row;    use Gtk.List_Box_Row;
 with Gtk.Main;
-with Gtk.Paned;              use Gtk.Paned;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Size_Group;         use Gtk.Size_Group;
-with Gtk.Style_Context;      use Gtk.Style_Context;
-with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Paned;           use Gtk.Paned;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Size_Group;      use Gtk.Size_Group;
+with Gtk.Style_Context;   use Gtk.Style_Context;
+with Gtk.Widget;          use Gtk.Widget;
 
 with Dialog_Utils;           use Dialog_Utils;
 with Histories;              use Histories;
@@ -45,9 +45,9 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GUI_Utils;              use GUI_Utils;
-with Gtk.Info_Bar; use Gtk.Info_Bar;
-with Glib; use Glib;
-with Gtk.Dialog; use Gtk.Dialog;
+with Gtk.Info_Bar;           use Gtk.Info_Bar;
+with Glib;                   use Glib;
+with Gtk.Dialog;             use Gtk.Dialog;
 
 package body Welcome_Dialogs is
 
@@ -88,8 +88,7 @@ package body Welcome_Dialogs is
    --  Type representing welcome dialog actions' buttons
 
    function On_Delete
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean;
    --  Called when the welcome dialog is closed. Set the dialog's response
    --  accordingly (i.e: Quit_GPS).
 
@@ -114,8 +113,7 @@ package body Welcome_Dialogs is
    ---------------
 
    function On_Delete
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
       Dialog : constant Welcome_Dialog := Welcome_Dialog (Self);
@@ -136,7 +134,7 @@ package body Welcome_Dialogs is
    is
       Dialog : constant Welcome_Dialog := Welcome_Dialog (Self);
       Item   : constant Recent_Project_Item_Box :=
-                 Recent_Project_Item_Box (Row.Get_Child);
+        Recent_Project_Item_Box (Row.Get_Child);
    begin
       Gtk.Main.Main_Quit;
       Load_Project (Dialog.Kernel, Item.File);
@@ -169,12 +167,12 @@ package body Welcome_Dialogs is
 
    procedure On_Clicked (Self : access Gtk_Button_Record'Class) is
       Action_Button : constant Welcome_Dialog_Action_Button :=
-                        Welcome_Dialog_Action_Button (Self);
+        Welcome_Dialog_Action_Button (Self);
       Success       : Boolean;
    begin
-      Success := Action_Button.Callback
-        (Kernel => Action_Button.Kernel,
-         Parent => Action_Button.Dialog);
+      Success :=
+        Action_Button.Callback
+          (Kernel => Action_Button.Kernel, Parent => Action_Button.Dialog);
 
       if Success then
          Action_Button.Dialog.Response := Project_Loaded;
@@ -190,11 +188,10 @@ package body Welcome_Dialogs is
      (Callback  : not null Welcome_Dialog_Action_Callback;
       Label     : String;
       Icon_Name : String) return Welcome_Dialog_Action
-   is
-     (Welcome_Dialog_Action'
-        (Callback  => Callback,
-         Label     => To_Unbounded_String (Label),
-         Icon_Name => To_Unbounded_String (Icon_Name)));
+   is (Welcome_Dialog_Action'
+         (Callback  => Callback,
+          Label     => To_Unbounded_String (Label),
+          Icon_Name => To_Unbounded_String (Icon_Name)));
 
    -------------------------------
    -- Display_Welcome_Dialog --
@@ -202,8 +199,7 @@ package body Welcome_Dialogs is
 
    function Display_Welcome_Dialog
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Actions : Welcome_Dialog_Action_Array)
-      return Welcome_Dialog_Response
+      Actions : Welcome_Dialog_Action_Array) return Welcome_Dialog_Response
    is
       Dialog                 : Welcome_Dialog;
       Pane                   : Gtk_Paned;
@@ -211,8 +207,8 @@ package body Welcome_Dialogs is
       Response               : Welcome_Dialog_Response;
       Scrolled               : Gtk_Scrolled_Window;
       Recent_Projects_View   : Recent_Projects_List_Box;
-      Stored_Recent_Projects : constant
-        VSS.String_Vectors.Virtual_String_Vector :=
+      Stored_Recent_Projects :
+        constant VSS.String_Vectors.Virtual_String_Vector :=
           Get_History (Kernel.Get_History.all, Project_Files_History_Key);
       Recent_Projects        : VSS.String_Vectors.Virtual_String_Vector;
 
@@ -237,8 +233,9 @@ package body Welcome_Dialogs is
       begin
          for Item of Stored_Recent_Projects loop
             if GNATCOLL.VFS.VSS_Utils.Create (Item).Is_Regular_File
-              and then (Is_Alire_Available (Kernel)
-                        or else not Item.Ends_With ("alire.toml"))
+              and then
+                (Is_Alire_Available (Kernel)
+                 or else not Item.Ends_With ("alire.toml"))
             then
                Recent_Projects.Append (Item);
             end if;
@@ -329,9 +326,7 @@ package body Welcome_Dialogs is
    begin
       Dialog := new Welcome_Dialog_Record;
       GPS.Dialogs.Initialize
-        (Dialog,
-         Title  => "Welcome to GNAT Studio",
-         Kernel => Kernel);
+        (Dialog, Title => "Welcome to GNAT Studio", Kernel => Kernel);
       Dialog.Set_Position (Win_Pos_Center);
       Set_Default_Size_From_History
         (Win    => Dialog,
@@ -369,8 +364,7 @@ package body Welcome_Dialogs is
          Recent_Projects_View.Set_Selection_Mode (Selection_Single);
          Recent_Projects_View.Set_Activate_On_Single_Click (False);
          Recent_Projects_View.On_Row_Activated
-           (On_Row_Activated'Access,
-            Slot => Dialog);
+           (On_Row_Activated'Access, Slot => Dialog);
 
          Fill_Recent_Projects_View;
 
@@ -380,14 +374,8 @@ package body Welcome_Dialogs is
          Gtk_New_Hpaned (Pane);
          Dialog.Get_Content_Area.Pack_Start (Pane);
 
-         Pane.Pack2
-           (Main_View,
-            Resize => True,
-            Shrink => True);
-         Pane.Pack1
-           (Scrolled,
-            Resize => False,
-            Shrink => False);
+         Pane.Pack2 (Main_View, Resize => True, Shrink => True);
+         Pane.Pack1 (Scrolled, Resize => False, Shrink => False);
 
          Pane.Set_Position (300);
       else

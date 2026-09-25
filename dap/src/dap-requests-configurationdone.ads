@@ -23,19 +23,19 @@ package DAP.Requests.ConfigurationDone is
 
    type ConfigurationDone_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.ConfigurationDoneRequest :=
-        DAP.Tools.ConfigurationDoneRequest'
-          (seq       => 0,
-           arguments => <>);
+        DAP.Tools.ConfigurationDoneRequest'(seq => 0, arguments => <>);
    end record;
 
    type ConfigurationDone_DAP_Request_Access is
      access all ConfigurationDone_DAP_Request;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : ConfigurationDone_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out ConfigurationDone_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -46,14 +46,15 @@ package DAP.Requests.ConfigurationDone is
      (Self        : in out ConfigurationDone_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ConfigurationDoneResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure Set_Seq
-     (Self : in out ConfigurationDone_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq
+     (Self : in out ConfigurationDone_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out ConfigurationDone_DAP_Request)
-      return String is ("configurationDone");
+   overriding
+   function Method (Self : in out ConfigurationDone_DAP_Request) return String
+   is ("configurationDone");
 
 end DAP.Requests.ConfigurationDone;

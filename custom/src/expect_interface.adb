@@ -34,23 +34,23 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with Gtk.Main;
 
-with Basic_Types;             use Basic_Types;
-with Custom_Module;           use Custom_Module;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
-with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
-with Remote;                  use Remote;
-with Commands;                use Commands;
-with UTF8_Utils;              use UTF8_Utils;
+with Basic_Types;          use Basic_Types;
+with Custom_Module;        use Custom_Module;
+with GPS.Intl;             use GPS.Intl;
+with GPS.Kernel.Console;   use GPS.Kernel.Console;
+with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
+with GPS.Kernel.Timeout;   use GPS.Kernel.Timeout;
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
+with Remote;               use Remote;
+with Commands;             use Commands;
+with UTF8_Utils;           use UTF8_Utils;
 
 package body Expect_Interface is
 
    Me : constant Trace_Handle := Create ("Expect", Off);
 
-   Process_Class_Name   : constant String := "Process";
+   Process_Class_Name : constant String := "Process";
 
    type Custom_Action_Data is new External_Process_Data with record
       Inst             : Class_Instance;
@@ -60,27 +60,31 @@ package body Expect_Interface is
       Output_Regexp    : GNAT.Expect.Pattern_Matcher_Access;
       Unmatched_Output : Unbounded_String;
    end record;
-   overriding function Create_Ada_Deep_Copy
+   overriding
+   function Create_Ada_Deep_Copy
      (Self : not null access Custom_Action_Data)
       return External_Process_Data_Access;
-   overriding procedure Free
-     (Self            : in out Custom_Action_Data;
-      Owned_By_Python : Boolean := True);
-   overriding procedure On_Exit
+   overriding
+   procedure Free
+     (Self : in out Custom_Action_Data; Owned_By_Python : Boolean := True);
+   overriding
+   procedure On_Exit
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class);
-   overriding procedure On_Output
+   overriding
+   procedure On_Output
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class;
       Output   : String);
-   overriding procedure On_Before_Kill
+   overriding
+   procedure On_Before_Kill
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class);
 
    type Custom_Action_Data_Access is access all Custom_Action_Data'Class;
 
-   function Get_Process_Class (Kernel : access Kernel_Handle_Record'Class)
-      return Class_Type;
+   function Get_Process_Class
+     (Kernel : access Kernel_Handle_Record'Class) return Class_Type;
    --  Return the process class
 
    type Action_Property is new Instance_Property_Record with record
@@ -122,8 +126,7 @@ package body Expect_Interface is
    --  Interactive command handler for the expect interface
 
    function To_UTF8_And_Warn
-      (Kernel : Kernel_Handle;
-       Str    : String) return String;
+     (Kernel : Kernel_Handle; Str : String) return String;
    --  Convert Str to UTF8 and return the result. The conversion is done
    --  with Unknown_To_UTF8, meaning that it will first UTF8-validate,
    --  and convert from the locale if this is not valid.
@@ -134,17 +137,14 @@ package body Expect_Interface is
    ----------------------
 
    function To_UTF8_And_Warn
-      (Kernel : Kernel_Handle;
-       Str    : String) return String
+     (Kernel : Kernel_Handle; Str : String) return String
    is
       Success : aliased Boolean;
       Result  : constant String := Unknown_To_UTF8 (Str, Success'Access);
    begin
       if not Success then
          Insert_UTF8
-           (Kernel,
-            "Could not convert process output to UTF8",
-            Mode => Error);
+           (Kernel, "Could not convert process output to UTF8", Mode => Error);
       end if;
       return Result;
    end To_UTF8_And_Warn;
@@ -153,20 +153,20 @@ package body Expect_Interface is
    -- Deep_Copy --
    ---------------
 
-   overriding function Create_Ada_Deep_Copy
+   overriding
+   function Create_Ada_Deep_Copy
      (Self : not null access Custom_Action_Data)
       return External_Process_Data_Access
    is
-      Deep : constant Custom_Action_Data_Access :=
-        new Custom_Action_Data;
+      Deep : constant Custom_Action_Data_Access := new Custom_Action_Data;
    begin
       Copy (Src => Self, Dest => External_Process_Data_Access (Deep));
       --  Don't set Deep.Inst, it will increase the refcount
       Deep.Unmatched_Output := Self.Unmatched_Output;
-      Deep.On_Match         := null;
-      Deep.On_Exit          := null;
-      Deep.Before_Kill      := null;
-      Deep.Output_Regexp    := null;
+      Deep.On_Match := null;
+      Deep.On_Exit := null;
+      Deep.Before_Kill := null;
+      Deep.Output_Regexp := null;
       --  Store the new python severed data in the python object
       Set_Data
         (Self.Inst, Process_Class_Name, Action_Property'(Action => Deep));
@@ -177,16 +177,17 @@ package body Expect_Interface is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Self            : in out Custom_Action_Data;
-      Owned_By_Python : Boolean := True) is
+   overriding
+   procedure Free
+     (Self : in out Custom_Action_Data; Owned_By_Python : Boolean := True) is
    begin
       if not Owned_By_Python then
          Unset_Data (Self.Inst, Process_Class_Name);
       end if;
 
-      Free (External_Process_Data (Self),
-            Owned_By_Python => Owned_By_Python);  --  inherited
+      Free
+        (External_Process_Data (Self),
+         Owned_By_Python => Owned_By_Python);  --  inherited
       Free (Self.On_Exit);
       Free (Self.On_Match);
       Free (Self.Before_Kill);
@@ -200,8 +201,9 @@ package body Expect_Interface is
    function Get_Data
      (Inst : Class_Instance) return access Custom_Action_Data'Class
    is
-      Action : constant Action_Property_Access := Action_Property_Access
-        (Instance_Property'(Get_Data (Inst, Process_Class_Name)));
+      Action : constant Action_Property_Access :=
+        Action_Property_Access
+          (Instance_Property'(Get_Data (Inst, Process_Class_Name)));
    begin
       if Action = null then
          return null;
@@ -219,9 +221,9 @@ package body Expect_Interface is
       return access Custom_Action_Data'Class
    is
       Process_Class : constant Class_Type :=
-                        Get_Process_Class (Get_Kernel (Data));
+        Get_Process_Class (Get_Kernel (Data));
       Inst          : constant Class_Instance :=
-                        Nth_Arg (Data, N, Process_Class);
+        Nth_Arg (Data, N, Process_Class);
    begin
       return Get_Data (Inst);
    end Get_Data;
@@ -230,28 +232,31 @@ package body Expect_Interface is
    -- On_Exit --
    -------------
 
-   overriding procedure On_Exit
+   overriding
+   procedure On_Exit
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class) is
    begin
       if Self.On_Exit /= null then
          declare
             Dummy : Boolean;
-            C   : Callback_Data'Class := Create
-              (Get_Script (Self.Inst), Arguments_Count => 3);
+            C     : Callback_Data'Class :=
+              Create (Get_Script (Self.Inst), Arguments_Count => 3);
          begin
             Set_Nth_Arg (C, 1, Self.Inst);
             Set_Nth_Arg (C, 2, Self.Exit_Status);
             if Self.Exit_Status > 0 then
                --  Error detected: Append the Exit_Output
                Set_Nth_Arg
-                 (C, 3,
+                 (C,
+                  3,
                   To_UTF8_And_Warn
                     (Self.Kernel,
                      To_String (Self.Unmatched_Output & Self.Exit_Output)));
             else
                Set_Nth_Arg
-                 (C, 3,
+                 (C,
+                  3,
                   To_UTF8_And_Warn
                     (Self.Kernel, To_String (Self.Unmatched_Output)));
             end if;
@@ -265,26 +270,25 @@ package body Expect_Interface is
    -- On_Before_Kill --
    --------------------
 
-   overriding procedure On_Before_Kill
+   overriding
+   procedure On_Before_Kill
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class)
    is
       pragma Unreferenced (External);
       Dummy : Boolean;
    begin
-      if Self.Descriptor /= null
-        and then Self.Before_Kill /= null
-      then
+      if Self.Descriptor /= null and then Self.Before_Kill /= null then
          declare
-            C : Callback_Data'Class := Create
-              (Get_Script (Self.Inst), Arguments_Count => 2);
+            C : Callback_Data'Class :=
+              Create (Get_Script (Self.Inst), Arguments_Count => 2);
          begin
             Set_Nth_Arg (C, 1, Self.Inst);
             Set_Nth_Arg
-              (C, 2,
+              (C,
+               2,
                To_UTF8_And_Warn
-                 (Self.Kernel,
-                  To_String (Self.Unmatched_Output)));
+                 (Self.Kernel, To_String (Self.Unmatched_Output)));
             Dummy := Execute (Self.Before_Kill, C);
             Free (C);
          end;
@@ -295,15 +299,16 @@ package body Expect_Interface is
    -- On_Output --
    ---------------
 
-   overriding procedure On_Output
+   overriding
+   procedure On_Output
      (Self     : not null access Custom_Action_Data;
       External : not null access Root_Command'Class;
       Output   : String)
    is
       pragma Unreferenced (External);
-      Matches           : Match_Array (0 .. Max_Paren_Count);
-      Index             : Natural;
-      Dummy             : Boolean;
+      Matches : Match_Array (0 .. Max_Paren_Count);
+      Index   : Natural;
+      Dummy   : Boolean;
    begin
       Append (Self.Unmatched_Output, Output);
 
@@ -323,29 +328,29 @@ package body Expect_Interface is
 
             Match
               (Self.Output_Regexp.all,
-               Data        => S.all,
-               Data_First  => Index,
-               Data_Last   => L,
-               Matches     => Matches);
+               Data       => S.all,
+               Data_First => Index,
+               Data_Last  => L,
+               Matches    => Matches);
 
             exit when Matches (0) = No_Match;
 
             declare
-               C : Callback_Data'Class := Create
-                 (Get_Script (Self.Inst), Arguments_Count => 3);
-               Dummy  : Boolean;
+               C     : Callback_Data'Class :=
+                 Create (Get_Script (Self.Inst), Arguments_Count => 3);
+               Dummy : Boolean;
             begin
                Set_Nth_Arg (C, 1, Self.Inst);
                Set_Nth_Arg
-                 (C, 2,
+                 (C,
+                  2,
                   To_UTF8_And_Warn
-                    (Self.Kernel,
-                     S (Matches (0).First .. Matches (0).Last)));
+                    (Self.Kernel, S (Matches (0).First .. Matches (0).Last)));
                Set_Nth_Arg
-                 (C, 3,
+                 (C,
+                  3,
                   To_UTF8_And_Warn
-                    (Self.Kernel,
-                     S (Index .. Matches (0).First - 1)));
+                    (Self.Kernel, S (Index .. Matches (0).First - 1)));
                Dummy := Execute (Self.On_Match, C);
                Free (C);
             end;
@@ -355,8 +360,9 @@ package body Expect_Interface is
          end;
       end loop;
 
-      Self.Unmatched_Output := Unbounded_Slice
-        (Self.Unmatched_Output, Index, Length (Self.Unmatched_Output));
+      Self.Unmatched_Output :=
+        Unbounded_Slice
+          (Self.Unmatched_Output, Index, Length (Self.Unmatched_Output));
    end On_Output;
 
    ------------------------
@@ -370,16 +376,16 @@ package body Expect_Interface is
       Output   : out Unbounded_String;
       Exit_Why : out Exit_Type)
    is
-      Regexp  : constant Pattern_Matcher := Compile
-        ((if Pattern = "" then ".+" else Pattern), Multiple_Lines);
-      Dummy   : Boolean;
-      Start   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Str     : Unbounded_String;
+      Regexp : constant Pattern_Matcher :=
+        Compile ((if Pattern = "" then ".+" else Pattern), Multiple_Lines);
+      Dummy  : Boolean;
+      Start  : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Str    : Unbounded_String;
 
    begin
       if Active (Me) then
-         Trace (Me, "Interactive_Expect " & Pattern
-                & " Timeout=" & Timeout'Img);
+         Trace
+           (Me, "Interactive_Expect " & Pattern & " Timeout=" & Timeout'Img);
       end if;
 
       Output := Action.Unmatched_Output;
@@ -388,10 +394,12 @@ package body Expect_Interface is
 
       loop
          case Action.Expect
-           (Regexp, Timeout => 5, Output => Str,
-            Stop_At_First_Match => Pattern /= "")
+                (Regexp,
+                 Timeout             => 5,
+                 Output              => Str,
+                 Stop_At_First_Match => Pattern /= "")
          is
-            when Matched =>
+            when Matched   =>
                Append (Output, Str);
                Exit_Why := Exit_Type'(Matched);
 
@@ -403,14 +411,14 @@ package body Expect_Interface is
             when Timed_Out =>
                Append (Output, Str);
                if Timeout /= -1
-                 and then Ada.Calendar.Clock - Start >
-                   (Duration (Timeout) / 1000.0)
+                 and then
+                   Ada.Calendar.Clock - Start > (Duration (Timeout) / 1000.0)
                then
                   Exit_Why := Exit_Type'(Timed_Out);
                   exit;
                end if;
 
-            when Died =>
+            when Died      =>
                Append (Output, Str);
                --  All callbacks (On_Exit, ...) were already called
                exit;
@@ -433,13 +441,12 @@ package body Expect_Interface is
    --------------------------
 
    procedure Custom_Spawn_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel        : constant Kernel_Handle :=
-                        Get_Kernel (Custom_Module_ID.all);
+        Get_Kernel (Custom_Module_ID.all);
       Process_Class : constant Class_Type :=
-                        Get_Process_Class (Get_Kernel (Data));
+        Get_Process_Class (Get_Kernel (Data));
       D             : Custom_Action_Data_Access;
       E             : Exit_Type;
       Dummy         : Boolean;
@@ -449,18 +456,18 @@ package body Expect_Interface is
    begin
       if Command = Constructor_Method then
          declare
-            Lock    : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+            Lock    : GNATCOLL.Python.State.Ada_GIL_Lock
+            with Unreferenced;
             Success : Boolean;
             Item    : PyObject;
          begin
             --  Do we have a string as parameter?
-            Get_Param (Python_Callback_Data'Class (Data),
-                       2, Item, Success);
+            Get_Param (Python_Callback_Data'Class (Data), 2, Item, Success);
             if Success then
                if PyString_Check (Item) then
                   CL := Parse_String (Data.Nth_Arg (2), Separate_Args);
                elsif PyUnicode_Check (Item) then
-                  CL := Parse_String (Unicode_AsString (Item),  Separate_Args);
+                  CL := Parse_String (Unicode_AsString (Item), Separate_Args);
                else
                   Success := False;
                end if;
@@ -480,7 +487,8 @@ package body Expect_Interface is
          end;
 
          declare
-            Inst  : constant Class_Instance := Data.Nth_Arg (1, Process_Class);
+            Inst              : constant Class_Instance :=
+              Data.Nth_Arg (1, Process_Class);
             Remote_Server     : constant String := Data.Nth_Arg (11, "");
             Dirname           : constant String := Data.Nth_Arg (17, "");
             Server            : Server_Type;
@@ -494,23 +502,29 @@ package body Expect_Interface is
                return;
             end if;
 
-            D := new Custom_Action_Data'
-              (External_Process_Data with
-               Inst          => Inst,
-               On_Match      => Data.Nth_Arg (4, null),
-               On_Exit       => Data.Nth_Arg (5, null),
-               Before_Kill   => Data.Nth_Arg (10, null),
-               Output_Regexp => new Pattern_Matcher'
-                 (Compile
-                      (Data.Nth_Arg (3, ""),
-                       Flags =>
-                         Multiple_Lines
-                       or
-                         (if Data.Nth_Arg (13, False) then Single_Line else 0)
-                       or
-                         (if Data.Nth_Arg (14, True)
-                          then Case_Insensitive else 0))),
-               others        => <>);
+            D :=
+              new Custom_Action_Data'
+                (External_Process_Data
+                 with
+                   Inst          => Inst,
+                   On_Match      => Data.Nth_Arg (4, null),
+                   On_Exit       => Data.Nth_Arg (5, null),
+                   Before_Kill   => Data.Nth_Arg (10, null),
+                   Output_Regexp =>
+                     new Pattern_Matcher'
+                       (Compile
+                          (Data.Nth_Arg (3, ""),
+                           Flags =>
+                             Multiple_Lines
+                             or
+                               (if Data.Nth_Arg (13, False)
+                                then Single_Line
+                                else 0)
+                             or
+                               (if Data.Nth_Arg (14, True)
+                                then Case_Insensitive
+                                else 0))),
+                   others        => <>);
 
             begin
                if Remote_Server = "" then
@@ -547,9 +561,10 @@ package body Expect_Interface is
                Start_Immediately    => True,
                Line_By_Line         => False,
                Show_In_Task_Manager => Data.Nth_Arg (6, True),
-               Name_In_Task_Manager => (if Task_Manager_Name /= ""
-                                        then Task_Manager_Name
-                                        else Get_Command (CL)),
+               Name_In_Task_Manager =>
+                 (if Task_Manager_Name /= ""
+                  then Task_Manager_Name
+                  else Get_Command (CL)),
                Synchronous          => False,
                Block_Exit           => Data.Nth_Arg (18, True),
                Strip_CR             => Data.Nth_Arg (15, True));
@@ -557,23 +572,22 @@ package body Expect_Interface is
             if not Success then
                Data.Set_Error_Msg
                  (-"Could not launch command """
-                  & To_Display_String (CL) & """");
+                  & To_Display_String (CL)
+                  & """");
                return;
             end if;
 
             Set_Command (Inst, Created_Command);
-            Set_Data
-              (Inst,
-               Process_Class_Name,
-               Action_Property'(Action => D));
+            Set_Data (Inst, Process_Class_Name, Action_Property'(Action => D));
          end;
 
       elsif Command = "send" then
          D := Get_Data (Data, 1);
          if D /= null and then D.Descriptor /= null then
-            Send (D.Descriptor.all,
-                  Str => Nth_Arg (Data, 2),
-                  Add_LF => Nth_Arg (Data, 3, True));
+            Send
+              (D.Descriptor.all,
+               Str    => Nth_Arg (Data, 2),
+               Add_LF => Nth_Arg (Data, 3, True));
          else
             Data.Set_Error_Msg ("The process is dead or was not started");
          end if;
@@ -611,8 +625,10 @@ package body Expect_Interface is
       elsif Command = "set_size" then
          D := Get_Data (Data, 1);
          if D /= null and then D.Descriptor /= null then
-            Set_Size (TTY_Process_Descriptor'Class (D.Descriptor.all),
-                      Nth_Arg (Data, 2), Nth_Arg (Data, 3));
+            Set_Size
+              (TTY_Process_Descriptor'Class (D.Descriptor.all),
+               Nth_Arg (Data, 2),
+               Nth_Arg (Data, 3));
          end if;
 
       elsif Command = "expect" then
@@ -626,7 +642,7 @@ package body Expect_Interface is
                Exit_Why => E);
 
             case E is
-               when Matched =>
+               when Matched   =>
                   if D.Descriptor /= null then
                      Data.Set_Return_Value (To_String (Str));
                   else
@@ -636,7 +652,7 @@ package body Expect_Interface is
                when Timed_Out =>
                   Data.Set_Error_Msg ("timed out");
 
-               when Died =>
+               when Died      =>
                   Data.Set_Error_Msg ("Process terminated");
             end case;
          end if;
@@ -676,11 +692,11 @@ package body Expect_Interface is
    -- Get_Process_Class --
    -----------------------
 
-   function Get_Process_Class (Kernel : access Kernel_Handle_Record'Class)
-      return Class_Type is
+   function Get_Process_Class
+     (Kernel : access Kernel_Handle_Record'Class) return Class_Type is
    begin
-      return New_Class
-        (Kernel, Process_Class_Name, New_Class (Kernel, "Command"));
+      return
+        New_Class (Kernel, Process_Class_Name, New_Class (Kernel, "Command"));
    end Get_Process_Class;
 
    -----------------------
@@ -692,68 +708,68 @@ package body Expect_Interface is
    begin
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Params => (2  => Param ("command"),
-                    3  => Param ("regexp",                Optional => True),
-                    4  => Param ("on_match",              Optional => True),
-                    5  => Param ("on_exit",               Optional => True),
-                    6  => Param ("task_manager",          Optional => True),
-                    7  => Param ("progress_regexp",       Optional => True),
-                    8  => Param ("progress_current",      Optional => True),
-                    9  => Param ("progress_total",        Optional => True),
-                    10 => Param ("before_kill",           Optional => True),
-                    11 => Param ("remote_server",         Optional => True),
-                    12 => Param ("show_command",          Optional => True),
-                    13 => Param ("single_line_regexp",    Optional => True),
-                    14 => Param ("case_sensitive_regexp", Optional => True),
-                    15 => Param ("strip_cr",              Optional => True),
-                    16 => Param ("active",                Optional => True),
-                    17 => Param ("directory",             Optional => True),
-                    18 => Param ("block_exit",            Optional => True),
-                    19 => Param ("task_manager_name",     Optional => True)),
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Params  =>
+           (2  => Param ("command"),
+            3  => Param ("regexp", Optional => True),
+            4  => Param ("on_match", Optional => True),
+            5  => Param ("on_exit", Optional => True),
+            6  => Param ("task_manager", Optional => True),
+            7  => Param ("progress_regexp", Optional => True),
+            8  => Param ("progress_current", Optional => True),
+            9  => Param ("progress_total", Optional => True),
+            10 => Param ("before_kill", Optional => True),
+            11 => Param ("remote_server", Optional => True),
+            12 => Param ("show_command", Optional => True),
+            13 => Param ("single_line_regexp", Optional => True),
+            14 => Param ("case_sensitive_regexp", Optional => True),
+            15 => Param ("strip_cr", Optional => True),
+            16 => Param ("active", Optional => True),
+            17 => Param ("directory", Optional => True),
+            18 => Param ("block_exit", Optional => True),
+            19 => Param ("task_manager_name", Optional => True)),
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("send",
-         Params => (2  => Param ("command"),
-                    3  => Param ("add_lf", Optional => True)),
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Params  =>
+           (2 => Param ("command"), 3 => Param ("add_lf", Optional => True)),
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("interrupt",
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("kill",
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("wait",
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_result",
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_pid",
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_exit_status",
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("expect",
-         Params      => (2 => Param ("regexp"),
-                         3 => Param ("timeout", Optional => True)),
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Params  =>
+           (2 => Param ("regexp"), 3 => Param ("timeout", Optional => True)),
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_size",
-         Params      => (2 => Param ("rows"),
-                         3 => Param ("columns")),
-         Class        => Process_Class,
-         Handler      => Custom_Spawn_Handler'Access);
+         Params  => (2 => Param ("rows"), 3 => Param ("columns")),
+         Class   => Process_Class,
+         Handler => Custom_Spawn_Handler'Access);
    end Register_Commands;
 
 end Expect_Interface;

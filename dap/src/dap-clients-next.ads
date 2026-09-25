@@ -17,36 +17,34 @@
 
 --  Concrete implementation of the DAP 'next' request
 
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
-with DAP.Requests;        use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.Next;
 
 package DAP.Clients.Next is
 
    type Next_Request (<>) is
-     new DAP.Requests.Next.Next_DAP_Request
-   with private;
+     new DAP.Requests.Next.Next_DAP_Request with private;
    type Next_Request_Access is access all Next_Request'Class;
 
    function Create
      (Kernel      : not null Kernel_Handle;
       Thread_Id   : Integer;
-      Instruction : Boolean)
-      return Next_Request_Access;
+      Instruction : Boolean) return Next_Request_Access;
    --  Create a new DAP 'next' request.
    --  Thread_Id specifies the thread for which to resume execution for
    --   one step (of the given granularity).
    --  if Instruction is True than step over one instruction only
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Next_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.NextResponse;
       New_Request : in out DAP_Request_Access);
 
-   procedure Send_Next
-     (Client : not null access DAP.Clients.DAP_Client'Class);
+   procedure Send_Next (Client : not null access DAP.Clients.DAP_Client'Class);
    --  Sends the corresponding request to step debuggee execution.
 
    procedure Send_Next_Instruction
@@ -56,7 +54,7 @@ package DAP.Clients.Next is
 
 private
 
-   type Next_Request is
-     new DAP.Requests.Next.Next_DAP_Request with null record;
+   type Next_Request is new DAP.Requests.Next.Next_DAP_Request
+   with null record;
 
 end DAP.Clients.Next;

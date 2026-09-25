@@ -25,8 +25,8 @@ package Task_Manager.Shell is
    --  Register the task manager commands
 
    function Get_Or_Create_Instance
-     (Data  : GNATCOLL.Scripts.Callback_Data'Class;
-      Id    : String) return GNATCOLL.Scripts.Class_Instance;
+     (Data : GNATCOLL.Scripts.Callback_Data'Class; Id : String)
+      return GNATCOLL.Scripts.Class_Instance;
    --  Return the script instance wrapping this Queue. Create it if it does
    --  not exist.
 

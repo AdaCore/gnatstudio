@@ -61,7 +61,7 @@ package GVD.Consoles is
    --  Whether the debugger console has the keyboard focus
 
    procedure Display_In_Debugger_Console
-     (Process       : not null access Visual_Debugger_Record'Class;
+     (Process        : not null access Visual_Debugger_Record'Class;
       Text           : String;
       Mode           : GPS.Kernel.Message_Type := Info;
       Add_To_History : Boolean := False);
@@ -69,9 +69,9 @@ package GVD.Consoles is
    --  See Interactive_Consoles.Insert for the meaning of parameters.
 
    procedure Display_In_Debuggee_Console
-     (Process   : not null access Visual_Debugger_Record'Class;
-      Text      : String;
-      Mode      : GPS.Kernel.Message_Type := Info);
+     (Process : not null access Visual_Debugger_Record'Class;
+      Text    : String;
+      Mode    : GPS.Kernel.Message_Type := Info);
    --  Display the given text in the debuggee console.
    --  The text will be displayed in the debugger console instead if there is
    --  no debuggee console attached to this process .

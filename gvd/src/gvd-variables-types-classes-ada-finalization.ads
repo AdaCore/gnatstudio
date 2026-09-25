@@ -29,27 +29,32 @@ package GVD.Variables.Types.Classes.Ada.Finalization is
    type GVD_Ada_Finalization_Type_Access is
      access all GVD_Ada_Finalization_Type'Class;
 
-   overriding procedure Add_Ancestor
+   overriding
+   procedure Add_Ancestor
      (Self     : not null access GVD_Ada_Finalization_Type;
       Num      : Positive;
       Ancestor : GVD_Type_Holder);
 
-   overriding procedure Set_Child
+   overriding
+   procedure Set_Child
      (Self  : not null access GVD_Ada_Finalization_Type;
       Child : GVD_Type_Holder);
 
-   overriding function Get_Child
-     (Self : not null access GVD_Ada_Finalization_Type)
-      return GVD_Type_Holder is (Empty_GVD_Type_Holder);
+   overriding
+   function Get_Child
+     (Self : not null access GVD_Ada_Finalization_Type) return GVD_Type_Holder
+   is (Empty_GVD_Type_Holder);
 
-   overriding function Get_Ancestor
-     (Self       : not null access GVD_Ada_Finalization_Type;
-      Unused_Num : Positive)
-      return GVD_Type_Holder is (Empty_GVD_Type_Holder);
+   overriding
+   function Get_Ancestor
+     (Self : not null access GVD_Ada_Finalization_Type; Unused_Num : Positive)
+      return GVD_Type_Holder
+   is (Empty_GVD_Type_Holder);
 
-   overriding function Get_Num_Ancestors
-     (Self : not null access GVD_Ada_Finalization_Type)
-      return Natural is (0);
+   overriding
+   function Get_Num_Ancestors
+     (Self : not null access GVD_Ada_Finalization_Type) return Natural
+   is (0);
 
 private
 
@@ -57,20 +62,23 @@ private
       Name : Standard.Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
-   overriding function Get_Type_Descr
-     (Self : not null access GVD_Ada_Finalization_Type) return String is
-     (To_String (Self.Name));
+   overriding
+   function Get_Type_Descr
+     (Self : not null access GVD_Ada_Finalization_Type) return String
+   is (To_String (Self.Name));
 
-   overriding procedure Clear
-     (Self : not null access GVD_Ada_Finalization_Type) is null;
+   overriding
+   procedure Clear (Self : not null access GVD_Ada_Finalization_Type) is null;
 
-   overriding procedure Set_Type_Name
-     (Self : not null access GVD_Ada_Finalization_Type;
-      Name : String) is null;
+   overriding
+   procedure Set_Type_Name
+     (Self : not null access GVD_Ada_Finalization_Type; Name : String)
+   is null;
 
-   overriding function Get_Type_Name
-     (Self : not null access GVD_Ada_Finalization_Type)
-      return String is (To_String (Self.Name));
+   overriding
+   function Get_Type_Name
+     (Self : not null access GVD_Ada_Finalization_Type) return String
+   is (To_String (Self.Name));
 
    function Create_Controlled return GVD_Type_Holder;
    function Create_Limited_Controlled return GVD_Type_Holder;

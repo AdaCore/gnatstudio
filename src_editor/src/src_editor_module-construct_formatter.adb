@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;                  use Basic_Types;
-with Commands;                     use Commands;
+with Basic_Types;             use Basic_Types;
+with Commands;                use Commands;
 with Casing_Exceptions;
-with Case_Handling;                use Case_Handling;
-with Language;                     use Language;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
-with GPS.Editors;                  use GPS.Editors;
+with Case_Handling;           use Case_Handling;
+with Language;                use Language;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GPS.Editors;             use GPS.Editors;
 with Refactoring.Services;
 with VSS.Characters.Latin;
-with VSS.Strings;                  use VSS.Strings;
-with VSS.Strings.Conversions;      use VSS.Strings.Conversions;
+with VSS.Strings;             use VSS.Strings;
+with VSS.Strings.Conversions; use VSS.Strings.Conversions;
 
 package body Src_Editor_Module.Construct_Formatter is
 
@@ -49,8 +49,7 @@ package body Src_Editor_Module.Construct_Formatter is
       Cursor_Line : Natural) return Boolean;
 
    overriding
-   function Get_Name
-     (Self : Language_Formatting_Provider) return String;
+   function Get_Name (Self : Language_Formatting_Provider) return String;
 
    Construct_Provider : aliased Language_Formatting_Provider;
 
@@ -97,13 +96,13 @@ package body Src_Editor_Module.Construct_Formatter is
          use type Basic_Types.Visible_Column_Type;
          --  According to the documentation of Replace_Text_Callback:
          --  "First and Last are byte offsets from the start of the line"
-         Line_Offset   : constant Natural :=
+         Line_Offset  : constant Natural :=
            Buffer.New_Location (Line => Line, Column => 0).Offset;
-         Replace_From  : constant Editor_Location'Class :=
+         Replace_From : constant Editor_Location'Class :=
            Buffer.New_Location
              (Offset => VSS.Strings.Character_Count (Line_Offset + First - 1));
          --  Last offset is not included
-         Replace_To : constant Editor_Location'Class :=
+         Replace_To   : constant Editor_Location'Class :=
            Buffer.New_Location
              (Offset => VSS.Strings.Character_Count (Line_Offset + Last - 1));
 
@@ -121,21 +120,22 @@ package body Src_Editor_Module.Construct_Formatter is
          then
             Result :=
               Result
-              and then Refactoring.Services.Insert_Text
-                         (Context     => Self.Kernel.Refactoring_Context,
-                          In_File     => File,
-                          From_Line   => Line,
-                          From_Column => Replace_From.Column,
-                          To_Line     => Line,
-                          To_Column   => Replace_To.Column,
-                          Text        => Replace);
+              and then
+                Refactoring.Services.Insert_Text
+                  (Context     => Self.Kernel.Refactoring_Context,
+                   In_File     => File,
+                   From_Line   => Line,
+                   From_Column => Replace_From.Column,
+                   To_Line     => Line,
+                   To_Column   => Replace_To.Column,
+                   Text        => Replace);
             if Line = Cursor_Line then
                --  Add the new characters
                Cursor_Move := Cursor_Move + Replace'Length;
                --  Remove the deleted characters
                Cursor_Move :=
-                 Cursor_Move -
-                   Integer (Replace_To.Column - Replace_From.Column);
+                 Cursor_Move
+                 - Integer (Replace_To.Column - Replace_From.Column);
             end if;
          end if;
       end Replace_Text;
@@ -148,8 +148,7 @@ package body Src_Editor_Module.Construct_Formatter is
 
       --  Set proper casing policy, we want to disable the auto-casing here if
       --  we are using the on-the-fly casing policy
-      if Indent_Params.Casing_Policy in End_Of_Word .. On_The_Fly
-      then
+      if Indent_Params.Casing_Policy in End_Of_Word .. On_The_Fly then
          Indent_Params.Casing_Policy := Disabled;
       end if;
 
@@ -201,9 +200,7 @@ package body Src_Editor_Module.Construct_Formatter is
    --------------
 
    overriding
-   function Get_Name
-     (Self : Language_Formatting_Provider) return String
-   is
+   function Get_Name (Self : Language_Formatting_Provider) return String is
       pragma Unreferenced (Self);
    begin
       return Legacy_Formatter_Value;

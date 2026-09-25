@@ -23,46 +23,56 @@ with GNAT.Strings;
 
 package GPS.Kernel.Search.Sources is
 
-   type Sources_Search_Provider is new Kernel_Search_Provider
-     with private;
-   overriding procedure Free (Self : in out Sources_Search_Provider);
-   overriding function Documentation
-     (Self    : not null access Sources_Search_Provider) return String;
-   overriding procedure Set_Pattern
+   type Sources_Search_Provider is new Kernel_Search_Provider with private;
+   overriding
+   procedure Free (Self : in out Sources_Search_Provider);
+   overriding
+   function Documentation
+     (Self : not null access Sources_Search_Provider) return String;
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Sources_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Sources_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
-   overriding function Display_Name
-     (Self     : not null access Sources_Search_Provider) return String
-   is
-     (Provider_Sources);
-   overriding function Get_Total_Progress
+   overriding
+   function Display_Name
+     (Self : not null access Sources_Search_Provider) return String
+   is (Provider_Sources);
+   overriding
+   function Get_Total_Progress
      (Self : not null access Sources_Search_Provider) return Integer;
    --  Searches in all source files of the project
-   overriding procedure On_Result_Executed
-      (Self   : not null access Sources_Search_Provider;
-       Result : not null access GPS.Search.Search_Result'Class);
+   overriding
+   procedure On_Result_Executed
+     (Self   : not null access Sources_Search_Provider;
+      Result : not null access GPS.Search.Search_Result'Class);
 
-   type Single_Source_Search_Provider is new Kernel_Search_Provider
-     with private;
-   overriding procedure Free (Self : in out Single_Source_Search_Provider);
-   overriding function Documentation
-     (Self    : not null access Single_Source_Search_Provider) return String;
-   overriding procedure Set_Pattern
+   type Single_Source_Search_Provider is
+     new Kernel_Search_Provider with private;
+   overriding
+   procedure Free (Self : in out Single_Source_Search_Provider);
+   overriding
+   function Documentation
+     (Self : not null access Single_Source_Search_Provider) return String;
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Single_Source_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Single_Source_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
-   overriding function Display_Name
-     (Self     : not null access Single_Source_Search_Provider) return String
-     is ("Specific file");
+   overriding
+   function Display_Name
+     (Self : not null access Single_Source_Search_Provider) return String
+   is ("Specific file");
    --  Searches in a specific source file
 
    procedure Set_File
@@ -71,23 +81,26 @@ package GPS.Kernel.Search.Sources is
       Project : GNATCOLL.Projects.Project_Type);
    --  Set the file to search
 
-   type Current_File_Search_Provider is new Single_Source_Search_Provider
-      with private;
-   overriding procedure Set_Pattern
+   type Current_File_Search_Provider is
+     new Single_Source_Search_Provider with private;
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Current_File_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding function Display_Name
-     (Self     : not null access Current_File_Search_Provider) return String
-     is ("Current file");
-   overriding function Documentation
-     (Self    : not null access Current_File_Search_Provider) return String
-     is ("Search for references in the current editor");
+   overriding
+   function Display_Name
+     (Self : not null access Current_File_Search_Provider) return String
+   is ("Current file");
+   overriding
+   function Documentation
+     (Self : not null access Current_File_Search_Provider) return String
+   is ("Search for references in the current editor");
    --  Search in the current editor, if there is one.
 
 private
    type Single_Source_Search_Provider is new Kernel_Search_Provider with record
-      Pattern : GPS.Search.Search_Pattern_Access;
+      Pattern            : GPS.Search.Search_Pattern_Access;
       Pattern_Needs_Free : Boolean := False;
 
       File    : GNATCOLL.VFS.Virtual_File;
@@ -98,7 +111,7 @@ private
    end record;
 
    type Sources_Search_Provider is new Kernel_Search_Provider with record
-      Pattern : GPS.Search.Search_Pattern_Access;
+      Pattern            : GPS.Search.Search_Pattern_Access;
       Pattern_Needs_Free : Boolean := False;
 
       Files   : GNATCOLL.Projects.File_And_Project_Array_Access;
@@ -107,5 +120,5 @@ private
    end record;
 
    type Current_File_Search_Provider is new Single_Source_Search_Provider
-      with null record;
+   with null record;
 end GPS.Kernel.Search.Sources;

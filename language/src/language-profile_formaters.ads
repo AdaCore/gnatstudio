@@ -29,7 +29,8 @@ package Language.Profile_Formaters is
       Name    : String;
       Mode    : String;
       Of_Type : String;
-      Default : String) is abstract;
+      Default : String)
+   is abstract;
    --  Add parameter of subprogram to formater.
    --  Longest is length of longest name of all parameters' names.
    --  Default is parameter's default value if any.
@@ -39,41 +40,37 @@ package Language.Profile_Formaters is
       Name    : String;
       Mode    : String;
       Of_Type : String;
-      Default : String) is abstract;
+      Default : String)
+   is abstract;
    --  Add a generic parameter of subprogram to formater.
 
    procedure Add_Result
-     (Self    : access Profile_Formater;
-      Mode    : String;
-      Of_Type : String) is abstract;
+     (Self : access Profile_Formater; Mode : String; Of_Type : String)
+   is abstract;
    --  Add result type of a function to formater
 
    procedure Add_Variable
-     (Self    : access Profile_Formater;
-      Mode    : String;
-      Of_Type : String) is abstract;
+     (Self : access Profile_Formater; Mode : String; Of_Type : String)
+   is abstract;
    --  Add type of a variable to formater
 
-   procedure Add_Aspects
-     (Self : access Profile_Formater;
-      Text : String) is abstract;
+   procedure Add_Aspects (Self : access Profile_Formater; Text : String)
+   is abstract;
    --  Add text of aspects to formater
 
-   procedure Add_Comments
-     (Self : access Profile_Formater;
-      Text : String) is abstract;
+   procedure Add_Comments (Self : access Profile_Formater; Text : String)
+   is abstract;
    --  Add text of comments to formater
 
-   function Get_Text
-     (Self : access Profile_Formater) return String is abstract;
+   function Get_Text (Self : access Profile_Formater) return String
+   is abstract;
    --  Return resulting formated text of profile
 
    type Text_Profile_Formater is new Profile_Formater with private;
    --  Profile formater to generate plain text
 
    procedure Configure
-     (Self             : in out Text_Profile_Formater;
-      Show_Param_Names : Boolean := True);
+     (Self : in out Text_Profile_Formater; Show_Param_Names : Boolean := True);
    --  Configure the output of the formater
 
 private
@@ -84,33 +81,31 @@ private
       Show_Param_Names : Boolean := True;
    end record;
 
-   overriding procedure Add_Parameter
+   overriding
+   procedure Add_Parameter
      (Self    : access Text_Profile_Formater;
       Name    : String;
       Mode    : String;
       Of_Type : String;
       Default : String);
-   overriding procedure Add_Result
-     (Self    : access Text_Profile_Formater;
-      Mode    : String;
-      Of_Type : String);
-   overriding procedure Add_Variable
-     (Self    : access Text_Profile_Formater;
-      Mode    : String;
-      Of_Type : String);
-   overriding procedure Add_Aspects
-     (Self : access Text_Profile_Formater;
-      Text : String);
-   overriding procedure Add_Comments
-     (Self : access Text_Profile_Formater;
-      Text : String);
-   overriding procedure Add_Generic_Parameter
+   overriding
+   procedure Add_Result
+     (Self : access Text_Profile_Formater; Mode : String; Of_Type : String);
+   overriding
+   procedure Add_Variable
+     (Self : access Text_Profile_Formater; Mode : String; Of_Type : String);
+   overriding
+   procedure Add_Aspects (Self : access Text_Profile_Formater; Text : String);
+   overriding
+   procedure Add_Comments (Self : access Text_Profile_Formater; Text : String);
+   overriding
+   procedure Add_Generic_Parameter
      (Self    : access Text_Profile_Formater;
       Name    : String;
       Mode    : String;
       Of_Type : String;
       Default : String);
-   overriding function Get_Text
-     (Self : access Text_Profile_Formater) return String;
+   overriding
+   function Get_Text (Self : access Text_Profile_Formater) return String;
 
 end Language.Profile_Formaters;

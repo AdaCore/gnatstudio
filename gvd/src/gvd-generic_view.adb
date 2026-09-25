@@ -29,14 +29,15 @@ with String_Utils;         use String_Utils;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body GVD.Generic_View is
-   Me : constant GNATCOLL.Traces.Trace_Handle := Create
-     ("GPS.DEBUGGING.GENERIC_VIEW");
+   Me : constant GNATCOLL.Traces.Trace_Handle :=
+     Create ("GPS.DEBUGGING.GENERIC_VIEW");
 
    -----------------
    -- Set_Process --
    -----------------
 
-   overriding procedure Set_Process
+   overriding
+   procedure Set_Process
      (Self    : not null access Process_View_Record;
       Process : access Base_Visual_Debugger'Class) is
    begin
@@ -50,13 +51,15 @@ package body GVD.Generic_View is
    package body Simple_Views is
 
       type Open_Command is new Interactive_Command with null record;
-      overriding function Execute
-        (Self    : access Open_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type;
+      overriding
+      function Execute
+        (Self : access Open_Command; Context : Interactive_Command_Context)
+         return Command_Return_Type;
       --  Opens the view and attach to current debugger
 
       type On_Debugger_Started is new Debugger_Hooks_Function with null record;
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self     : On_Debugger_Started;
          Kernel   : not null access Kernel_Handle_Record'Class;
          Debugger : access Base_Visual_Debugger'Class);
@@ -80,14 +83,16 @@ package body GVD.Generic_View is
       -- Execute --
       -------------
 
-      overriding procedure Execute
-         (Self     : On_Debugger_Terminate;
-          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-          Debugger : access Base_Visual_Debugger'Class)
+      overriding
+      procedure Execute
+        (Self     : On_Debugger_Terminate;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class)
       is
          Block_Me : constant Block_Trace_Handle :=
            Create (Me, "Closing view " & Views.View_Name);
-         V : constant access Formal_View_Record'Class := Get_View (Debugger);
+         V        : constant access Formal_View_Record'Class :=
+           Get_View (Debugger);
          pragma Unreferenced (Self, Block_Me, Kernel);
       begin
          if V /= null then
@@ -95,29 +100,31 @@ package body GVD.Generic_View is
             Set_View (Debugger, null);
             V.Set_Process (null);
 
-            --  ??? We used to call Close_Child on the Child_From_View (V).
-            --  This unfortunately is fragile (given the comment below, and
-            --  also because typing 'q' in the console results in invalid
-            --  memory access). Also this means that the current desktop gets
-            --  changed, so if the user opens the debugger again (or a second
-            --  one again), the views are back to their default position.
-            --
-            --  For now, this code is thus commented out.
+         --  ??? We used to call Close_Child on the Child_From_View (V).
+         --  This unfortunately is fragile (given the comment below, and
+         --  also because typing 'q' in the console results in invalid
+         --  memory access). Also this means that the current desktop gets
+         --  changed, so if the user opens the debugger again (or a second
+         --  one again), the views are back to their default position.
+         --
+         --  For now, this code is thus commented out.
 
-            --  Do not destroy the view when we are in the process of
-            --  destroying the main window. What might happen otherwise is the
-            --  following: we have the debugger console and debuggee console in
-            --  the same notebook. The first is destroyed as a result of
-            --  destroying the notebook. When that first is destroyed, it also
-            --  calls this On_Debugger_Terminate for the debuggee console. If
-            --  we were to destroy the latter, this means that
-            --  gtk_notebook_destroy's loop would then point to an invalid
-            --  location.
---              if Kernel.Get_Main_Window /= null
---                and then not Kernel.Get_Main_Window.In_Destruction
---              then
---                 Views.Child_From_View (V).Close_Child (Force => True);
---              end if;
+         --  Do not destroy the view when we are in the process of
+         --  destroying the main window. What might happen otherwise is the
+         --  following: we have the debugger console and debuggee console in
+         --  the same notebook. The first is destroyed as a result of
+         --  destroying the notebook. When that first is destroyed, it also
+         --  calls this On_Debugger_Terminate for the debuggee console. If
+         --  we were to destroy the latter, this means that
+         --  gtk_notebook_destroy's loop would then point to an invalid
+         --  location.
+         --              if Kernel.Get_Main_Window /= null
+         --                and then not Kernel.Get_Main_Window.In_Destruction
+         --              then
+         --                 Views.Child_From_View (V).Close_Child
+         --                    (Force => True);
+         --              end if;
+
          end if;
       end Execute;
 
@@ -130,11 +137,12 @@ package body GVD.Generic_View is
          Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean)
       is
-         MDI     : constant MDI_Window := GPS.Kernel.MDI.Get_MDI (Kernel);
-         Child   : MDI_Child;
-         Iter    : Child_Iterator;
-         View    : access Formal_View_Record'Class;
-         Button  : Message_Dialog_Buttons with Unreferenced;
+         MDI    : constant MDI_Window := GPS.Kernel.MDI.Get_MDI (Kernel);
+         Child  : MDI_Child;
+         Iter   : Child_Iterator;
+         View   : access Formal_View_Record'Class;
+         Button : Message_Dialog_Buttons
+         with Unreferenced;
       begin
          if Process = null then
             --  ??? Should try to attach to the current debugger, but there are
@@ -196,7 +204,8 @@ package body GVD.Generic_View is
                   if Process.Command_In_Process then
                      declare
                         Info_Msg : constant String :=
-                          "Cannot update " & Views.View_Name
+                          "Cannot update "
+                          & Views.View_Name
                           & " while the debugger is busy";
                      begin
                         Trace (Me, Info_Msg);
@@ -232,7 +241,8 @@ package body GVD.Generic_View is
       -- Execute --
       -------------
 
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self     : On_Update;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access Base_Visual_Debugger'Class)
@@ -253,7 +263,8 @@ package body GVD.Generic_View is
       -- Execute --
       -------------
 
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self     : On_Debugger_Frame_Changed;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access Base_Visual_Debugger'Class)
@@ -270,7 +281,8 @@ package body GVD.Generic_View is
       -- Execute --
       -------------
 
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self      : On_Debugger_State_Changed;
          Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger  : access Base_Visual_Debugger'Class;
@@ -288,10 +300,11 @@ package body GVD.Generic_View is
       -- Execute --
       -------------
 
-      overriding procedure Execute
-         (Self     : On_Debug_Process_Terminated;
-          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-          Debugger : access Base_Visual_Debugger'Class)
+      overriding
+      procedure Execute
+        (Self     : On_Debug_Process_Terminated;
+         Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self, Kernel);
          V : constant access Formal_View_Record'Class := Get_View (Debugger);
@@ -330,7 +343,8 @@ package body GVD.Generic_View is
       -- Execute --
       -------------
 
-      overriding procedure Execute
+      overriding
+      procedure Execute
         (Self     : On_Debugger_Started;
          Kernel   : not null access Kernel_Handle_Record'Class;
          Debugger : access Base_Visual_Debugger'Class)
@@ -344,9 +358,10 @@ package body GVD.Generic_View is
       -- Execute --
       -------------
 
-      overriding function Execute
-        (Self    : access Open_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type
+      overriding
+      function Execute
+        (Self : access Open_Command; Context : Interactive_Command_Context)
+         return Command_Return_Type
       is
          pragma Unreferenced (Self);
 
@@ -378,7 +393,9 @@ package body GVD.Generic_View is
          end if;
 
          Register_Action
-           (Kernel, Action_Name, new Open_Command,
+           (Kernel,
+            Action_Name,
+            new Open_Command,
             Description => Description,
             Category    => -"Views",
             Filter      => F);

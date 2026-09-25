@@ -15,63 +15,63 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with System;                     use System;
+with System;                  use System;
 
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Strings;
-with GNAT.TTY;                   use GNAT.TTY;
+with GNAT.TTY;                  use GNAT.TTY;
 
-with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;         use GNATCOLL.VFS_Utils;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
 
-with Glib;                       use Glib;
-with Glib.Object;                use Glib.Object;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
 
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtk.Window;                 use Gtk.Window;
-with Gtk;                        use Gtk;
+with Gtk.Widget; use Gtk.Widget;
+with Gtk.Window; use Gtk.Window;
+with Gtk;        use Gtk;
 
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
+with Gtkada.MDI;     use Gtkada.MDI;
 
-with Commands;                   use Commands;
-with Config;                     use Config;
-with Debugger.Base_Gdb.Gdb_CLI;  use Debugger.Base_Gdb.Gdb_CLI;
-with Debugger.Base_Gdb.Gdb_MI;   use Debugger.Base_Gdb.Gdb_MI;
-with Debugger.LLDB;              use Debugger.LLDB;
-with Default_Preferences;        use Default_Preferences;
+with Commands;                  use Commands;
+with Config;                    use Config;
+with Debugger.Base_Gdb.Gdb_CLI; use Debugger.Base_Gdb.Gdb_CLI;
+with Debugger.Base_Gdb.Gdb_MI;  use Debugger.Base_Gdb.Gdb_MI;
+with Debugger.LLDB;             use Debugger.LLDB;
+with Default_Preferences;       use Default_Preferences;
 with Interactive_Consoles;
-with GPS.Intl;                   use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 with GPS.Core_Kernels;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Remote;
-with GPS.Main_Window;            use GPS.Main_Window;
-with GVD.Code_Editors;           use GVD.Code_Editors;
-with GVD.Consoles;               use GVD.Consoles;
-with GVD.Preferences;            use GVD.Preferences;
-with GVD.Types;                  use GVD.Types;
-with GVD_Module;                 use GVD_Module;
+with GPS.Main_Window;           use GPS.Main_Window;
+with GVD.Code_Editors;          use GVD.Code_Editors;
+with GVD.Consoles;              use GVD.Consoles;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Types;                 use GVD.Types;
+with GVD_Module;                use GVD_Module;
 with GVD.Registers_View;
-with GUI_Utils;                  use GUI_Utils;
-with Language_Handlers;          use Language_Handlers;
-with Process_Proxies;            use Process_Proxies;
-with Projects;                   use Projects;
-with Remote;                     use Remote;
-with Toolchains;                 use Toolchains;
-with Toolchains_Old;             use Toolchains_Old;
+with GUI_Utils;                 use GUI_Utils;
+with Language_Handlers;         use Language_Handlers;
+with Process_Proxies;           use Process_Proxies;
+with Projects;                  use Projects;
+with Remote;                    use Remote;
+with Toolchains;                use Toolchains;
+with Toolchains_Old;            use Toolchains_Old;
 
 package body GVD.Process is
 
@@ -82,7 +82,8 @@ package body GVD.Process is
    end record;
    --  GNAT Studio specific proxy, used to redefine Set_Command_In_Process
 
-   overriding procedure Set_Command_In_Process
+   overriding
+   procedure Set_Command_In_Process
      (Proxy : access GPS_Proxy; In_Process : Boolean := True);
    --  Set the appropriate debugger menu items to the corresponding state
 
@@ -92,9 +93,10 @@ package body GVD.Process is
      Ada.Unchecked_Conversion (System.Address, GPS_Window);
    pragma Warnings (On);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Expect.Process_Descriptor'Class,
-      GNAT.Expect.Process_Descriptor_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Expect.Process_Descriptor'Class,
+        GNAT.Expect.Process_Descriptor_Access);
 
    Null_TTY : GNAT.TTY.TTY_Handle;
 
@@ -118,7 +120,8 @@ package body GVD.Process is
    type On_Before_Exit is new Return_Boolean_Hooks_Function with record
       Process : access Visual_Debugger_Record'Class;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
    --  Called before exiting
@@ -129,8 +132,7 @@ package body GVD.Process is
    --  Internal initialize procedure
 
    procedure On_Console_Destroy
-     (Process : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
+     (Process : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the debugger console is destroyed, which also terminates the
    --  debugger itself
 
@@ -156,9 +158,9 @@ package body GVD.Process is
          Process.Kernel,
          Create_If_Necessary =>
            Execution_Window.Get_Pref
-         and then Is_Local (Debug_Server)
-         and then Support_TTY (Process.Debugger)
-         and then GNAT.TTY.TTY_Supported);
+           and then Is_Local (Debug_Server)
+           and then Support_TTY (Process.Debugger)
+           and then GNAT.TTY.TTY_Supported);
    end Create_Execution_Console;
 
    ----------------
@@ -176,9 +178,9 @@ package body GVD.Process is
    -- Set_Command_In_Process --
    ----------------------------
 
-   overriding procedure Set_Command_In_Process
-     (Proxy      : access GPS_Proxy;
-      In_Process : Boolean := True) is
+   overriding
+   procedure Set_Command_In_Process
+     (Proxy : access GPS_Proxy; In_Process : Boolean := True) is
    begin
       Set_Command_In_Process (Process_Proxy (Proxy.all)'Access, In_Process);
       Proxy.Process.Kernel.Refresh_Context;
@@ -216,11 +218,9 @@ package body GVD.Process is
 
    function Convert
      (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Descriptor : GNAT.Expect.Process_Descriptor'Class)
-      return Visual_Debugger
+      Descriptor : GNAT.Expect.Process_Descriptor'Class) return Visual_Debugger
    is
-      procedure Callback
-        (Object : not null access Base_Visual_Debugger'Class);
+      procedure Callback (Object : not null access Base_Visual_Debugger'Class);
 
       Result : Visual_Debugger;
 
@@ -228,8 +228,7 @@ package body GVD.Process is
       -- Callback --
       --------------
 
-      procedure Callback
-        (Object : not null access Base_Visual_Debugger'Class)
+      procedure Callback (Object : not null access Base_Visual_Debugger'Class)
       is
          Process : constant Visual_Debugger := Visual_Debugger (Object);
       begin
@@ -237,8 +236,7 @@ package body GVD.Process is
             --  Note: The process might have been already killed when this
             --  function is called.
 
-            if Get_Descriptor
-              (Get_Process (Process.Debugger)).all = Descriptor
+            if Get_Descriptor (Get_Process (Process.Debugger)).all = Descriptor
             then
                Result := Process;
             end if;
@@ -260,21 +258,23 @@ package body GVD.Process is
    -------------
 
    function Convert
-     (Debugger   : access Debugger_Root'Class)
-      return Visual_Debugger is
+     (Debugger : access Debugger_Root'Class) return Visual_Debugger is
    begin
-      return Convert
-        (Get_Kernel (Debugger), Get_Descriptor (Get_Process (Debugger)).all);
+      return
+        Convert
+          (Get_Kernel (Debugger), Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
 
    ------------------------
    -- Command_In_Process --
    ------------------------
 
-   overriding function Command_In_Process
+   overriding
+   function Command_In_Process
      (Self : not null access Visual_Debugger_Record) return Boolean is
    begin
-      return Self.Debugger /= null
+      return
+        Self.Debugger /= null
         and then Get_Process (Self.Debugger) /= null
         and then Command_In_Process (Get_Process (Self.Debugger));
    end Command_In_Process;
@@ -303,8 +303,9 @@ package body GVD.Process is
       if Process.Current_Command = null then
          return False;
       else
-         return Command_Kind
-           (Process.Debugger, Process.Current_Command.all) = Execution_Command;
+         return
+           Command_Kind (Process.Debugger, Process.Current_Command.all)
+           = Execution_Command;
       end if;
    end Is_Execution_Command;
 
@@ -319,8 +320,8 @@ package body GVD.Process is
       Set_Position : Boolean := False)
    is
       pragma Unreferenced (Set_Position);
-      Matched : GNAT.Regpat.Match_Array (0 .. 0);
-      Start   : Positive := Str'First;
+      Matched       : GNAT.Regpat.Match_Array (0 .. 0);
+      Start         : Positive := Str'First;
       Console_Child : MDI_Child;
    begin
       if Process.Debugger_Text /= null then
@@ -332,9 +333,10 @@ package body GVD.Process is
                Add_To_History => True);
          else
             while Start <= Str'Last loop
-               Match (Highlighting_Pattern (Process.Debugger),
-                      Str (Start .. Str'Last),
-                      Matched);
+               Match
+                 (Highlighting_Pattern (Process.Debugger),
+                  Str (Start .. Str'Last),
+                  Matched);
 
                if Matched (0) /= No_Match then
                   if Matched (0).First - 1 >= Start then
@@ -356,8 +358,8 @@ package body GVD.Process is
             end loop;
          end if;
 
-         Console_Child := Find_MDI_Child
-           (Get_MDI (Process.Kernel), Process.Debugger_Text);
+         Console_Child :=
+           Find_MDI_Child (Get_MDI (Process.Kernel), Process.Debugger_Text);
 
          if Console_Child /= null then
             Highlight_Child (Console_Child);
@@ -370,12 +372,13 @@ package body GVD.Process is
    ------------------------
 
    procedure Final_Post_Process
-     (Process           : not null access Visual_Debugger_Record'Class;
-      Mode              : GVD.Types.Command_Type;
-      Always_Emit_Hooks : Boolean;
-      Category          : Command_Category;
+     (Process                        :
+        not null access Visual_Debugger_Record'Class;
+      Mode                           : GVD.Types.Command_Type;
+      Always_Emit_Hooks              : Boolean;
+      Category                       : Command_Category;
       Breakpoints_Might_Have_Changed : Boolean;
-      Register_Changed  : Boolean)
+      Register_Changed               : Boolean)
    is
       File : Unbounded_String;
       Line : Natural := 0;
@@ -392,7 +395,9 @@ package body GVD.Process is
          Process.Debugger.Found_File_Name
            (Process.Current_Output
               (Process.Current_Output'First .. Process.Current_Output_Pos - 1),
-            File, Line, Addr);
+            File,
+            Line,
+            Addr);
 
          if Addr /= Invalid_Address then
             Process.Pc := Addr;
@@ -402,9 +407,7 @@ package body GVD.Process is
       --  Do we have a file name or line number indication?
       --  This runs the Debugger_Location_Changed_Hook hook
 
-      if Length (File) /= 0
-        and then Line /= 0
-      then
+      if Length (File) /= 0 and then Line /= 0 then
          Set_Current_File_And_Line
            (Kernel  => Process.Kernel,
             Process => Base_Visual_Debugger_Access (Process),
@@ -438,19 +441,19 @@ package body GVD.Process is
          end if;
 
          case Category is
-            when Load_Command =>
+            when Load_Command      =>
                Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
 
-            when Context_Command =>
+            when Context_Command   =>
                Debugger_Context_Changed_Hook.Run (Process.Kernel, Process);
 
-            when Frame_Command =>
+            when Frame_Command     =>
                Debugger_Frame_Changed_Hook.Run (Process.Kernel, Process);
 
             when Execution_Command =>
                Debugger_Process_Stopped_Hook.Run (Process.Kernel, Process);
 
-            when Misc_Command =>
+            when Misc_Command      =>
                null;
          end case;
       end if;
@@ -490,8 +493,7 @@ package body GVD.Process is
       Window     : System.Address)
    is
       Process         : constant Visual_Debugger :=
-        Convert
-          (To_Main_Debug_Window (Window).Kernel, Descriptor);
+        Convert (To_Main_Debug_Window (Window).Kernel, Descriptor);
       Tmp_Str         : GNAT.Strings.String_Access;
       Current_Filter  : Regexp_Filter_List;
       Matched         : Match_Array (0 .. Max_Paren_Count);
@@ -533,8 +535,9 @@ package body GVD.Process is
       end if;
 
       Process.Current_Output
-        (Process.Current_Output_Pos ..
-         Process.Current_Output_Pos + Str'Length - 1) := Str;
+        (Process.Current_Output_Pos
+         .. Process.Current_Output_Pos + Str'Length - 1) :=
+        Str;
       Process.Current_Output_Pos := Process.Current_Output_Pos + Str'Length;
 
       --  Process the filters. Each filter is tested until there is no more
@@ -549,8 +552,8 @@ package body GVD.Process is
          Match
            (Current_Filter.Regexp.all,
             Process.Current_Output
-              (Process.Last_Match + 1 + Offset ..
-                 Process.Current_Output_Pos - 1),
+              (Process.Last_Match + 1 + Offset
+               .. Process.Current_Output_Pos - 1),
             Matched);
          Str_Match := False;
 
@@ -560,15 +563,17 @@ package body GVD.Process is
             Match
               (Current_Filter.Regexp.all,
                Process.Current_Output
-                 (Process.Current_Output_Pos - Str'Length + Offset ..
-                    Process.Current_Output_Pos - 1),
+                 (Process.Current_Output_Pos - Str'Length + Offset
+                  .. Process.Current_Output_Pos - 1),
                Matched);
 
             if Matched (0) /= No_Match then
                --  Match found, record offset for next one. We cannot change
                --  Offset here as we need it later when calling the filters.
-               New_Offset := Matched (0).Last + 1 -
-                 (Process.Current_Output_Pos - Str'Length);
+               New_Offset :=
+                 Matched (0).Last
+                 + 1
+                 - (Process.Current_Output_Pos - Str'Length);
             end if;
 
          else
@@ -593,15 +598,15 @@ package body GVD.Process is
                Current_Filter.Filter
                  (Process,
                   Process.Current_Output
-                    (Process.Current_Output_Pos - Str'Length + Offset ..
-                       Process.Current_Output_Pos - 1),
+                    (Process.Current_Output_Pos - Str'Length + Offset
+                     .. Process.Current_Output_Pos - 1),
                   Matched);
             else
                Current_Filter.Filter
                  (Process,
                   Process.Current_Output
-                    (Process.Last_Match + 1 + Offset ..
-                       Process.Current_Output_Pos - 1),
+                    (Process.Last_Match + 1 + Offset
+                     .. Process.Current_Output_Pos - 1),
                   Matched);
             end if;
          end if;
@@ -637,8 +642,7 @@ package body GVD.Process is
 
          if Length (Debuggee_Output) > 0 then
             Display_In_Debuggee_Console
-              (Process => Process,
-               Text    => To_String (Debuggee_Output));
+              (Process => Process, Text => To_String (Debuggee_Output));
          end if;
       end if;
    end Text_Output_Filter;
@@ -665,8 +669,7 @@ package body GVD.Process is
    ------------------------
 
    procedure On_Console_Destroy
-     (Process : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
+     (Process : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Kernel);
       Proc : constant Visual_Debugger := Visual_Debugger (Process);
@@ -680,8 +683,7 @@ package body GVD.Process is
    --------------------
 
    procedure Close_Debugger
-     (Process  : access Visual_Debugger_Record;
-      Has_Died : Boolean := False)
+     (Process : access Visual_Debugger_Record; Has_Died : Boolean := False)
    is
       Kernel : constant Kernel_Handle := Process.Kernel;
       Count  : Natural;
@@ -810,9 +812,7 @@ package body GVD.Process is
 
       Busy := Debugger.Debugger.Get_Process.Command_In_Process;
 
-      if Output /= null
-        and then Busy
-      then
+      if Output /= null and then Busy then
          --  Catch interrupt command when gdb is busy
          if Is_Interrupt_Command (Debugger.Debugger, Lowered_Command) then
             Debugger.Interrupt (Display_In_Console => False);
@@ -824,8 +824,7 @@ package body GVD.Process is
          return;
       end if;
 
-      if Output_Command
-        and then not Debugger_Console_All_Interactions.Get_Pref
+      if Output_Command and then not Debugger_Console_All_Interactions.Get_Pref
       then
          Debugger.Output_Text (Command & ASCII.LF, Is_Command => True);
       end if;
@@ -836,8 +835,7 @@ package body GVD.Process is
       --  in a case-sensitive language.
 
       if Is_Quit_Command (Debugger.Debugger, Lowered_Command) then
-         if Busy
-           and then not Separate_Execution_Window (Debugger.Debugger)
+         if Busy and then not Separate_Execution_Window (Debugger.Debugger)
          then
             --  If the debugger does not have a separate execution window,
             --  send the command right away.
@@ -857,8 +855,9 @@ package body GVD.Process is
       --  answers the question...
 
       if Output = null
-        and then (Debugger.Debugger.Continuation_Line
-                  or else Debugger.Registered_Dialog /= null)
+        and then
+          (Debugger.Debugger.Continuation_Line
+           or else Debugger.Registered_Dialog /= null)
       then
          --  For interactive command, we always send them immediately to
          --  the debugger, since this might be an answer to a gdb question
@@ -880,13 +879,12 @@ package body GVD.Process is
             Force_Send      => False);
 
       else
-         Output.all := new String'
-           (Debugger.Debugger.Send_And_Get_Clean_Output
-              (Command, Mode => Mode));
+         Output.all :=
+           new String'
+             (Debugger.Debugger.Send_And_Get_Clean_Output
+                (Command, Mode => Mode));
 
-         if Output_Command
-           and then Debugger.Debugger /= null
-         then
+         if Output_Command and then Debugger.Debugger /= null then
             Debugger.Debugger.Display_Prompt;
          end if;
       end if;
@@ -955,8 +953,7 @@ package body GVD.Process is
    -- Unregister_Dialog --
    -----------------------
 
-   procedure Unregister_Dialog
-     (Process : access Visual_Debugger_Record) is
+   procedure Unregister_Dialog (Process : access Visual_Debugger_Record) is
    begin
       if Process.Registered_Dialog /= null then
          Destroy (Process.Registered_Dialog);
@@ -968,8 +965,9 @@ package body GVD.Process is
    -- Get_Num --
    -------------
 
-   overriding function Get_Num
-     (Self : not null access Visual_Debugger_Record) return Gint is
+   overriding
+   function Get_Num (Self : not null access Visual_Debugger_Record) return Gint
+   is
    begin
       return Gint (Self.Debugger_Num);
    end Get_Num;
@@ -989,7 +987,8 @@ package body GVD.Process is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access Kernel_Handle_Record'Class) return Boolean is
    begin
@@ -1020,7 +1019,7 @@ package body GVD.Process is
       Load_Executable : Boolean := False) return Visual_Debugger
    is
       Top           : constant GPS_Window :=
-                        GPS_Window (Get_Main_Window (Kernel));
+        GPS_Window (Get_Main_Window (Kernel));
       Process       : Visual_Debugger;
       Program_Args  : GNAT.Strings.String_Access;
       Blank_Pos     : Natural;
@@ -1038,8 +1037,7 @@ package body GVD.Process is
       --  Returns name of debugger and parameters for it
 
       function Get_Debugger_Kind
-        (CL : GNAT.OS_Lib.Argument_List)
-          return GVD.Types.Debugger_Type;
+        (CL : GNAT.OS_Lib.Argument_List) return GVD.Types.Debugger_Type;
       --  Get debugger kind according to executable and prefered kind
 
       --------------
@@ -1047,13 +1045,13 @@ package body GVD.Process is
       --------------
 
       function Get_Main return Virtual_File is
-         type Extension_Array is array (Positive range <>) of
-           Filesystem_String (1 .. 4);
+         type Extension_Array is
+           array (Positive range <>) of Filesystem_String (1 .. 4);
          Extensions : constant Extension_Array := (".exe", ".out", ".vxe");
          Tmp        : Virtual_File;
 
-         End_Of_Exec  : Natural;
-         Exec         : Virtual_File;
+         End_Of_Exec : Natural;
+         Exec        : Virtual_File;
       begin
          if File /= GNATCOLL.VFS.No_File then
             Exec := File;
@@ -1085,9 +1083,10 @@ package body GVD.Process is
                   --  whether it corresponds to a file found from the
                   --  current directory.
 
-                  Exec := Create
-                    (Full_Filename =>
-                       Normalize_Pathname (Exec_Name, Get_Current_Dir));
+                  Exec :=
+                    Create
+                      (Full_Filename =>
+                         Normalize_Pathname (Exec_Name, Get_Current_Dir));
 
                   if not Exec.Is_Regular_File then
                      --  If the Exec is not an absolute path and it is not
@@ -1111,8 +1110,8 @@ package body GVD.Process is
             return Exec;
          else
             for J in Extensions'Range loop
-               Tmp := Create
-                 (Full_Filename => Exec.Full_Name.all & Extensions (J));
+               Tmp :=
+                 Create (Full_Filename => Exec.Full_Name.all & Extensions (J));
 
                if Tmp.Is_Regular_File then
                   Exec := Tmp;
@@ -1129,8 +1128,7 @@ package body GVD.Process is
       -----------------------
 
       function Get_Debugger_Kind
-        (CL : GNAT.OS_Lib.Argument_List)
-         return GVD.Types.Debugger_Type
+        (CL : GNAT.OS_Lib.Argument_List) return GVD.Types.Debugger_Type
       is
          Is_LLDB : constant Boolean :=
            (for some Arg of CL => Starts_With (Arg.all, "lldb"));
@@ -1140,17 +1138,19 @@ package body GVD.Process is
             if Prefered_Kind /= GVD.Types.LLDB then
                Process.Kernel.Insert
                  ("Can't use GDB protocol with given LLDB debugger, switching"
-                  & " to LLDB mode", True, Error);
+                  & " to LLDB mode",
+                  True,
+                  Error);
             end if;
 
             return GVD.Types.LLDB;
          end if;
 
          case Prefered_Kind is
-            when GVD.Types.Gdb =>
+            when GVD.Types.Gdb    =>
                return GVD.Types.Gdb;
 
-            when GVD.Types.DAP =>
+            when GVD.Types.DAP    =>
                return GVD.Types.DAP;
 
             when GVD.Types.Gdb_MI =>
@@ -1159,20 +1159,25 @@ package body GVD.Process is
                else
                   Process.Kernel.Insert
                     ("MI protocol is not supported by GDB, switching to"
-                       & " CI mode", True, Error);
+                     & " CI mode",
+                     True,
+                     Error);
 
                   return GVD.Types.Gdb;
                end if;
-            when GVD.Types.LLDB =>
+
+            when GVD.Types.LLDB   =>
                Process.Kernel.Insert
                  ("Can't use LLDB protocol with given GDB debugger, switching"
-                  & " to GDB CI mode", True, Error);
+                  & " to GDB CI mode",
+                  True,
+                  Error);
 
                return GVD.Types.Gdb;
          end case;
       end Get_Debugger_Kind;
 
-      Args2        : GNAT.OS_Lib.Argument_List_Access;
+      Args2                  : GNAT.OS_Lib.Argument_List_Access;
       Actual_Remote_Target   : constant String :=
         (if Remote_Target /= ""
          then Remote_Target
@@ -1182,7 +1187,7 @@ package body GVD.Process is
          then Remote_Protocol
          else Project.Attribute_Value (Protocol_Attribute));
 
-      Executable    : GNATCOLL.VFS.Virtual_File;
+      Executable : GNATCOLL.VFS.Virtual_File;
 
       ----------------------------
       -- Is_MI_Protocol_Allowed --
@@ -1212,15 +1217,13 @@ package body GVD.Process is
          Append_Argument (CL, "--version", One_Arg);
 
          GPS.Kernel.Remote.Spawn
-           (Kernel            => Kernel_Handle (Kernel),
-            Arguments         => CL,
-            Server            => Debug_Server,
-            Pd                => Fd,
-            Success           => Success);
+           (Kernel    => Kernel_Handle (Kernel),
+            Arguments => CL,
+            Server    => Debug_Server,
+            Pd        => Fd,
+            Success   => Success);
 
-         if Success
-           and then Fd /= null
-         then
+         if Success and then Fd /= null then
             declare
                S : constant String := GNATCOLL.Utils.Get_Command_Output (Fd);
             begin
@@ -1233,9 +1236,9 @@ package body GVD.Process is
          end if;
          Unchecked_Free (Fd);
 
-         return Version.Major > 7
-           or else (Version.Major = 7
-                    and then Version.Minor >= 10);
+         return
+           Version.Major > 7
+           or else (Version.Major = 7 and then Version.Minor >= 10);
 
       exception
          when others =>
@@ -1253,25 +1256,25 @@ package body GVD.Process is
          if Project.Has_Attribute (Debugger_Command_Attribute) then
             --  return debuger from project
             declare
-               Name : constant String := Project.Attribute_Value
-                 (Debugger_Command_Attribute);
+               Name : constant String :=
+                 Project.Attribute_Value (Debugger_Command_Attribute);
             begin
 
                return Name;
             end;
          end if;
 
-         case Prefered_Kind  is
+         case Prefered_Kind is
             when GVD.Types.LLDB =>
                return "lldb";
 
-            when others =>
+            when others         =>
                declare
                   Tc      : constant Toolchain :=
                     Kernel.Get_Toolchains_Manager.Get_Toolchain
                       (Kernel.Get_Project_Tree.Root_Project);
-                  Command : constant String := Get_Command
-                    (Tc, Toolchains.Debugger);
+                  Command : constant String :=
+                    Get_Command (Tc, Toolchains.Debugger);
                begin
                   --  return debugger from toolchain
 
@@ -1293,16 +1296,18 @@ package body GVD.Process is
 
       Args2 := GNAT.OS_Lib.Argument_String_To_List (Get_Debugger_Executable);
 
-      Process.Descriptor.Debugger      := Get_Debugger_Kind (Args2.all);
-      Process.Descriptor.Program       := Executable;
+      Process.Descriptor.Debugger := Get_Debugger_Kind (Args2.all);
+      Process.Descriptor.Program := Executable;
       Process.Descriptor.Debugger_Name := new String'(Args2 (1).all);
 
       case Process.Descriptor.Debugger is
-         when GVD.Types.Gdb =>
+         when GVD.Types.Gdb                    =>
             Process.Debugger := new Gdb_Debugger;
+
          when GVD.Types.Gdb_MI | GVD.Types.DAP =>
             Process.Debugger := new Gdb_MI_Debugger;
-         when GVD.Types.LLDB =>
+
+         when GVD.Types.LLDB                   =>
             Process.Debugger := new LLDB_Debugger;
       end case;
 
@@ -1329,7 +1334,8 @@ package body GVD.Process is
         (Process, Process.Kernel, Create_If_Necessary => True);
       if Process.Debugger_Text /= null then
          Kernel_Callback.Object_Connect
-           (Process.Debugger_Text, Signal_Destroy,
+           (Process.Debugger_Text,
+            Signal_Destroy,
             On_Console_Destroy'Access,
             After       => True,
             User_Data   => null,
@@ -1341,7 +1347,9 @@ package body GVD.Process is
 
       Add_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         First_Text_Output_Filter'Access, Output, Top.all'Address);
+         First_Text_Output_Filter'Access,
+         Output,
+         Top.all'Address);
 
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
@@ -1375,7 +1383,7 @@ package body GVD.Process is
          declare
             use Interactive_Consoles;
             Console : constant Interactive_Console :=
-                GVD.Consoles.Get_Debugger_Interactive_Console (Process);
+              GVD.Consoles.Get_Debugger_Interactive_Console (Process);
          begin
             if Console /= null and then Process.Debugger.Get_Remote_Target = ""
             then
@@ -1393,8 +1401,8 @@ package body GVD.Process is
       end if;
 
       --  Give the focus to the Debugger Console
-      Console_Child := Find_MDI_Child
-        (Get_MDI (Kernel), Process.Debugger_Text);
+      Console_Child :=
+        Find_MDI_Child (Get_MDI (Kernel), Process.Debugger_Text);
 
       if Console_Child /= null then
          Raise_Child (Console_Child);
@@ -1422,9 +1430,12 @@ package body GVD.Process is
          declare
             Dummy : constant Message_Dialog_Buttons :=
               GPS_Message_Dialog
-                (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
-                 (-"Could not launch the debugger"),
-                 Error, Button_OK, Button_OK,
+                (Expect_Out (Get_Process (Process.Debugger))
+                 & ASCII.LF
+                 & (-"Could not launch the debugger"),
+                 Error,
+                 Button_OK,
+                 Button_OK,
                  Parent => Gtk_Window (Top));
          begin
             Process.Exiting := True;
@@ -1491,16 +1502,17 @@ package body GVD.Process is
                GNATCOLL.Traces.Trace
                  (Testsuite_Handle, "executable passed to --debug not found");
             else
-               Buttons := GPS_Message_Dialog
-                 (Msg =>
-                    "The following executable specified with"
-                  & " --debug does not exist on disk: "
-                  & ASCII.LF
-                  & Exec.Display_Full_Name,
-                  Dialog_Type => Error,
-                  Buttons => Button_OK,
-                  Title =>  -"Executable not found",
-                  Parent => Get_Main_Window (Kernel));
+               Buttons :=
+                 GPS_Message_Dialog
+                   (Msg         =>
+                      "The following executable specified with"
+                      & " --debug does not exist on disk: "
+                      & ASCII.LF
+                      & Exec.Display_Full_Name,
+                    Dialog_Type => Error,
+                    Buttons     => Button_OK,
+                    Title       => -"Executable not found",
+                    Parent      => Get_Main_Window (Kernel));
             end if;
          end;
       end if;
@@ -1524,14 +1536,11 @@ package body GVD.Process is
 
       declare
          Debugger_Name : constant String :=
-                           Project.Attribute_Value
-                             (Debugger_Command_Attribute, Default => "");
+           Project.Attribute_Value (Debugger_Command_Attribute, Default => "");
          Target        : constant String :=
-                           Project.Attribute_Value
-                             (Program_Host_Attribute, Default => "");
+           Project.Attribute_Value (Program_Host_Attribute, Default => "");
          Protocol      : constant String :=
-                           Project.Attribute_Value
-                             (Protocol_Attribute, Default => "");
+           Project.Attribute_Value (Protocol_Attribute, Default => "");
       begin
          Get_Registry (Kernel).Tree.Unload;
 
@@ -1553,26 +1562,24 @@ package body GVD.Process is
 
          if Debugger_Name /= "" then
             Project.Set_Attribute
-              (Attribute          => Debugger_Command_Attribute,
-               Value              => Debugger_Name);
+              (Attribute => Debugger_Command_Attribute,
+               Value     => Debugger_Name);
          end if;
 
          if Target /= "" then
             Project.Set_Attribute
-              (Attribute          => Program_Host_Attribute,
-               Value              => Target);
+              (Attribute => Program_Host_Attribute, Value => Target);
          end if;
 
          if Protocol /= "" then
             Project.Set_Attribute
-              (Attribute          => Protocol_Attribute,
-               Value              => Protocol);
+              (Attribute => Protocol_Attribute, Value => Protocol);
          end if;
       end;
 
       declare
          List        : GNAT.Strings.String_List :=
-                         Source_Files_List (Debugger.Debugger);
+           Source_Files_List (Debugger.Debugger);
          Bases       : GNAT.OS_Lib.Argument_List (List'Range);
          Bases_Index : Natural := Bases'First;
          Dirs        : GNAT.OS_Lib.Argument_List (List'Range);
@@ -1587,18 +1594,17 @@ package body GVD.Process is
          for L in List'Range loop
             declare
                Remote_File : constant Virtual_File :=
-                               Create_From_Base
-                                 (+List (L).all,
-                                  Dir_Name (Exec),
-                                  Get_Nickname (Debug_Server));
+                 Create_From_Base
+                   (+List (L).all,
+                    Dir_Name (Exec),
+                    Get_Nickname (Debug_Server));
                Local_File  : constant Virtual_File := To_Local (Remote_File);
                Dir         : constant Virtual_File := Local_File.Dir;
                Base        : constant Filesystem_String :=
-                               Base_Name (Local_File);
+                 Base_Name (Local_File);
                Lang        : constant String :=
-                               Get_Language_From_File
-                                 (Get_Language_Handler (Kernel),
-                                  Local_File);
+                 Get_Language_From_File
+                   (Get_Language_Handler (Kernel), Local_File);
                Found       : Boolean;
 
             begin
@@ -1655,8 +1661,8 @@ package body GVD.Process is
          end loop;
 
          Project.Set_Attribute
-           (Attribute          => Source_Dirs_Attribute,
-            Values             => Dirs (Dirs'First .. Dirs_Index - 1));
+           (Attribute => Source_Dirs_Attribute,
+            Values    => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
 
          GNATCOLL.Traces.Trace (Me, "Setting Source_Files:");
@@ -1665,8 +1671,8 @@ package body GVD.Process is
          end loop;
 
          Project.Set_Attribute
-           (Attribute          => Source_Files_Attribute,
-            Values             => Bases (Bases'First .. Bases_Index - 1));
+           (Attribute => Source_Files_Attribute,
+            Values    => Bases (Bases'First .. Bases_Index - 1));
          Free (Bases);
 
          GNATCOLL.Traces.Trace (Me, "Setting Languages:");
@@ -1682,8 +1688,8 @@ package body GVD.Process is
                  (new String'("ada"), new String'("c"), new String'("c++")));
          else
             Project.Set_Attribute
-              (Attribute          => Languages_Attribute,
-               Values             => Langs (Langs'First .. Lang_Index - 1));
+              (Attribute => Languages_Attribute,
+               Values    => Langs (Langs'First .. Lang_Index - 1));
          end if;
 
          Free (Langs);
@@ -1692,16 +1698,13 @@ package body GVD.Process is
 
          if Exec /= GNATCOLL.VFS.No_File then
             Project.Set_Attribute
-              (Attribute          => Obj_Dir_Attribute,
-               Value              => +Dir_Name (Exec));
+              (Attribute => Obj_Dir_Attribute, Value => +Dir_Name (Exec));
             Project.Set_Attribute
-              (Attribute          => Exec_Dir_Attribute,
-               Value              => +Dir_Name (Exec));
+              (Attribute => Exec_Dir_Attribute, Value => +Dir_Name (Exec));
 
             Main (Main'First) := new String'(+Full_Name (Exec));
             Project.Set_Attribute
-              (Attribute          => Main_Attribute,
-               Values             => Main);
+              (Attribute => Main_Attribute, Values => Main);
             Free (Main);
          end if;
          Free (List);
@@ -1721,7 +1724,8 @@ package body GVD.Process is
    -----------------
 
    package body Dbg_Command is
-      overriding function Execute
+      overriding
+      function Execute
         (Command : access Debugger_Command;
          Context : Interactive_Command_Context) return Command_Return_Type
       is

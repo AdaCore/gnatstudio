@@ -15,31 +15,30 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with VSS.Strings;                 use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 
-with Basic_Types;                 use Basic_Types;
+with Basic_Types; use Basic_Types;
 with GPS.Kernel;
-with GPS.Markers;                 use GPS.Markers;
+with GPS.Markers; use GPS.Markers;
 
-with DAP.Types.Breakpoints;       use DAP.Types.Breakpoints;
-with DAP.Types;                   use DAP.Types;
+with DAP.Types.Breakpoints; use DAP.Types.Breakpoints;
+with DAP.Types;             use DAP.Types;
 with DAP.Tools;
 
 package DAP.Clients.Breakpoint_Managers is
 
    type Breakpoint_Manager_Type
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is
      tagged limited private;
    --  Breakpoints manager when debugging is in progress
 
-   type Breakpoint_Manager_Access is access
-     all Breakpoint_Manager_Type'Class;
+   type Breakpoint_Manager_Access is access all Breakpoint_Manager_Type'Class;
 
-   procedure Initialize
-     (Self : not null access Breakpoint_Manager_Type);
+   procedure Initialize (Self : not null access Breakpoint_Manager_Type);
    --  Initialize the breakpoints' manager and set the initial breakpoints
    --  on the server's side.
 
@@ -61,8 +60,7 @@ package DAP.Clients.Breakpoint_Managers is
    --  breakpoint's location.
 
    procedure Break
-     (Self : not null access Breakpoint_Manager_Type;
-      Data : Breakpoint_Data);
+     (Self : not null access Breakpoint_Manager_Type; Data : Breakpoint_Data);
    --  Add the given breakpoint.
 
    procedure Break_Source
@@ -98,14 +96,13 @@ package DAP.Clients.Breakpoint_Managers is
    --  Add a breakpoint for the address
 
    procedure Toggle_Instruction_Breakpoint
-     (Self    : not null access Breakpoint_Manager_Type;
-      Address : Address_Type);
+     (Self : not null access Breakpoint_Manager_Type; Address : Address_Type);
    --  Add/delete a breakpoint for the address
 
    procedure Remove_Breakpoint_At
-     (Self      : not null access Breakpoint_Manager_Type;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Editable_Line_Type);
+     (Self : not null access Breakpoint_Manager_Type;
+      File : GNATCOLL.VFS.Virtual_File;
+      Line : Editable_Line_Type);
    --  Remove breakpoint for the file/line
 
    procedure Remove_Breakpoints
@@ -130,15 +127,14 @@ package DAP.Clients.Breakpoint_Managers is
    --  Enable/disable breakpoints
 
    function Get_Breakpoint_From_Index
-     (Self   : not null access Breakpoint_Manager_Type;
-      Index  : Positive)
+     (Self : not null access Breakpoint_Manager_Type; Index : Positive)
       return DAP.Types.Breakpoints.Breakpoint_Data;
    --  Retrieve data for breakpoint at Index
 
    procedure Replace_Breakpoint_At_Index
-     (Self   : not null access Breakpoint_Manager_Type;
-      Data   : DAP.Types.Breakpoints.Breakpoint_Data;
-      Index  : Positive);
+     (Self  : not null access Breakpoint_Manager_Type;
+      Data  : DAP.Types.Breakpoints.Breakpoint_Data;
+      Index : Positive);
    --  Replace data for breakpoint at Index
 
    procedure Set_Breakpoint_Command
@@ -181,8 +177,7 @@ package DAP.Clients.Breakpoint_Managers is
    --  Set commands for the breakpoints
 
    function Has_Breakpoint
-     (Self   : not null access Breakpoint_Manager_Type;
-      Marker : Location_Marker)
+     (Self : not null access Breakpoint_Manager_Type; Marker : Location_Marker)
       return Boolean;
    --  Return True if a breakpoint exists for the given location
 
@@ -195,8 +190,8 @@ private
 
    type Breakpoint_Manager_Type
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Client : not null access DAP.Clients.DAP_Client'Class) is
-     tagged limited record
+      Client : not null access DAP.Clients.DAP_Client'Class)
+   is tagged limited record
       Holder : Breakpoint_Holder;
       --  Actual breakpoints set for the debugger.
 
@@ -219,13 +214,13 @@ private
    --  File needs to be set only when sending SLOC breakpoints.
 
    type Synchonization_Data is record
-      Files_To_Sync     : File_Sets.Set;
+      Files_To_Sync : File_Sets.Set;
       --  The files that need to be synchonized.
 
-      Sync_Functions    : Boolean := False;
+      Sync_Functions : Boolean := False;
       --  True if function breakpoints should be synchonized.
 
-      Sync_Exceptions   : Boolean := False;
+      Sync_Exceptions : Boolean := False;
       --  True if exception breakpoints should be synchonized.
 
       Sync_Instructions : Boolean := False;

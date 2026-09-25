@@ -31,8 +31,7 @@ package GVD.Variables.Types.Classes is
    --  It can have one or more ancestors, whose contents is also displayed when
    --  the value of the variable is shown.
 
-   function New_Class_Type
-     (Num_Ancestors : Natural) return GVD_Type_Holder;
+   function New_Class_Type (Num_Ancestors : Natural) return GVD_Type_Holder;
    --  Create a new class type, with a specific number of ancestors (parent
    --  classes).
 
@@ -47,80 +46,81 @@ package GVD.Variables.Types.Classes is
    --  No copy of Ancestor is made, we just keep the pointer.
 
    procedure Set_Child
-     (Self  : not null access GVD_Class_Type;
-      Child : GVD_Type_Holder);
+     (Self : not null access GVD_Class_Type; Child : GVD_Type_Holder);
    --  Record the child component of Item (where the fields of Item are
    --  defined).
 
    function Get_Child
-     (Self : not null access GVD_Class_Type)
-      return GVD_Type_Holder;
+     (Self : not null access GVD_Class_Type) return GVD_Type_Holder;
    --  Return a pointer to the child.
 
    function Get_Ancestor
-     (Self : not null access GVD_Class_Type;
-      Num  : Positive)
+     (Self : not null access GVD_Class_Type; Num : Positive)
       return GVD_Type_Holder;
    --  Return a pointer to the Num-th ancestor.
 
    function Get_Num_Ancestors
-     (Self : not null access GVD_Class_Type)
-      return Natural;
+     (Self : not null access GVD_Class_Type) return Natural;
    --  Return the number of ancestors.
 
    function Get_Value_Command
-     (Self          : not null access GVD_Class_Type;
-      Unused_Entity : String)
-      return String is ("");
+     (Self : not null access GVD_Class_Type; Unused_Entity : String)
+      return String
+   is ("");
    --  Returns command for retrieving value
 
-   procedure Set_Value
-     (Self  : not null access GVD_Class_Type;
-      Value : String) is null;
+   procedure Set_Value (Self : not null access GVD_Class_Type; Value : String)
+   is null;
    --  Parse and set value
 
 private
 
    type Class_Type_Array is array (Positive range <>) of GVD_Type_Holder;
 
-   type GVD_Class_Type (Num_Ancestors : Natural) is
-     new GVD_Generic_Type with record
-      Child          : GVD_Type_Holder;
-      Ancestors      : Class_Type_Array (1 .. Num_Ancestors) :=
+   type GVD_Class_Type (Num_Ancestors : Natural) is new GVD_Generic_Type
+   with record
+      Child     : GVD_Type_Holder;
+      Ancestors : Class_Type_Array (1 .. Num_Ancestors) :=
         (others => Empty_GVD_Type_Holder);
    end record;
 
-   overriding function Get_Type_Descr
-     (Self : not null access GVD_Class_Type) return String is ("Class");
+   overriding
+   function Get_Type_Descr
+     (Self : not null access GVD_Class_Type) return String
+   is ("Class");
 
-   overriding procedure Clear (Self : not null access GVD_Class_Type);
+   overriding
+   procedure Clear (Self : not null access GVD_Class_Type);
 
-   overriding procedure Free (Self : not null access GVD_Class_Type);
+   overriding
+   procedure Free (Self : not null access GVD_Class_Type);
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Class_Type;
       Item : not null GVD_Generic_Type_Access);
 
-   overriding function Replace
+   overriding
+   function Replace
      (Self         : not null access GVD_Class_Type;
       Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class)
-      return GVD_Type_Holder'Class;
+      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class;
 
-   overriding procedure Set_Type_Name
-     (Self : not null access GVD_Class_Type;
-      Name : String);
+   overriding
+   procedure Set_Type_Name
+     (Self : not null access GVD_Class_Type; Name : String);
 
-   overriding function Get_Type_Name
-     (Self : not null access GVD_Class_Type)
-      return String;
+   overriding
+   function Get_Type_Name
+     (Self : not null access GVD_Class_Type) return String;
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Class_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Class_Type; Item : GVD_Type_Holder'Class)
       return Boolean;
 
-   overriding function Start
+   overriding
+   function Start
      (Self : not null access GVD_Class_Type) return Generic_Iterator'Class;
 
 end GVD.Variables.Types.Classes;

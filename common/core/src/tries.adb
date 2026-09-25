@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
-with System.Memory; use System.Memory;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
+with System.Memory;           use System.Memory;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 package body Tries is
 
@@ -28,14 +28,14 @@ package body Tries is
 
    pragma Warnings (Off);
    --  These 4 UCs are safe aliasing-wise, so kill warning
-   function Convert is new Ada.Unchecked_Conversion
-     (Cell_Child_Array_Access, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Cell_Child_Array_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (Data_Type_Array_Access, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Data_Type_Array_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (Cell_Child_Array_Access, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Cell_Child_Array_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (Data_Type_Array_Access, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Data_Type_Array_Access);
    pragma Warnings (On);
 
    Component_Size : constant size_t :=
@@ -160,10 +160,10 @@ package body Tries is
    -----------
 
    procedure Clear (Tree : in out Trie_Tree) is
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Mod_Counter, Mod_Access);
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Cell_Child, Cell_Child_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Mod_Counter, Mod_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Cell_Child, Cell_Child_Access);
    begin
       if Tree.Child /= null then
          Free (Tree.Child.all);
@@ -187,13 +187,18 @@ package body Tries is
          if Ind = null then
             Put ("(<null>");
          elsif Ind'First + Cell.Index_Length - 1 > Ind'Last then
-            Put ("('" & Ind (Ind'First + Eliminate .. Ind'Last)
-                 & "(invalid length:" & Integer'Image (Cell.Index_Length)
-                 & ")'");
+            Put
+              ("('"
+               & Ind (Ind'First + Eliminate .. Ind'Last)
+               & "(invalid length:"
+               & Integer'Image (Cell.Index_Length)
+               & ")'");
          else
-            Put ("('"
-                 & Ind (Ind'First + Eliminate ..
-                          Ind'First + Cell.Index_Length - 1) & "'");
+            Put
+              ("('"
+               & Ind
+                   (Ind'First + Eliminate .. Ind'First + Cell.Index_Length - 1)
+               & "'");
          end if;
 
          Put (Cell.First_Char_Of_Key & ' ');
@@ -226,21 +231,21 @@ package body Tries is
       Index          : String;
       Pointer        : out Cell_Pointer)
    is
-      Current  : Cell_Child_Access := Root_Cell;
-      Start    : Integer := Index'First;
-      Ind      : Cst_String_Access;
+      Current             : Cell_Child_Access := Root_Cell;
+      Start               : Integer := Index'First;
+      Ind                 : Cst_String_Access;
       Ind_First, Ind_Last : Natural;
-      Child    : Integer;
-      TL       : Character;
+      Child               : Integer;
+      TL                  : Character;
    begin
       pragma Assert (Index'Length /= 0);
 
       --  If we are processing the root node
       if Root_Cell.Children = null then
          Pointer.Cell_Parent := null;
-         Pointer.Cell        := Current;
-         Pointer.Last        := Index'First;
-         Pointer.Scenario    := 5;
+         Pointer.Cell := Current;
+         Pointer.Last := Index'First;
+         Pointer.Scenario := 5;
          return;
       end if;
 
@@ -265,8 +270,8 @@ package body Tries is
             Child := Child + 1;
 
             if Child > Current.Num_Children then
-               Pointer.Last     := Start;
-               Pointer.Cell     := Current;
+               Pointer.Last := Start;
+               Pointer.Cell := Current;
                Pointer.Scenario := 4;
                return;
             end if;
@@ -274,7 +279,7 @@ package body Tries is
 
          Pointer.Cell_Parent := Current;
          Current := Current.Children (Child)'Access;
-         Ind     := Get_Index (Current.all);
+         Ind := Get_Index (Current.all);
 
          if Ind = null then
             pragma Assert (False);
@@ -289,7 +294,7 @@ package body Tries is
          end if;
 
          Ind_First := Ind'First + Pointer.Cell_Parent.Index_Length;
-         Ind_Last  := Ind'First + Current.Index_Length - 1;
+         Ind_Last := Ind'First + Current.Index_Length - 1;
 
          if Start = Index'Last then
             Pointer.Cell := Current;
@@ -300,7 +305,7 @@ package body Tries is
             else
                Pointer.First_Not_Matched :=
                  Ind (Ind'First + Pointer.Cell_Parent.Index_Length + 1);
-               Pointer.Scenario     := 2;
+               Pointer.Scenario := 2;
                Pointer.Index_Length := Index'Length;
             end if;
             return;
@@ -315,11 +320,11 @@ package body Tries is
             then
                --  If at least one character matched, this is the
                --  correct cell, although it will have to be split
-               Pointer.Cell              := Current;
-               Pointer.Last              := Start - 1;
-               Pointer.Index_Length      := J - Ind'First;
+               Pointer.Cell := Current;
+               Pointer.Last := Start - 1;
+               Pointer.Index_Length := J - Ind'First;
                Pointer.First_Not_Matched := Ind (J);
-               Pointer.Scenario          := 1;
+               Pointer.Scenario := 1;
                return;
             end if;
 
@@ -336,9 +341,9 @@ package body Tries is
                if J = Ind_Last then
                   Pointer.Scenario := 3;
                else
-                  Pointer.Index_Length      := J - Ind'First + 1;
+                  Pointer.Index_Length := J - Ind'First + 1;
                   Pointer.First_Not_Matched := Ind (J + 1);
-                  Pointer.Scenario          := 2;
+                  Pointer.Scenario := 2;
                end if;
                return;
             end if;
@@ -348,8 +353,8 @@ package body Tries is
          --  too short, check the children
       end loop;
 
-      Pointer.Last     := Start;
-      Pointer.Cell     := Current;
+      Pointer.Last := Start;
+      Pointer.Cell := Current;
       Pointer.Scenario := 4;
    end Find_Cell_Child;
 
@@ -357,10 +362,7 @@ package body Tries is
    -- Insert --
    ------------
 
-   procedure Insert
-     (Tree : in out Trie_Tree;
-      Data : Data_Type)
-   is
+   procedure Insert (Tree : in out Trie_Tree; Data : Data_Type) is
       Pointer : Cell_Pointer;
       Index   : constant Cst_String_Access := Get_Index (Data);
    begin
@@ -395,15 +397,14 @@ package body Tries is
    -- Insert --
    ------------
 
-   procedure Insert
-     (Index : String; Pointer : Cell_Pointer; Data : Data_Type)
+   procedure Insert (Index : String; Pointer : Cell_Pointer; Data : Data_Type)
    is
       Initial_Array_Size : constant := 8;
 
-      Children     : Cell_Child_Array_Access;
+      Children : Cell_Child_Array_Access;
    begin
       case Pointer.Scenario is
-         when 1 =>
+         when 1      =>
             Children := Convert (Alloc (Initial_Array_Size * Component_Size));
 
             Children (Children'First) :=
@@ -426,8 +427,8 @@ package body Tries is
                Parent_Cell       => Pointer.Cell,
                Number_In_Parent  => 2);
 
-            if Children (Children'First).First_Char_Of_Key >
-              Children (Children'First + 1).First_Char_Of_Key
+            if Children (Children'First).First_Char_Of_Key
+              > Children (Children'First + 1).First_Char_Of_Key
             then
                --  In this case, the two nodes are not in order. Swap them.
 
@@ -455,7 +456,7 @@ package body Tries is
                Parent_Cell       => Pointer.Cell.Parent_Cell,
                Number_In_Parent  => Pointer.Cell.Number_In_Parent);
 
-         when 2 =>
+         when 2      =>
             Children := Convert (Alloc (Initial_Array_Size * Component_Size));
             Children (Children'First) :=
               (Data              => Pointer.Cell.Data,
@@ -479,25 +480,28 @@ package body Tries is
                Parent_Cell       => Pointer.Cell.Parent_Cell,
                Number_In_Parent  => Pointer.Cell.Number_In_Parent);
 
-         when 3 =>
+         when 3      =>
             Free (Pointer.Cell.Data);
             Pointer.Cell.Data := Data;
 
-         when 4 | 5 =>
+         when 4 | 5  =>
             if Pointer.Cell.Children /= null then
                if Pointer.Cell.Num_Children = Pointer.Cell.Children_Length then
                   Pointer.Cell.Children_Length :=
                     Pointer.Cell.Children_Length * 2;
 
-                  Pointer.Cell.Children     := Convert
-                    (Realloc (Convert (Pointer.Cell.Children),
-                     size_t (Pointer.Cell.Children_Length) * Component_Size));
+                  Pointer.Cell.Children :=
+                    Convert
+                      (Realloc
+                         (Convert (Pointer.Cell.Children),
+                          size_t (Pointer.Cell.Children_Length)
+                          * Component_Size));
                end if;
 
                Pointer.Cell.Num_Children := Pointer.Cell.Num_Children + 1;
             else
-               Pointer.Cell.Children     := Convert
-                 (Alloc (Initial_Array_Size * Component_Size));
+               Pointer.Cell.Children :=
+                 Convert (Alloc (Initial_Array_Size * Component_Size));
                Pointer.Cell.Children_Length := Initial_Array_Size;
                Pointer.Cell.Num_Children := 1;
             end if;
@@ -517,8 +521,8 @@ package body Tries is
             --  place it at the proper location.
 
             for J in reverse 1 .. Pointer.Cell.Num_Children - 1 loop
-               if Pointer.Cell.Children (J).First_Char_Of_Key >
-                 Pointer.Cell.Children (J + 1).First_Char_Of_Key
+               if Pointer.Cell.Children (J).First_Char_Of_Key
+                 > Pointer.Cell.Children (J + 1).First_Char_Of_Key
                then
                   declare
                      Tmp : constant Cell_Child := Pointer.Cell.Children (J);
@@ -599,14 +603,16 @@ package body Tries is
                      Tmp : Cell_Child := Pointer.Cell_Parent.all;
                   begin
                      if Pointer.Cell_Parent.Children
-                       (Pointer.Cell_Parent.Children'First)'Access
+                          (Pointer.Cell_Parent.Children'First)'Access
                        = Pointer.Cell
                      then
-                        Pointer.Cell_Parent.all := Pointer.Cell_Parent.Children
-                          (Pointer.Cell_Parent.Children'First + 1);
+                        Pointer.Cell_Parent.all :=
+                          Pointer.Cell_Parent.Children
+                            (Pointer.Cell_Parent.Children'First + 1);
                      else
-                        Pointer.Cell_Parent.all := Pointer.Cell_Parent.Children
-                          (Pointer.Cell_Parent.Children'First);
+                        Pointer.Cell_Parent.all :=
+                          Pointer.Cell_Parent.Children
+                            (Pointer.Cell_Parent.Children'First);
                      end if;
                      Pointer.Cell_Parent.First_Char_Of_Key :=
                        Tmp.First_Char_Of_Key;
@@ -615,20 +621,21 @@ package body Tries is
                   end;
 
                else
-                  Pointer.Cell.all := Pointer.Cell_Parent.Children
-                    (Pointer.Cell_Parent.Num_Children);
+                  Pointer.Cell.all :=
+                    Pointer.Cell_Parent.Children
+                      (Pointer.Cell_Parent.Num_Children);
                   Pointer.Cell_Parent.Num_Children :=
                     Pointer.Cell_Parent.Num_Children - 1;
 
-                  --  ??? We don't remove anymore the actual array, since we
-                  --  expect it to be filled later. However, this could be less
-                  --  drastric and controlled by a switch.
+               --  ??? We don't remove anymore the actual array, since we
+               --  expect it to be filled later. However, this could be less
+               --  drastric and controlled by a switch.
 
---                    Pointer.Cell_Parent.Children := Convert
---                      (Realloc
---                         (Convert (Pointer.Cell_Parent.Children),
---                          size_t (Pointer.Cell_Parent.Num_Children)
---                          * Component_Size));
+               --             Pointer.Cell_Parent.Children := Convert
+               --               (Realloc
+               --                   (Convert (Pointer.Cell_Parent.Children),
+               --                    size_t (Pointer.Cell_Parent.Num_Children)
+               --                    * Component_Size));
                end if;
             end if;
 
@@ -639,11 +646,11 @@ package body Tries is
                --  Cell_Parent.Children (C)
 
                Tmp := Pointer.Cell.Children;
-               Pointer.Cell.Children
-                 (Pointer.Cell.Children'First).First_Char_Of_Key :=
+               Pointer.Cell.Children (Pointer.Cell.Children'First)
+                 .First_Char_Of_Key :=
                  Pointer.Cell.First_Char_Of_Key;
-               Pointer.Cell.all := Pointer.Cell.Children
-                 (Pointer.Cell.Children'First);
+               Pointer.Cell.all :=
+                 Pointer.Cell.Children (Pointer.Cell.Children'First);
                Free (Convert (Tmp));
 
             else
@@ -654,8 +661,8 @@ package body Tries is
          Update_Children_Parent (Pointer.Cell_Parent);
 
       else
-         Trace (Me, "Couldn't remove from Tree scenario="
-                & Pointer.Scenario'Img);
+         Trace
+           (Me, "Couldn't remove from Tree scenario=" & Pointer.Scenario'Img);
       end if;
    end Remove;
 
@@ -696,8 +703,8 @@ package body Tries is
    -----------
 
    function Start (Tree : access Trie_Tree; Prefix : String) return Iterator is
-      Pointer   : Cell_Pointer;
-      Iter      : Iterator := Null_Iterator;
+      Pointer : Cell_Pointer;
+      Iter    : Iterator := Null_Iterator;
    begin
       if Tree.Child = null then
          Iter.Current_Cell := null;
@@ -785,8 +792,8 @@ package body Tries is
 
             Force_Loop := True;
          else
-            Iter.Current_Cell := Iter.Current_Cell.Children
-              (Iter.Current_Index)'Access;
+            Iter.Current_Cell :=
+              Iter.Current_Cell.Children (Iter.Current_Index)'Access;
             Iter.Current_Index := 1;
          end if;
 
@@ -810,7 +817,8 @@ package body Tries is
                --  between this and its parent.
                Iter.Current_Name.all
                  (Iter.Current_Name'First
-                  .. Iter.Current_Name'First + Suffix'Length - 1) := Suffix;
+                  .. Iter.Current_Name'First + Suffix'Length - 1) :=
+                 Suffix;
             end if;
 
             Iter.Current_Name_Length := Suffix'Length;
@@ -843,8 +851,8 @@ package body Tries is
 
    function Get_Index (Iter : Iterator) return String is
    begin
-      return Iter.Root_Name.all
-        & Iter.Current_Name (1 .. Iter.Current_Name_Length);
+      return
+        Iter.Root_Name.all & Iter.Current_Name (1 .. Iter.Current_Name_Length);
    end Get_Index;
 
    ------------
@@ -862,8 +870,7 @@ package body Tries is
 
    function Is_Valid (Iter : Iterator) return Boolean is
    begin
-      return At_End (Iter)
-        or else Iter.Current_Cell.Data /= No_Data;
+      return At_End (Iter) or else Iter.Current_Cell.Data /= No_Data;
    end Is_Valid;
 
    ----------
@@ -902,10 +909,11 @@ package body Tries is
         and then Iter.Mod_Clock.all /= Iter.Initial_Timestamp
       then
          declare
-            Full_Name : constant String := Iter.Root_Name.all
+            Full_Name : constant String :=
+              Iter.Root_Name.all
               & Iter.Current_Name
-              (Iter.Current_Name'First
-               .. Iter.Current_Name'First + Iter.Current_Name_Length - 1);
+                  (Iter.Current_Name'First
+                   .. Iter.Current_Name'First + Iter.Current_Name_Length - 1);
          begin
             --  Here, there have been modifications. We try to retreive the
             --  cells as they were. If we can't, it's the end of the iteration.
@@ -918,7 +926,9 @@ package body Tries is
             end if;
 
             Find_Cell_Child
-              (Tree_Root_Cell, Iter.Case_Sensitive, Iter.Root_Name.all,
+              (Tree_Root_Cell,
+               Iter.Case_Sensitive,
+               Iter.Root_Name.all,
                Pointer);
 
             if Pointer.Scenario /= 3 then

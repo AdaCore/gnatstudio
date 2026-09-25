@@ -23,14 +23,15 @@
 --  levels: Project, File, Subprogram, Line.
 --  </description>
 
-with Ada.Containers.Indefinite_Ordered_Maps; use Ada.Containers;
+with Ada.Containers.Indefinite_Ordered_Maps;
+use Ada.Containers;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;                           use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.VFS;                           use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GPS.Kernel;
 with GPS.Editors.Line_Information;
 with Commands;
@@ -42,9 +43,7 @@ package Code_Analysis is
    -- Tree decoration records --
    -----------------------------
 
-   type Coverage_Status is
-     (Valid,
-      Undetermined);
+   type Coverage_Status is (Valid, Undetermined);
 
    type File_Coverage_Status is
      (Valid,
@@ -59,20 +58,14 @@ package Code_Analysis is
       File_Corrupted,
       --  The gcov file could not be parsed.
       Undetermined);
-      --  The status is undetermined.
+   --  The status is undetermined.
 
    ----------------------
    -- Coverage metrics --
    ----------------------
 
    type Metric_Kind is
-     (Unknown_Metric,
-      Line_Metric,
-      Statement,
-      Decision,
-      MCDC,
-      ATC,
-      ATCC);
+     (Unknown_Metric, Line_Metric, Statement, Decision, MCDC, ATC, ATCC);
    --  The coverage criteria we know how to recognize, in order of increasing
    --  strictness: that order is what arbitrates between the criteria of
    --  several files when they do not agree on a coverage level.
@@ -82,10 +75,11 @@ package Code_Analysis is
    --  tool may report: it is kept for display purposes but is never chosen to
    --  drive the displayed percentage.
 
-   package Name_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Ada.Strings.Unbounded.Unbounded_String,
-      "="          => Ada.Strings.Unbounded."=");
+   package Name_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Ada.Strings.Unbounded.Unbounded_String,
+        "="          => Ada.Strings.Unbounded."=");
 
    type Coverage_Metric is record
       Kind     : Metric_Kind := Unknown_Metric;
@@ -105,9 +99,10 @@ package Code_Analysis is
    end record;
    --  A single coverage figure, as reported by the coverage tool itself
 
-   package Metric_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Coverage_Metric);
+   package Metric_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Coverage_Metric);
 
    function Metric_Kind_Name (Kind : Metric_Kind) return String;
    --  A short label naming Kind, e.g. "MC/DC". Returns an empty string for
@@ -125,22 +120,19 @@ package Code_Analysis is
    --  Unknown_Metric when no component of Level is recognized.
 
    type Coverage is abstract tagged record
-      Coverage   : Natural := 0;
+      Coverage : Natural := 0;
    end record;
    --  Basic code coverage information
    --  Record the Line's execution counts and the Subprogram, File and Project
    --  number of not covered lines
 
-   function Is_Valid
-     (Self : Coverage) return Boolean is abstract;
+   function Is_Valid (Self : Coverage) return Boolean is abstract;
    --  True if coverage contains valid coverage data
-   function Print_Status
-     (Self : Coverage) return String is abstract;
+   function Print_Status (Self : Coverage) return String is abstract;
    --  Return a message explaining the coverage status
 
    function Is_Exempted (Self : Coverage) return Boolean
-   is
-     (False);
+   is (False);
    --  Should return True if this coverage information is related to exempted
    --  code.
    --
@@ -157,20 +149,22 @@ package Code_Analysis is
      (Coverage : access Line_Coverage;
       Kernel   : GPS.Kernel.Kernel_Handle;
       Bin_Mode : Boolean := False)
-      return GPS.Editors.Line_Information.Line_Information_Record is abstract;
+      return GPS.Editors.Line_Information.Line_Information_Record
+   is abstract;
    --  Return a String_Access pointing on a message describing the coverage
    --  state of the line from which the Coverage record had been extracted
    --  If Bin_Mode is True, then the returned messages can only be between
    --  (covered | not covered)
 
    procedure Add_Location_If_Uncovered
-     (Coverage    : Line_Coverage;
-      Kernel      : GPS.Kernel.Kernel_Handle;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Line_Number : Positive;
-      Line_Text   : String_Access;
-      Added       : in out Boolean;
-      Allow_Auto_Jump_To_First : Boolean) is abstract;
+     (Coverage                 : Line_Coverage;
+      Kernel                   : GPS.Kernel.Kernel_Handle;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line_Number              : Positive;
+      Line_Text                : String_Access;
+      Added                    : in out Boolean;
+      Allow_Auto_Jump_To_First : Boolean)
+   is abstract;
    --  Adds location of the uncovered line to the location window. Set Added to
    --  True if line has been added; otherwise preserve Added value.
 
@@ -178,12 +172,12 @@ package Code_Analysis is
       Children : Natural := 0;
       --  The Subprogram, File or Project children count
 
-      Metrics  : Metric_Vectors.Vector;
+      Metrics : Metric_Vectors.Vector;
       --  The coverage figures reported by the coverage tool itself. Empty
       --  when the tool reports none, in which case the line-based
       --  Children / Coverage pair is the only figure available.
 
-      Level    : Ada.Strings.Unbounded.Unbounded_String;
+      Level : Ada.Strings.Unbounded.Unbounded_String;
       --  The coverage level announced by the tool (the "Coverage level:"
       --  line of an .xcov file). Empty when the tool announces none.
 
@@ -211,8 +205,10 @@ package Code_Analysis is
       Status : File_Coverage_Status := Undetermined;
    end record;
 
-   overriding function Is_Valid (Self : File_Coverage) return Boolean;
-   overriding function Print_Status (Self : File_Coverage) return String;
+   overriding
+   function Is_Valid (Self : File_Coverage) return Boolean;
+   overriding
+   function Print_Status (Self : File_Coverage) return String;
 
    type Subprogram_Coverage is new Node_Coverage with record
       Called : Natural;
@@ -221,12 +217,14 @@ package Code_Analysis is
    --  Specific Subprogram extra info
    --  The number of time the subprogram has been called
 
-   overriding function Is_Valid (Self : Subprogram_Coverage) return Boolean;
-   overriding function Print_Status (Self : Subprogram_Coverage) return String;
+   overriding
+   function Is_Valid (Self : Subprogram_Coverage) return Boolean;
+   overriding
+   function Print_Status (Self : Subprogram_Coverage) return String;
 
    type Project_Coverage is new Node_Coverage with record
       Status    : Coverage_Status := Undetermined;
-      Have_Runs : Boolean         := False;
+      Have_Runs : Boolean := False;
       Runs      : Natural;
    end record;
    --  Store project number of call if this info is available
@@ -234,8 +232,10 @@ package Code_Analysis is
    --  in their header, reporting the number of executions of the produced
    --  executable file
 
-   overriding function Is_Valid (Self : Project_Coverage) return Boolean;
-   overriding function Print_Status (Self : Project_Coverage) return String;
+   overriding
+   function Is_Valid (Self : Project_Coverage) return Boolean;
+   overriding
+   function Print_Status (Self : Project_Coverage) return String;
 
    type Coverage_Access is access all Coverage'Class;
 
@@ -245,7 +245,7 @@ package Code_Analysis is
    procedure Finalize (Self : access CodePeer_Data_Root) is null;
 
    type Analysis is record
-      Coverage_Data  : Coverage_Access;
+      Coverage_Data : Coverage_Access;
       --  Future other specific analysis records might be added here, such as
       --  Metrics_Data : Metrics_Record_Access;
       --  SSAT_Data    : SSAT_Record_Access;
@@ -272,40 +272,40 @@ package Code_Analysis is
    type Project;
 
    type Subprogram_Access is access all Subprogram'Class;
-   type File_Access       is access all File'Class;
-   type Project_Access    is access all Project'Class;
-   type Node_Access       is access all Node'Class;
+   type File_Access is access all File'Class;
+   type Project_Access is access all Project'Class;
+   type Node_Access is access all Node'Class;
 
    function Less (V1, V2 : String) return Boolean;
    function Less (V1, V2 : Virtual_File) return Boolean;
    function Less
      (V1, V2 : Projects.Views.Project_View_Reference) return Boolean;
-   function Equ  (V1, V2 : Subprogram_Access) return Boolean;
-   function Equ  (V1, V2 : File_Access) return Boolean;
-   function Equ  (V1, V2 : Project_Access) return Boolean;
+   function Equ (V1, V2 : Subprogram_Access) return Boolean;
+   function Equ (V1, V2 : File_Access) return Boolean;
+   function Equ (V1, V2 : Project_Access) return Boolean;
 
-   package Subprogram_Maps is
-     new Indefinite_Ordered_Maps
-       (Key_Type        => String,
-        Element_Type    => Subprogram_Access,
-        "="             => Equ,
-        "<"             => Less);
+   package Subprogram_Maps is new
+     Indefinite_Ordered_Maps
+       (Key_Type     => String,
+        Element_Type => Subprogram_Access,
+        "="          => Equ,
+        "<"          => Less);
    --  Used to stored the Subprogram nodes of every Files
 
-   package File_Maps is
-     new Ordered_Maps
-       (Key_Type        => GNATCOLL.VFS.Virtual_File,
-        Element_Type    => File_Access,
-        "="             => Equ,
-        "<"             => Less);
+   package File_Maps is new
+     Ordered_Maps
+       (Key_Type     => GNATCOLL.VFS.Virtual_File,
+        Element_Type => File_Access,
+        "="          => Equ,
+        "<"          => Less);
    --  Used to stored the File nodes of every Projects
 
-   package Project_Maps is
-     new Ordered_Maps
-       (Key_Type        => Projects.Views.Project_View_Reference,
-        Element_Type    => Project_Access,
-        "="             => Equ,
-        "<"             => Less);
+   package Project_Maps is new
+     Ordered_Maps
+       (Key_Type     => Projects.Views.Project_View_Reference,
+        Element_Type => Project_Access,
+        "="          => Equ,
+        "<"          => Less);
    --  Used to stored the Project nodes
 
    type Code_Analysis_Tree is access all Project_Maps.Map;
@@ -359,12 +359,11 @@ package Code_Analysis is
    -------------------
 
    function Get_Or_Create
-     (File_Node : File_Access;
-      Key       : String) return not null Subprogram_Access;
+     (File_Node : File_Access; Key : String) return not null Subprogram_Access;
 
    function Get_Or_Create
-     (Project_Node : Project_Access;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return not null File_Access;
+     (Project_Node : Project_Access; File_Name : GNATCOLL.VFS.Virtual_File)
+      return not null File_Access;
 
    function Get_Or_Create
      (Projects     : Code_Analysis_Tree;
@@ -378,8 +377,8 @@ package Code_Analysis is
    ---------
 
    function Get
-     (Project_Node : Project_Access;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return File_Access;
+     (Project_Node : Project_Access; File_Name : GNATCOLL.VFS.Virtual_File)
+      return File_Access;
 
    function Get
      (Projects     : Code_Analysis_Tree;
@@ -426,11 +425,13 @@ package Code_Analysis is
    procedure Clear_Code_Analysis (Projects : Code_Analysis_Tree);
    --  Clear all information in the code analysis structure
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Coverage'Class, Coverage_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Coverage'Class, Coverage_Access);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (CodePeer_Data_Root'Class, CodePeer_Data_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (CodePeer_Data_Root'Class,
+        CodePeer_Data_Access);
 
    -------------
    -- Free-er --

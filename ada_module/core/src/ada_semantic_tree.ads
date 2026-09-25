@@ -18,12 +18,12 @@
 with Ada.Containers.Vectors;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with Basic_Types;             use Basic_Types;
-with Language;                use Language;
-with Language.Tree;           use Language.Tree;
-with Language.Tree.Database;  use Language.Tree.Database;
+with Basic_Types;            use Basic_Types;
+with Language;               use Language;
+with Language.Tree;          use Language.Tree;
+with Language.Tree.Database; use Language.Tree.Database;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
@@ -69,8 +69,7 @@ package Ada_Semantic_Tree is
 
    Null_Entity_View : constant Entity_View;
 
-   function Get_Documentation
-     (E : access Entity_View_Record) return String;
+   function Get_Documentation (E : access Entity_View_Record) return String;
    --  Return the documentation associated to this declaration view
 
    function Get_Construct
@@ -78,9 +77,7 @@ package Ada_Semantic_Tree is
       return access Simple_Construct_Information;
    --  Return the construct designated by this declaration view.
 
-   function Is_Accessible
-     (E : access Entity_View_Record)
-      return Boolean;
+   function Is_Accessible (E : access Entity_View_Record) return Boolean;
    --  Return the visibility of the entity in the context of the search
    --  Should return True if the entity is accessible (directly or via
    --  a qualified name).
@@ -115,8 +112,8 @@ package Ada_Semantic_Tree is
      (E : access Entity_View_Record'Class) return Entity_Access;
    --  Return the entity pointed by this declaration view.
 
-   function Get_Name
-     (E : access Entity_View_Record) return UTF8_String is abstract;
+   function Get_Name (E : access Entity_View_Record) return UTF8_String
+   is abstract;
 
    type Visibility_Filter is mod 2 ** 32;
 
@@ -132,8 +129,8 @@ package Ada_Semantic_Tree is
    --  Denote any expression that can be interpreted as a type designation
    --  ??? This has to be used after a 'new' or ': [in|out|access]' or 'access'
    --  token (not yet used).
-   Everything           : constant Visibility_Filter := 16#FFFFFF#
-     and not All_Accessible_Units;
+   Everything           : constant Visibility_Filter :=
+     16#FFFFFF# and not All_Accessible_Units;
    --  Denotes everyting.
 
    type Visibility_Context is record
@@ -149,8 +146,7 @@ package Ada_Semantic_Tree is
    Null_Visibility_Context : constant Visibility_Context :=
      (null, 0, 0, Not_Visible);
 
-   type Filter_Kind is
-     (Pass_Through, Categories_Filter, Exceptions_Only);
+   type Filter_Kind is (Pass_Through, Categories_Filter, Exceptions_Only);
 
    type Entity_Filter (Kind : Filter_Kind := Pass_Through) is private;
 
@@ -159,8 +155,7 @@ package Ada_Semantic_Tree is
    --  Return true if the entity given in parameter has to be kept, false
    --  otherwise.
 
-   function Create
-     (Categories : Category_Array) return Entity_Filter;
+   function Create (Categories : Category_Array) return Entity_Filter;
    --  Creates a new Entity_Filter_By_Category object based on the category
    --  given in parameter. Cat_Package may be added if the category can be
    --  reached though a package.
@@ -172,7 +167,8 @@ package Ada_Semantic_Tree is
       Is_Partial          : Boolean;
       Filter              : Entity_Filter;
       Ignored_Expressions : Expressions_List.List;
-      Result              : in out Entity_List) is null;
+      Result              : in out Entity_List)
+   is null;
    --  Adds to result the children of the current entity, given the constrains
    --  in parameter.
 
@@ -269,8 +265,7 @@ package Ada_Semantic_Tree is
      (Buffer            : access constant UTF8_String;
       Start_Offset      : String_Index_Type;
       End_Offset        : String_Index_Type := 0;
-      Multiple_Operands : Boolean := False)
-      return Parsed_Expression;
+      Multiple_Operands : Boolean := False) return Parsed_Expression;
    --  This function looks backwards from the offset given in parameter and
    --  parses the relevant completion expression.
    --  Start_Offset is the offset (in byte) of where we have to look.
@@ -315,8 +310,8 @@ package Ada_Semantic_Tree is
 
 private
 
-   Test_Trace : constant Trace_Handle := Create
-     ("GPS.INTERNAL.ADA_SEMANTIC_TREE.TEST", Off);
+   Test_Trace : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.ADA_SEMANTIC_TREE.TEST", Off);
 
    type Entity_View_Record is abstract tagged record
       Entity        : Entity_Access := Null_Entity_Access;
@@ -332,7 +327,8 @@ private
    procedure Deep_Copy (E : in out Entity_View_Record) is null;
 
    procedure Configure_View
-     (E : in out Entity_View_Record; It : Entity_Iterator) is null;
+     (E : in out Entity_View_Record; It : Entity_Iterator)
+   is null;
    --  Extra things may have to be extracted from the iterator to the view -
    --  if so, this is the responsibility of this subprogram, called on Get_View
 
@@ -361,8 +357,8 @@ private
    end record;
 
    pragma Suppress (Container_Checks);
-   package Excluded_Entities is
-     new Ada.Containers.Vectors (Positive, Entity_Access);
+   package Excluded_Entities is new
+     Ada.Containers.Vectors (Positive, Entity_Access);
 
    use Excluded_Entities;
 
@@ -376,8 +372,10 @@ private
    Null_Excluded_Stack : constant Excluded_Stack_Type := null;
 
    Null_Entity_List : constant Entity_List :=
-     (Entity_List_Pckg.Null_Virtual_List, null,
-      Expressions_List.Empty_List, Null_Visibility_Context);
+     (Entity_List_Pckg.Null_Virtual_List,
+      null,
+      Expressions_List.Empty_List,
+      Null_Visibility_Context);
 
    Null_Parsed_Expression : constant Parsed_Expression :=
      (null, Token_List.Empty_Vector);
@@ -389,6 +387,7 @@ private
       case Kind is
          when Categories_Filter =>
             Categories : Category_Map;
+
          when others =>
             null;
       end case;
@@ -396,32 +395,32 @@ private
 
    Null_Filter : constant Entity_Filter := (Kind => Pass_Through);
 
-   Filter_Packages   : constant Entity_Filter :=
-     (Kind => Categories_Filter,
-      Categories => (Cat_Package => True,
-                     others      => False));
+   Filter_Packages : constant Entity_Filter :=
+     (Kind       => Categories_Filter,
+      Categories => (Cat_Package => True, others => False));
 
-   Filter_Types      : constant Entity_Filter :=
-     (Kind => Categories_Filter,
-      Categories => (Cat_Package   => True,
-                     Cat_Class     => True,
-                     Cat_Structure => True,
-                     Cat_Union     => True,
-                     Cat_Type      => True,
-                     Cat_Subtype   => True,
-                     others        => False));
+   Filter_Types : constant Entity_Filter :=
+     (Kind       => Categories_Filter,
+      Categories =>
+        (Cat_Package   => True,
+         Cat_Class     => True,
+         Cat_Structure => True,
+         Cat_Union     => True,
+         Cat_Type      => True,
+         Cat_Subtype   => True,
+         others        => False));
 
-   Filter_Entries    : constant Entity_Filter :=
-     (Kind => Categories_Filter,
-      Categories => (Cat_Entry => True,
-                     others    => False));
+   Filter_Entries : constant Entity_Filter :=
+     (Kind       => Categories_Filter,
+      Categories => (Cat_Entry => True, others => False));
 
-   Filter_Variables  : constant Entity_Filter :=
-     (Kind => Categories_Filter,
-      Categories => (Cat_Package        => True,
-                     Cat_Variable       => True,
-                     Cat_Local_Variable => True,
-                     others             => False));
+   Filter_Variables : constant Entity_Filter :=
+     (Kind       => Categories_Filter,
+      Categories =>
+        (Cat_Package        => True,
+         Cat_Variable       => True,
+         Cat_Local_Variable => True,
+         others             => False));
 
    Filter_Exceptions : constant Entity_Filter := (Kind => Exceptions_Only);
 

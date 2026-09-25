@@ -46,7 +46,7 @@ with Projects.Views;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 
-with Gtk.Window;        use Gtk.Window;
+with Gtk.Window; use Gtk.Window;
 
 package GPS.Kernel.Project is
 
@@ -98,8 +98,7 @@ package GPS.Kernel.Project is
    --  Used to display a "Start with default project" option in
    --  the GNAT Studio Welcome Dialog.
 
-   procedure Load_Empty_Project
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Load_Empty_Project (Kernel : access Kernel_Handle_Record'Class);
    --  Create and load an empty project in memory.
 
    procedure Load_Alire_Crate
@@ -108,7 +107,7 @@ package GPS.Kernel.Project is
    --  Load given Alire crate based on the specified alire.toml manifest.
 
    procedure Reload_Project_If_Needed
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel         : access Kernel_Handle_Record'Class;
       Recompute_View : Boolean := False);
    --  If any of the project files on the disk have been modified, reload the
    --  project. This doesn't recompute the view, though.
@@ -134,16 +133,14 @@ package GPS.Kernel.Project is
 
    function Lookup_Project
      (Self : not null access Kernel_Handle_Record'Class;
-      File : GNATCOLL.VFS.Virtual_File)
-      return GNATCOLL.Projects.Project_Type;
+      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Projects.Project_Type;
    --  Lookup for project for the given project file in the root project.
    --
    --  ??? For LibGPR2 it should return as many project views as exists.
 
    function Get_Project_For_File
      (Tree : access GNATCOLL.Projects.Project_Tree'Class;
-      File : GNATCOLL.VFS.Virtual_File)
-      return GNATCOLL.Projects.Project_Type;
+      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Projects.Project_Type;
    --  Check if the file or directory File_In belongs to at least one of the
    --  projects in the tree (either as a source file, or as one of the source
    --  directories).
@@ -162,8 +159,7 @@ package GPS.Kernel.Project is
 
    procedure Recompute_View (Handle : access Kernel_Handle_Record'Class);
    function Recompute_View
-     (Handle : access Kernel_Handle_Record'Class)
-      return Boolean;
+     (Handle : access Kernel_Handle_Record'Class) return Boolean;
    --  Recompute the view of the project, based on the current value of all
    --  scenario variables.
    --  This emits the "project_view_changed" signal.

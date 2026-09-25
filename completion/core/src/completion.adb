@@ -39,11 +39,9 @@ package body Completion is
    --------------------------
 
    function Get_Completed_String (This : Completion_List) return String
-   is
-     (if This.Searched_Identifier = null then
-         ""
-      else
-         This.Searched_Identifier.all);
+   is (if This.Searched_Identifier = null
+       then ""
+       else This.Searched_Identifier.all);
 
    ----------
    -- Free --
@@ -60,8 +58,10 @@ package body Completion is
    ----------
 
    procedure Free (Context : in out Completion_Context) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Completion_Context_Record'Class, Completion_Context);
+      procedure Internal is new
+        Ada.Unchecked_Deallocation
+          (Completion_Context_Record'Class,
+           Completion_Context);
    begin
       Internal (Context);
    end Free;
@@ -70,8 +70,7 @@ package body Completion is
    -- Get_Buffer --
    ----------------
 
-   function Get_Buffer
-     (Context : Completion_Context) return String_Access is
+   function Get_Buffer (Context : Completion_Context) return String_Access is
    begin
       return Context.Buffer;
    end Get_Buffer;
@@ -119,36 +118,33 @@ package body Completion is
    -- Is_In_Comment --
    -------------------
 
-   function Is_In_Comment
-     (Context : Completion_Context) return Boolean
-   is
-     (Context.In_Comment);
+   function Is_In_Comment (Context : Completion_Context) return Boolean
+   is (Context.In_Comment);
 
    ------------------
    -- Is_In_String --
    ------------------
 
-   function Is_In_String
-     (Context : Completion_Context) return Boolean
-   is
-     (Context.In_String);
+   function Is_In_String (Context : Completion_Context) return Boolean
+   is (Context.In_String);
 
    ---------------
    -- Deep_Copy --
    ---------------
 
-   function Deep_Copy
-     (Context : Completion_Context) return Completion_Context is
+   function Deep_Copy (Context : Completion_Context) return Completion_Context
+   is
    begin
-      return new Completion_Context_Record'
-        (Buffer       => Context.Buffer,
-         Start_Offset => Context.Start_Offset,
-         End_Offset   => Context.End_Offset,
-         Lang         => Context.Lang,
-         File         => Context.File,
-         Trigger_Kind => Context.Trigger_Kind,
-         In_Comment   => Context.In_Comment,
-         In_String    => Context.In_String);
+      return
+        new Completion_Context_Record'
+          (Buffer       => Context.Buffer,
+           Start_Offset => Context.Start_Offset,
+           End_Offset   => Context.End_Offset,
+           Lang         => Context.Lang,
+           File         => Context.File,
+           Trigger_Kind => Context.Trigger_Kind,
+           In_Comment   => Context.In_Comment,
+           In_String    => Context.In_String);
    end Deep_Copy;
 
    ---------
@@ -157,36 +153,40 @@ package body Completion is
 
    function "<" (Left, Right : Completion_Id) return Boolean is
    begin
-      return Left.Id_Length < Right.Id_Length
+      return
+        Left.Id_Length < Right.Id_Length
         or else
           (Left.Id_Length = Right.Id_Length
            and then
              (Left.Line < Right.Line
               or else
-               (Left.Line = Right.Line
-                and then
-                  (Left.Column < Right.Column
-                   or else
-                     (Left.Column = Right.Column
-                      and then
-                      (Left.Id < Right.Id
-                       or else
-                         (Left.Id = Right.Id
-                          and then
-                            (Left.File < Right.File
-                             or else
-                             (Left.File = Right.File
-                              and then
-                              Left.Resolver_Id < Right.Resolver_Id)))))))));
+                (Left.Line = Right.Line
+                 and then
+                   (Left.Column < Right.Column
+                    or else
+                      (Left.Column = Right.Column
+                       and then
+                         (Left.Id < Right.Id
+                          or else
+                            (Left.Id = Right.Id
+                             and then
+                               (Left.File < Right.File
+                                or else
+                                  (Left.File = Right.File
+                                   and then
+                                     Left.Resolver_Id
+                                     < Right.Resolver_Id)))))))));
    end "<";
 
    ---------
    -- "=" --
    ---------
 
-   overriding function "=" (Left, Right : Completion_Id) return Boolean is
+   overriding
+   function "=" (Left, Right : Completion_Id) return Boolean is
    begin
-      return Left.Resolver_Id = Right.Resolver_Id
+      return
+        Left.Resolver_Id = Right.Resolver_Id
         and then Left.Id = Right.Id
         and then Left.File = Right.File
         and then Left.Line = Right.Line
@@ -201,8 +201,8 @@ package body Completion is
      (Resolver : access Completion_Resolver'Class)
       return Completion_Resolver_Access
    is
-      It : Completion_Resolver_Map_Pckg.Cursor := First
-        (Resolver.Manager.Resolvers);
+      It : Completion_Resolver_Map_Pckg.Cursor :=
+        First (Resolver.Manager.Resolvers);
    begin
       while It /= Completion_Resolver_Map_Pckg.No_Element loop
          if Element (It) = Completion_Resolver_Access (Resolver) then
@@ -226,7 +226,8 @@ package body Completion is
    procedure Free (This : in out Completion_Manager_Access) is
       procedure Internal_Free is new
         Ada.Unchecked_Deallocation
-          (Completion_Manager'Class, Completion_Manager_Access);
+          (Completion_Manager'Class,
+           Completion_Manager_Access);
    begin
       This.Contexts.Clear;
       Internal_Free (This);
@@ -245,8 +246,7 @@ package body Completion is
          Get_Id (Resolver.all),
          Completion_Resolver_Access (Resolver));
       Append
-        (Manager.Ordered_Resolvers,
-         Completion_Resolver_Access (Resolver));
+        (Manager.Ordered_Resolvers, Completion_Resolver_Access (Resolver));
       Resolver.Manager := Completion_Manager_Access (Manager);
    end Register_Resolver;
 
@@ -287,8 +287,8 @@ package body Completion is
    ------------------
 
    function Get_Resolver
-     (Manager : access Completion_Manager;
-      Name    : String) return Completion_Resolver_Access
+     (Manager : access Completion_Manager; Name : String)
+      return Completion_Resolver_Access
    is
       It : constant Completion_Resolver_Map_Pckg.Cursor :=
         Manager.Resolvers.Find (Name);
@@ -318,7 +318,8 @@ package body Completion is
    procedure Free (Resolver : in out Completion_Resolver_Access) is
       procedure Internal_Free is new
         Ada.Unchecked_Deallocation
-          (Completion_Resolver'Class, Completion_Resolver_Access);
+          (Completion_Resolver'Class,
+           Completion_Resolver_Access);
    begin
       Free (Resolver.all);
       Internal_Free (Resolver);
@@ -329,8 +330,10 @@ package body Completion is
    ----------
 
    procedure Free (This : in out Completion_Proposal_Access) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Completion_Proposal'Class, Completion_Proposal_Access);
+      procedure Internal is new
+        Ada.Unchecked_Deallocation
+          (Completion_Proposal'Class,
+           Completion_Proposal_Access);
    begin
       Free (This.all);
       Internal (This);
@@ -352,7 +355,7 @@ package body Completion is
 
    function Get_Label
      (Proposal : Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String is
    begin
       return Get_Completion (Completion_Proposal'Class (Proposal), Db);
@@ -378,8 +381,7 @@ package body Completion is
      (Proposal : Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
-   is
-     (Get_Label (Completion_Proposal'Class (Proposal), Db));
+   is (Get_Label (Completion_Proposal'Class (Proposal), Db));
 
    ------------
    -- Get_Id --
@@ -387,7 +389,7 @@ package body Completion is
 
    function Get_Id
      (Proposal : Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String is
    begin
       return Get_Completion (Completion_Proposal'Class (Proposal), Db);
@@ -405,7 +407,7 @@ package body Completion is
       return
         Basic_Types.Character_Offset_Type
           (UTF8_Strlen
-               (Get_Completion (Completion_Proposal'Class (Proposal), Db)));
+             (Get_Completion (Completion_Proposal'Class (Proposal), Db)));
    end Get_Caret_Offset;
 
    ------------------
@@ -414,7 +416,8 @@ package body Completion is
 
    function Get_Location
      (Proposal : Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return File_Location
+      Db       : access Xref.General_Xref_Database_Record'Class)
+      return File_Location
    is
       pragma Unreferenced (Db, Proposal);
    begin
@@ -435,8 +438,8 @@ package body Completion is
    -- Get_Resolver --
    ------------------
 
-   function Get_Resolver (Proposal : Completion_Proposal)
-     return Completion_Resolver_Access is
+   function Get_Resolver
+     (Proposal : Completion_Proposal) return Completion_Resolver_Access is
    begin
       return Completion_Resolver_Access (Proposal.Resolver);
    end Get_Resolver;
@@ -445,10 +448,7 @@ package body Completion is
    -- First --
    -----------
 
-   function First
-     (This : Completion_List)
-      return Completion_Iterator
-   is
+   function First (This : Completion_List) return Completion_Iterator is
       It : Completion_Iterator := (It => First (This.List), others => <>);
 
       Next_Done : Boolean := False;
@@ -471,8 +471,7 @@ package body Completion is
    -- Next --
    ----------
 
-   procedure Next
-     (This : in out Completion_Iterator) is
+   procedure Next (This : in out Completion_Iterator) is
    begin
       loop
          Next (This.It);
@@ -484,8 +483,8 @@ package body Completion is
                Id : constant Completion_Id :=
                  To_Completion_Id (Get_Proposal (This));
             begin
-               if Completion_Id_Set.Find
-               (This.Already_Extracted, Id) = Completion_Id_Set.No_Element
+               if Completion_Id_Set.Find (This.Already_Extracted, Id)
+                 = Completion_Id_Set.No_Element
                then
                   Completion_Id_Set.Insert (This.Already_Extracted, Id);
 
@@ -504,8 +503,7 @@ package body Completion is
      (Proposal    : Completion_Proposal;
       Kernel      : Kernel_Handle;
       Range_Start : out File_Location;
-      Range_End   : out File_Location)
-      return Boolean
+      Range_End   : out File_Location) return Boolean
    is
       pragma Unreferenced (Proposal, Kernel, Range_Start, Range_End);
    begin
@@ -535,9 +533,10 @@ package body Completion is
    -- Get_Completion --
    --------------------
 
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : Simple_Completion_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String
    is
       pragma Unreferenced (Db);
@@ -549,7 +548,8 @@ package body Completion is
    -- Get_Category --
    ------------------
 
-   overriding function Get_Category
+   overriding
+   function Get_Category
      (Proposal : Simple_Completion_Proposal) return Language_Category is
    begin
       return Proposal.Category;
@@ -559,7 +559,8 @@ package body Completion is
    -- Get_Visibility --
    --------------------
 
-   overriding function Get_Visibility
+   overriding
+   function Get_Visibility
      (Proposal : Simple_Completion_Proposal) return Construct_Visibility
    is
       pragma Unreferenced (Proposal);
@@ -571,7 +572,8 @@ package body Completion is
    -- Match --
    -----------
 
-   overriding function Match
+   overriding
+   function Match
      (Proposal : Simple_Completion_Proposal;
       Context  : Completion_Context;
       Offset   : String_Index_Type) return Boolean
@@ -586,7 +588,8 @@ package body Completion is
    -- Free --
    ----------
 
-   overriding procedure Free (Proposal : in out Simple_Completion_Proposal) is
+   overriding
+   procedure Free (Proposal : in out Simple_Completion_Proposal) is
    begin
       Free (Proposal.Name);
    end Free;
@@ -595,14 +598,16 @@ package body Completion is
    -- Deep_Copy --
    ---------------
 
-   overriding function Deep_Copy
-     (Proposal : Simple_Completion_Proposal)
-      return Completion_Proposal'Class is
+   overriding
+   function Deep_Copy
+     (Proposal : Simple_Completion_Proposal) return Completion_Proposal'Class
+   is
    begin
-      return Simple_Completion_Proposal'
-        (Resolver => Proposal.Resolver,
-         Name     => new String'(Proposal.Name.all),
-         Category => Proposal.Category);
+      return
+        Simple_Completion_Proposal'
+          (Resolver => Proposal.Resolver,
+           Name     => new String'(Proposal.Name.all),
+           Category => Proposal.Category);
    end Deep_Copy;
 
    -----------
@@ -620,8 +625,8 @@ package body Completion is
       end if;
 
       for J in 1 .. Seeked_Name'Length loop
-         if To_Lower (Tested_Name (J + Tested_Name'First - 1)) /=
-           To_Lower (Seeked_Name (J + Seeked_Name'First - 1))
+         if To_Lower (Tested_Name (J + Tested_Name'First - 1))
+           /= To_Lower (Seeked_Name (J + Seeked_Name'First - 1))
          then
             return False;
          end if;
@@ -634,14 +639,17 @@ package body Completion is
    -- To_Completion_Id --
    ----------------------
 
-   overriding function To_Completion_Id
-     (Proposal : Simple_Completion_Proposal)
-      return Completion_Id is
+   overriding
+   function To_Completion_Id
+     (Proposal : Simple_Completion_Proposal) return Completion_Id is
    begin
-      return (Proposal.Name'Length,
-              "SIMPLE  ",
-              Proposal.Name.all,
-              GNATCOLL.VFS.No_File, 0, 0);
+      return
+        (Proposal.Name'Length,
+         "SIMPLE  ",
+         Proposal.Name.all,
+         GNATCOLL.VFS.No_File,
+         0,
+         0);
    end To_Completion_Id;
 
    ----------

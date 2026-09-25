@@ -21,11 +21,15 @@ package CodePeer.Bridge is
 
    function Hash (Item : Natural) return Ada.Containers.Hash_Type;
 
-   package Annotation_Category_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Annotation_Category_Access, Hash, "=");
+   package Annotation_Category_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Natural,
+        Annotation_Category_Access,
+        Hash,
+        "=");
 
-   package Positive_Subprogram_Maps is
-     new Ada.Containers.Hashed_Maps
+   package Positive_Subprogram_Maps is new
+     Ada.Containers.Hashed_Maps
        (Positive,
         Code_Analysis.Subprogram_Access,
         Hash,

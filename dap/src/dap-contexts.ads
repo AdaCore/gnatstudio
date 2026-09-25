@@ -18,14 +18,14 @@
 --  Utilities to support selection contexts in the contxt of the debugger
 
 with VSS.Strings;
-with GPS.Kernel;                   use GPS.Kernel;
-with DAP.Modules.Variables.Items;  use DAP.Modules.Variables.Items;
+with GPS.Kernel;                  use GPS.Kernel;
+with DAP.Modules.Variables.Items; use DAP.Modules.Variables.Items;
 
 package DAP.Contexts is
 
    function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
+     (Context : GPS.Kernel.Selection_Context; Dereference : Boolean)
+      return String;
    --  If Context contains an entity, get the entity name.
    --  Dereference the entity if Dereference is True.
    --  Return "" if entity name could not be found in Context.
@@ -37,8 +37,7 @@ package DAP.Contexts is
    --  Set the debugging variable into the Context.
 
    function Get_Variable
-     (Context : GPS.Kernel.Selection_Context)
-      return Item_Info'Class;
+     (Context : GPS.Kernel.Selection_Context) return Item_Info'Class;
    --  Retrieve the debugging variable from the Context.
 
 end DAP.Contexts;

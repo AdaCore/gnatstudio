@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with VSS.Strings.Conversions;
 
 package body DAP.Clients.Variables.Variables is
@@ -33,8 +33,9 @@ package body DAP.Clients.Variables.Variables is
    is
       use DAP.Modules.Variables.Items;
 
-      Req : Variables_Request_Access := new Variables_Request
-        (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
+      Req : Variables_Request_Access :=
+        new Variables_Request
+              (GPS.Kernel.Kernel_Handle (Client.Kernel), Params.Kind);
    begin
       if Id > 0 then
          Req.Params := Params;
@@ -52,7 +53,8 @@ package body DAP.Clients.Variables.Variables is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Variables_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;
@@ -143,18 +145,18 @@ package body DAP.Clients.Variables.Variables is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Variables_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String)
    is
-      Var     : constant Variables_Holder_Access := Client.Get_Variables;
-      Id      : constant Integer :=
-        Self.Parameters.arguments.variablesReference;
-      C       : Variables_References_Trees.Cursor;
+      Var : constant Variables_Holder_Access := Client.Get_Variables;
+      Id  : constant Integer := Self.Parameters.arguments.variablesReference;
+      C   : Variables_References_Trees.Cursor;
    begin
-      DAP.Requests.Variables.Variables_DAP_Request
-        (Self).On_Error_Message (Client, Message);
+      DAP.Requests.Variables.Variables_DAP_Request (Self).On_Error_Message
+        (Client, Message);
 
       C := Var.Find_By_Id (Id);
       if C = Variables_References_Trees.No_Element then
@@ -192,7 +194,8 @@ package body DAP.Clients.Variables.Variables is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Variables_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin

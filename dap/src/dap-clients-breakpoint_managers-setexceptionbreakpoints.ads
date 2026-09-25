@@ -16,16 +16,15 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings;
-with DAP.Requests;                         use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.SetExceptionBreakpoints;
 
 private package DAP.Clients.Breakpoint_Managers.SetExceptionBreakpoints is
 
    type Exception_Breakpoint_Request is
-     new DAP.Requests.SetExceptionBreakpoints.
-       Exception_Breakpoints_DAP_Request
+     new DAP.Requests.SetExceptionBreakpoints.Exception_Breakpoints_DAP_Request
    with record
-      Manager     : Breakpoint_Manager_Access;
+      Manager : Breakpoint_Manager_Access;
       --  The breakpoints' manager that created the request.
 
       Breakpoints : Breakpoint_Index_Lists.List;
@@ -37,17 +36,20 @@ private package DAP.Clients.Breakpoint_Managers.SetExceptionBreakpoints is
    type Exception_Breakpoint_Request_Access is
      access all Exception_Breakpoint_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Exception_Breakpoint_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetExceptionBreakpointsResponse;
       New_Request : in out DAP_Request_Access);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Exception_Breakpoint_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Exception_Breakpoint_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);

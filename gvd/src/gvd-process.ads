@@ -21,9 +21,9 @@ with System;
 with Glib;
 with Glib.Main;
 
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with GNAT.Regpat;          use GNAT.Regpat;
-with GNAT.Expect;          use GNAT.Expect;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.Expect; use GNAT.Expect;
 
 with Gtk.Widget;
 
@@ -68,66 +68,66 @@ package GVD.Process is
    type Regexp_Filter_List is private;
 
    type Visual_Debugger_Record is new Base_Visual_Debugger with record
-      Debugger_Num            : Natural;
+      Debugger_Num : Natural;
       --  The number identifying the debugger.
 
-      Debugger                : Debugger_Access;
+      Debugger : Debugger_Access;
       --  The underlying debugger process.
 
-      Kernel                  : GPS.Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
       --  The associated kernel.
 
-      Command_History         : String_History.History_List;
+      Command_History : String_History.History_List;
       --  The history of commands for the current session.
 
-      Debugger_Text           : Generic_Views.Abstract_View_Access;
-      Debuggee_Console        : Generic_Views.Abstract_View_Access;
-      Debuggee_TTY            : GNAT.TTY.TTY_Handle;
+      Debugger_Text      : Generic_Views.Abstract_View_Access;
+      Debuggee_Console   : Generic_Views.Abstract_View_Access;
+      Debuggee_TTY       : GNAT.TTY.TTY_Handle;
       --  tty for Debugger Execution console
-      Stack                   : Generic_Views.Abstract_View_Access;
-      Threads                 : Generic_Views.Abstract_View_Access;
-      Tasks                   : Generic_Views.Abstract_View_Access;
-      PDs                     : Generic_Views.Abstract_View_Access;
-      Data                    : Generic_Views.Abstract_View_Access;
-      Assembly                : Generic_Views.Abstract_View_Access;
-      Breakpoints_Editor      : Generic_Views.Abstract_View_Access;
-      Memory_View             : Generic_Views.Abstract_View_Access;
-      Variables_View          : Generic_Views.Abstract_View_Access;
-      Registers_View          : Generic_Views.Abstract_View_Access;
+      Stack              : Generic_Views.Abstract_View_Access;
+      Threads            : Generic_Views.Abstract_View_Access;
+      Tasks              : Generic_Views.Abstract_View_Access;
+      PDs                : Generic_Views.Abstract_View_Access;
+      Data               : Generic_Views.Abstract_View_Access;
+      Assembly           : Generic_Views.Abstract_View_Access;
+      Breakpoints_Editor : Generic_Views.Abstract_View_Access;
+      Memory_View        : Generic_Views.Abstract_View_Access;
+      Variables_View     : Generic_Views.Abstract_View_Access;
+      Registers_View     : Generic_Views.Abstract_View_Access;
       --  All views potentially associated with a debugger
 
-      Breakpoints             : aliased GVD.Breakpoints_List.Breakpoint_List;
+      Breakpoints : aliased GVD.Breakpoints_List.Breakpoint_List;
       --  The list of breakpoints and watchpoints specific to this debugger.
 
-      Imaginary_Breakpoints   : Breakpoint_Vectors.Vector;
+      Imaginary_Breakpoints : Breakpoint_Vectors.Vector;
       --  List of breakpoints the debugger couldn't set.
 
-      Descriptor              : GVD.Types.Program_Descriptor;
+      Descriptor : GVD.Types.Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added to handle sessions)
 
-      Current_Command         : String_Access;
+      Current_Command : String_Access;
       --  Async command currently running in the underlying debugger, if any.
 
-      Current_Output          : String_Access;
+      Current_Output : String_Access;
       --  Complete output received in the underlying debugger for the current
       --  command. This is needed to buffer the output before calling the
       --  various filters. It is only initialized in the range
       --  Current_Output'First .. Current_Output_Pos - 1
 
-      Current_Output_Pos      : Natural := 1;
+      Current_Output_Pos : Natural := 1;
       --  Position in Current_Output to insert new text.
 
-      Exiting                 : Boolean := False;
+      Exiting : Boolean := False;
       --  True if the debugger is exiting.
 
-      Is_From_Dbg_Console     : Boolean := False;
+      Is_From_Dbg_Console : Boolean := False;
       --  True if the current command was issued by the user from the console.
       --  Valid both for command typed manually, and for commands issued by
       --  shortcuts while the focus is in the console
 
-      Current_File            : GNATCOLL.VFS.Virtual_File;
-      Current_Line            : Natural := 0;
+      Current_File : GNATCOLL.VFS.Virtual_File;
+      Current_Line : Natural := 0;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)
 
@@ -136,22 +136,22 @@ package GVD.Process is
       ------------
       --  The following fields should only be used in gvd-process.adb
 
-      Registered_Dialog       : access GPS_Dialog_Record'Class := null;
+      Registered_Dialog : access GPS_Dialog_Record'Class := null;
       --  Currently displayed dialog that should be deleted on next user input.
       --  This is mostly used for question dialogs, since the user can also
       --  type its input directly in the command window.
 
-      Post_Processing         : Boolean := False;
+      Post_Processing : Boolean := False;
       --  True if the debugger is handling post processing of a command.
 
-      Filters                 : Regexp_Filter_List;
+      Filters : Regexp_Filter_List;
       --  List of regexp filters registered to this process.
 
       Log_Lines : Natural := 0;
       --  Number of lines output in the log file, while executing commands
       --  with gdb (see gvd-trace.ads). We only log some of the output.
 
-      Last_Match              : Natural := 0;
+      Last_Match : Natural := 0;
       --  Last match in Current_Output.
       --  This is needed to avoid matching twice the same string and to
       --  optimize the handling of regexp filters.
@@ -190,8 +190,7 @@ package GVD.Process is
    --  Prefer given debugger kind if it's supported by chosen debugger.
 
    procedure Close_Debugger
-     (Process  : access Visual_Debugger_Record;
-      Has_Died : Boolean := False);
+     (Process : access Visual_Debugger_Record; Has_Died : Boolean := False);
    --  Close the given debugger and terminate the debugging session if this
    --  is the last one. Do not send quit command to debugger
    --  if Has_Died is True.
@@ -218,10 +217,11 @@ package GVD.Process is
    Debugger_Not_Found : exception;
    --  Raised by Convert when no debugger is found.
 
-   type Regexp_Filter_Function is access procedure
-     (Process : access Visual_Debugger_Record'Class;
-      Str     : String;
-      Match   : Match_Array);
+   type Regexp_Filter_Function is
+     access procedure
+       (Process : access Visual_Debugger_Record'Class;
+        Str     : String;
+        Match   : Match_Array);
    --  To be used with Add_Regexp_Filter below.
 
    procedure Add_Regexp_Filter
@@ -232,9 +232,11 @@ package GVD.Process is
    --  This filter will be run when output from a debugger is received
    --  that matches regexp.
 
-   overriding function Get_Num
+   overriding
+   function Get_Num
      (Self : not null access Visual_Debugger_Record) return Glib.Gint;
-   overriding function Command_In_Process
+   overriding
+   function Command_In_Process
      (Self : not null access Visual_Debugger_Record) return Boolean;
 
    function Get_Console
@@ -250,8 +252,7 @@ package GVD.Process is
    --  If no such page is found, returns null
 
    function Convert
-     (Debugger : access Debugger_Root'Class)
-      return Visual_Debugger;
+     (Debugger : access Debugger_Root'Class) return Visual_Debugger;
    --  Conversion function.
 
    function Convert is new
@@ -260,12 +261,13 @@ package GVD.Process is
    --  Used for GNAT.Expect filter functions.
 
    procedure Final_Post_Process
-     (Process           : not null access Visual_Debugger_Record'Class;
-      Mode              : GVD.Types.Command_Type;
-      Always_Emit_Hooks : Boolean;
-      Category          : Command_Category;
+     (Process                        :
+        not null access Visual_Debugger_Record'Class;
+      Mode                           : GVD.Types.Command_Type;
+      Always_Emit_Hooks              : Boolean;
+      Category                       : Command_Category;
       Breakpoints_Might_Have_Changed : Boolean;
-      Register_Changed  : Boolean);
+      Register_Changed               : Boolean);
    --  Final post processing.
    --  Call the appropriate filters and reset Current_Output.
    --  The hooks reporting the change of state of the debugger are only emited
@@ -362,17 +364,18 @@ package GVD.Process is
       --  console Debugger commands don't need to override Execute, as is
       --  usual with Interactive_Commands, but Execute_Dbg
 
-      overriding function Execute
+      overriding
+      function Execute
         (Command : access Debugger_Command;
          Context : Interactive_Command_Context)
-        return Commands.Command_Return_Type;
+         return Commands.Command_Return_Type;
       --  Overridden Execute primitive to take care of Debugger_Command
       --  boilerplate, do not override
 
       function Execute_Dbg
-        (Command : access Debugger_Command;
-         Process : Visual_Debugger)
-        return Commands.Command_Return_Type is abstract;
+        (Command : access Debugger_Command; Process : Visual_Debugger)
+         return Commands.Command_Return_Type
+      is abstract;
       --  Types derived from Debugger_Command need to override this primitive
       --  Process is the process of the active debugger for the command.
 

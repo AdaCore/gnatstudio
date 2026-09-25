@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Object;               use Glib.Object;
-with Gtk.Widget;                use Gtk.Widget;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with Task_Manager.Shell;        use Task_Manager.Shell;
+with Glib.Object;        use Glib.Object;
+with Gtk.Widget;         use Gtk.Widget;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with Task_Manager.Shell; use Task_Manager.Shell;
 
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 
 package body GPS.Kernel.Task_Manager is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.Tasks");
@@ -31,8 +31,7 @@ package body GPS.Kernel.Task_Manager is
 
    procedure Set_Task_Manager
      (Kernel  : access Kernel_Handle_Record'Class;
-      Manager : Task_Manager_Access)
-   is
+      Manager : Task_Manager_Access) is
    begin
       Kernel.Tasks := Manager;
    end Set_Task_Manager;
@@ -45,7 +44,8 @@ package body GPS.Kernel.Task_Manager is
      (Kernel : access Kernel_Handle_Record'Class) return Task_Manager_Access is
    begin
       Assert
-        (Me, Kernel.Tasks /= No_Task_Manager,
+        (Me,
+         Kernel.Tasks /= No_Task_Manager,
          "Task manager has not been created yet");
       return Kernel.Tasks;
    end Get_Task_Manager;
@@ -63,14 +63,15 @@ package body GPS.Kernel.Task_Manager is
       Block_Exit        : Boolean := True;
       Start_Immediately : Boolean := False)
    is
-      Wrapper : constant Scheduled_Command_Access := Launch_Background_Command
-        (Kernel            => Kernel,
-         Command           => Command,
-         Active            => Active,
-         Show_Bar          => Show_Bar,
-         Queue_Id          => Queue_Id,
-         Start_Immediately => Start_Immediately,
-         Block_Exit        => Block_Exit);
+      Wrapper : constant Scheduled_Command_Access :=
+        Launch_Background_Command
+          (Kernel            => Kernel,
+           Command           => Command,
+           Active            => Active,
+           Show_Bar          => Show_Bar,
+           Queue_Id          => Queue_Id,
+           Start_Immediately => Start_Immediately,
+           Block_Exit        => Block_Exit);
       pragma Unreferenced (Wrapper);
    begin
       null;
@@ -90,12 +91,12 @@ package body GPS.Kernel.Task_Manager is
       Start_Immediately : Boolean := False) return Scheduled_Command_Access
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
-      Wrapper : constant Scheduled_Command_Access :=
-                  Create_Wrapper (Command);
+      Wrapper : constant Scheduled_Command_Access := Create_Wrapper (Command);
    begin
       Task_Started_Hook.Run (Kernel);
       Add_Command
-        (Manager, Wrapper,
+        (Manager,
+         Wrapper,
          Active            => Active,
          Show_Bar          => Show_Bar,
          Queue_Id          => Queue_Id,
@@ -108,8 +109,8 @@ package body GPS.Kernel.Task_Manager is
    -- Interrupt_Latest_Task --
    ---------------------------
 
-   procedure Interrupt_Latest_Task
-     (Kernel : access Kernel_Handle_Record'Class) is
+   procedure Interrupt_Latest_Task (Kernel : access Kernel_Handle_Record'Class)
+   is
    begin
       Interrupt_Latest_Task (Get_Task_Manager (Kernel));
    end Interrupt_Latest_Task;
@@ -128,8 +129,7 @@ package body GPS.Kernel.Task_Manager is
    end Interrupt_Queue;
 
    procedure Interrupt_Queue
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Queue_Id : String)
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Id : String)
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
    begin
@@ -141,8 +141,8 @@ package body GPS.Kernel.Task_Manager is
    ---------------
 
    function Has_Queue
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Queue_Id : String) return Boolean is
+     (Kernel : access Kernel_Handle_Record'Class; Queue_Id : String)
+      return Boolean is
    begin
       return Get_Task_Manager (Kernel).Has_Queue (Queue_Id);
    end Has_Queue;

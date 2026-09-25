@@ -15,86 +15,86 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Strings;
 
 with VSS.String_Vectors;
-with VSS.Strings;               use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Templates;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;
 
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gdk.Window;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Types;                use Glib.Types;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
+with Glib.Types;  use Glib.Types;
 
-with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
-with Gtk.Cell_Layout;           use Gtk.Cell_Layout;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Clipboard;             use Gtk.Clipboard;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Editable;              use Gtk.Editable;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.GEntry;                use Gtk.GEntry;
-with Gtk.List_Store;            use Gtk.List_Store;
+with Gtkada.Combo_Tool_Button; use Gtkada.Combo_Tool_Button;
+with Gtk.Cell_Layout;          use Gtk.Cell_Layout;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Clipboard;            use Gtk.Clipboard;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Editable;             use Gtk.Editable;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.List_Store;           use Gtk.List_Store;
 with Gtk.Menu;
-with Gtk.Selection_Data;        use Gtk.Selection_Data;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Toggle_Tool_Button;    use Gtk.Toggle_Tool_Button;
+with Gtk.Selection_Data;       use Gtk.Selection_Data;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Toggle_Tool_Button;   use Gtk.Toggle_Tool_Button;
 with Gtk.Toolbar;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Window;                use Gtk.Window;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Check_Button;          use Gtk.Check_Button;
-with Gtk.Combo_Box;             use Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
-with Gtk.Label;                 use Gtk.Label;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Window;               use Gtk.Window;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Combo_Box;            use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
+with Gtk.Label;                use Gtk.Label;
 
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Dialogs;  use Gtkada.Dialogs;
+with Gtkada.MDI;      use Gtkada.MDI;
+with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtkada.Types;
 
-with Basic_Types;               use Basic_Types;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Search;                use GPS.Search;
+with Basic_Types;              use Basic_Types;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Editors;              use GPS.Editors;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
+with GPS.Kernel.Task_Manager;  use GPS.Kernel.Task_Manager;
+with GPS.Search;               use GPS.Search;
 
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
-with Default_Preferences;       use Default_Preferences;
-with Dialog_Utils;              use Dialog_Utils;
-with Generic_Views;             use Generic_Views;
-with GUI_Utils;                 use GUI_Utils;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
+with Default_Preferences;  use Default_Preferences;
+with Dialog_Utils;         use Dialog_Utils;
+with Generic_Views;        use Generic_Views;
+with GUI_Utils;            use GUI_Utils;
 
-with Histories;                 use Histories;
-with Projects;                  use Projects;
-with XML_Utils;                 use XML_Utils;
+with Histories; use Histories;
+with Projects;  use Projects;
+with XML_Utils; use XML_Utils;
 
 package body Vsearch is
    Me : constant Trace_Handle := Create ("GPS.OTHERS.VSEARCH_MODULE");
@@ -109,23 +109,23 @@ package body Vsearch is
    Regexp_Search_Hist_Key  : constant History_Key := "regexp_search";
    --  The key for the histories.
 
-   Selection_Style_Name    : constant String := "Compiler info";
+   Selection_Style_Name : constant String := "Compiler info";
    --  The style used to highlight the searched area when the search applies
    --  to the editor's current selection.
 
-   Max_Nb_History_Entries  : constant Positive := 5;
+   Max_Nb_History_Entries : constant Positive := 5;
    --  Maximum number of entries in history for search/replace patterns
 
    Pattern_Child_Key : constant String := "pattern_child";
-   Replace_Child_Key  : constant String := "replace_child";
+   Replace_Child_Key : constant String := "replace_child";
    --  Keys used to identify the pattern/replace entry widgets
 
    Last_Search_Module_Key : constant History_Key := "search_module";
    --  The prefix used to store the name of the last search function used for
    --  each module. The name of the module is appended to form the real key.
 
-   Find_Only_Label         : constant String := "Find Only";
-   Find_And_Replace_Label  : constant String := "Find & Replace";
+   Find_Only_Label        : constant String := "Find Only";
+   Find_And_Replace_Label : constant String := "Find & Replace";
 
    Incremental_Search               : Boolean_Preference;
    Select_On_Match                  : Boolean_Preference;
@@ -195,16 +195,16 @@ package body Vsearch is
       Search_All_Button       : Gtk.Button.Gtk_Button;
       Replace_Only_Button     : Gtk.Button.Gtk_Button;
 
-      Selection_From          : Gtk_Text_Mark;
-      Selection_To            : Gtk_Text_Mark;
+      Selection_From : Gtk_Text_Mark;
+      Selection_To   : Gtk_Text_Mark;
 
-      Search_Start_Mark       : GPS.Editors.Editor_Mark_Holders.Holder;
-      Search_End_Mark         : GPS.Editors.Editor_Mark_Holders.Holder;
+      Search_Start_Mark : GPS.Editors.Editor_Mark_Holders.Holder;
+      Search_End_Mark   : GPS.Editors.Editor_Mark_Holders.Holder;
       --  The marks that delimit the searched area.
       --  These marks are set when the search applies to the editor's current
       --  selection.
 
-      Pattern_Changed_Once    : Boolean := False;
+      Pattern_Changed_Once : Boolean := False;
       --  Set to True if the pattern has changed once. This is used to know
       --  whether incremental mode is valid after this.
 
@@ -213,23 +213,24 @@ package body Vsearch is
       --  Crtl-Z action to return to the "starting" pattern.
    end record;
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Vsearch_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Create_Menu
-     (View    : not null access Vsearch_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure On_Create
+   overriding
+   procedure Create_Menu
+     (View : not null access Vsearch_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure On_Create
      (Self  : not null access Vsearch_Record;
       Child : not null access GPS_MDI_Child_Record'Class);
 
-   function Initialize
-     (Self : access Vsearch_Record'Class) return Gtk_Widget;
+   function Initialize (Self : access Vsearch_Record'Class) return Gtk_Widget;
    --  Create a new search window and returns the focus widget
 
    procedure Set_Vsearch_Mode
-     (Self : not null access Vsearch_Record'Class;
-      Mode : Vsearch_Mode);
+     (Self : not null access Vsearch_Record'Class; Mode : Vsearch_Mode);
    --  Set the mode of the given search mode, hiding or showing the widgets
    --  related with replacing depending on With_Replace.
 
@@ -237,46 +238,47 @@ package body Vsearch is
    --  Return True if the incremental mode preference is enabled and the
    --  currently selected search module supports it. Return False otherwise.
 
-   package Search_Views is new Generic_Views.Simple_Views
-     (Module_Name                => Search_Module_Name,
-      View_Name                  => -"Search",
-      Formal_View_Record         => Vsearch_Record,
-      Formal_MDI_Child           => GPS_MDI_Child_Record,
-      Reuse_If_Exist             => True,
-      Initialize                 => Initialize,
-      Local_Toolbar              => True,
-      Local_Config               => True,
-      Position                   => Position_Float,
-      Group                      => Group_Consoles,
-      Commands_Category          => "",  --  no automatic command
-      MDI_Flags                  => All_Buttons
-      or Float_As_Transient or Always_Destroy_Float,
-      Areas                      => Sides_Only,
-      Default_Width              => Default_Width,
-      Default_Height             => Default_Height,
-      Add_Close_Button_On_Float  => True,
-      Focus_Same_Area_On_Close   => False);
+   package Search_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name               => Search_Module_Name,
+        View_Name                 => -"Search",
+        Formal_View_Record        => Vsearch_Record,
+        Formal_MDI_Child          => GPS_MDI_Child_Record,
+        Reuse_If_Exist            => True,
+        Initialize                => Initialize,
+        Local_Toolbar             => True,
+        Local_Config              => True,
+        Position                  => Position_Float,
+        Group                     => Group_Consoles,
+        Commands_Category         => "",  --  no automatic command
+        MDI_Flags                 =>
+          All_Buttons or Float_As_Transient or Always_Destroy_Float,
+        Areas                     => Sides_Only,
+        Default_Width             => Default_Width,
+        Default_Height            => Default_Height,
+        Add_Close_Button_On_Float => True,
+        Focus_Same_Area_On_Close  => False);
    use Search_Views;
    subtype Vsearch_Access is Search_Views.View_Access;
 
    procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Register the preferences associated to the search functions
 
-   package Implements_Editable is new Glib.Types.Implements
-     (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
+   package Implements_Editable is new
+     Glib.Types.Implements
+       (Gtk.Editable.Gtk_Editable,
+        GObject_Record,
+        GObject);
    function "+"
-     (Widget : access GObject_Record'Class)
-      return Gtk.Editable.Gtk_Editable
-      renames Implements_Editable.To_Interface;
+     (Widget : access GObject_Record'Class) return Gtk.Editable.Gtk_Editable
+   renames Implements_Editable.To_Interface;
 
    procedure Set_Search_Module
-     (Self   : not null access Vsearch_Record'Class;
-      Module : Search_Module);
+     (Self : not null access Vsearch_Record'Class; Module : Search_Module);
    --  Set the current search module used by the Search view
 
    procedure Set_Last_Search_Module
-     (Handle : access Kernel_Handle_Record'Class;
-      Module : Search_Module);
+     (Handle : access Kernel_Handle_Record'Class; Module : Search_Module);
    --  The Module given in parameter is set as being the last one selected
    --  by the user, and will be the next one shown for the corresponding
    --  module.
@@ -295,14 +297,14 @@ package body Vsearch is
    procedure Free (Module : Search_Module);
    --  Free the memory associated with Module
 
-   package Search_Modules_List is new Ada.Containers.Doubly_Linked_Lists
-     (Search_Module);
+   package Search_Modules_List is new
+     Ada.Containers.Doubly_Linked_Lists (Search_Module);
    use Search_Modules_List;
 
    type Vsearch_Module_Record is new Module_ID_Record with record
       Kernel : Kernel_Handle;
 
-      Search_Modules        : Search_Modules_List.List;
+      Search_Modules : Search_Modules_List.List;
       --  Global variable that contains the list of all registered search
       --  functions.
 
@@ -310,19 +312,19 @@ package body Vsearch is
       --  The default search module to use when no one matches with the current
       --  context.
 
-      Search_Started        : Boolean := False;
+      Search_Started : Boolean := False;
       --  Whether the user has started a search (Next and Previous should work)
 
-      Search_Regexps        : Search_Regexps_Array_Access;
+      Search_Regexps : Search_Regexps_Array_Access;
       --  The list of predefined regexps for the search module.
 
-      Has_Focus_On_Click    : Boolean := False;
+      Has_Focus_On_Click : Boolean := False;
       --  If Patern/Replace combo has focus on mouse click
 
-      Double_Click          : Boolean := False;
+      Double_Click : Boolean := False;
       --  Does the last action is a double-click
 
-      Last_Close_On_Match   : Boolean := False;
+      Last_Close_On_Match : Boolean := False;
       --  Last known value of Close_On_Match preference
 
       Context : Unbounded_String := Null_Unbounded_String;
@@ -332,34 +334,36 @@ package body Vsearch is
 
       Find_Next : Boolean := False;
 
-      Interactive_Context     : Root_Search_Context_Access;
+      Interactive_Context : Root_Search_Context_Access;
       --  The search context for interactieve search and replace.
       --  It is owned by the module.
       --  Unused for "Search All" and "Replace All", so that we can run
       --  multiple such commands in parallel, and these commands can outlive
       --  the widget.
 
-      Locked                  : Boolean := False;
+      Locked : Boolean := False;
       --  Used to lock the search view when the search pattern changes in
       --  incremental mode.
 
-      Search_Has_Failed       : Boolean := False;
+      Search_Has_Failed : Boolean := False;
       --  Used to know if the last search operation has failed.
       --  This is needed for the 'backspace' feature of the incremental mode.
 
-      Selector                : Scope_Selector;
+      Selector : Scope_Selector;
 
-      Projects                : Standard.Projects.Project_Type_Array_Access;
+      Projects : Standard.Projects.Project_Type_Array_Access;
       --  Restrict the search to these projects
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Vsearch_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   overriding procedure Destroy (Module : in out Vsearch_Module_Record);
+   overriding
+   procedure Destroy (Module : in out Vsearch_Module_Record);
    --  See inherited documentation
 
    Vsearch_Module_Id : Vsearch_Module;
@@ -376,9 +380,10 @@ package body Vsearch is
       Context     : GNAT.Strings.String_Access;
       Incremental : Boolean := False;
    end record;
-   overriding procedure Primitive_Free
-     (Action : in out Search_Specific_Context);
-   overriding function Execute
+   overriding
+   procedure Primitive_Free (Action : in out Search_Specific_Context);
+   overriding
+   function Execute
      (Action  : access Search_Specific_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  A command that opens the search view and presets the Look In field to
@@ -386,20 +391,21 @@ package body Vsearch is
    --  preserve if the preference keep-previous-search-context is set,
    --  otherwise the context is reset depending on the current module.
 
-   type Replace_Specific_Context is new Search_Specific_Context with
-     null record;
-   overriding function Execute
+   type Replace_Specific_Context is new Search_Specific_Context
+   with null record;
+   overriding
+   function Execute
      (Action  : access Replace_Specific_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Same as Search_Specific_Context commands but opens the search view in
    --  the replace mode (i.e: showing the replace-related widgets).
 
    type Abstract_Search_Command is abstract new Interactive_Command with record
-      Kernel                 : access Kernel_Handle_Record'Class;
-      Search_Backward        : Boolean;
+      Kernel          : access Kernel_Handle_Record'Class;
+      Search_Backward : Boolean;
 
-      Context                : Root_Search_Context_Access;
-      Context_Is_Owned       : Boolean;
+      Context          : Root_Search_Context_Access;
+      Context_Is_Owned : Boolean;
       --  This context is either:
       --  * owned and freed when the command is destroyed, when using
       --    "search all" or "replace all".
@@ -408,30 +414,35 @@ package body Vsearch is
       Found                  : Boolean := False;
       Select_Editor_On_Match : Boolean;
    end record;
-   overriding procedure Primitive_Free (Self : in out Abstract_Search_Command);
+   overriding
+   procedure Primitive_Free (Self : in out Abstract_Search_Command);
 
    type Search_Command is new Abstract_Search_Command with null record;
-   overriding function Execute
-     (Self    : access Search_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   overriding function Name
-     (Self    : access Search_Command) return String is ("search");
+   overriding
+   function Execute
+     (Self : access Search_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
+   overriding
+   function Name (Self : access Search_Command) return String
+   is ("search");
 
    type Replace_Command is new Abstract_Search_Command with record
-      Replace_With           : GNAT.Strings.String_Access;
+      Replace_With : GNAT.Strings.String_Access;
    end record;
    type Replace_Command_Access is access all Replace_Command'Class;
-   overriding procedure Primitive_Free (Self : in out Replace_Command);
-   overriding function Execute
-     (Self    : access Replace_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   overriding function Name
-     (Self    : access Replace_Command) return String is ("replace");
+   overriding
+   procedure Primitive_Free (Self : in out Replace_Command);
+   overriding
+   function Execute
+     (Self : access Replace_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
+   overriding
+   function Name (Self : access Replace_Command) return String
+   is ("replace");
 
    function Create_Replace
      (Vsearch         : not null access Vsearch_Record'Class;
-      All_Occurrences : Boolean)
-      return Command_Access;
+      All_Occurrences : Boolean) return Command_Access;
    --  Create a new replace command from the settings in the dialog.
    --  Result must be freed by the caller.
 
@@ -456,13 +467,13 @@ package body Vsearch is
    --  search pattern combo box.
 
    function On_Button_Press
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Button) return Boolean;
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    --  Remember is an entry has focus at the moment of mouse click.
 
    function On_Button_Release
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Button) return Boolean;
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event_Button)
+      return Boolean;
    --  Select the full text of an entry when it is clicked by left mouse
    --  button and doesn't have focus, to help users clear the entry.
 
@@ -481,24 +492,27 @@ package body Vsearch is
    --  label of existing ones is updated to show the next context (macro
    --  substitution,...)
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Search_Regexps_Array, Search_Regexps_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Search_Regexps_Array,
+        Search_Regexps_Array_Access);
 
    procedure Set_First_Next_Mode
-     (Vsearch   : access Vsearch_Record'Class;
-      Find_Next : Boolean);
+     (Vsearch : access Vsearch_Record'Class; Find_Next : Boolean);
    --  If Find_Next is False, a new search will be started, otherwise the next
    --  occurence of the current search will be searched.
    --  Vsearch can be null. If it is set, the GUI will be updated.
 
    type Set_First_Next_Mode_Cb is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : Set_First_Next_Mode_Cb;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Aborts the current search pattern
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view has changed.
@@ -507,7 +521,8 @@ package body Vsearch is
    --  scratch.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -515,7 +530,8 @@ package body Vsearch is
    --  Used to update the font used by the search/replace entries if necessary.
 
    type On_MDI_Child_Selected is new Mdi_Child_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_MDI_Child_Selected;
       Kernel : not null access Kernel_Handle_Record'Class;
       Child  : Gtkada.MDI.MDI_Child);
@@ -524,24 +540,24 @@ package body Vsearch is
    --  any) when the Search view loses the focus.
 
    function Key_Press
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Called when a key is pressed in the pattern field.
 
    function Key_Press_Replace
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Called when a key is pressed in the replacement field.
 
    function Get_Nth_Search_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive) return Search_Module;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Positive)
+      return Search_Module;
    --  Return the Num-th registered module, or No_Search if there is no such
    --  module.
 
    function Find_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Label  : String) return Search_Module;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Label : String)
+      return Search_Module;
    --  Search the list of registered search functions for a matching module.
    --  No_Search is returned if no such module was found.
 
@@ -550,8 +566,7 @@ package body Vsearch is
       Raise_Widget  : Boolean := False;
       Reset_Entries : Boolean := False;
       Context       : GNAT.Strings.String_Access := null;
-      Mode          : Vsearch_Mode := Find_Only)
-      return Vsearch_Access;
+      Mode          : Vsearch_Mode := Find_Only) return Vsearch_Access;
    --  Return a valid vsearch widget, creating one if necessary.
    --  If Reset_Entries is True, the fields in the dialog are reset depending
    --  on the current module. Context indicates the value that should be
@@ -559,16 +574,14 @@ package body Vsearch is
    --  The replace-related widgets are shown/hidden depending on Mode.
 
    function Create_Context
-     (Vsearch         : access Vsearch_Record'Class;
-      All_Occurrences : Boolean)
-     return Root_Search_Context_Access;
+     (Vsearch : access Vsearch_Record'Class; All_Occurrences : Boolean)
+      return Root_Search_Context_Access;
    --  Create the search context based on the current contents of the
    --  global search data.
    --  Vsearch can be null. If it is set, the GUI is updated.
    --  Result must be freed by the caller.
 
-   procedure Reset_Interactive_Context
-     (Vsearch : access Vsearch_Record'Class);
+   procedure Reset_Interactive_Context (Vsearch : access Vsearch_Record'Class);
    --  Free the interactive search context and reset the state of buttons.
    --  Vsearch can be null. If it is set, the GUI is updated.
 
@@ -632,13 +645,13 @@ package body Vsearch is
      (Object : access Gtk_Widget_Record'Class);
    --  Called after the replace combo has changed
 
-   procedure On_Mode_Changed
-     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Mode_Changed (Object : access Gtk_Widget_Record'Class);
    --  Called when the user changes the mode from the mode combo tool button
 
-   type Can_Fill_With_Current_Word_Filter is new Action_Filter_Record with
-     null record;
-   overriding function Filter_Matches_Primitive
+   type Can_Fill_With_Current_Word_Filter is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Can_Fill_With_Current_Word_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether the search view's search entry can be filled with the current
@@ -646,75 +659,86 @@ package body Vsearch is
    --  Return False when there is no current editor or when the search view's
    --  search entry does not have the focus.
 
-   type Fill_With_Current_Word_Command is new Interactive_Command with
-     null record;
-   overriding function Execute
+   type Fill_With_Current_Word_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Fill_With_Current_Word_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Command used to fill the search view's search entry with the focused
    --  editor current word.
 
    type Has_Search_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Has_Search_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether a search is in progress
 
-   type Focused_Search_View_Filter is new Action_Filter_Record with
-     null record;
-   overriding function Filter_Matches_Primitive
+   type Focused_Search_View_Filter is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Focused_Search_View_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
    --  Whether the Search view is open and currently focused
 
    type Find_Next_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_Next_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Command used to find the next occurrence of the search pattern
 
    type Find_Previous_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Command used to find the previous occurrence of the search pattern
 
    type Find_All_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Find_All_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Find_All_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Command used to find all the occurrence of the search pattern
 
    type Replace_Current_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Replace_Current_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Command used to replace the current occurence of the search pattern by
    --  the replace pattern
 
    type Replace_And_Find_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Replace_And_Find_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback used replace the next occurrence of the search pattern by
    --  the replace pattern and find the next occurrence right after.
 
    type Replace_All_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Replace_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Command used to replace all the occurrences of the search pattern by the
    --  replace pattern.
 
    type Exit_Search_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Exit_Search_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Command used to exit the Search view and give the focus back to the
    --  previously focused area.
 
    type New_Predefined_Regexp is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : New_Predefined_Regexp;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when a new predefined regexp has been added to the kernel.
@@ -723,9 +747,9 @@ package body Vsearch is
    --  Called when the selected pattern has changed, to reflect the settings
    --  for the predefined patterns
 
-   type Search_Functions_Changed is new Simple_Hooks_Function
-      with null record;
-   overriding procedure Execute
+   type Search_Functions_Changed is new Simple_Hooks_Function with null record;
+   overriding
+   procedure Execute
      (Self   : Search_Functions_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the list of registered search functions has changed.
@@ -749,8 +773,8 @@ package body Vsearch is
    -- Get_Label_From_Mode --
    -------------------------
 
-   function Get_Label_From_Mode (Mode : Vsearch_Mode) return String is
-     (case Mode is
+   function Get_Label_From_Mode (Mode : Vsearch_Mode) return String
+   is (case Mode is
          when Find_Only        => Find_Only_Label,
          when Find_And_Replace => Find_And_Replace_Label,
          when Unknown          => "");
@@ -759,20 +783,18 @@ package body Vsearch is
    -- Get_Mode_From_Label --
    -------------------------
 
-   function Get_Mode_From_Label (Label : String) return Vsearch_Mode is
-     (if Label = Find_Only_Label then
-         Find_Only
-      elsif Label = Find_And_Replace_Label then
-         Find_And_Replace
-      else
-         Unknown);
+   function Get_Mode_From_Label (Label : String) return Vsearch_Mode
+   is (if Label = Find_Only_Label
+       then Find_Only
+       elsif Label = Find_And_Replace_Label
+       then Find_And_Replace
+       else Unknown);
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Module : Search_Module)
-   is
+   procedure Free (Module : Search_Module) is
       Selector : constant Scope_Selector := Module.Get_Scope_Selector;
    begin
       if Selector /= null then
@@ -788,7 +810,8 @@ package body Vsearch is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Vsearch_Module_Record) is
+   overriding
+   procedure Destroy (Module : in out Vsearch_Module_Record) is
    begin
       if Module.Search_Regexps /= null then
          for S in Module.Search_Regexps'Range loop
@@ -808,9 +831,10 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Search_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Search_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Context);
       Dummy    : Message_Dialog_Buttons;
@@ -837,14 +861,18 @@ package body Vsearch is
       end if;
 
       if not Self.Found then
-         Dummy := GPS_Message_Dialog
-           (Msg     => "No occurrences of '" &
-            Context_Look_For (Self.Context) & "' found."
-            & ASCII.LF & "in "
-            & Context_Look_In (Self.Context.all),
-            Title   => -"Search",
-            Buttons => Button_OK,
-            Parent  => Self.Kernel.Get_Main_Window);
+         Dummy :=
+           GPS_Message_Dialog
+             (Msg     =>
+                "No occurrences of '"
+                & Context_Look_For (Self.Context)
+                & "' found."
+                & ASCII.LF
+                & "in "
+                & Context_Look_In (Self.Context.all),
+              Title   => -"Search",
+              Buttons => Button_OK,
+              Parent  => Self.Kernel.Get_Main_Window);
       end if;
 
       return Success;
@@ -854,14 +882,15 @@ package body Vsearch is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (Self : in out Replace_Command) is
+   overriding
+   procedure Primitive_Free (Self : in out Replace_Command) is
    begin
       Free (Self.Replace_With);
       Primitive_Free (Abstract_Search_Command (Self));  -- inherited
    end Primitive_Free;
 
-   overriding procedure Primitive_Free
-     (Self : in out Abstract_Search_Command) is
+   overriding
+   procedure Primitive_Free (Self : in out Abstract_Search_Command) is
    begin
       if Self.Context_Is_Owned then
          Free (Self.Context);
@@ -873,19 +902,20 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Replace_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Replace_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Context);
    begin
       if Replace
-        (Context         => Self.Context,
-         Kernel          => Self.Kernel,
-         Replace_String  => Self.Replace_With.all,
-         Case_Preserving => Preserve_Case_On_Replace.Get_Pref,
-         Search_Backward => Self.Search_Backward,
-         Give_Focus      => Self.Select_Editor_On_Match)
+           (Context         => Self.Context,
+            Kernel          => Self.Kernel,
+            Replace_String  => Self.Replace_With.all,
+            Case_Preserving => Preserve_Case_On_Replace.Get_Pref,
+            Search_Backward => Self.Search_Backward,
+            Give_Focus      => Self.Select_Editor_On_Match)
       then
          Self.Set_Progress
            ((Running,
@@ -913,32 +943,28 @@ package body Vsearch is
 
    begin
       if not Value.Is_Empty then
-         if V (V'Last) = Character'Val (127)
-           and then V'Length > 4
-         then
-            Iter := Add_Unique_List_Entry
-              (Model, V (V'First .. V'Last - 4),
-               Prepend => True,
-               Col     => Column_Text);
-            Model.Set
-              (Iter, Column_Pattern, V (V'First .. V'Last - 4));
-            Model.Set
-              (Iter, Column_Whole_Word, V (V'Last - 3) = '*');
-            Model.Set
-              (Iter, Column_Is_Regexp, V (V'Last - 2) = '*');
-            Model.Set
-              (Iter, Column_Case_Sensitive, V (V'Last - 1) = '*');
+         if V (V'Last) = Character'Val (127) and then V'Length > 4 then
+            Iter :=
+              Add_Unique_List_Entry
+                (Model,
+                 V (V'First .. V'Last - 4),
+                 Prepend => True,
+                 Col     => Column_Text);
+            Model.Set (Iter, Column_Pattern, V (V'First .. V'Last - 4));
+            Model.Set (Iter, Column_Whole_Word, V (V'Last - 3) = '*');
+            Model.Set (Iter, Column_Is_Regexp, V (V'Last - 2) = '*');
+            Model.Set (Iter, Column_Case_Sensitive, V (V'Last - 1) = '*');
          else
-            Iter := Add_Unique_List_Entry
-              (Model, V, Prepend => True, Col => Column_Text);
+            Iter :=
+              Add_Unique_List_Entry
+                (Model, V, Prepend => True, Col => Column_Text);
             Model.Set (Iter, Column_Pattern, V);
             Model.Set (Iter, Column_Case_Sensitive, False);
             Model.Set (Iter, Column_Is_Regexp, False);
             Model.Set (Iter, Column_Whole_Word, False);
          end if;
 
-         Model.Set
-           (Iter, Column_Is_Separator, False);
+         Model.Set (Iter, Column_Is_Separator, False);
       end if;
    end Add_History_To_Combo;
 
@@ -947,8 +973,8 @@ package body Vsearch is
    ------------------------------
 
    procedure Add_To_History_And_Combo
-     (Vsearch : not null access Vsearch_Record'Class;
-      Pattern : String;
+     (Vsearch        : not null access Vsearch_Record'Class;
+      Pattern        : String;
       Whole_Word     : Boolean;
       Case_Sensitive : Boolean;
       Regexp         : Boolean;
@@ -977,40 +1003,35 @@ package body Vsearch is
    --------------------
 
    function Create_Context
-     (Vsearch         : access Vsearch_Record'Class;
-      All_Occurrences : Boolean)
+     (Vsearch : access Vsearch_Record'Class; All_Occurrences : Boolean)
       return Find_Utils.Root_Search_Context_Access
    is
       Module         : constant Search_Module :=
-                         Find_Module
-                           (Vsearch_Module_Id.Kernel,
-                            To_String (Vsearch_Module_Id.Context));
+        Find_Module
+          (Vsearch_Module_Id.Kernel, To_String (Vsearch_Module_Id.Context));
       History        : constant History_Record :=
-                         Get_History (Vsearch_Module_Id.Kernel).all;
+        Get_History (Vsearch_Module_Id.Kernel).all;
       Pattern        : constant String :=
-                         To_String (Vsearch_Module_Id.Pattern);
+        To_String (Vsearch_Module_Id.Pattern);
       Replace_Text   : constant Virtual_String :=
-                         VSS.Strings.Conversions.To_Virtual_String
-                           (Vsearch_Module_Id.Replace);
+        VSS.Strings.Conversions.To_Virtual_String (Vsearch_Module_Id.Replace);
       Whole_Word     : constant Boolean :=
-                         Get_History (History, Key => Whole_Word_Hist_Key);
+        Get_History (History, Key => Whole_Word_Hist_Key);
       Case_Sensitive : constant Boolean :=
-                         Get_History (History, Key => Case_Sensitive_Hist_Key);
+        Get_History (History, Key => Case_Sensitive_Hist_Key);
       Kind           : constant GPS.Search.Search_Kind :=
-                         (if Get_History
-                            (History, Key => Regexp_Search_Hist_Key)
-                          then
-                             Regexp
-                          else
-                             Full_Text);
+        (if Get_History (History, Key => Regexp_Search_Hist_Key)
+         then Regexp
+         else Full_Text);
       Ctxt           : Root_Search_Context_Access;
 
    begin
       if Module /= null and then Pattern /= "" then
-         Ctxt := Module.Create_Context
-           (Vsearch_Module_Id.Kernel,
-            All_Occurrences,
-            Vsearch_Module_Id.Selector);
+         Ctxt :=
+           Module.Create_Context
+             (Vsearch_Module_Id.Kernel,
+              All_Occurrences,
+              Vsearch_Module_Id.Selector);
       end if;
 
       if Ctxt = null then
@@ -1027,15 +1048,14 @@ package body Vsearch is
       --  Update the contents of the combo boxes
       if Vsearch /= null then
          Add_To_History_And_Combo
-           (Vsearch, Pattern,
+           (Vsearch,
+            Pattern,
             Whole_Word     => Whole_Word,
             Case_Sensitive => Case_Sensitive,
             Regexp         => Kind = Regexp);
 
          Add_Unique_Combo_Entry
-           (Vsearch.Replace_Combo,
-            Replace_Text,
-            Prepend => True);
+           (Vsearch.Replace_Combo, Replace_Text, Prepend => True);
       end if;
 
       Add_To_History
@@ -1050,8 +1070,8 @@ package body Vsearch is
    -- Reset_Interactive_Context --
    -------------------------------
 
-   procedure Reset_Interactive_Context
-     (Vsearch : access Vsearch_Record'Class) is
+   procedure Reset_Interactive_Context (Vsearch : access Vsearch_Record'Class)
+   is
    begin
 
       Free (Vsearch_Module_Id.Interactive_Context);
@@ -1075,20 +1095,18 @@ package body Vsearch is
       Replace         : Boolean := False)
    is
       Module              : constant Search_Module :=
-                              Find_Module
-                                (Vsearch_Module_Id.Kernel,
-                                 To_String (Vsearch_Module_Id.Context));
+        Find_Module
+          (Vsearch_Module_Id.Kernel, To_String (Vsearch_Module_Id.Context));
       Occurrence          : Search_Occurrence;
       Found               : Boolean;
       Has_Next            : Boolean;
       Dummy               : Message_Dialog_Buttons;
       Ctxt                : Root_Search_Context_Access;
       Pattern             : constant String :=
-                              To_String (Vsearch_Module_Id.Pattern);
+        To_String (Vsearch_Module_Id.Pattern);
       C                   : Interactive_Command_Access;
       Has_Select_On_Match : constant Boolean :=
-                              (not Is_In_Incremental_Mode
-                               and then Select_On_Match.Get_Pref);
+        (not Is_In_Incremental_Mode and then Select_On_Match.Get_Pref);
       Search_Category     : constant String :=
         VSS.Strings.Conversions.To_UTF_8_String
           (Get_Search_Category_Name
@@ -1121,26 +1139,29 @@ package body Vsearch is
 
       if Ctxt /= null then
          if All_Occurrences then
-            C := new Search_Command'
-              (Interactive_Command with
-               Select_Editor_On_Match => Has_Select_On_Match,
-               Kernel                 => Vsearch_Module_Id.Kernel,
-               Search_Backward        => False,
-               Context                => Ctxt,
-               Context_Is_Owned       => True,  --  command will free context
-               Found                  => False);
+            C :=
+              new Search_Command'
+                (Interactive_Command
+                 with
+                   Select_Editor_On_Match => Has_Select_On_Match,
+                   Kernel                 => Vsearch_Module_Id.Kernel,
+                   Search_Backward        => False,
+                   Context                => Ctxt,
+                   Context_Is_Owned       =>
+                     True,  --  command will free context
+                   Found                  => False);
             Launch_Background_Command
-              (Vsearch_Module_Id.Kernel, C, True, True,
-               Search_Category);
+              (Vsearch_Module_Id.Kernel, C, True, True, Search_Category);
 
          else
-            Occurrence := Ctxt.Search
-              (Kernel               => Vsearch_Module_Id.Kernel,
-               Search_Backward      => False,
-               From_Selection_Start => Is_Incremental,
-               Give_Focus           => Has_Select_On_Match,
-               Found                => Found,
-               Continue             => Has_Next);
+            Occurrence :=
+              Ctxt.Search
+                (Kernel               => Vsearch_Module_Id.Kernel,
+                 Search_Backward      => False,
+                 From_Selection_Start => Is_Incremental,
+                 Give_Focus           => Has_Select_On_Match,
+                 Found                => Found,
+                 Continue             => Has_Next);
 
             --  Push the occurrence in the module's search occurrences stack if
             --  it supports the incremental search mode and if it's different
@@ -1150,7 +1171,7 @@ package body Vsearch is
                if Is_In_Incremental_Mode then
                   declare
                      Last_Occurrence : constant Search_Occurrence :=
-                                         Module.Get_Last_Occurrence;
+                       Module.Get_Last_Occurrence;
                   begin
                      if Last_Occurrence = null
                        or else not Last_Occurrence.Is_Equal (Occurrence)
@@ -1168,18 +1189,17 @@ package body Vsearch is
                   --  Remove any displayed information since a match has been
                   --  found.
                   Remove_Information_On_Child
-                    (Vsearch.Main_View,
-                     Child_Key => Pattern_Child_Key);
+                    (Vsearch.Main_View, Child_Key => Pattern_Child_Key);
                end if;
             end if;
 
             if Vsearch /= null then
                Vsearch.Replace_Button.Set_Sensitive
-                 (Found and then
-                  Module.Is_Option_Supported (Supports_Replace));
+                 (Found
+                  and then Module.Is_Option_Supported (Supports_Replace));
                Vsearch.Replace_Search_Button.Set_Sensitive
-                 (Found and then
-                  Module.Is_Option_Supported (Supports_Replace));
+                 (Found
+                  and then Module.Is_Option_Supported (Supports_Replace));
             end if;
 
             --  Give a visual feedback that the search is terminated.
@@ -1193,8 +1213,10 @@ package body Vsearch is
                     (Vsearch.Main_View,
                      Child_Key => Pattern_Child_Key,
                      Message   =>
-                       "No occurrences of '" & Pattern & "' found in "
-                     & Context_Look_In (Ctxt.all),
+                       "No occurrences of '"
+                       & Pattern
+                       & "' found in "
+                       & Context_Look_In (Ctxt.all),
                      Is_Error  => True);
                end if;
                Ctxt.Set_End_Notif_Done (True);
@@ -1254,8 +1276,8 @@ package body Vsearch is
             Vsearch_Module_Id.Kernel,
             Search_Backward      => True,
             From_Selection_Start => False,
-            Give_Focus           => (not Is_In_Incremental_Mode
-                                     and then Select_On_Match.Get_Pref),
+            Give_Focus           =>
+              (not Is_In_Incremental_Mode and then Select_On_Match.Get_Pref),
             Found                => Found,
             Continue             => Has_Next);
 
@@ -1276,7 +1298,7 @@ package body Vsearch is
    ------------------------
 
    procedure On_Search_Previous (Object : access Gtk_Widget_Record'Class) is
-      Vsearch        : constant Vsearch_Access := Vsearch_Access (Object);
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
    begin
       Internal_Search_Previous (Vsearch);
    end On_Search_Previous;
@@ -1295,8 +1317,9 @@ package body Vsearch is
    ----------------
 
    procedure On_Replace (Object : access Gtk_Widget_Record'Class) is
-      C        : Command_Access;
-      Result   : Command_Return_Type with Unreferenced;
+      C      : Command_Access;
+      Result : Command_Return_Type
+      with Unreferenced;
    begin
       C := Create_Replace (Vsearch_Access (Object), All_Occurrences => False);
       if C /= null then
@@ -1320,22 +1343,26 @@ package body Vsearch is
    --------------------
 
    procedure On_Replace_All (Object : access Gtk_Widget_Record'Class) is
-      Vsearch     : constant Vsearch_Access := Vsearch_Access (Object);
-      Has_Next    : Boolean;
+      Vsearch  : constant Vsearch_Access := Vsearch_Access (Object);
+      Has_Next : Boolean;
       pragma Unreferenced (Has_Next);
 
-      Dialog : constant Gtk_Dialog := Create_Gtk_Dialog
-        (Msg      => (-"You are about to replace all occurrences of """)
-         & To_String (Vsearch_Module_Id.Pattern) & """."
-         & ASCII.LF & (-"Continue?"),
-         Dialog_Type => Warning,
-         Title       => -"Replacing all occurrences",
-         Parent      => Gtk_Window (Get_Toplevel (Vsearch)));
+      Dialog : constant Gtk_Dialog :=
+        Create_Gtk_Dialog
+          (Msg         =>
+             (-"You are about to replace all occurrences of """)
+             & To_String (Vsearch_Module_Id.Pattern)
+             & """."
+             & ASCII.LF
+             & (-"Continue?"),
+           Dialog_Type => Warning,
+           Title       => -"Replacing all occurrences",
+           Parent      => Gtk_Window (Get_Toplevel (Vsearch)));
 
-      Dummy       : Gtk_Widget;
-      Do_Not_Ask  : Gtk_Check_Button;
-      Box         : Gtk_Hbox;
-      Response    : Gtk_Response_Type;
+      Dummy      : Gtk_Widget;
+      Do_Not_Ask : Gtk_Check_Button;
+      Box        : Gtk_Hbox;
+      Response   : Gtk_Response_Type;
 
    begin
       if Ask_Confirmation_For_Replace_All.Get_Pref then
@@ -1344,15 +1371,11 @@ package body Vsearch is
          Pack_Start (Get_Content_Area (Dialog), Box, True, True, 3);
          Pack_Start (Box, Do_Not_Ask, True, False, 3);
 
-         Dummy := Add_Button
-           (Dialog,
-            Text => "Yes",
-            Response_Id => Gtk_Response_Yes);
+         Dummy :=
+           Add_Button (Dialog, Text => "Yes", Response_Id => Gtk_Response_Yes);
 
-         Dummy := Add_Button
-           (Dialog,
-            Text => "No",
-            Response_Id => Gtk_Response_No);
+         Dummy :=
+           Add_Button (Dialog, Text => "No", Response_Id => Gtk_Response_No);
 
          Show_All (Dialog);
          Response := Run (Dialog);
@@ -1360,7 +1383,8 @@ package body Vsearch is
          if Get_Active (Do_Not_Ask) then
             Set_Pref
               (Ask_Confirmation_For_Replace_All,
-               Vsearch_Module_Id.Kernel, False);
+               Vsearch_Module_Id.Kernel,
+               False);
          end if;
 
          Destroy (Dialog);
@@ -1373,7 +1397,9 @@ package body Vsearch is
       Launch_Background_Command
         (Vsearch_Module_Id.Kernel,
          Create_Replace (Vsearch, All_Occurrences => True),
-         True, True, -"Search and replace");
+         True,
+         True,
+         -"Search and replace");
    end On_Replace_All;
 
    --------------------
@@ -1382,8 +1408,7 @@ package body Vsearch is
 
    function Create_Replace
      (Vsearch         : not null access Vsearch_Record'Class;
-      All_Occurrences : Boolean)
-     return Command_Access
+      All_Occurrences : Boolean) return Command_Access
    is
       Ctxt : Root_Search_Context_Access;
       Aux  : Replace_Command_Access;
@@ -1406,17 +1431,20 @@ package body Vsearch is
          return null;
       end if;
 
-      Aux := new Replace_Command'
-        (Interactive_Command with
-         Search_Backward        => False,
-         Context                => Ctxt,
-         Context_Is_Owned       => All_Occurrences,  --  command will free ctxt
-         Kernel                 => Vsearch_Module_Id.Kernel,
-         Select_Editor_On_Match => (not Is_In_Incremental_Mode
-                                    and then Select_On_Match.Get_Pref),
-         Found                  => False,
-         Replace_With           =>
-            new String'(To_String (Vsearch_Module_Id.Replace)));
+      Aux :=
+        new Replace_Command'
+          (Interactive_Command
+           with
+             Search_Backward        => False,
+             Context                => Ctxt,
+             Context_Is_Owned       =>
+               All_Occurrences,  --  command will free ctxt
+             Kernel                 => Vsearch_Module_Id.Kernel,
+             Select_Editor_On_Match =>
+               (not Is_In_Incremental_Mode and then Select_On_Match.Get_Pref),
+             Found                  => False,
+             Replace_With           =>
+               new String'(To_String (Vsearch_Module_Id.Replace)));
 
       return Command_Access (Aux);
    end Create_Replace;
@@ -1436,13 +1464,13 @@ package body Vsearch is
         and then View.Search_End_Mark.Element.Is_Present
       then
          declare
-            Start_Loc   : constant Editor_Location'Class :=
+            Start_Loc  : constant Editor_Location'Class :=
               View.Search_Start_Mark.Element.Location;
-            End_Loc     : constant Editor_Location'Class :=
+            End_Loc    : constant Editor_Location'Class :=
               View.Search_End_Mark.Element.Location;
-            Start_Line  : constant Integer := Start_Loc.Line;
-            End_Line    : constant Integer := End_Loc.Line;
-            Buffer      : constant Editor_Buffer'Class := Start_Loc.Buffer;
+            Start_Line : constant Integer := Start_Loc.Line;
+            End_Line   : constant Integer := End_Loc.Line;
+            Buffer     : constant Editor_Buffer'Class := Start_Loc.Buffer;
          begin
             if Buffer /= Nil_Editor_Buffer then
                Buffer.Remove_Style
@@ -1456,9 +1484,9 @@ package body Vsearch is
                   To_Line   => Editable_Line_Type (End_Line - 1));
 
                Buffer.Remove_Style
-                 (Style       => Selection_Style_Name,
-                  Line        => End_Line,
-                  To_Column   => End_Loc.Column);
+                 (Style     => Selection_Style_Name,
+                  Line      => End_Line,
+                  To_Column => End_Loc.Column);
             end if;
          end;
       end if;
@@ -1469,27 +1497,22 @@ package body Vsearch is
    -----------------------------
 
    procedure Highlight_Searched_Area
-     (View   : not null access Vsearch_Record'Class)
+     (View : not null access Vsearch_Record'Class)
    is
-      Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
-        Vsearch_Module_Id.Kernel.Get_Buffer_Factory.Get
-          (Open_View => False);
+      Buffer : constant GPS.Editors.Editor_Buffer'Class :=
+        Vsearch_Module_Id.Kernel.Get_Buffer_Factory.Get (Open_View => False);
    begin
       if Buffer = GPS.Editors.Nil_Editor_Buffer then
          return;
       end if;
 
       declare
-         Start_Loc                         : constant
-           GPS.Editors.Editor_Location'Class :=
-             Buffer.Selection_Start;
-         End_Loc                           : constant
-           GPS.Editors.Editor_Location'Class :=
-             Buffer.Selection_End;
-         Start_Line                        : constant Integer :=
-           Start_Loc.Line;
-         End_Line                          : constant Integer :=
-           End_Loc.Line;
+         Start_Loc  : constant GPS.Editors.Editor_Location'Class :=
+           Buffer.Selection_Start;
+         End_Loc    : constant GPS.Editors.Editor_Location'Class :=
+           Buffer.Selection_End;
+         Start_Line : constant Integer := Start_Loc.Line;
+         End_Line   : constant Integer := End_Loc.Line;
       begin
          Buffer.Apply_Style
            (Style       => Selection_Style_Name,
@@ -1502,9 +1525,9 @@ package body Vsearch is
             To_Line   => Editable_Line_Type (End_Line - 1));
 
          Buffer.Apply_Style
-           (Style       => Selection_Style_Name,
-            Line        => End_Line,
-            To_Column   => End_Loc.Column);
+           (Style     => Selection_Style_Name,
+            Line      => End_Line,
+            To_Column => End_Loc.Column);
 
          View.Search_Start_Mark :=
            GPS.Editors.Editor_Mark_Holders.To_Holder
@@ -1519,19 +1542,14 @@ package body Vsearch is
    -- On_Context_Combo_Changed --
    ------------------------------
 
-   procedure On_Context_Combo_Changed
-     (Object : access Gtk_Widget_Record'Class)
+   procedure On_Context_Combo_Changed (Object : access Gtk_Widget_Record'Class)
    is
       Vsearch             : constant Vsearch_Access := Vsearch_Access (Object);
       Module              : constant Search_Module :=
-                              Find_Module
-                                (Vsearch_Module_Id.Kernel,
-                                 Get_Active_Id (Vsearch.Context_Combo));
+        Find_Module
+          (Vsearch_Module_Id.Kernel, Get_Active_Id (Vsearch.Context_Combo));
       Selector            : constant Scope_Selector :=
-                              (if Module /= null then
-                                  Module.Get_Scope_Selector
-                               else
-                                  null);
+        (if Module /= null then Module.Get_Scope_Selector else null);
       Has_Replace         : Boolean;
       Has_Case_Sensitive  : Boolean;
       Has_All_Occurrences : Boolean;
@@ -1568,10 +1586,8 @@ package body Vsearch is
          --  We remove the scope selector widgets, but there is still one
          --  reference hold by the module, so they don't get destroyed.
          if Vsearch.Scope_Selector_Combo /= null then
-            Vsearch.Scope_Selector_Box.Remove
-              (Vsearch.Scope_Separator_Label);
-            Vsearch.Scope_Selector_Box.Remove
-              (Vsearch.Scope_Selector_Combo);
+            Vsearch.Scope_Selector_Box.Remove (Vsearch.Scope_Separator_Label);
+            Vsearch.Scope_Selector_Box.Remove (Vsearch.Scope_Selector_Combo);
          end if;
 
          if Vsearch.Scope_Selector_Optional /= null then
@@ -1595,9 +1611,7 @@ package body Vsearch is
                Padding => H_Padding);
 
             Vsearch.Scope_Selector_Box.Pack_End
-              (Vsearch.Scope_Selector_Combo,
-               Expand => True,
-               Fill   => True);
+              (Vsearch.Scope_Selector_Combo, Expand => True, Fill => True);
 
             Vsearch.Scope_Selector_Box.Show_All;
 
@@ -1636,8 +1650,7 @@ package body Vsearch is
    -------------------------
 
    procedure Set_First_Next_Mode
-     (Vsearch   : access Vsearch_Record'Class;
-      Find_Next : Boolean) is
+     (Vsearch : access Vsearch_Record'Class; Find_Next : Boolean) is
    begin
       Vsearch_Module_Id.Find_Next := Find_Next;
 
@@ -1653,7 +1666,8 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : Set_First_Next_Mode_Cb;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1674,7 +1688,8 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1691,7 +1706,8 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -1701,13 +1717,9 @@ package body Vsearch is
    begin
       if Vsearch /= null then
          Set_Font_And_Colors
-           (Widget     => Vsearch.Pattern_Combo,
-            Fixed_Font => True,
-            Pref       => Pref);
+           (Widget => Vsearch.Pattern_Combo, Fixed_Font => True, Pref => Pref);
          Set_Font_And_Colors
-           (Widget     => Vsearch.Replace_Combo,
-            Fixed_Font => True,
-            Pref       => Pref);
+           (Widget => Vsearch.Replace_Combo, Fixed_Font => True, Pref => Pref);
 
          if Close_On_Match.Get_Pref and then Incremental_Search.Get_Pref then
             --  Having both Close_On_Match and Incremental_Search has no sense
@@ -1728,7 +1740,8 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_MDI_Child_Selected;
       Kernel : not null access Kernel_Handle_Record'Class;
       Child  : Gtkada.MDI.MDI_Child)
@@ -1746,15 +1759,13 @@ package body Vsearch is
    ---------------
 
    function Key_Press
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       Vsearch             : constant Vsearch_Access := Vsearch_Access (Widget);
       Module              : constant Search_Module :=
-                              Find_Module
-                                (Vsearch_Module_Id.Kernel,
-                                 To_String
-                                   (Vsearch_Module_Id.Context));
+        Find_Module
+          (Vsearch_Module_Id.Kernel, To_String (Vsearch_Module_Id.Context));
       In_Incremental_Mode : constant Boolean := Is_In_Incremental_Mode;
       Key                 : constant Gdk_Key_Type := Get_Key_Val (Event);
       Mods                : constant Gdk_Modifier_Type := Get_State (Event);
@@ -1780,10 +1791,11 @@ package body Vsearch is
             End_Pos       : Gint;
             Has_Selection : Boolean;
          begin
-            Get_Selection_Bounds (Gtk_Entry (Vsearch.Pattern_Combo.Get_Child),
-                                  Start_Pos     => Start_Pos,
-                                  End_Pos       => End_Pos,
-                                  Has_Selection => Has_Selection);
+            Get_Selection_Bounds
+              (Gtk_Entry (Vsearch.Pattern_Combo.Get_Child),
+               Start_Pos     => Start_Pos,
+               End_Pos       => End_Pos,
+               Has_Selection => Has_Selection);
 
             --  If some text is selected in the search pattern entry, return
             --  False directly so that the text gets deleted.
@@ -1816,17 +1828,15 @@ package body Vsearch is
                   --  sensitivity of the 'Replace' and 'Replace and Find'
                   --  buttons since a match has been found.
                   Remove_Information_On_Child
-                    (Vsearch.Main_View,
-                     Child_Key => Pattern_Child_Key);
+                    (Vsearch.Main_View, Child_Key => Pattern_Child_Key);
                   Vsearch.Replace_Button.Set_Sensitive (True);
                   Vsearch.Replace_Search_Button.Set_Sensitive (True);
                   Reset_Interactive_Context (Vsearch);
 
                   Set_Active_Text
-                    (Vsearch.Pattern_Combo,
-                     Occurrence.Get_Pattern);
-                  Gtk_Entry
-                    (Vsearch.Pattern_Combo.Get_Child).Select_Region (0, -1);
+                    (Vsearch.Pattern_Combo, Occurrence.Get_Pattern);
+                  Gtk_Entry (Vsearch.Pattern_Combo.Get_Child).Select_Region
+                    (0, -1);
                   Module.Highlight_Occurrence (Occurrence);
 
                   Vsearch_Module_Id.Locked := False;
@@ -1841,8 +1851,7 @@ package body Vsearch is
         and then (Key = GDK_Z or else Key = GDK_LC_z)
       then
          Set_Active_Text
-           (Vsearch.Pattern_Combo,
-            To_String (Vsearch.Starting_Pattern));
+           (Vsearch.Pattern_Combo, To_String (Vsearch.Starting_Pattern));
          return True;
       end if;
 
@@ -1854,8 +1863,8 @@ package body Vsearch is
    -----------------------
 
    function Key_Press_Replace
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Widget);
    begin
@@ -1879,9 +1888,7 @@ package body Vsearch is
    -- Selection_Changed --
    -----------------------
 
-   procedure Selection_Changed
-     (Vsearch : access Gtk_Widget_Record'Class)
-   is
+   procedure Selection_Changed (Vsearch : access Gtk_Widget_Record'Class) is
       Search         : constant Vsearch_Access := Vsearch_Access (Vsearch);
       Iter           : Gtk_Tree_Iter;
       Case_Sensitive : Boolean;
@@ -1891,12 +1898,15 @@ package body Vsearch is
    begin
       if Get_Active_Iter (Search.Pattern_Combo) /= Null_Iter then
          Iter := Get_Active_Iter (Search.Pattern_Combo);
-         Case_Sensitive := Get_Boolean
-           (Search.Pattern_Combo.Get_Model, Iter, Column_Case_Sensitive);
-         Is_Regexp := Get_Boolean
-           (Search.Pattern_Combo.Get_Model, Iter, Column_Is_Regexp);
-         Whole_Word := Get_Boolean
-           (Search.Pattern_Combo.Get_Model, Iter, Column_Whole_Word);
+         Case_Sensitive :=
+           Get_Boolean
+             (Search.Pattern_Combo.Get_Model, Iter, Column_Case_Sensitive);
+         Is_Regexp :=
+           Get_Boolean
+             (Search.Pattern_Combo.Get_Model, Iter, Column_Is_Regexp);
+         Whole_Word :=
+           Get_Boolean
+             (Search.Pattern_Combo.Get_Model, Iter, Column_Whole_Word);
 
          Set_Active (Search.Case_Toggle, Case_Sensitive);
          Set_Active (Search.Regexp_Toggle, Is_Regexp);
@@ -1914,7 +1924,7 @@ package body Vsearch is
 
    procedure Set_Search_Regexps (Vsearch : access Vsearch_Record'Class) is
       Model      : constant Gtk_List_Store :=
-                     -Get_Model (Vsearch.Pattern_Combo);
+        -Get_Model (Vsearch.Pattern_Combo);
       Item       : Gtk_Tree_Iter;
       Casing     : constant Boolean := Get_Active (Vsearch.Case_Toggle);
       Whole_Word : constant Boolean := Get_Active (Vsearch.Whole_Word_Toggle);
@@ -1934,11 +1944,11 @@ package body Vsearch is
               Add_Unique_Combo_Entry
                 (Vsearch.Pattern_Combo,
                  VSS.Strings.Conversions.To_Virtual_String (R.Name.all));
-            Model.Set (Item, Column_Pattern,        R.Regexp.all);
+            Model.Set (Item, Column_Pattern, R.Regexp.all);
             Model.Set (Item, Column_Case_Sensitive, R.Case_Sensitive);
-            Model.Set (Item, Column_Is_Regexp,      R.Is_Regexp);
-            Model.Set (Item, Column_Whole_Word,     False);
-            Model.Set (Item, Column_Is_Separator,   False);
+            Model.Set (Item, Column_Is_Regexp, R.Is_Regexp);
+            Model.Set (Item, Column_Whole_Word, False);
+            Model.Set (Item, Column_Is_Separator, False);
          end loop;
       end if;
       --  Restore the options as before (they might have changed depending
@@ -1953,7 +1963,8 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : New_Predefined_Regexp;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1970,14 +1981,14 @@ package body Vsearch is
    ---------------------------
 
    procedure Refresh_Context_Combo
-     (Vsearch   : not null access Vsearch_Record'Class)
+     (Vsearch : not null access Vsearch_Record'Class)
    is
-      Num     : Positive := 1;
-      Store   : constant Gtk_List_Store :=
-                  Gtk_List_Store'(-Vsearch.Context_Combo.Get_Model);
-      Id_Col  : constant Gint := Vsearch.Context_Combo.Get_Id_Column;
-      Iter    : Gtk_Tree_Iter;
-      Found   : Boolean;
+      Num    : Positive := 1;
+      Store  : constant Gtk_List_Store :=
+        Gtk_List_Store'(-Vsearch.Context_Combo.Get_Model);
+      Id_Col : constant Gint := Vsearch.Context_Combo.Get_Id_Column;
+      Iter   : Gtk_Tree_Iter;
+      Found  : Boolean;
    begin
       loop
          declare
@@ -1993,7 +2004,9 @@ package body Vsearch is
                if Get_String (Store, Iter, Id_Col) = Module.Get_Label then
                   --  Update the text, after substituting macros.
                   Store.Set
-                    (Iter, 0, Substitute_Label
+                    (Iter,
+                     0,
+                     Substitute_Label
                        (Vsearch_Module_Id.Kernel, Module.Get_Label));
                   Found := True;
                   exit;
@@ -2004,8 +2017,9 @@ package body Vsearch is
             if not Found then
                Vsearch.Context_Combo.Append
                  (Id   => Module.Get_Label,
-                  Text => Substitute_Label
-                    (Vsearch_Module_Id.Kernel, Module.Get_Label));
+                  Text =>
+                    Substitute_Label
+                      (Vsearch_Module_Id.Kernel, Module.Get_Label));
             end if;
 
             Num := Num + 1;
@@ -2017,7 +2031,8 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : Search_Functions_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -2034,8 +2049,8 @@ package body Vsearch is
    -----------------------
 
    function On_Button_Release
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Button) return Boolean
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
       E : constant Gtk_Entry := Gtk_Entry (Self);
 
@@ -2058,10 +2073,9 @@ package body Vsearch is
       -- Get_Limit --
       ---------------
 
-      function Get_Limit (Backward : Boolean) return Gint
-      is
-         Limit   : constant Gint    := (if Backward then 0 else -1);
-         Text    : constant String  :=
+      function Get_Limit (Backward : Boolean) return Gint is
+         Limit   : constant Gint := (if Backward then 0 else -1);
+         Text    : constant String :=
            (if Backward
             then E.Get_Chars (Limit, E.Get_Position)
             else E.Get_Chars (E.Get_Position, Limit));
@@ -2114,16 +2128,15 @@ package body Vsearch is
    function Is_Separator_Row_Func
      (Model : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
-   is
-      (Get_Boolean (Model, Iter, Column_Is_Separator));
+   is (Get_Boolean (Model, Iter, Column_Is_Separator));
 
    ---------------------
    -- On_Button_Press --
    ---------------------
 
    function On_Button_Press
-     (Self  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event_Button) return Boolean
+     (Self : access Gtk_Widget_Record'Class; Event : Gdk_Event_Button)
+      return Boolean
    is
       E : constant Gtk_Entry := Gtk_Entry (Self);
    begin
@@ -2149,13 +2162,12 @@ package body Vsearch is
       Add_To_History_And_Combo
         (Vsearch,
          Vsearch.Pattern_Combo.Get_Active_Text,
-         Whole_Word     => Get_History
-           (History, Key => Whole_Word_Hist_Key),
-         Case_Sensitive => Get_History
-           (History, Key => Case_Sensitive_Hist_Key),
-         Regexp         => Get_History
-           (History, Key => Regexp_Search_Hist_Key),
-         To_Combo => False);
+         Whole_Word     => Get_History (History, Key => Whole_Word_Hist_Key),
+         Case_Sensitive =>
+           Get_History (History, Key => Case_Sensitive_Hist_Key),
+         Regexp         =>
+           Get_History (History, Key => Regexp_Search_Hist_Key),
+         To_Combo       => False);
 
       Add_To_History
         (History,
@@ -2167,13 +2179,11 @@ package body Vsearch is
       --  dialog itself: make sure here that they are not destroyed when the
       --  dialog is destroyed.
       if Vsearch.Scope_Selector_Combo /= null then
-         Vsearch.Scope_Selector_Box.Remove
-           (Vsearch.Scope_Selector_Combo);
+         Vsearch.Scope_Selector_Box.Remove (Vsearch.Scope_Selector_Combo);
       end if;
 
       if Vsearch.Scope_Selector_Optional /= null then
-         Vsearch.Scope_Optional_Box.Remove
-           (Vsearch.Scope_Selector_Optional);
+         Vsearch.Scope_Optional_Box.Remove (Vsearch.Scope_Selector_Optional);
       end if;
 
       Reset_Interactive_Context (Vsearch);
@@ -2183,8 +2193,7 @@ package body Vsearch is
    -- Initialize --
    ----------------
 
-   function Initialize
-     (Self : access Vsearch_Record'Class) return Gtk_Widget
+   function Initialize (Self : access Vsearch_Record'Class) return Gtk_Widget
    is
 
       procedure Disable_Button_Focus (Combo_Box : Gtk_Combo_Box);
@@ -2215,22 +2224,18 @@ package body Vsearch is
       procedure Initialize_From_History is
          History   : History_Record := Get_History (Self.Kernel).all;
          Last_Mode : constant VSS.String_Vectors.Virtual_String_Vector :=
-                       Get_History (History, Key => Mode_Hist_Key);
+           Get_History (History, Key => Mode_Hist_Key);
          Patterns  : constant VSS.String_Vectors.Virtual_String_Vector :=
-                       Get_History (History, Pattern_Hist_Key);
+           Get_History (History, Pattern_Hist_Key);
       begin
          --  Create a new key in the history to save the replace patterns and
          --  fill the replace combo first, so that the selection remains in the
          --  pattern combo.
 
          Create_New_Key_If_Necessary
-           (History,
-            Key      => Replace_Hist_Key,
-            Key_Type => Strings);
+           (History, Key => Replace_Hist_Key, Key_Type => Strings);
          Set_Max_Length
-           (History,
-            Num => Max_Nb_History_Entries,
-            Key => Replace_Hist_Key);
+           (History, Num => Max_Nb_History_Entries, Key => Replace_Hist_Key);
 
          Get_History
            (History,
@@ -2244,13 +2249,9 @@ package body Vsearch is
          --  history.
 
          Create_New_Key_If_Necessary
-           (History,
-            Key      => Pattern_Hist_Key,
-            Key_Type => Strings);
+           (History, Key => Pattern_Hist_Key, Key_Type => Strings);
          Set_Max_Length
-           (History,
-            Num => Max_Nb_History_Entries,
-            Key => Pattern_Hist_Key);
+           (History, Num => Max_Nb_History_Entries, Key => Pattern_Hist_Key);
 
          if not Patterns.Is_Empty then
             for I in reverse Patterns.First_Index .. Patterns.Last_Index loop
@@ -2260,17 +2261,19 @@ package body Vsearch is
             if Reuse_Last_Pattern.Get_Pref then
                Self.Pattern_Combo.Set_Active (0);
                Gtk_Entry (Self.Pattern_Combo.Get_Child).Select_Region (0, -1);
-               Self.Starting_Pattern := To_Unbounded_String
-                 (Self.Pattern_Combo.Get_Active_Text);
+               Self.Starting_Pattern :=
+                 To_Unbounded_String (Self.Pattern_Combo.Get_Active_Text);
 
             else
                Self.Pattern_Combo.Set_Active (-1);
                declare
-                  Model : constant Gtk_List_Store := -Get_Model
-                    (Self.Pattern_Combo);
+                  Model : constant Gtk_List_Store :=
+                    -Get_Model (Self.Pattern_Combo);
                begin
-                  Self.Starting_Pattern := To_Unbounded_String
-                    (Get_String (Model, Model.Get_Iter_First, Column_Pattern));
+                  Self.Starting_Pattern :=
+                    To_Unbounded_String
+                      (Get_String
+                         (Model, Model.Get_Iter_First, Column_Pattern));
                end;
             end if;
 
@@ -2282,13 +2285,8 @@ package body Vsearch is
          --  retrieve it if it already exists.
 
          Create_New_Key_If_Necessary
-           (History,
-            Key       => Mode_Hist_Key,
-            Key_Type  => Strings);
-         Set_Max_Length
-           (History,
-            Num => 1,
-            Key => Mode_Hist_Key);
+           (History, Key => Mode_Hist_Key, Key_Type => Strings);
+         Set_Max_Length (History, Num => 1, Key => Mode_Hist_Key);
 
          if not Last_Mode.Is_Empty and then Self.Mode = Unknown then
             Self.Set_Vsearch_Mode
@@ -2301,26 +2299,19 @@ package body Vsearch is
          --  Create a key in the history to save the last used search module
          --  when the keep-previous-search-context preference is set.
          Create_New_Key_If_Necessary
-           (History,
-            Key      => Last_Search_Module_Key,
-            Key_Type => Strings);
-         Set_Max_Length
-           (History,
-            Num => 1,
-            Key => Last_Search_Module_Key);
+           (History, Key => Last_Search_Module_Key, Key_Type => Strings);
+         Set_Max_Length (History, Num => 1, Key => Last_Search_Module_Key);
       end Initialize_From_History;
 
-      Replace_Row  : Gtk_Widget;
-      Layout       : Gtk_Cell_Layout;
-      Renderer     : Gtk_Cell_Renderer_Text;
-      Model        : Gtk_List_Store;
+      Replace_Row : Gtk_Widget;
+      Layout      : Gtk_Cell_Layout;
+      Renderer    : Gtk_Cell_Renderer_Text;
+      Model       : Gtk_List_Store;
    begin
       Gtk.Box.Initialize_Vbox (Self);
 
       Self.Main_View := new Dialog_View_With_Button_Box_Record;
-      Dialog_Utils.Initialize
-        (Self.Main_View,
-         Position => Pos_Right);
+      Dialog_Utils.Initialize (Self.Main_View, Position => Pos_Right);
       Self.Pack_Start (Self.Main_View, Expand => True, Fill => True);
 
       --  Find/Replace combo boxes
@@ -2357,8 +2348,7 @@ package body Vsearch is
       Gtk.Cell_Layout.Clear (Layout);
       Gtk.Cell_Layout.Pack_Start (Layout, Renderer, True);
       Gtk.Cell_Layout.Add_Attribute (Layout, Renderer, "text", Column_Text);
-      Set_Tooltip_Text (Self.Pattern_Combo,
-                        -"The searched word or pattern");
+      Set_Tooltip_Text (Self.Pattern_Combo, -"The searched word or pattern");
 
       Self.Group_Widget.Create_Child
         (Self.Pattern_Combo,
@@ -2372,13 +2362,15 @@ package body Vsearch is
       Set_Font_And_Colors (Self.Replace_Combo.Get_Child, Fixed_Font => True);
       Self.Replace_Combo.Set_Entry_Text_Column (0);
       Self.Replace_Combo.Set_Tooltip_Text
-        (-("The text that will replace each match. Next special patterns are" &
-           " recognized in regexp mode:" & ASCII.LF &
-           " * \0 - refers to the complete matched string" & ASCII.LF &
-           " * \1..\9 - refer to the corresponding matching subexpression" &
-           ASCII.LF &
-           " * \i or \i(start,step) - refers to the sequentially " &
-           "increasing number"));
+        (-("The text that will replace each match. Next special patterns are"
+           & " recognized in regexp mode:"
+           & ASCII.LF
+           & " * \0 - refers to the complete matched string"
+           & ASCII.LF
+           & " * \1..\9 - refer to the corresponding matching subexpression"
+           & ASCII.LF
+           & " * \i or \i(start,step) - refers to the sequentially "
+           & "increasing number"));
 
       Disable_Button_Focus (Self.Replace_Combo);
 
@@ -2387,10 +2379,11 @@ package body Vsearch is
       Self.Replace_Combo.Get_Child.On_Button_Release_Event
         (On_Button_Release'Access, After => False);
 
-      Replace_Row := Self.Group_Widget.Create_Child
-        (Self.Replace_Combo,
-         Label     => "Replace",
-         Child_Key => Replace_Child_Key);
+      Replace_Row :=
+        Self.Group_Widget.Create_Child
+          (Self.Replace_Combo,
+           Label     => "Replace",
+           Child_Key => Replace_Child_Key);
       Replace_Row.Set_No_Show_All (True);
 
       --  Context specific search
@@ -2400,19 +2393,19 @@ package body Vsearch is
       Gtk_New (Self.Context_Combo);
       Self.Context_Combo.Set_Tooltip_Text (-"The context of the search");
       Self.Scope_Selector_Box.Pack_End
-        (Self.Context_Combo,
-         Expand => True,
-         Fill   => True);
+        (Self.Context_Combo, Expand => True, Fill => True);
       Widget_Callback.Object_Connect
-        (Self.Context_Combo, Gtk.Combo_Box.Signal_Changed,
-         On_Context_Combo_Changed'Access, Self);
+        (Self.Context_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         On_Context_Combo_Changed'Access,
+         Self);
       Self.Context_Combo.Set_Name ("search scope combo");
 
       Self.Group_Widget.Create_Child
         (Self.Scope_Selector_Box,
-         Label     => "Where",
-         Expand    => True,
-         Fill      => True);
+         Label  => "Where",
+         Expand => True,
+         Fill   => True);
 
       Gtk_New_Vbox (Self.Scope_Optional_Box, Homogeneous => False);
       Self.Group_Widget.Append_Child
@@ -2425,8 +2418,10 @@ package body Vsearch is
       Self.Main_View.Append_Button (Self.Search_Next_Button);
       Self.Search_Next_Button.Set_Tooltip_Text (-"Search next occurrence");
       Widget_Callback.Object_Connect
-        (Self.Search_Next_Button, Gtk.Button.Signal_Clicked,
-         On_Search'Access, Self);
+        (Self.Search_Next_Button,
+         Gtk.Button.Signal_Clicked,
+         On_Search'Access,
+         Self);
 
       Gtk_New_With_Mnemonic (Self.Search_Previous_Button, -"_Previous");
       Self.Search_Previous_Button.Set_No_Show_All (True);
@@ -2434,24 +2429,30 @@ package body Vsearch is
       Self.Search_Previous_Button.Set_Tooltip_Text
         (-"Search previous occurrence");
       Widget_Callback.Object_Connect
-        (Self.Search_Previous_Button, Gtk.Button.Signal_Clicked,
-         On_Search_Previous'Access, Self);
+        (Self.Search_Previous_Button,
+         Gtk.Button.Signal_Clicked,
+         On_Search_Previous'Access,
+         Self);
 
       Gtk_New_With_Mnemonic (Self.Search_All_Button, -"Find All");
       Self.Search_All_Button.Set_No_Show_All (True);
       Self.Main_View.Append_Button (Self.Search_All_Button);
       Self.Search_All_Button.Set_Tooltip_Text (-"Find all occurences");
       Widget_Callback.Object_Connect
-        (Self.Search_All_Button, Gtk.Button.Signal_Clicked,
-         On_Search_All'Access, Self);
+        (Self.Search_All_Button,
+         Gtk.Button.Signal_Clicked,
+         On_Search_All'Access,
+         Self);
 
       Gtk_New (Self.Replace_Button, -"Replace");
       Self.Replace_Button.Set_No_Show_All (True);
       Self.Main_View.Append_Button (Self.Replace_Button);
       Self.Replace_Button.Set_Tooltip_Text (-"Replace next occurrence");
       Widget_Callback.Object_Connect
-        (Self.Replace_Button, Gtk.Button.Signal_Clicked,
-         On_Replace'Access, Self);
+        (Self.Replace_Button,
+         Gtk.Button.Signal_Clicked,
+         On_Replace'Access,
+         Self);
       Self.Replace_Button.Set_Sensitive (False);
 
       Gtk_New_With_Mnemonic (Self.Replace_Search_Button, -"Replace & Find");
@@ -2460,44 +2461,64 @@ package body Vsearch is
       Self.Replace_Search_Button.Set_Tooltip_Text
         (-"Replace, then find next occurrence");
       Widget_Callback.Object_Connect
-        (Self.Replace_Search_Button, Gtk.Button.Signal_Clicked,
-         On_Replace_Search'Access, Self);
+        (Self.Replace_Search_Button,
+         Gtk.Button.Signal_Clicked,
+         On_Replace_Search'Access,
+         Self);
 
       Gtk_New_With_Mnemonic (Self.Replace_All_Button, -"Replace All");
       Self.Replace_All_Button.Set_No_Show_All (True);
       Self.Main_View.Append_Button (Self.Replace_All_Button);
-      Self.Replace_All_Button.Set_Tooltip_Text
-        (-"Replace all occurences");
+      Self.Replace_All_Button.Set_Tooltip_Text (-"Replace all occurences");
       Widget_Callback.Object_Connect
-        (Self.Replace_All_Button, Gtk.Button.Signal_Clicked,
-         On_Replace_All'Access, Self);
+        (Self.Replace_All_Button,
+         Gtk.Button.Signal_Clicked,
+         On_Replace_All'Access,
+         Self);
 
       Self.On_Destroy (On_Vsearch_Destroy'Access);
 
       --  Any change to the fields resets the search mode
       Return_Callback.Object_Connect
-        (Self.Pattern_Combo.Get_Child, Signal_Key_Press_Event,
-         Return_Callback.To_Marshaller (Key_Press'Access), Self);
+        (Self.Pattern_Combo.Get_Child,
+         Signal_Key_Press_Event,
+         Return_Callback.To_Marshaller (Key_Press'Access),
+         Self);
       Return_Callback.Object_Connect
-        (Self.Replace_Combo.Get_Child, Signal_Key_Press_Event,
-         Return_Callback.To_Marshaller (Key_Press_Replace'Access), Self);
+        (Self.Replace_Combo.Get_Child,
+         Signal_Key_Press_Event,
+         Return_Callback.To_Marshaller (Key_Press_Replace'Access),
+         Self);
       Kernel_Callback.Connect
-        (Self.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
-         Reset_Search'Access, Self.Kernel);
+        (Self.Pattern_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         Reset_Search'Access,
+         Self.Kernel);
       Kernel_Callback.Connect
-        (Self.Context_Combo, Gtk.Combo_Box.Signal_Changed,
-         Reset_Search'Access, Self.Kernel);
+        (Self.Context_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         Reset_Search'Access,
+         Self.Kernel);
 
       --  These synchronize the global data to what the user sets in the view
       Widget_Callback.Object_Connect
-        (Self.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
-         On_Pattern_Combo_Changed_After'Access, Self, After => True);
+        (Self.Pattern_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         On_Pattern_Combo_Changed_After'Access,
+         Self,
+         After => True);
       Widget_Callback.Object_Connect
-        (Self.Context_Combo, Gtk.Combo_Box.Signal_Changed,
-         On_Context_Combo_Changed_After'Access, Self, After => True);
+        (Self.Context_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         On_Context_Combo_Changed_After'Access,
+         Self,
+         After => True);
       Widget_Callback.Object_Connect
-        (Self.Replace_Combo, Gtk.Combo_Box.Signal_Changed,
-         On_Replace_Combo_Changed_After'Access, Self, After => True);
+        (Self.Replace_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         On_Replace_Combo_Changed_After'Access,
+         Self,
+         After => True);
 
       --  Initialize the widgets that may have saved items in history
 
@@ -2526,20 +2547,16 @@ package body Vsearch is
    ----------------------
 
    procedure Set_Vsearch_Mode
-     (Self : not null access Vsearch_Record'Class;
-      Mode : Vsearch_Mode)
+     (Self : not null access Vsearch_Record'Class; Mode : Vsearch_Mode)
    is
       Show_Replace_Widgets : constant Boolean := Mode = Find_And_Replace;
    begin
       Self.Mode := Mode;
       Add_To_History
-        (Self.Kernel,
-         Key       => Mode_Hist_Key,
-         New_Entry => Mode'Img);
+        (Self.Kernel, Key => Mode_Hist_Key, New_Entry => Mode'Img);
 
       Self.Main_View.Set_Child_Visible
-        (Child_Key => Replace_Child_Key,
-         Visible   => Show_Replace_Widgets);
+        (Child_Key => Replace_Child_Key, Visible => Show_Replace_Widgets);
       Self.Replace_Button.Set_Visible (Show_Replace_Widgets);
       Self.Replace_All_Button.Set_Visible (Show_Replace_Widgets);
       Self.Replace_Search_Button.Set_Visible (Show_Replace_Widgets);
@@ -2555,20 +2572,20 @@ package body Vsearch is
    -- Is_In_Incremental_Mode --
    ----------------------------
 
-   function Is_In_Incremental_Mode return Boolean
-   is
+   function Is_In_Incremental_Mode return Boolean is
       Module : constant Search_Module :=
         Find_Module
           (Vsearch_Module_Id.Kernel,
            Label => To_String (Vsearch_Module_Id.Context));
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Vsearch_Module_Id.Get_Kernel);
+      View   : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Vsearch_Module_Id.Get_Kernel);
    begin
-      return (Module /= null
-              and then View /= null
-              and then View.Pattern_Changed_Once
-              and then Module.Is_Option_Supported (Supports_Incremental)
-              and then Incremental_Search.Get_Pref);
+      return
+        (Module /= null
+         and then View /= null
+         and then View.Pattern_Changed_Once
+         and then Module.Is_Option_Supported (Supports_Incremental)
+         and then Incremental_Search.Get_Pref);
    end Is_In_Incremental_Mode;
 
    ------------------
@@ -2580,16 +2597,14 @@ package body Vsearch is
       Text      : Glib.UTF8_String)
    is
       pragma Unreferenced (Clipboard);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Vsearch_Module_Id.Get_Kernel);
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Vsearch_Module_Id.Get_Kernel);
    begin
       if View = null then
          return;
       end if;
 
-      if Text /= ""
-        and then Text'Length < 128
-      then
+      if Text /= "" and then Text'Length < 128 then
          Set_Active_Text (View.Pattern_Combo, Text);
       end if;
    end Receive_Text;
@@ -2598,7 +2613,8 @@ package body Vsearch is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access Vsearch_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
@@ -2609,7 +2625,8 @@ package body Vsearch is
       Create_New_Boolean_Key_If_Necessary
         (Get_History (View.Kernel).all, Regexp_Search_Hist_Key, False);
       Associate
-        (Get_History (View.Kernel).all, Regexp_Search_Hist_Key,
+        (Get_History (View.Kernel).all,
+         Regexp_Search_Hist_Key,
          View.Regexp_Toggle,
          Default => False);
       Kernel_Callback.Connect
@@ -2617,49 +2634,45 @@ package body Vsearch is
          Gtk.Toggle_Tool_Button.Signal_Toggled,
          Reset_Search'Access,
          View.Kernel);
-      View.Append_Toolbar
-        (Toolbar => Toolbar,
-         Item    => View.Regexp_Toggle);
+      View.Append_Toolbar (Toolbar => Toolbar, Item => View.Regexp_Toggle);
 
       Gtk_New (View.Case_Toggle);
-      View.Case_Toggle.Set_Icon_Name
-        ("gps-case-sensitive-symbolic");
+      View.Case_Toggle.Set_Icon_Name ("gps-case-sensitive-symbolic");
       View.Case_Toggle.Set_Tooltip_Text
         (-("Select this to differenciate upper from lower casing in search"
-         & " results"));
+           & " results"));
       Create_New_Boolean_Key_If_Necessary
         (Get_History (View.Kernel).all, Case_Sensitive_Hist_Key, False);
       Associate
-        (Get_History (View.Kernel).all, Case_Sensitive_Hist_Key,
-         View.Case_Toggle, Default => False);
+        (Get_History (View.Kernel).all,
+         Case_Sensitive_Hist_Key,
+         View.Case_Toggle,
+         Default => False);
       Kernel_Callback.Connect
         (View.Case_Toggle,
          Gtk.Toggle_Tool_Button.Signal_Toggled,
          Reset_Search'Access,
          View.Kernel);
-      View.Append_Toolbar
-        (Toolbar => Toolbar,
-         Item    => View.Case_Toggle);
+      View.Append_Toolbar (Toolbar => Toolbar, Item => View.Case_Toggle);
 
       Gtk_New (View.Whole_Word_Toggle);
-      View.Whole_Word_Toggle.Set_Icon_Name
-        ("gps-whole-word-symbolic");
+      View.Whole_Word_Toggle.Set_Icon_Name ("gps-whole-word-symbolic");
       View.Whole_Word_Toggle.Set_Tooltip_Text
         (-("Select this if the pattern should only match a whole word, never"
-         & " part of a word"));
+           & " part of a word"));
       Create_New_Boolean_Key_If_Necessary
         (Get_History (View.Kernel).all, Whole_Word_Hist_Key, False);
       Associate
-        (Get_History (View.Kernel).all, Whole_Word_Hist_Key,
-         View.Whole_Word_Toggle, Default => False);
+        (Get_History (View.Kernel).all,
+         Whole_Word_Hist_Key,
+         View.Whole_Word_Toggle,
+         Default => False);
       Kernel_Callback.Connect
         (View.Whole_Word_Toggle,
          Gtk.Toggle_Tool_Button.Signal_Toggled,
          Reset_Search'Access,
          View.Kernel);
-      View.Append_Toolbar
-        (Toolbar     => Toolbar,
-         Item        => View.Whole_Word_Toggle);
+      View.Append_Toolbar (Toolbar => Toolbar, Item => View.Whole_Word_Toggle);
 
       Gtk_New (View.Mode_Combo, "", Click_Pops_Up => True);
       Widget_Callback.Object_Connect
@@ -2686,53 +2699,38 @@ package body Vsearch is
       --  Include all the patterns that have been predefined so far, and make
       --  sure that new patterns will be automatically added.
       Widget_Callback.Object_Connect
-        (View.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
-         Selection_Changed'Access, View);
+        (View.Pattern_Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         Selection_Changed'Access,
+         View);
    end Create_Toolbar;
 
    -----------------
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Vsearch_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access Vsearch_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
+      Append_Menu (Menu, Kernel => View.Kernel, Pref => Incremental_Search);
+      Append_Menu (Menu, Kernel => View.Kernel, Pref => Close_On_Match);
+      Append_Menu (Menu, Kernel => View.Kernel, Pref => Select_On_Match);
       Append_Menu
-        (Menu,
-         Kernel => View.Kernel,
-         Pref   => Incremental_Search);
+        (Menu, Kernel => View.Kernel, Pref => Keep_Previous_Search_Context);
+      Append_Menu (Menu, Kernel => View.Kernel, Pref => Display_Matched_Only);
       Append_Menu
-        (Menu,
-         Kernel => View.Kernel,
-         Pref   => Close_On_Match);
-      Append_Menu
-        (Menu,
-         Kernel => View.Kernel,
-         Pref   => Select_On_Match);
-      Append_Menu
-        (Menu,
-         Kernel => View.Kernel,
-         Pref   => Keep_Previous_Search_Context);
-      Append_Menu
-        (Menu,
-         Kernel => View.Kernel,
-         Pref   => Display_Matched_Only);
-      Append_Menu
-        (Menu,
-         Kernel => View.Kernel,
-         Pref   => Preserve_Case_On_Replace);
-      Append_Menu
-        (Menu,
-         Kernel => View.Kernel,
-         Pref   => Reuse_Last_Pattern);
+        (Menu, Kernel => View.Kernel, Pref => Preserve_Case_On_Replace);
+      Append_Menu (Menu, Kernel => View.Kernel, Pref => Reuse_Last_Pattern);
    end Create_Menu;
 
    ---------------
    -- On_Create --
    ---------------
 
-   overriding procedure On_Create
+   overriding
+   procedure On_Create
      (Self  : not null access Vsearch_Record;
       Child : not null access GPS_MDI_Child_Record'Class)
    is
@@ -2777,11 +2775,9 @@ package body Vsearch is
    begin
       declare
          Start, Stop : Gint;
-         Success : Boolean := False;
+         Success     : Boolean := False;
       begin
-         if W /= null
-           and then Is_A (W.Get_Type, Gtk.Editable.Get_Type)
-         then
+         if W /= null and then Is_A (W.Get_Type, Gtk.Editable.Get_Type) then
             Get_Selection_Bounds (+W, Start, Stop, Success);
 
             if Success and then Start /= Stop then
@@ -2795,8 +2791,8 @@ package body Vsearch is
 
             if Has_Selection then
                if Get_Line (First_Iter) = Get_Line (Last_Iter) then
-                  Default_Pattern := new String'
-                    (Get_Slice (Buffer, First_Iter, Last_Iter));
+                  Default_Pattern :=
+                    new String'(Get_Slice (Buffer, First_Iter, Last_Iter));
 
                   Select_Range (Buffer, First_Iter, First_Iter);
                else
@@ -2831,17 +2827,14 @@ package body Vsearch is
       --  want to make a minor modification, rather than reuse the previous
       --  replacement text (which is still accessible through the combo).
 
-      if not Created
-        or else Reuse_Last_Pattern.Get_Pref
-      then
+      if not Created or else Reuse_Last_Pattern.Get_Pref then
          if Default_Pattern /= null then
             Set_Active_Text (View.Pattern_Combo, Default_Pattern.all);
             Set_Active_Text (View.Replace_Combo, Default_Pattern.all);
             Free (Default_Pattern);
          else
             Request_Text
-              (Gtk.Clipboard.Get (Selection_Primary),
-               Receive_Text'Access);
+              (Gtk.Clipboard.Get (Selection_Primary), Receive_Text'Access);
          end if;
       end if;
 
@@ -2853,15 +2846,17 @@ package body Vsearch is
             Highlight_Searched_Area (View);
          end if;
 
-         View.Selection_From := Buffer.Create_Mark
-           (Mark_Name    => "search_from",
-            Where        => First_Iter,
-            Left_Gravity => True);
+         View.Selection_From :=
+           Buffer.Create_Mark
+             (Mark_Name    => "search_from",
+              Where        => First_Iter,
+              Left_Gravity => True);
 
-         View.Selection_To := Buffer.Create_Mark
-           (Mark_Name    => "search_to",
-            Where        => Last_Iter,
-            Left_Gravity => False);
+         View.Selection_To :=
+           Buffer.Create_Mark
+             (Mark_Name    => "search_to",
+              Where        => Last_Iter,
+              Left_Gravity => False);
       end if;
 
       Set_Selected_Project (Kernel, Selected);
@@ -2905,7 +2900,7 @@ package body Vsearch is
       begin
          if Param = "p" then
             declare
-               P : constant Project_Type_Array :=
+               P      : constant Project_Type_Array :=
                  Get_Selected_Project (Kernel);
                Result : Unbounded_String;
             begin
@@ -2925,11 +2920,12 @@ package body Vsearch is
          return "%" & Param;
       end Substitution;
    begin
-      return GNATCOLL.Templates.Substitute
-        (Label,
-         Delimiter => '%',
-         Callback  => Substitution'Unrestricted_Access,
-         Recursive => False);
+      return
+        GNATCOLL.Templates.Substitute
+          (Label,
+           Delimiter => '%',
+           Callback  => Substitution'Unrestricted_Access,
+           Recursive => False);
    end Substitute_Label;
 
    --------------------------
@@ -2941,8 +2937,8 @@ package body Vsearch is
       Context : Selection_Context)
    is
       View : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
-      Set : File_Info_Set;
-      Idx : Integer;
+      Set  : File_Info_Set;
+      Idx  : Integer;
    begin
       Free (Vsearch_Module_Id.Projects);
 
@@ -2953,8 +2949,8 @@ package body Vsearch is
          Set := Kernel.Get_Project_Tree.Info_Set (File_Information (Context));
 
          if not Set.Is_Empty then
-            Vsearch_Module_Id.Projects := new Project_Type_Array
-              (1 .. Integer (Set.Length));
+            Vsearch_Module_Id.Projects :=
+              new Project_Type_Array (1 .. Integer (Set.Length));
             Idx := 1;
 
             for P of Set loop
@@ -3005,7 +3001,7 @@ package body Vsearch is
    begin
       if View /= null then
          From := View.Selection_From;
-         To   := View.Selection_To;
+         To := View.Selection_To;
       else
          --  This should not happen, but set this for safety
          From := null;
@@ -3017,18 +3013,19 @@ package body Vsearch is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Can_Fill_With_Current_Word_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context));
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context));
    begin
       if View /= null and then View.Pattern_Combo.Get_Child.Has_Focus then
          declare
             Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                       View.Kernel.Get_Buffer_Factory.Get (Open_View => False);
+              View.Kernel.Get_Buffer_Factory.Get (Open_View => False);
          begin
             return Buffer /= GPS.Editors.Nil_Editor_Buffer;
          end;
@@ -3041,7 +3038,8 @@ package body Vsearch is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Has_Search_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -3054,36 +3052,38 @@ package body Vsearch is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Focused_Search_View_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context), Visible_Only => True);
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View
+          (Get_Kernel (Context), Visible_Only => True);
    begin
-      return View /= null
-        and then View.Pattern_Combo.Get_Child.Has_Focus;
+      return View /= null and then View.Pattern_Combo.Get_Child.Has_Focus;
    end Filter_Matches_Primitive;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Fill_With_Current_Word_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Vsearch : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
+      Vsearch : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
       if Vsearch = null then
          return Success;
       end if;
 
       declare
-         Buffer  : constant GPS.Editors.Editor_Buffer'Class :=
+         Buffer : constant GPS.Editors.Editor_Buffer'Class :=
            Vsearch_Module_Id.Kernel.Get_Buffer_Factory.Get
              (Open_View => False);
       begin
@@ -3120,13 +3120,14 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_Next_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
       Internal_Search (View);
       return Commands.Success;
@@ -3136,13 +3137,14 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
       Internal_Search_Previous (View);
       return Commands.Success;
@@ -3152,13 +3154,14 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Find_All_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Find_All_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
       if View /= null and then View.Is_Visible then
          On_Search_All (View);
@@ -3170,13 +3173,14 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Replace_Current_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
       if View /= null then
          On_Replace (View);
@@ -3188,13 +3192,14 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Replace_And_Find_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
       if View /= null then
          On_Replace_Search (View);
@@ -3206,13 +3211,14 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Replace_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
+      View : constant Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
       if View /= null and then View.Replace_All_Button.Get_Sensitive then
          On_Replace_All (View);
@@ -3224,14 +3230,14 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Exit_Search_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : constant Vsearch_Access := Search_Views.Retrieve_View
-        (Kernel);
+      View   : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
    begin
       if View /= null then
          declare
@@ -3239,8 +3245,7 @@ package body Vsearch is
          begin
             if Child /= null then
                if not Child.Is_Floating then
-                  Child.Give_Focus_To_Previous_Child
-                    (From_Same_Area => False);
+                  Child.Give_Focus_To_Previous_Child (From_Same_Area => False);
 
                else
                   --  Call Close_Child to let the MDI close the view.
@@ -3265,8 +3270,8 @@ package body Vsearch is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free
-     (Action : in out Search_Specific_Context) is
+   overriding
+   procedure Primitive_Free (Action : in out Search_Specific_Context) is
    begin
       Free (Action.Context);
    end Primitive_Free;
@@ -3275,14 +3280,15 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Action  : access Search_Specific_Context;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Vsearch : Vsearch_Access := Search_Views.Retrieve_View
-        (Get_Kernel (Context.Context));
-      Dummy  : Boolean;
+      Vsearch : Vsearch_Access :=
+        Search_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Dummy   : Boolean;
    begin
       if Action.Incremental then
          Set_Pref
@@ -3298,12 +3304,13 @@ package body Vsearch is
       then
          On_Search (Vsearch);
       else
-         Vsearch := Get_Or_Create_Vsearch
-           (Get_Kernel (Context.Context),
-            Raise_Widget  => True,
-            Reset_Entries => True,
-            Context       => Action.Context,
-            Mode          => Find_Only);
+         Vsearch :=
+           Get_Or_Create_Vsearch
+             (Get_Kernel (Context.Context),
+              Raise_Widget  => True,
+              Reset_Entries => True,
+              Context       => Action.Context,
+              Mode          => Find_Only);
       end if;
 
       return Success;
@@ -3313,19 +3320,21 @@ package body Vsearch is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Action  : access Replace_Specific_Context;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Vsearch : Vsearch_Access;
       pragma Unreferenced (Vsearch);
    begin
-      Vsearch := Get_Or_Create_Vsearch
-        (Get_Kernel (Context.Context),
-         Raise_Widget  => True,
-         Reset_Entries => True,
-         Context       => Action.Context,
-         Mode          => Find_And_Replace);
+      Vsearch :=
+        Get_Or_Create_Vsearch
+          (Get_Kernel (Context.Context),
+           Raise_Widget  => True,
+           Reset_Entries => True,
+           Context       => Action.Context,
+           Mode          => Find_And_Replace);
       return Success;
    end Execute;
 
@@ -3334,9 +3343,9 @@ package body Vsearch is
    ------------------------------
 
    procedure Register_Search_Function
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Module        : not null access Search_Module_Type'Class;
-      Is_Default    : Boolean := False)
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Module     : not null access Search_Module_Type'Class;
+      Is_Default : Boolean := False)
    is
       Label : constant String := Module.Get_Label;
    begin
@@ -3348,10 +3357,10 @@ package body Vsearch is
 
       if Module.Get_Scope_Selector /= null then
          declare
-            Scope_Combo    : constant Gtk_Widget := Gtk_Widget
-              (Module.Get_Scope_Selector.Get_Scope_Combo);
+            Scope_Combo    : constant Gtk_Widget :=
+              Gtk_Widget (Module.Get_Scope_Selector.Get_Scope_Combo);
             Scope_Optional : constant Gtk_Widget :=
-                               Module.Get_Scope_Selector.Get_Optional_Widget;
+              Module.Get_Scope_Selector.Get_Optional_Widget;
          begin
             --  Make sure the extra information is not destroyed for the
             --  duration of GNAT Studio, even when the search window is
@@ -3373,13 +3382,15 @@ package body Vsearch is
       Register_Action
         (Kernel,
          Name        => -"Search in context: " & Label,
-         Command     => new Search_Specific_Context'
-           (Interactive_Command
-            with
-              Context     => new String'(Label),
-              Incremental => False),
-         Description => -("Open the search dialog, and preset the ""Look In"""
-           & " field to """ & Label & """"),
+         Command     =>
+           new Search_Specific_Context'
+             (Interactive_Command
+              with Context => new String'(Label), Incremental => False),
+         Description =>
+           -("Open the search dialog, and preset the ""Look In"""
+             & " field to """
+             & Label
+             & """"),
          Category    => -"Search");
 
       Search_Functions_Changed_Hook.Run (Kernel);
@@ -3390,8 +3401,8 @@ package body Vsearch is
    ---------------------------
 
    function Get_Nth_Search_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive) return Search_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Num : Positive)
+      return Search_Module
    is
       pragma Unreferenced (Kernel);
       Node : Search_Modules_List.Cursor :=
@@ -3413,8 +3424,8 @@ package body Vsearch is
    -----------------
 
    function Find_Module
-     (Kernel : access Kernel_Handle_Record'Class;
-      Label  : String) return Search_Module
+     (Kernel : access Kernel_Handle_Record'Class; Label : String)
+      return Search_Module
    is
       pragma Unreferenced (Kernel);
    begin
@@ -3437,8 +3448,7 @@ package body Vsearch is
       In_Selection : Boolean := False) return Search_Module
    is
       Module : Search_Module;
-      Id     : constant Module_ID :=
-                 Module_ID (Get_Creator (Context));
+      Id     : constant Module_ID := Module_ID (Get_Creator (Context));
 
       function Get_Search_Module_From_Context return Search_Module;
       function Get_Search_Module_From_History return Search_Module;
@@ -3449,7 +3459,7 @@ package body Vsearch is
 
       function Get_Search_Module_From_Context return Search_Module is
          List : Search_Modules_List.Cursor :=
-                  Vsearch_Module_Id.Search_Modules.First;
+           Vsearch_Module_Id.Search_Modules.First;
 
       begin
          while Has_Element (List) loop
@@ -3472,8 +3482,7 @@ package body Vsearch is
       function Get_Search_Module_From_History return Search_Module is
          Last_Selected : constant VSS.String_Vectors.Virtual_String_Vector :=
            Get_History
-             (Get_History (Get_Kernel (Context)).all,
-              Last_Search_Module_Key);
+             (Get_History (Get_Kernel (Context)).all, Last_Search_Module_Key);
       begin
          if not Last_Selected.Is_Empty then
             declare
@@ -3482,9 +3491,9 @@ package body Vsearch is
                    (Last_Selected.First_Element);
 
             begin
-               return Find_Module
-                 (Kernel => Get_Kernel (Context),
-                  Label  => Module_Name);
+               return
+                 Find_Module
+                   (Kernel => Get_Kernel (Context), Label => Module_Name);
             end;
          end if;
 
@@ -3518,9 +3527,10 @@ package body Vsearch is
       --  one otherwise.
 
       if Id /= null and then Id.Module_Name = Search_Module_Name then
-         Module := Find_Module
-           (Vsearch_Module_Id.Kernel,
-            Label => Get_Active_Text (Vsearch.Context_Combo));
+         Module :=
+           Find_Module
+             (Vsearch_Module_Id.Kernel,
+              Label => Get_Active_Text (Vsearch.Context_Combo));
       end if;
 
       if Module = null then
@@ -3535,8 +3545,7 @@ package body Vsearch is
    -----------------------
 
    procedure Set_Search_Module
-     (Self   : not null access Vsearch_Record'Class;
-      Module : Search_Module)
+     (Self : not null access Vsearch_Record'Class; Module : Search_Module)
    is
       Dummy : Boolean;
    begin
@@ -3550,8 +3559,7 @@ package body Vsearch is
    ----------------------------
 
    procedure Set_Last_Search_Module
-     (Handle : access Kernel_Handle_Record'Class;
-      Module : Search_Module) is
+     (Handle : access Kernel_Handle_Record'Class; Module : Search_Module) is
    begin
       if not Get_Pref (Keep_Previous_Search_Context)
         or else Module.Get_Id = null
@@ -3560,9 +3568,12 @@ package body Vsearch is
       end if;
 
       if Active (Me) then
-         Trace (Me, "Set last search function for module "
-                & Get_Name (Module.Get_Id)
-                & " to " & Module.Get_Label);
+         Trace
+           (Me,
+            "Set last search function for module "
+            & Get_Name (Module.Get_Id)
+            & " to "
+            & Module.Get_Label);
       end if;
 
       Add_To_History
@@ -3607,7 +3618,8 @@ package body Vsearch is
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Vsearch_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -3642,7 +3654,7 @@ package body Vsearch is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Filter  : Action_Filter;
+      Filter : Action_Filter;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
       Search_Views.Register_Module (Kernel, Module_ID (Vsearch_Module_Id));
@@ -3650,102 +3662,111 @@ package body Vsearch is
       Vsearch_Module_Id.Kernel := Kernel_Handle (Kernel);
 
       Register_Action
-        (Kernel, "Search",
+        (Kernel,
+         "Search",
          new Search_Specific_Context'
-           (Interactive_Command
-            with
-              Context     => null,
-              Incremental => False),
-         Description  => -("Open the search dialog. If you have selected the"
-           & " preference Search/Preserve search context, the same context"
-           & " will be selected, otherwise the context is reset depending on"
-           & " the active window"),
+           (Interactive_Command with Context => null, Incremental => False),
+         Description  =>
+           -("Open the search dialog. If you have selected the"
+             & " preference Search/Preserve search context, the same context"
+             & " will be selected, otherwise the context is reset depending on"
+             & " the active window"),
          Icon_Name    => "gps-search-symbolic",
          Category     => -"Search",
          For_Learning => True);
 
       Register_Action
-        (Kernel, "incremental search",
+        (Kernel,
+         "incremental search",
          new Search_Specific_Context'
-           (Interactive_Command
-            with
-              Context     => null,
-              Incremental => True),
+           (Interactive_Command with Context => null, Incremental => True),
          Description => -("Open the search dialog in incremental mode."),
          Icon_Name   => "gps-search-symbolic",
          Category    => -"Search");
 
       Register_Action
-        (Kernel, "Replace",
+        (Kernel,
+         "Replace",
          new Replace_Specific_Context'
-           (Interactive_Command
-            with
-              Context     => null,
-              Incremental => False),
-         Description  => -("Open the search dialog in the replace mode."
-           & " If you have selected the"
-           & " preference Search/Preserve Search Context, the same context"
-           & " will be selected, otherwise the context is reset depending on"
-           & " the active window"),
+           (Interactive_Command with Context => null, Incremental => False),
+         Description  =>
+           -("Open the search dialog in the replace mode."
+             & " If you have selected the"
+             & " preference Search/Preserve Search Context, the same context"
+             & " will be selected, otherwise the context is reset depending on"
+             & " the active window"),
          Icon_Name    => "gps-search-symbolic",
          Category     => -"Search",
          For_Learning => True);
 
       Filter := new Can_Fill_With_Current_Word_Filter;
       Register_Action
-        (Kernel, "fill search with current word",
+        (Kernel,
+         "fill search with current word",
          new Fill_With_Current_Word_Command,
-         Description => -("Fill the Search view's search entry with the "
-           & "focused editor's current word"),
+         Description =>
+           -("Fill the Search view's search entry with the "
+             & "focused editor's current word"),
          Filter      => Filter,
          Category    => -"Search");
 
       Register_Action
-        (Kernel, "find next",
+        (Kernel,
+         "find next",
          new Find_Next_Command,
          Description => -"Find the next occurrence of the search pattern",
          Category    => -"Search");
 
       Register_Action
-        (Kernel, "find previous",
+        (Kernel,
+         "find previous",
          new Find_Previous_Command,
          Description => -"Find the previous occurrence of the search pattern",
          Category    => -"Search");
 
       Register_Action
-        (Kernel, "find all",
+        (Kernel,
+         "find all",
          new Find_All_Command,
          Description => -"Find all the occurrences of the search pattern",
          Category    => -"Search");
 
-      Filter  := new Has_Search_Filter;
+      Filter := new Has_Search_Filter;
       Register_Action
-        (Kernel, "replace current",
+        (Kernel,
+         "replace current",
          new Replace_Current_Command,
-         Description => -"Replace the current matched occurrence, if any, " &
-           "with the replace pattern",
+         Description =>
+           -"Replace the current matched occurrence, if any, "
+           & "with the replace pattern",
          Filter      => Filter,
          Category    => -"Search");
 
       Register_Action
-        (Kernel, "replace and find",
+        (Kernel,
+         "replace and find",
          new Replace_And_Find_Command,
-         Description => -("Replace the current matched occurrence, if any, " &
-             "with the replace pattern and find the next occurrence"),
+         Description =>
+           -("Replace the current matched occurrence, if any, "
+             & "with the replace pattern and find the next occurrence"),
          Category    => -"Search");
 
       Register_Action
-        (Kernel, "replace all",
+        (Kernel,
+         "replace all",
          new Replace_All_Command,
-         Description => -("Replace all the occurrences of the search pattern "
-           & "by the replace pattern"),
+         Description =>
+           -("Replace all the occurrences of the search pattern "
+             & "by the replace pattern"),
          Category    => -"Search");
 
       Register_Action
-        (Kernel, "exit search",
+        (Kernel,
+         "exit search",
          new Exit_Search_Command,
-         Description => -("Exit the Search view and give the focus back to "
-           & "the widget focused before entering the Search view."),
+         Description =>
+           -("Exit the Search view and give the focus back to "
+             & "the widget focused before entering the Search view."),
          Filter      => new Focused_Search_View_Filter,
          Category    => -"Search");
 
@@ -3756,108 +3777,115 @@ package body Vsearch is
    -- Register_Preferences --
    --------------------------
 
-   procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class)
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class)
    is
       Manager : constant Preferences_Manager := Kernel.Get_Preferences;
       Page    : Preferences_Page;
       Group   : Preferences_Group;
    begin
-      Incremental_Search := Create
-        (Get_Preferences (Kernel),
-         Name    => "Search-Incremental",
-         Label   => -"Incremental search",
-         Path    => -":Search",
-         Doc     =>
-           -"Enable the incremental mode. In this mode, a search will be "
-         & "automatically performed whenever the search pattern is modified, "
-         & "starting from the current location to the next occurrence in the "
-         & "current file. It turns Close on Match off.",
-         Default => True);
+      Incremental_Search :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "Search-Incremental",
+           Label   => -"Incremental search",
+           Path    => -":Search",
+           Doc     =>
+             -"Enable the incremental mode. In this mode, a search will be "
+             & "automatically performed whenever the search pattern is "
+             & "modified,starting from the current location to the "
+             & "next occurrence in the current file. "
+             & "It turns Close on Match off.",
+           Default => True);
 
-      Select_On_Match := Create
-        (Get_Preferences (Kernel),
-         Name    => "Search-Select-On-Match",
-         Label   => -"Select on match",
-         Path    => -":Search",
-         Doc     =>
-           -"When a match is found, give the focus to the matching editor. If"
-         & " unselected, the focus is left on the search window, which means"
-         & " you can keep typing Enter to go to the next search, but can't"
-         & " modify the editor directly. This option is ignored when the"
-         & " incremental mode is enabled.",
-         Default => False);
+      Select_On_Match :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "Search-Select-On-Match",
+           Label   => -"Select on match",
+           Path    => -":Search",
+           Doc     =>
+             -"When a match is found, give the focus to the matching editor. "
+             & "If unselected, the focus is left on the search window, which "
+             & "means you can keep typing Enter to go to the next search, "
+             & "but can't modify the editor directly. This option is "
+             & "ignored when the incremental mode is enabled.",
+           Default => False);
 
-      Close_On_Match := Create
-        (Get_Preferences (Kernel),
-         Name    => "Search-Close-On-Match",
-         Label   => -"Close on match",
-         Path    => -":Search",
-         Doc     =>
-           -"If this is selected, the search dialog is closed when a match is"
-         & " found. You can still search for the next occurrence by using"
-         & " the appropriate shortcut (Ctrl-N by default). It turns"
-         & " incremental mode off.",
-         Default => False);
+      Close_On_Match :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "Search-Close-On-Match",
+           Label   => -"Close on match",
+           Path    => -":Search",
+           Doc     =>
+             -"If this is selected, the search dialog is closed when a match "
+             & "is found. You can still search for the next occurrence by "
+             & "using the appropriate shortcut (Ctrl-N by default). It turns "
+             & "incremental mode off.",
+           Default => False);
 
-      Ask_Confirmation_For_Replace_All := Create
-        (Get_Preferences (Kernel),
-         Name  => "Ask-Confirmation-For-Replace-All",
-         Label => -"Confirmation for 'Replace all'",
-         Path  => -":Search",
-         Doc   =>
-            -"Enable the confirmation popup before a replace all operation.",
-         Default => True);
+      Ask_Confirmation_For_Replace_All :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "Ask-Confirmation-For-Replace-All",
+           Label   => -"Confirmation for 'Replace all'",
+           Path    => -":Search",
+           Doc     =>
+             -"Enable the confirmation popup before a replace all operation.",
+           Default => True);
 
-      Keep_Previous_Search_Context := Create
-        (Get_Preferences (Kernel),
-         Name  => "keep-previous-search-context",
-         Label => -"Preserve Search Context",
-         Path  => -":Search",
-         Doc   => -("Preserve the contents of the ""in"" entry"
-           & " between searches."),
-         Default => False);
+      Keep_Previous_Search_Context :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "keep-previous-search-context",
+           Label   => -"Preserve Search Context",
+           Path    => -":Search",
+           Doc     =>
+             -("Preserve the contents of the ""in"" entry"
+               & " between searches."),
+           Default => False);
 
-      Display_Matched_Only := Create
-        (Get_Preferences (Kernel),
-         Name  => "display-only-matched-strings",
-         Label => -"Display only matched strings",
-         Path  => -":Search",
-         Doc   =>
-           -"After a find all, display only the matched strings in the "
-           & "Location view.",
-         Default => False);
+      Display_Matched_Only :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "display-only-matched-strings",
+           Label   => -"Display only matched strings",
+           Path    => -":Search",
+           Doc     =>
+             -"After a find all, display only the matched strings in the "
+             & "Location view.",
+           Default => False);
 
-      Preserve_Case_On_Replace := Create
-        (Get_Preferences (Kernel),
-         Name  => "preserve-case-on-replace",
-         Label => -"Preserve case on replacing",
-         Path  => -":Search",
-         Doc   => -"Apply case of original text to replacing text",
-         Default => True);
+      Preserve_Case_On_Replace :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "preserve-case-on-replace",
+           Label   => -"Preserve case on replacing",
+           Path    => -":Search",
+           Doc     => -"Apply case of original text to replacing text",
+           Default => True);
 
-      Reuse_Last_Pattern := Create
-        (Get_Preferences (Kernel),
-         Name  => "use-last-pattern-on-search",
-         Label => -"Reuse last pattern",
-         Path  => -":Search",
-         Doc   => -"Set the last searched text into the 'find' " &
-           "field automatically.",
-         Default => True);
+      Reuse_Last_Pattern :=
+        Create
+          (Get_Preferences (Kernel),
+           Name    => "use-last-pattern-on-search",
+           Label   => -"Reuse last pattern",
+           Path    => -":Search",
+           Doc     =>
+             -"Set the last searched text into the 'find' "
+             & "field automatically.",
+           Default => True);
 
-      Page := Manager.Get_Registered_Page
-        (Name             => "Preferences Assistant General",
-         Create_If_Needed => False);
+      Page :=
+        Manager.Get_Registered_Page
+          (Name => "Preferences Assistant General", Create_If_Needed => False);
 
       Group := new Preferences_Group_Record;
       Page.Register_Group
-        (Name     => "Search View",
-         Group    => Group,
-         Priority => -4);
+        (Name => "Search View", Group => Group, Priority => -4);
 
       Group.Add_Pref
-        (Manager => Manager,
-         Pref    => Preference (Incremental_Search));
+        (Manager => Manager, Pref => Preference (Incremental_Search));
    end Register_Preferences;
 
    ------------------
@@ -3882,17 +3910,15 @@ package body Vsearch is
    is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
    begin
-      Vsearch_Module_Id.Replace := To_Unbounded_String
-        (Vsearch.Replace_Combo.Get_Active_Text);
+      Vsearch_Module_Id.Replace :=
+        To_Unbounded_String (Vsearch.Replace_Combo.Get_Active_Text);
    end On_Replace_Combo_Changed_After;
 
    ---------------------
    -- On_Mode_Changed --
    ---------------------
 
-   procedure On_Mode_Changed
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Mode_Changed (Object : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
    begin
       Vsearch.Set_Vsearch_Mode
@@ -3908,18 +3934,16 @@ package body Vsearch is
    is
       Vsearch     : constant Vsearch_Access := Vsearch_Access (Object);
       New_Pattern : constant Boolean :=
-        Vsearch_Module_Id.Pattern /= To_Unbounded_String
-          (Vsearch.Pattern_Combo.Get_Active_Text);
+        Vsearch_Module_Id.Pattern
+        /= To_Unbounded_String (Vsearch.Pattern_Combo.Get_Active_Text);
    begin
       --  If this is the same pattern then don't start a new search
       if New_Pattern then
-         Vsearch_Module_Id.Pattern := To_Unbounded_String
-           (Vsearch.Pattern_Combo.Get_Active_Text);
+         Vsearch_Module_Id.Pattern :=
+           To_Unbounded_String (Vsearch.Pattern_Combo.Get_Active_Text);
          Vsearch.Pattern_Changed_Once := True;
 
-         if not Vsearch_Module_Id.Locked
-           and then Is_In_Incremental_Mode
-         then
+         if not Vsearch_Module_Id.Locked and then Is_In_Incremental_Mode then
             Reset_Interactive_Context (Vsearch);
             Internal_Search
               (Vsearch,
@@ -3939,8 +3963,8 @@ package body Vsearch is
    is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
    begin
-      Vsearch_Module_Id.Context := To_Unbounded_String
-        (Vsearch.Context_Combo.Get_Active_Id);
+      Vsearch_Module_Id.Context :=
+        To_Unbounded_String (Vsearch.Context_Combo.Get_Active_Id);
    end On_Context_Combo_Changed_After;
 
 end Vsearch;

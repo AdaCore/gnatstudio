@@ -28,14 +28,15 @@ package XML_Viewer is
    --  Register the shell commands associated with this module
 
 private
-   type Abstract_XML_Viewer_Record is abstract new Gtk.Box.Gtk_Vbox_Record with
-      null record;
+   type Abstract_XML_Viewer_Record is abstract new Gtk.Box.Gtk_Vbox_Record
+   with null record;
 
    function Node_Parser
      (View        : access Abstract_XML_Viewer_Record;
       Parent      : Gtk.Tree_Model.Gtk_Tree_Iter;
       Node        : XML_Utils.Node_Ptr;
-      Child_Index : Positive) return Gtk.Tree_Model.Gtk_Tree_Iter is abstract;
+      Child_Index : Positive) return Gtk.Tree_Model.Gtk_Tree_Iter
+   is abstract;
    --  Parse Node, and create a new row in View.
    --  Returns an iterator to the newly created row. If Null_Iter is returned,
    --  then we will not iterate over children of Node, which can be used for
@@ -48,7 +49,8 @@ private
      (View         : access Abstract_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Node         : XML_Utils.Node_Ptr) return Boolean is abstract;
+      Node         : XML_Utils.Node_Ptr) return Boolean
+   is abstract;
    --  Called when a row of the table is clicked on.
    --  Return true if an action was performed
 

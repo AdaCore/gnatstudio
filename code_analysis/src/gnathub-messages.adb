@@ -17,42 +17,40 @@
 
 with VSS.Strings.Conversions;
 
-with GNAThub.Module;                  use GNAThub.Module;
-with GPS.Kernel;                      use GPS.Kernel;
+with GNAThub.Module; use GNAThub.Module;
+with GPS.Kernel;     use GPS.Kernel;
 with GPS.Kernel.Messages.Tools_Output;
-with XML_Utils;                       use XML_Utils;
+with XML_Utils;      use XML_Utils;
 
 package body GNAThub.Messages is
 
    GNAThub_Module : GNAThub.Module.GNAThub_Module_Id;
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr);
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr);
    --  Used to save GNAThub messages when GNAT Studio exits.
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
-      Allow_Auto_Jump_To_First : Boolean)
-      return not null Message_Access;
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean) return not null Message_Access;
    --  Used to load GNAThub messages when GNAT Studio starts.
 
    --------------------------
    -- Get_Background_Color --
    --------------------------
 
-   overriding function Get_Background_Color
-     (Self : not null access GNAThub_Message)
-      return Gdk.RGBA.Gdk_RGBA is
+   overriding
+   function Get_Background_Color
+     (Self : not null access GNAThub_Message) return Gdk.RGBA.Gdk_RGBA is
    begin
       return Background (Self.Severity.Style);
    end Get_Background_Color;
@@ -88,7 +86,8 @@ package body GNAThub.Messages is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant GNAThub_Message)
       return Ada.Strings.Unbounded.Unbounded_String is
    begin
@@ -167,10 +166,10 @@ package body GNAThub.Messages is
       Look_For_Secondary       : Boolean := True;
       Allow_Auto_Jump_To_First : Boolean := False) is
    begin
-      Self.Rule     := Rule;
+      Self.Rule := Rule;
       Self.Severity := Severity;
-      Self.Text     := Text;
-      Self.Entity   := Entity;
+      Self.Text := Text;
+      Self.Entity := Entity;
 
       Self.Entity :=
         Real_Entity (Container.Get_Kernel, File, Line, Column, Self.Entity);
@@ -180,9 +179,9 @@ package body GNAThub.Messages is
          Container                => Container,
          Category                 =>
            (if not Category.Is_Empty
-              then Category
-              else VSS.Strings.Conversions.To_Virtual_String
-                     (Self.Rule.Tool.Name)),
+            then Category
+            else
+              VSS.Strings.Conversions.To_Virtual_String (Self.Rule.Tool.Name)),
          File                     => File,
          Line                     => Natural'Max (Line, 1),
          Column                   => Column,
@@ -200,18 +199,14 @@ package body GNAThub.Messages is
    ----------
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr)
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr)
    is
       Self : constant GNAThub_Message_Access :=
         GNAThub_Message_Access (Message_Node);
    begin
-      Set_Attribute_S
-        (XML_Node, "text", To_String (Self.Text));
-      Set_Attribute_S
-        (XML_Node, "tool_name", To_String (Self.Get_Tool.Name));
-      Set_Attribute_S
-        (XML_Node, "rule_name", To_String (Self.Get_Rule.Name));
+      Set_Attribute_S (XML_Node, "text", To_String (Self.Text));
+      Set_Attribute_S (XML_Node, "tool_name", To_String (Self.Get_Tool.Name));
+      Set_Attribute_S (XML_Node, "rule_name", To_String (Self.Get_Rule.Name));
       Set_Attribute_S
         (XML_Node, "rule_id", To_String (Self.Get_Rule.Identifier));
    end Save;
@@ -221,22 +216,25 @@ package body GNAThub.Messages is
    ----------
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
-      Allow_Auto_Jump_To_First : Boolean)
-      return not null Message_Access
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean) return not null Message_Access
    is
-      pragma Unreferenced
-        (Actual_Line, Actual_Column, Flags,
-         Allow_Auto_Jump_To_First, Category);
+      pragma
+        Unreferenced
+          (Actual_Line,
+           Actual_Column,
+           Flags,
+           Allow_Auto_Jump_To_First,
+           Category);
       Text      : constant String := Get_Attribute_S (XML_Node, "text", "");
       Tool_Name : constant String :=
         Get_Attribute_S (XML_Node, "tool_name", "");
@@ -245,12 +243,13 @@ package body GNAThub.Messages is
       Rule_ID   : constant String := Get_Attribute_S (XML_Node, "rule_id", "");
       Tool      : constant Tool_Access :=
         GNAThub_Module.Get_Or_Create_Tool (To_Unbounded_String (Tool_Name));
-      Rule      : constant Rule_Access := GNAThub_Module.Get_Or_Create_Rule
-        (Tool       => Tool,
-         Name       => To_Unbounded_String (Rule_Name),
-         Identifier => To_Unbounded_String (Rule_ID));
-      Severity  : constant Severity_Access := GNAThub_Module.Get_Severity
-        (Importance);
+      Rule      : constant Rule_Access :=
+        GNAThub_Module.Get_Or_Create_Rule
+          (Tool       => Tool,
+           Name       => To_Unbounded_String (Rule_Name),
+           Identifier => To_Unbounded_String (Rule_ID));
+      Severity  : constant Severity_Access :=
+        GNAThub_Module.Get_Severity (Importance);
       Message   : GNAThub_Message_Access;
    begin
       --  Restore the GNAthub message from the attributes saved in XML

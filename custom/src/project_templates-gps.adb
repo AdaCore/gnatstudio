@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Enums;                        use Gtk.Enums;
-with Glib.Object;                      use Glib.Object;
+with Gtk.Enums;   use Gtk.Enums;
+with Glib.Object; use Glib.Object;
 
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
-with Commands.Interactive;             use Commands, Commands.Interactive;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 with GPS.Core_Kernels;
 with GPS.Kernel.Actions;               use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
@@ -31,8 +32,8 @@ with Project_Templates.Script_Objects; use Project_Templates.Script_Objects;
 
 package body Project_Templates.GPS is
 
-   package Virtual_File_List is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Virtual_File);
+   package Virtual_File_List is new
+     Ada.Containers.Doubly_Linked_Lists (Element_Type => Virtual_File);
 
    type Project_Templates_Module is record
       Dirs : Virtual_File_List.List;
@@ -41,8 +42,9 @@ package body Project_Templates.GPS is
    Module_Id : Project_Templates_Module;
 
    type Project_From_Template_Command is new Interactive_Command
-      with null record;
-   overriding function Execute
+   with null record;
+   overriding
+   function Execute
      (Command : access Project_From_Template_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback when the menu is selected
@@ -56,8 +58,7 @@ package body Project_Templates.GPS is
    ------------------------------
 
    procedure Template_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "add_templates_dir" then
          declare
@@ -80,44 +81,42 @@ package body Project_Templates.GPS is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Parent : not null access Gtk_Window_Record'Class) return Boolean
    is
-       --  Builds the `Destination` list by copying the project template and
-       --  building the internal PyObject of each script object.
+      --  Builds the `Destination` list by copying the project template and
+      --  building the internal PyObject of each script object.
       procedure Build_Python_Objects
-         (Source      : Project_Templates_List.List;
-          Kernel      : not null access Kernel_Handle_Record'Class;
-          Destination : out Templates_Script_Objects_List.List);
+        (Source      : Project_Templates_List.List;
+         Kernel      : not null access Kernel_Handle_Record'Class;
+         Destination : out Templates_Script_Objects_List.List);
 
       --------------------------
       -- Build_Python_Objects --
       --------------------------
 
       procedure Build_Python_Objects
-         (Source      : Project_Templates_List.List;
-          Kernel      : not null access Kernel_Handle_Record'Class;
-          Destination : out Templates_Script_Objects_List.List)
+        (Source      : Project_Templates_List.List;
+         Kernel      : not null access Kernel_Handle_Record'Class;
+         Destination : out Templates_Script_Objects_List.List)
       is
          TC : Project_Templates_List.Cursor :=
-            Project_Templates_List.First (Source);
+           Project_Templates_List.First (Source);
       begin
          while Project_Templates_List.Has_Element (TC) loop
             declare
                Template : constant Project_Template :=
-                  Project_Templates_List.Element (TC);
+                 Project_Templates_List.Element (TC);
 
                Template_Script : Template_Script_Object :=
-                  (Project  => Template,
-                   Object   => Null_Script_Object);
+                 (Project => Template, Object => Null_Script_Object);
             begin
                if Template.Python_Script /= No_File then
                   Template_Script.Object.Build_Python_Object
-                     (Python_Script => Template.Python_Script,
-                      Kernel        =>
-                        Standard.GPS.Core_Kernels.Core_Kernel (Kernel));
+                    (Python_Script => Template.Python_Script,
+                     Kernel        =>
+                       Standard.GPS.Core_Kernels.Core_Kernel (Kernel));
                end if;
 
                Templates_Script_Objects_List.Append
-                  (Container => Destination,
-                   New_Item  => Template_Script);
+                 (Container => Destination, New_Item => Template_Script);
             end;
             Project_Templates_List.Next (TC);
          end loop;
@@ -128,9 +127,9 @@ package body Project_Templates.GPS is
       C : Cursor;
       E : Unbounded_String;
 
-      Project           : Virtual_File;
-      Dir               : Virtual_File;
-      Installed         : Boolean;
+      Project   : Virtual_File;
+      Dir       : Virtual_File;
+      Installed : Boolean;
 
       Chosen            : Template_Script_Object;
       Templates_Scripts : Templates_Script_Objects_List.List;
@@ -151,15 +150,14 @@ package body Project_Templates.GPS is
 
       if Templates.Is_Empty then
          Insert
-           (Kernel,
-            -"Could not load any project templates.",
-            Mode => Error);
+           (Kernel, -"Could not load any project templates.", Mode => Error);
          return False;
       end if;
 
-      Build_Python_Objects (Source      => Templates,
-                            Kernel      => Kernel,
-                            Destination => Templates_Scripts);
+      Build_Python_Objects
+        (Source      => Templates,
+         Kernel      => Kernel,
+         Destination => Templates_Scripts);
 
       --  Launch the GUI
 
@@ -209,7 +207,9 @@ package body Project_Templates.GPS is
          Insert
            (Kernel,
             -"The following occurred when deploying the Project from template:"
-            & ASCII.LF & To_String (E), Mode => Error);
+            & ASCII.LF
+            & To_String (E),
+            Mode => Error);
       end if;
 
       return Success;
@@ -219,17 +219,19 @@ package body Project_Templates.GPS is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Project_From_Template_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Success : Boolean with Unreferenced;
+      Success : Boolean
+      with Unreferenced;
    begin
-      Success := Display_Project_Templates_Assistant
-        (Kernel,
-         Parent => Get_Current_Window (Kernel));
+      Success :=
+        Display_Project_Templates_Assistant
+          (Kernel, Parent => Get_Current_Window (Kernel));
       return Commands.Success;
    end Execute;
 
@@ -256,7 +258,8 @@ package body Project_Templates.GPS is
          Static_Method => True);
 
       Register_Action
-        (Kernel, "create project from template",
+        (Kernel,
+         "create project from template",
          new Project_From_Template_Command,
          -"Open a dialog to create a new project from an existing template");
    end Register_Module;

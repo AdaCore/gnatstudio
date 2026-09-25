@@ -25,13 +25,13 @@ with GPS.Default_Styles;
 package GPS.Kernel.Messages.Tools_Output is
 
    procedure Parse_File_Locations
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Text              : UTF8_String;
-      Category          : VSS.Strings.Virtual_String;
-      Highlight         : Boolean := False;
-      Styles            : GPS.Default_Styles.Message_Styles_Array :=
+     (Kernel                   : access Kernel_Handle_Record'Class;
+      Text                     : UTF8_String;
+      Category                 : VSS.Strings.Virtual_String;
+      Highlight                : Boolean := False;
+      Styles                   : GPS.Default_Styles.Message_Styles_Array :=
         (others => null);
-      Show_In_Locations : Boolean := True;
+      Show_In_Locations        : Boolean := True;
       Allow_Auto_Jump_To_First : Boolean := True);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
@@ -73,39 +73,39 @@ package GPS.Kernel.Messages.Tools_Output is
    --  Subprograms below is intended to be used only by scripting engine
 
    procedure Parse_File_Locations_Unknown_Encoding
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
-      Category                : VSS.Strings.Virtual_String;
-      Highlight               : Boolean := False;
-      Highlight_Category      : String := "Builder results";
-      Style_Category          : String := "Style errors";
-      Warning_Category        : String := "Builder warnings";
-      Info_Category           : String := "Compiler info";
-      File_Location_Regexp    : String := "";
-      File_Index_In_Regexp    : Integer := -1;
-      Line_Index_In_Regexp    : Integer := -1;
-      Col_Index_In_Regexp     : Integer := -1;
-      Msg_Index_In_Regexp     : Integer := -1;
-      Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1;
-      Info_Index_In_Regexp    : Integer := -1;
-      Quiet                   : Boolean := False;
+     (Kernel                   : access Kernel_Handle_Record'Class;
+      Text                     : String;
+      Category                 : VSS.Strings.Virtual_String;
+      Highlight                : Boolean := False;
+      Highlight_Category       : String := "Builder results";
+      Style_Category           : String := "Style errors";
+      Warning_Category         : String := "Builder warnings";
+      Info_Category            : String := "Compiler info";
+      File_Location_Regexp     : String := "";
+      File_Index_In_Regexp     : Integer := -1;
+      Line_Index_In_Regexp     : Integer := -1;
+      Col_Index_In_Regexp      : Integer := -1;
+      Msg_Index_In_Regexp      : Integer := -1;
+      Style_Index_In_Regexp    : Integer := -1;
+      Warning_Index_In_Regexp  : Integer := -1;
+      Info_Index_In_Regexp     : Integer := -1;
+      Quiet                    : Boolean := False;
       Allow_Auto_Jump_To_First : Boolean := True);
    --  Same as above, but the encoding for Text is unknown so we first try to
    --  convert it to UTF8
 
    function Add_Tool_Message
-     (Container          : not null access Messages_Container'Class;
-      Category           : VSS.Strings.Virtual_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Positive;
-      Column             : Basic_Types.Visible_Column_Type;
-      Text               : String;
-      Importance         : Message_Importance_Type;
-      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
-      Length             : Highlight_Length;
-      Look_For_Secondary : Boolean;
-      Show_In_Locations  : Boolean;
+     (Container                : not null access Messages_Container'Class;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Positive;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Highlight_Category       : GPS.Kernel.Style_Manager.Style_Access;
+      Length                   : Highlight_Length;
+      Look_For_Secondary       : Boolean;
+      Show_In_Locations        : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access;
    --  Looking for same message in the messages container and add it into the
    --  container when it does not exists.
@@ -116,18 +116,18 @@ package GPS.Kernel.Messages.Tools_Output is
    --  If we have added messages, returns the primary message inserted.
 
    procedure Create_Tool_Message
-     (Self               : not null access Abstract_Message'Class;
-      Container          : not null access Messages_Container'Class;
-      Category           : VSS.Strings.Virtual_String;
-      File               : GNATCOLL.VFS.Virtual_File;
-      Line               : Positive;
-      Column             : Basic_Types.Visible_Column_Type;
-      Text               : String;
-      Importance         : Message_Importance_Type;
-      Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
-      Length             : Highlight_Length;
-      Look_For_Secondary : Boolean;
-      Show_In_Locations  : Boolean;
+     (Self                     : not null access Abstract_Message'Class;
+      Container                : not null access Messages_Container'Class;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Positive;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Highlight_Category       : GPS.Kernel.Style_Manager.Style_Access;
+      Length                   : Highlight_Length;
+      Look_For_Secondary       : Boolean;
+      Show_In_Locations        : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True);
    --  Create a new primary message.
    --  If Look_For_Secondary, tries to find secondaries messages in Text and

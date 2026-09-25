@@ -65,10 +65,11 @@ package Codefix.Errors_Manager is
 
    procedure Free (This : in out Ptr_Correction_Manager);
 
-   type Error_Callback is access procedure
-     (Id           : Error_Id;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Corrector    : in out Correction_Manager);
+   type Error_Callback is
+     access procedure
+       (Id           : Error_Id;
+        Current_Text : Text_Navigator_Abstr'Class;
+        Corrector    : in out Correction_Manager);
    --  Type of procedure that can be called when a correctible error message
    --  is found.
 
@@ -106,20 +107,18 @@ package Codefix.Errors_Manager is
    --  Return the number of errors found in This.
 
    function Search_Error
-     (This         : Correction_Manager;
-      File         : GNATCOLL.VFS.Virtual_File;
-      Line         : Integer;
-      Column       : Visible_Column_Type;
-      Message      : String := "")
-     return Error_Id;
+     (This    : Correction_Manager;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Integer;
+      Column  : Visible_Column_Type;
+      Message : String := "") return Error_Id;
    --  Return the Error_Id contained in the correction manager correspondant to
    --  the message. If this error does not exist, Null_Error_Id is returned.
    --  If Message is the empty string, the first error at that location is
    --  returned
 
    procedure Set_Error_Cb
-     (This     : in out Correction_Manager;
-      Error_Cb : Execute_Corrupted);
+     (This : in out Correction_Manager; Error_Cb : Execute_Corrupted);
    --  Set the function that will be called when the execution of a command
    --  doesn't work.
 

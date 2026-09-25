@@ -24,9 +24,9 @@ with Ada.Tags;
 
 with VSS.Strings;
 
-with Gtkada.MDI;           use Gtkada.MDI;
+with Gtkada.MDI; use Gtkada.MDI;
 with Gdk.Event;
-with Gdk.Types;            use Gdk.Types;
+with Gdk.Types;  use Gdk.Types;
 
 with Commands.Interactive; use Commands.Interactive;
 with String_Hash;
@@ -79,16 +79,16 @@ package GPS.Kernel.Actions is
    --  sensitive regarding performance (e.g: basic editor actions).
 
    procedure Unregister_Action
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String;
+     (Kernel                    : access Kernel_Handle_Record'Class;
+      Name                      : String;
       Remove_Menus_And_Toolbars : Boolean := True);
    --  Remove action named Name from the table of actions.
    --  Automatically remove the associated menus and toolbar items if
    --  Remove_Menus_And_Toolbars is true.
 
    function Lookup_Action
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Action_Access;
+     (Kernel : access Kernel_Handle_Record'Class; Name : String)
+      return Action_Access;
    --  Lookup a command by name. Return null if no such action has been
    --  registered.
    --  If Name represents the absolute path to a menu (starting with /), then
@@ -104,13 +104,12 @@ package GPS.Kernel.Actions is
    --  including for the contextual menus.
 
    function Filter_Matches
-     (Self    : access Action_Record;
-      Context : Selection_Context) return Boolean;
+     (Self : access Action_Record; Context : Selection_Context) return Boolean;
    --  Whether the action can be executed in this context
 
    function "and"
-     (Action : access Action_Record;
-      Filter : Action_Filter) return Action_Filter;
+     (Action : access Action_Record; Filter : Action_Filter)
+      return Action_Filter;
    --  Combine the action's filter with another filter, and return the result.
    --  Any of the two parameters can be null
 
@@ -130,7 +129,7 @@ package GPS.Kernel.Actions is
    --  letter and with the rest of the name being lowercase.
 
    function Get_Command
-     (Self    : not null access Action_Record)
+     (Self : not null access Action_Record)
       return not null access Interactive_Command'Class;
    --  The command to execute for this action.
    --  ??? This subprogram is provided as a transition only. New code should
@@ -146,22 +145,21 @@ package GPS.Kernel.Actions is
       Child  : access MDI_Child_Record'Class;
       Key    : Gdk_Key_Type;
       Button : Guint;
-      Modif  : Gdk_Modifier_Type)
-      return Boolean;
+      Modif  : Gdk_Modifier_Type) return Boolean;
    --  Return True if the key shortcut should be active in the given MDI child,
    --  False otherwise.
 
    function Execute_Action
-     (Kernel      : not null access Kernel_Handle_Record'Class;
-      Action      : String;
-      Context     : Selection_Context := No_Context;
-      Event       : Gdk.Event.Gdk_Event := null;
-      Repeat      : Positive := 1;
-      Args        : access GNAT.Strings.String_List := null;
-      Synchronous : Boolean := False;
-      Show_Bar    : Boolean := False;
-      Via_Menu    : Boolean := False;
-      Block_Exit  : Boolean := False;
+     (Kernel               : not null access Kernel_Handle_Record'Class;
+      Action               : String;
+      Context              : Selection_Context := No_Context;
+      Event                : Gdk.Event.Gdk_Event := null;
+      Repeat               : Positive := 1;
+      Args                 : access GNAT.Strings.String_List := null;
+      Synchronous          : Boolean := False;
+      Show_Bar             : Boolean := False;
+      Via_Menu             : Boolean := False;
+      Block_Exit           : Boolean := False;
       Error_Msg_In_Console : Boolean := True) return Boolean;
    --  Execute the action if it is valid for the given context.
    --  Action can be an action name or a menu path - but prefer to use the
@@ -196,8 +194,7 @@ package GPS.Kernel.Actions is
       Use_Markup       : Boolean := True;
       Include_Name     : Boolean := True;
       Include_Category : Boolean := True;
-      Include_Menus    : Boolean := True)
-     return String;
+      Include_Menus    : Boolean := True) return String;
    --  Return the full description for this action.
    --  If Include_Name, this includes the name of the action.
    --  If Include_Category, this includes the category of the action.
@@ -208,8 +205,8 @@ package GPS.Kernel.Actions is
 
    type Action_Iterator is private;
 
-   function Start (Kernel : access Kernel_Handle_Record'Class)
-      return Action_Iterator;
+   function Start
+     (Kernel : access Kernel_Handle_Record'Class) return Action_Iterator;
    --  Return the first action registered in the kernel (this is in no
    --  particular order).
 
@@ -230,18 +227,18 @@ package GPS.Kernel.Actions is
 private
 
    type Action_Record is record
-      Command                  : access Interactive_Command'Class;
-      Filter                   : Action_Filter;
-      Description              : VSS.Strings.Virtual_String;
-      Name                     : VSS.Strings.Virtual_String;
-      Modified                 : Boolean;
-      Overridden               : Boolean;
-      Category                 : VSS.Strings.Virtual_String;
+      Command     : access Interactive_Command'Class;
+      Filter      : Action_Filter;
+      Description : VSS.Strings.Virtual_String;
+      Name        : VSS.Strings.Virtual_String;
+      Modified    : Boolean;
+      Overridden  : Boolean;
+      Category    : VSS.Strings.Virtual_String;
 
-      Disabled                 : Boolean := False;
+      Disabled : Boolean := False;
       --  Whether this command was disabled explicitly.
 
-      Icon_Name                : VSS.Strings.Virtual_String;
+      Icon_Name : VSS.Strings.Virtual_String;
 
       Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag;
       --  Used to enable the key shortcut associated to this action only when
@@ -251,7 +248,7 @@ private
       --  modifier (e.g: if we want to use '+' as a key shortcut for a given
       --  action but still want to be able to write a '+' in an editor).
 
-      Log_On_Execute           : Boolean := True;
+      Log_On_Execute : Boolean := True;
       --  Used to know whether we should log this action when executing it.
    end record;
    --  Command is freed automatically. We use an anonymous type so that calls
@@ -271,15 +268,16 @@ private
    procedure Free (Action : in out Action_Access);
    --  Free the memory occupied by the action
 
-   package Actions_Htable is new String_Hash
-     (Action_Access, Free, null, Case_Sensitive => False);
+   package Actions_Htable is new
+     String_Hash (Action_Access, Free, null, Case_Sensitive => False);
 
    type Actions_Htable_Record is new Root_Table with record
       Table : Actions_Htable.String_Hash_Table.Instance;
    end record;
    type Actions_Htable_Access is access all Actions_Htable_Record'Class;
 
-   overriding procedure Reset (X : access Actions_Htable_Record);
+   overriding
+   procedure Reset (X : access Actions_Htable_Record);
    --  Reset the table.
 
    type Action_Iterator is record

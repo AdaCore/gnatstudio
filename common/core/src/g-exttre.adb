@@ -23,13 +23,13 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Fixed;    use Ada.Strings.Fixed;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
-with GNAT.Regpat;              use GNAT.Regpat;
-with GNAT.Strings;             use GNAT.Strings;
+with GNAT.Regpat;          use GNAT.Regpat;
+with GNAT.Strings;         use GNAT.Strings;
 with Password_Manager;     use Password_Manager;
 with String_Utils;         use String_Utils;
 with GNATCOLL.Arg_Lists;   use GNATCOLL.Arg_Lists;
@@ -38,7 +38,7 @@ with GNATCOLL.Utils;       use GNATCOLL.Utils;
 with User_Interface_Tools; use User_Interface_Tools;
 
 with Defaults;
-with Gexpect.Db;           use Gexpect.Db;
+with Gexpect.Db; use Gexpect.Db;
 
 package body GNAT.Expect.TTY.Remote is
 
@@ -48,15 +48,16 @@ package body GNAT.Expect.TTY.Remote is
 
    Remote_Process_Died : exception;
 
-   Test_Echo_Cmd : constant String := "echo foo";
-   Echoing_Regexps : constant Compiled_Regexp_Array
-     := (1 => new Pattern_Matcher'
-           (Compile ("^echo foo", Multiple_Lines or Single_Line)),
-         2 => new Pattern_Matcher'
-           (Compile ("^foo", Multiple_Lines or Single_Line)));
+   Test_Echo_Cmd   : constant String := "echo foo";
+   Echoing_Regexps : constant Compiled_Regexp_Array :=
+     (1 =>
+        new Pattern_Matcher'
+          (Compile ("^echo foo", Multiple_Lines or Single_Line)),
+      2 =>
+        new Pattern_Matcher'(Compile ("^foo", Multiple_Lines or Single_Line)));
 
-   procedure Simple_Free is new Ada.Unchecked_Deallocation
-     (String_List, String_List_Access);
+   procedure Simple_Free is new
+     Ada.Unchecked_Deallocation (String_List, String_List_Access);
 
    procedure Internal_Sync_Execute
      (Host                : String;
@@ -89,18 +90,15 @@ package body GNAT.Expect.TTY.Remote is
    procedure Log (Where : String; What : String);
    --  Log a debug comment
 
-   procedure Get_Status
-     (Descriptor : in out Remote_Process_Descriptor);
+   procedure Get_Status (Descriptor : in out Remote_Process_Descriptor);
    pragma Precondition (Descriptor.Terminated and not Descriptor.Session_Died);
    --  Retrieve the status code of a terminated descriptor, and set the
    --  underlying session state to READY.
 
    procedure Handle_Pre_Disconnect
-     (Descriptor : Remote_Process_Descriptor;
-      Timeout    : in out Integer);
+     (Descriptor : Remote_Process_Descriptor; Timeout : in out Integer);
    procedure Handle_Post_Disconnect
-     (Descriptor : Remote_Process_Descriptor;
-      Result : Expect_Match);
+     (Descriptor : Remote_Process_Descriptor; Result : Expect_Match);
    --  Handle descriptor termination
 
    ---------
@@ -134,7 +132,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Add_Filter --
    ----------------
 
-   overriding procedure Add_Filter
+   overriding
+   procedure Add_Filter
      (Descriptor : in out Remote_Process_Descriptor;
       Filter     : Filter_Function;
       Filter_On  : Filter_Type := Output;
@@ -144,8 +143,12 @@ package body GNAT.Expect.TTY.Remote is
       Current : Filter_List := Descriptor.R_Filters;
    begin
       if Filter_On /= Output then
-         Add_Filter (TTY_Process_Descriptor (Descriptor),
-                     Filter, Filter_On, User_Data, After);
+         Add_Filter
+           (TTY_Process_Descriptor (Descriptor),
+            Filter,
+            Filter_On,
+            User_Data,
+            After);
       elsif After then
          while Current /= null and then Current.Next /= null loop
             Current := Current.Next;
@@ -154,20 +157,26 @@ package body GNAT.Expect.TTY.Remote is
          if Current = null then
             Descriptor.R_Filters :=
               new Filter_List_Elem'
-               (Filter => Filter, Filter_On => Filter_On,
-                User_Data => User_Data, Next => null);
+                (Filter    => Filter,
+                 Filter_On => Filter_On,
+                 User_Data => User_Data,
+                 Next      => null);
          else
             Current.Next :=
               new Filter_List_Elem'
-              (Filter => Filter, Filter_On => Filter_On,
-               User_Data => User_Data, Next => null);
+                (Filter    => Filter,
+                 Filter_On => Filter_On,
+                 User_Data => User_Data,
+                 Next      => null);
          end if;
 
       else
          Descriptor.R_Filters :=
            new Filter_List_Elem'
-             (Filter => Filter, Filter_On => Filter_On,
-              User_Data => User_Data, Next => Descriptor.R_Filters);
+             (Filter    => Filter,
+              Filter_On => Filter_On,
+              User_Data => User_Data,
+              Next      => Descriptor.R_Filters);
       end if;
    end Add_Filter;
 
@@ -175,9 +184,9 @@ package body GNAT.Expect.TTY.Remote is
    -- Remove_Filter --
    -------------------
 
-   overriding procedure Remove_Filter
-     (Descriptor : in out Remote_Process_Descriptor;
-      Filter     : Filter_Function)
+   overriding
+   procedure Remove_Filter
+     (Descriptor : in out Remote_Process_Descriptor; Filter : Filter_Function)
    is
       Previous : Filter_List := null;
       Current  : Filter_List := Descriptor.R_Filters;
@@ -202,8 +211,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Lock_Filters --
    ------------------
 
-   overriding procedure Lock_Filters
-     (Descriptor : in out Remote_Process_Descriptor) is
+   overriding
+   procedure Lock_Filters (Descriptor : in out Remote_Process_Descriptor) is
    begin
       Descriptor.R_Filters_Lock := Descriptor.R_Filters_Lock + 1;
    end Lock_Filters;
@@ -212,8 +221,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Unlock_Filters --
    --------------------
 
-   overriding procedure Unlock_Filters
-     (Descriptor : in out Remote_Process_Descriptor) is
+   overriding
+   procedure Unlock_Filters (Descriptor : in out Remote_Process_Descriptor) is
    begin
       if Descriptor.R_Filters_Lock > 0 then
          Descriptor.R_Filters_Lock := Descriptor.R_Filters_Lock - 1;
@@ -248,7 +257,7 @@ package body GNAT.Expect.TTY.Remote is
             Close (Data.Sessions (Desc.Session_Nb).Pd);
          end if;
 
-         Desc.Terminated   := True;
+         Desc.Terminated := True;
          Desc.Session_Died := True;
       end if;
 
@@ -262,14 +271,15 @@ package body GNAT.Expect.TTY.Remote is
    -- Send --
    ----------
 
-   overriding procedure Send
+   overriding
+   procedure Send
      (Descriptor   : in out Remote_Process_Descriptor;
       Str          : String;
       Add_LF       : Boolean := True;
       Empty_Buffer : Boolean := False)
    is
-      TTY_Descriptor : TTY_Process_Descriptor
-      renames TTY_Process_Descriptor (Descriptor);
+      TTY_Descriptor : TTY_Process_Descriptor renames
+        TTY_Process_Descriptor (Descriptor);
    begin
       if Str /= "" then
          if Active (Me) then
@@ -307,7 +317,7 @@ package body GNAT.Expect.TTY.Remote is
       On_New_Connection : access procedure (Target_Name : String) := null)
    is
       TTY_Data     : constant TTY_Data_Access :=
-                       TTY_Data_Access (Get_Data (Descriptor.Machine.all));
+        TTY_Data_Access (Get_Data (Descriptor.Machine.all));
       Session_Nb   : Natural := 0;
       New_Args     : String_List_Access;
       Old_Args     : String_List_Access;
@@ -318,8 +328,7 @@ package body GNAT.Expect.TTY.Remote is
       function Process_Arg_List (L : String_List) return String_List;
       --  process the list of arguments, replacing tags with actual values
 
-      procedure Wait_For_Prompt
-        (Intermediate : Boolean := False);
+      procedure Wait_For_Prompt (Intermediate : Boolean := False);
       --  Wait for prompt on target
 
       procedure My_Send
@@ -341,17 +350,16 @@ package body GNAT.Expect.TTY.Remote is
       begin
          for J in Result'Range loop
             if L (J).all = "%h" then
-               Result (J) :=
-                 new String'(Descriptor.Machine.Network_Name);
+               Result (J) := new String'(Descriptor.Machine.Network_Name);
             elsif L (J).all = "%u" then
-               Result (J) :=
-                 new String'(Descriptor.Machine.User_Name);
+               Result (J) := new String'(Descriptor.Machine.User_Name);
             elsif L (J).all = "%s" then
                --  Get next args as a single string
-               Result (J) := new String'
-                 (Argument_List_To_String
-                    (Process_Arg_List (L (J + 1 .. L'Last)),
-                     Protect_Quotes => False));
+               Result (J) :=
+                 new String'
+                   (Argument_List_To_String
+                      (Process_Arg_List (L (J + 1 .. L'Last)),
+                       Protect_Quotes => False));
                return Result (Result'First .. J);
 
             else
@@ -366,24 +374,27 @@ package body GNAT.Expect.TTY.Remote is
       -- Wait_For_Prompt --
       ---------------------
 
-      procedure Wait_For_Prompt
-        (Intermediate : Boolean := False)
-      is
+      procedure Wait_For_Prompt (Intermediate : Boolean := False) is
          Regexp_Array       : Compiled_Regexp_Array (1 .. 4);
          Matched            : GNAT.Regpat.Match_Array (0 .. 1);
-         Extra_Regexp_Array : Compiled_Regexp_Array
-                          (Descriptor.Machine.Access_Tool_Extra_Prompts'Range);
+         Extra_Regexp_Array :
+           Compiled_Regexp_Array
+             (Descriptor.Machine.Access_Tool_Extra_Prompts'Range);
          Res                : Expect_Match;
          Res_Extra          : Natural;
          NL_Regexp          : constant Pattern_Matcher :=
-                                Compile ("^[^\n]*\n", Single_Line);
+           Compile ("^[^\n]*\n", Single_Line);
          Force_Password_Ask : Boolean;
 
       begin
          --  Machine is echoing commands. Skip them.
          if TTY_Data.Echoing then
-            Expect (TTY_Data.Sessions (Session_Nb).Pd, Res,
-                    NL_Regexp, Descriptor.Machine.Timeout, False);
+            Expect
+              (TTY_Data.Sessions (Session_Nb).Pd,
+               Res,
+               NL_Regexp,
+               Descriptor.Machine.Timeout,
+               False);
          end if;
 
          --  Now wait for prompt
@@ -394,8 +405,7 @@ package body GNAT.Expect.TTY.Remote is
             Regexp_Array (1) := Descriptor.Machine.Shell_Generic_Prompt;
          end if;
 
-         Regexp_Array (2) :=
-           Descriptor.Machine.Access_Tool_User_Prompt_Ptrn;
+         Regexp_Array (2) := Descriptor.Machine.Access_Tool_User_Prompt_Ptrn;
          Regexp_Array (3) :=
            Descriptor.Machine.Access_Tool_Password_Prompt_Ptrn;
          Regexp_Array (4) :=
@@ -421,8 +431,7 @@ package body GNAT.Expect.TTY.Remote is
          --  shell understands it as a line return.
          declare
             Out_Str : constant String :=
-                       Expect_Out
-                         (TTY_Data.Sessions (Session_Nb).Pd);
+              Expect_Out (TTY_Data.Sessions (Session_Nb).Pd);
 
          begin
             if Active (Me) then
@@ -452,8 +461,11 @@ package body GNAT.Expect.TTY.Remote is
 
          case Res is
             when Expect_Timeout =>
-               Trace (Me, "RCV timeout in Wait_For_Prompt (intermediate=" &
-                      Boolean'Image (Intermediate) & ")");
+               Trace
+                 (Me,
+                  "RCV timeout in Wait_For_Prompt (intermediate="
+                  & Boolean'Image (Intermediate)
+                  & ")");
 
                --  We just tested if LF alone was working as line terminator.
                --  If we receive a timeout at this point, then this means we
@@ -473,20 +485,19 @@ package body GNAT.Expect.TTY.Remote is
                     ("<Timeout> Cannot get a valid prompt. Received so far:",
                      Input);
                   Descriptor.Machine.Dbg
-                    (TTY_Data.Sessions (Session_Nb).Pd.Buffer.all,
-                     Output);
+                    (TTY_Data.Sessions (Session_Nb).Pd.Buffer.all, Output);
                end if;
 
                Close (TTY_Data.Sessions (Session_Nb).Pd);
 
-               raise Invalid_Process with
-                 "Could not get prompt when connecting to host " &
-                 Descriptor.Machine.Nickname;
+               raise Invalid_Process
+                 with
+                   "Could not get prompt when connecting to host "
+                   & Descriptor.Machine.Nickname;
 
-            when 1 =>
+            when 1              =>
                --  Received shell prompt
-               Trace
-                 (Me, "got prompt in Wait_For_Prompt");
+               Trace (Me, "got prompt in Wait_For_Prompt");
 
                --  If Verify_Cr_Lf is set, then this was a test to determine
                --  if LF alone works. This succeeds here so we set Use_Cr_Lf to
@@ -497,15 +508,14 @@ package body GNAT.Expect.TTY.Remote is
                   Trace (Me, "Using LF alone, as the test succeeded");
                end if;
 
-            when 2 =>
+            when 2              =>
                Trace (Me, "got user name prompt in Wait_For_Prompt");
 
                --  Received user name prompt
                if Descriptor.Machine.User_Name = "" then
                   Descriptor.Machine.Set_User_Name
                     (Query_User
-                       (Expect_Out
-                          (TTY_Data.Sessions (Session_Nb).Pd),
+                       (Expect_Out (TTY_Data.Sessions (Session_Nb).Pd),
                         Password_Mode => False));
 
                   if Descriptor.Machine.User_Name = "" then
@@ -522,7 +532,7 @@ package body GNAT.Expect.TTY.Remote is
                   Descriptor.Use_Cr_Lf = CRLF);
                Wait_For_Prompt (Intermediate);
 
-            when 3 | 4 =>
+            when 3 | 4          =>
                Trace (Me, "got password prompt in Wait_For_Prompt");
 
                --  If this password was already tried, let's forget it.
@@ -533,8 +543,8 @@ package body GNAT.Expect.TTY.Remote is
                end if;
 
                --  Received password prompt
-               Descriptor.Nb_Password_Prompt
-                 := Descriptor.Nb_Password_Prompt + 1;
+               Descriptor.Nb_Password_Prompt :=
+                 Descriptor.Nb_Password_Prompt + 1;
 
                if Descriptor.Nb_Password_Prompt > 3 then
                   Close (TTY_Data.Sessions (Session_Nb).Pd);
@@ -547,19 +557,20 @@ package body GNAT.Expect.TTY.Remote is
                begin
                   if Res = 3 then
                      --  Password
-                     Password := new String'
-                       (Get_Password
-                          (Descriptor.Machine.Network_Name,
-                           Descriptor.Machine.User_Name,
-                           Force_Password_Ask));
+                     Password :=
+                       new String'
+                         (Get_Password
+                            (Descriptor.Machine.Network_Name,
+                             Descriptor.Machine.User_Name,
+                             Force_Password_Ask));
                   else
                      --  Passphrase
-                     Password := new String'
-                       (Get_Passphrase
-                          (Expect_Out
-                             (TTY_Data.Sessions (Session_Nb).Pd)
+                     Password :=
+                       new String'
+                         (Get_Passphrase
+                            (Expect_Out (TTY_Data.Sessions (Session_Nb).Pd)
                                (Matched (1).First .. Matched (1).Last),
-                           Force_Password_Ask));
+                             Force_Password_Ask));
                   end if;
 
                   if Password.all = "" then
@@ -570,17 +581,18 @@ package body GNAT.Expect.TTY.Remote is
                      raise Invalid_Process with "Connection canceled by user";
                   end if;
 
-                  My_Send (TTY_Data.Sessions (Session_Nb).Pd,
-                           Descriptor.Machine,
-                           Password.all,
-                           Descriptor.Use_Cr_Lf = CRLF,
-                           Password_Mode => True);
+                  My_Send
+                    (TTY_Data.Sessions (Session_Nb).Pd,
+                     Descriptor.Machine,
+                     Password.all,
+                     Descriptor.Use_Cr_Lf = CRLF,
+                     Password_Mode => True);
                   Free (Password);
                end;
 
                Wait_For_Prompt (Intermediate);
 
-            when others =>
+            when others         =>
                --  Extra regexp array match
                if Res > 4 then
                   Trace (Me, "got extra regexp prompt in Wait_For_Prompt");
@@ -590,26 +602,29 @@ package body GNAT.Expect.TTY.Remote is
                   Descriptor.Session_Died := True;
                   Close (TTY_Data.Sessions (Session_Nb).Pd);
 
-                  raise Invalid_Process with
-                    "Unexpected error when connecting to " &
-                  Descriptor.Machine.Nickname;
+                  raise Invalid_Process
+                    with
+                      "Unexpected error when connecting to "
+                      & Descriptor.Machine.Nickname;
                end if;
 
-               if Descriptor.Machine.Access_Tool_Extra_Prompts
-                 (Res_Extra).Auto_Answer
+               if Descriptor.Machine.Access_Tool_Extra_Prompts (Res_Extra)
+                    .Auto_Answer
                then
                   My_Send
                     (TTY_Data.Sessions (Session_Nb).Pd,
                      Descriptor.Machine,
-                     Descriptor.Machine.Access_Tool_Extra_Prompts
-                       (Res_Extra).Answer.all,
+                     Descriptor.Machine.Access_Tool_Extra_Prompts (Res_Extra)
+                       .Answer.all,
                      Descriptor.Use_Cr_Lf = CRLF);
                else
                   declare
-                     Str : constant String := Query_User
-                       (Descriptor.Machine.Access_Tool_Extra_Prompts
-                          (Res_Extra).Question.all,
-                        False);
+                     Str : constant String :=
+                       Query_User
+                         (Descriptor.Machine.Access_Tool_Extra_Prompts
+                            (Res_Extra)
+                            .Question.all,
+                          False);
                   begin
                      if Str /= "" then
                         My_Send
@@ -666,8 +681,8 @@ package body GNAT.Expect.TTY.Remote is
          end if;
       end My_Send;
 
-      Res          : Expect_Match;
-      Found_U      : Boolean;
+      Res     : Expect_Match;
+      Found_U : Boolean;
 
    begin
       --  Search for READY or OFF sessions
@@ -698,8 +713,9 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Set command
 
-         Old_Args := new GNAT.OS_Lib.Argument_List'
-           (1 => new String'(Descriptor.Machine.Access_Tool_Command));
+         Old_Args :=
+           new GNAT.OS_Lib.Argument_List'
+             (1 => new String'(Descriptor.Machine.Access_Tool_Command));
 
          --  Does the common arguments allow user input ?
 
@@ -714,10 +730,10 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Set common arguments
 
-         New_Args := new GNAT.OS_Lib.Argument_List'
-           (Old_Args.all &
-            Process_Arg_List
-              (Descriptor.Machine.Access_Tool_Common_Args));
+         New_Args :=
+           new GNAT.OS_Lib.Argument_List'
+             (Old_Args.all
+              & Process_Arg_List (Descriptor.Machine.Access_Tool_Common_Args));
          Simple_Free (Old_Args);
          Old_Args := New_Args;
 
@@ -729,16 +745,18 @@ package body GNAT.Expect.TTY.Remote is
 
                if Descriptor.Machine.User_Name /= "" then
                   --  Replace %U with user arguments.
-                  New_Args := new GNAT.OS_Lib.Argument_List'
-                    (Old_Args (Old_Args'First .. J - 1) &
-                     Process_Arg_List
-                       (Descriptor.Machine.Access_Tool_User_Args) &
-                     Old_Args (J + 1 .. Old_Args'Last));
+                  New_Args :=
+                    new GNAT.OS_Lib.Argument_List'
+                      (Old_Args (Old_Args'First .. J - 1)
+                       & Process_Arg_List
+                           (Descriptor.Machine.Access_Tool_User_Args)
+                       & Old_Args (J + 1 .. Old_Args'Last));
                else
                   --  Remove %U: no user specified
-                  New_Args := new GNAT.OS_Lib.Argument_List'
-                    (Old_Args (Old_Args'First .. J - 1) &
-                     Old_Args (J + 1 .. Old_Args'Last));
+                  New_Args :=
+                    new GNAT.OS_Lib.Argument_List'
+                      (Old_Args (Old_Args'First .. J - 1)
+                       & Old_Args (J + 1 .. Old_Args'Last));
                end if;
 
                Free (Old_Args (J));
@@ -749,15 +767,13 @@ package body GNAT.Expect.TTY.Remote is
             end if;
          end loop;
 
-         if not Found_U
-           and then Descriptor.Machine.User_Name /= ""
-         then
+         if not Found_U and then Descriptor.Machine.User_Name /= "" then
             --  Compatibility: if %U was not found, then add user arguments at
             --  the begining of the args list.
-            New_Args := new GNAT.OS_Lib.Argument_List'
-              (Process_Arg_List
-                 (Descriptor.Machine.Access_Tool_User_Args) &
-               Old_Args.all);
+            New_Args :=
+              new GNAT.OS_Lib.Argument_List'
+                (Process_Arg_List (Descriptor.Machine.Access_Tool_User_Args)
+                 & Old_Args.all);
 
             Simple_Free (Old_Args);
             Old_Args := New_Args;
@@ -767,10 +783,11 @@ package body GNAT.Expect.TTY.Remote is
 
          for J in Old_Args'Range loop
             if Old_Args (J).all = "%C" then
-               New_Args := new GNAT.OS_Lib.Argument_List'
-                 (Old_Args (Old_Args'First .. J - 1) &
-                  new String'(Descriptor.Machine.Shell_Command) &
-                  Old_Args (J + 1 .. Old_Args'Last));
+               New_Args :=
+                 new GNAT.OS_Lib.Argument_List'
+                   (Old_Args (Old_Args'First .. J - 1)
+                    & new String'(Descriptor.Machine.Shell_Command)
+                    & Old_Args (J + 1 .. Old_Args'Last));
 
                Free (Old_Args (J));
                Simple_Free (Old_Args);
@@ -788,12 +805,12 @@ package body GNAT.Expect.TTY.Remote is
             while Cleaned loop
                Cleaned := False;
 
-               Search_Loop :
-               for J in Old_Args'Range loop
+               Search_Loop : for J in Old_Args'Range loop
                   if Old_Args (J).all = "" then
-                     New_Args := new GNAT.OS_Lib.Argument_List'
-                       (Old_Args (Old_Args'First .. J - 1) &
-                        Old_Args (J + 1 .. Old_Args'Last));
+                     New_Args :=
+                       new GNAT.OS_Lib.Argument_List'
+                         (Old_Args (Old_Args'First .. J - 1)
+                          & Old_Args (J + 1 .. Old_Args'Last));
                      Free (Old_Args (J));
                      Simple_Free (Old_Args);
                      Old_Args := New_Args;
@@ -808,8 +825,7 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Now launch the program remotely accessing the shell
 
-         Log ("spawn",
-              Argument_List_To_String (New_Args.all, False));
+         Log ("spawn", Argument_List_To_String (New_Args.all, False));
          --  Do not use pipes, as they prevent password retrieval on windows
          Set_Use_Pipes
            (TTY_Data.Sessions (Session_Nb).Pd,
@@ -834,7 +850,9 @@ package body GNAT.Expect.TTY.Remote is
             My_Send
               (TTY_Data.Sessions (Session_Nb).Pd,
                Descriptor.Machine,
-               "", Use_Cr_Lf => False, Add_LF => True);
+               "",
+               Use_Cr_Lf => False,
+               Add_LF    => True);
             First_Call := True;
             Wait_For_Prompt (True);
          end if;
@@ -855,9 +873,12 @@ package body GNAT.Expect.TTY.Remote is
                Descriptor.Machine,
                Test_Echo_Cmd,
                Descriptor.Use_Cr_Lf = CRLF);
-            Expect (TTY_Data.Sessions (Session_Nb).Pd, Res,
-                    Echoing_Regexps,
-                    Descriptor.Machine.Timeout, False);
+            Expect
+              (TTY_Data.Sessions (Session_Nb).Pd,
+               Res,
+               Echoing_Regexps,
+               Descriptor.Machine.Timeout,
+               False);
 
             if Descriptor.Machine.Use_Dbg then
                Descriptor.Machine.Dbg
@@ -865,14 +886,13 @@ package body GNAT.Expect.TTY.Remote is
             end if;
 
             if Active (Me) then
-               Log
-                 ("RCV", Expect_Out (TTY_Data.Sessions (Session_Nb).Pd));
+               Log ("RCV", Expect_Out (TTY_Data.Sessions (Session_Nb).Pd));
             end if;
 
             if Res = 1 then
                if Descriptor.Machine.Use_Dbg then
                   Descriptor.Machine.Dbg
-                    (" ... <remote echoes commands> ...",  Output);
+                    (" ... <remote echoes commands> ...", Output);
                end if;
 
                Log ("Init_Session", "remote echoes cmds");
@@ -922,30 +942,23 @@ package body GNAT.Expect.TTY.Remote is
          end if;
 
          TTY_Data.Sessions (Session_Nb).State := READY;
-         TTY_Data.Sessions (Session_Nb).Cr_Lf :=
-           Descriptor.Use_Cr_Lf;
+         TTY_Data.Sessions (Session_Nb).Cr_Lf := Descriptor.Use_Cr_Lf;
 
          if On_New_Connection /= null then
             On_New_Connection (Descriptor.Machine.Nickname);
          end if;
       end if;
 
-      Descriptor.Input_Fd   :=
-        TTY_Data.Sessions (Session_Nb).Pd.Input_Fd;
-      Descriptor.Output_Fd  :=
-        TTY_Data.Sessions (Session_Nb).Pd.Output_Fd;
-      Descriptor.Error_Fd   :=
-        TTY_Data.Sessions (Session_Nb).Pd.Error_Fd;
-      Descriptor.Pid        :=
-        TTY_Data.Sessions (Session_Nb).Pd.Pid;
-      Descriptor.Process    :=
-        TTY_Data.Sessions (Session_Nb).Pd.Process;
-      Descriptor.Use_Cr_Lf  :=
-        TTY_Data.Sessions (Session_Nb).Cr_Lf;
+      Descriptor.Input_Fd := TTY_Data.Sessions (Session_Nb).Pd.Input_Fd;
+      Descriptor.Output_Fd := TTY_Data.Sessions (Session_Nb).Pd.Output_Fd;
+      Descriptor.Error_Fd := TTY_Data.Sessions (Session_Nb).Pd.Error_Fd;
+      Descriptor.Pid := TTY_Data.Sessions (Session_Nb).Pd.Pid;
+      Descriptor.Process := TTY_Data.Sessions (Session_Nb).Pd.Process;
+      Descriptor.Use_Cr_Lf := TTY_Data.Sessions (Session_Nb).Cr_Lf;
 
       --  Set Terminated state as it is not started yet !
       Descriptor.Terminated := True;
-      Descriptor.Busy       := False;
+      Descriptor.Busy := False;
       TTY_Data.Sessions (Session_Nb).State := BUSY;
    end Get_Or_Init_Session;
 
@@ -961,14 +974,14 @@ package body GNAT.Expect.TTY.Remote is
       Err_To_Out          : Boolean := False;
       On_New_Connection   : access procedure (Target_Name : String) := null)
    is
-      Res          : Expect_Match;
-      The_Args     : GNAT.OS_Lib.Argument_List := Clone (Args);
+      Res      : Expect_Match;
+      The_Args : GNAT.OS_Lib.Argument_List := Clone (Args);
    begin
       Descriptor := new Remote_Process_Descriptor;
 
       declare
-         Desc : Remote_Process_Descriptor
-                  renames Remote_Process_Descriptor (Descriptor.all);
+         Desc : Remote_Process_Descriptor renames
+           Remote_Process_Descriptor (Descriptor.all);
       begin
          Desc.Machine := Get_Server (Target_Nickname);
          Ref (Desc.Machine.all);
@@ -979,32 +992,35 @@ package body GNAT.Expect.TTY.Remote is
                new TTY_Data_Record (Desc.Machine.Max_Nb_Connections));
          end if;
 
-         Desc.Session_Died         := False;
+         Desc.Session_Died := False;
 
-         Get_Or_Init_Session
-           (Desc, True, On_New_Connection);
+         Get_Or_Init_Session (Desc, True, On_New_Connection);
 
-         Desc.Terminated :=  False;
+         Desc.Terminated := False;
          Desc.Busy := True;
 
          --  Change to working directory
 
-         if Execution_Directory'Length > 0 and then
-           Desc.Machine.Shell_Cd_Cmd /= ""
+         if Execution_Directory'Length > 0
+           and then Desc.Machine.Shell_Cd_Cmd /= ""
          then
             declare
                Cd_Cmd : String renames Desc.Machine.Shell_Cd_Cmd;
-               Idx : constant Natural := Index (Cd_Cmd, "%d");
+               Idx    : constant Natural := Index (Cd_Cmd, "%d");
             begin
-               Send (Descriptor.all,
-                     Cd_Cmd (Cd_Cmd'First .. Idx - 1) & '"' &
-                     (+Execution_Directory) & '"' &
-                     Cd_Cmd (Idx + 2 .. Cd_Cmd'Last));
-               Expect (Descriptor.all,
-                       Res,
-                       Desc.Machine.Shell_Configured_Prompt.all,
-                       Desc.Machine.Timeout,
-                       False);
+               Send
+                 (Descriptor.all,
+                  Cd_Cmd (Cd_Cmd'First .. Idx - 1)
+                  & '"'
+                  & (+Execution_Directory)
+                  & '"'
+                  & Cd_Cmd (Idx + 2 .. Cd_Cmd'Last));
+               Expect
+                 (Descriptor.all,
+                  Res,
+                  Desc.Machine.Shell_Configured_Prompt.all,
+                  Desc.Machine.Timeout,
+                  False);
 
                if Active (Me) then
                   Log ("RCV", Expect_Out (Descriptor.all));
@@ -1022,8 +1038,7 @@ package body GNAT.Expect.TTY.Remote is
             if The_Args (J)'Length > 0
               and then The_Args (J) (The_Args (J)'First) /= '"'
             then
-               Space_Loop :
-               for K in The_Args (J)'Range loop
+               Space_Loop : for K in The_Args (J)'Range loop
                   if The_Args (J) (K) = ' ' then
                      Free (The_Args (J));
                      The_Args (J) := new String'('"' & Args (J).all & '"');
@@ -1037,10 +1052,11 @@ package body GNAT.Expect.TTY.Remote is
          --  This filter also removes echoed lines.
          --  Force call to parent's Add_Filter.
 
-         Add_Filter (Process_Descriptor (Descriptor.all),
-                     Filter_Out'Access,
-                     Output,
-                     Descriptor.all'Address);
+         Add_Filter
+           (Process_Descriptor (Descriptor.all),
+            Filter_Out'Access,
+            Output,
+            Descriptor.all'Address);
 
          Flush (Desc);
 
@@ -1056,9 +1072,11 @@ package body GNAT.Expect.TTY.Remote is
 
             Internal_Handle_Exceptions (Desc);
 
-            raise Process_Died with
-               "Disconnected from host " & Target_Nickname &
-               ". Please verify your network connections and retry.";
+            raise Process_Died
+              with
+                "Disconnected from host "
+                & Target_Nickname
+                & ". Please verify your network connections and retry.";
       end;
    end Remote_Spawn;
 
@@ -1067,11 +1085,11 @@ package body GNAT.Expect.TTY.Remote is
    ------------------
 
    procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Out_Value             : out GNAT.Strings.String_Access;
-      Status                : out Boolean;
-      Execution_Directory   : Filesystem_String  := "")
+     (Host                : String;
+      Args                : GNAT.OS_Lib.Argument_List;
+      Out_Value           : out GNAT.Strings.String_Access;
+      Status              : out Boolean;
+      Execution_Directory : Filesystem_String := "")
    is
       Status_Nb : Integer;
    begin
@@ -1084,10 +1102,10 @@ package body GNAT.Expect.TTY.Remote is
    ------------------
 
    procedure Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Status                : out Boolean;
-      Execution_Directory   : Filesystem_String  := "")
+     (Host                : String;
+      Args                : GNAT.OS_Lib.Argument_List;
+      Status              : out Boolean;
+      Execution_Directory : Filesystem_String := "")
    is
       Out_Value : GNAT.Strings.String_Access;
       Status_Nb : Integer;
@@ -1101,22 +1119,21 @@ package body GNAT.Expect.TTY.Remote is
    ---------------------------
 
    procedure Internal_Sync_Execute
-     (Host                  : String;
-      Args                  : GNAT.OS_Lib.Argument_List;
-      Execution_Directory   : Filesystem_String;
-      Get_Output            : Boolean;
-      Out_Value             : out GNAT.Strings.String_Access;
-      Status                : out Integer;
-      Success               : out Boolean)
+     (Host                : String;
+      Args                : GNAT.OS_Lib.Argument_List;
+      Execution_Directory : Filesystem_String;
+      Get_Output          : Boolean;
+      Out_Value           : out GNAT.Strings.String_Access;
+      Status              : out Integer;
+      Success             : out Boolean)
    is
       Fd     : Process_Descriptor_Access;
       Result : Expect_Match;
       Regexp : constant Pattern_Matcher :=
-                 Compile ("^[^\n]*\n", Single_Line or Multiple_Lines);
+        Compile ("^[^\n]*\n", Single_Line or Multiple_Lines);
 
    begin
-      Remote_Spawn
-        (Fd, Host, Args, Execution_Directory, Err_To_Out => False);
+      Remote_Spawn (Fd, Host, Args, Execution_Directory, Err_To_Out => False);
 
       loop
          Expect (Fd.all, Result, Regexp, Timeout => 5);
@@ -1152,8 +1169,10 @@ package body GNAT.Expect.TTY.Remote is
          end if;
 
       when E : others =>
-         Trace (Me, "Exception when executing Internal_Sync_Execute: " &
-                Exception_Information (E));
+         Trace
+           (Me,
+            "Exception when executing Internal_Sync_Execute: "
+            & Exception_Information (E));
          Status := -1;
          Success := False;
    end Internal_Sync_Execute;
@@ -1174,7 +1193,7 @@ package body GNAT.Expect.TTY.Remote is
 
       Desc           : Remote_PD_Access renames Convert (User_Data);
       TTY_Data       : constant TTY_Data_Access :=
-                         TTY_Data_Access (Get_Data (Desc.Machine.all));
+        TTY_Data_Access (Get_Data (Desc.Machine.all));
       Size           : Natural;
       Matched        : GNAT.Regpat.Match_Array (0 .. 1);
       Tmp_Buf        : String_Access;
@@ -1206,8 +1225,7 @@ package body GNAT.Expect.TTY.Remote is
                  and then
                    (J = Str'Last
                     or else
-                      (Str (J + 1) /= ASCII.LF
-                       and then Str (J + 1) /= '<')))
+                      (Str (J + 1) /= ASCII.LF and then Str (J + 1) /= '<')))
             then
                Log ("Remove", Str (Str'First .. J));
                Size := Str'Last - J;
@@ -1239,9 +1257,10 @@ package body GNAT.Expect.TTY.Remote is
 
       if not Desc.Terminated then
          --  Catch a prompt
-         Match (Desc.Machine.Shell_Configured_Prompt.all,
-                Desc.Buffer (1 .. Desc.Buffer_Index),
-                Matched);
+         Match
+           (Desc.Machine.Shell_Configured_Prompt.all,
+            Desc.Buffer (1 .. Desc.Buffer_Index),
+            Matched);
 
          if Matched (0) /= No_Match then
             if Desc.Machine.Use_Dbg then
@@ -1261,8 +1280,7 @@ package body GNAT.Expect.TTY.Remote is
                Idx_Last := 0;
             end if;
 
-            Tmp_Buf := new String'
-              (Desc.Buffer (1 .. Matched (0).First - 1));
+            Tmp_Buf := new String'(Desc.Buffer (1 .. Matched (0).First - 1));
             Desc.Buffer_Index := Matched (0).First - 1;
             Free (Desc.Buffer);
             Desc.Buffer := Tmp_Buf;
@@ -1279,7 +1297,8 @@ package body GNAT.Expect.TTY.Remote is
          while Current_Filter /= null loop
             if Current_Filter.Filter_On = Output then
                Current_Filter.Filter
-                 (Desc.all, Str (Idx_First .. Idx_Last),
+                 (Desc.all,
+                  Str (Idx_First .. Idx_Last),
                   Current_Filter.User_Data);
             end if;
 
@@ -1287,9 +1306,7 @@ package body GNAT.Expect.TTY.Remote is
          end loop;
       end if;
 
-      if not Desc.Busy
-        and then Desc.Terminated
-      then
+      if not Desc.Busy and then Desc.Terminated then
          raise Remote_Process_Died;
       end if;
    end Filter_Out;
@@ -1298,17 +1315,15 @@ package body GNAT.Expect.TTY.Remote is
    -- Get_Status --
    ----------------
 
-   procedure Get_Status
-     (Descriptor : in out Remote_Process_Descriptor)
-   is
+   procedure Get_Status (Descriptor : in out Remote_Process_Descriptor) is
       TTY_Data  : constant TTY_Data_Access :=
-                    TTY_Data_Access (Get_Data (Descriptor.Machine.all));
+        TTY_Data_Access (Get_Data (Descriptor.Machine.all));
       Matched   : GNAT.Regpat.Match_Array (0 .. 1);
       Res       : Expect_Match;
       NL_Regexp : constant Pattern_Matcher :=
-                    Compile ("^[^\n\r]*(\n|\r)", Single_Line);
+        Compile ("^[^\n\r]*(\n|\r)", Single_Line);
       Desc      : TTY_Process_Descriptor renames
-                    TTY_Data.Sessions (Descriptor.Session_Nb).Pd;
+        TTY_Data.Sessions (Descriptor.Session_Nb).Pd;
 
    begin
       if Descriptor.Machine.Shell_Get_Status_Cmd = "" then
@@ -1317,9 +1332,7 @@ package body GNAT.Expect.TTY.Remote is
          --  Try to retrieve the terminated program's status
 
          if Descriptor.Use_Cr_Lf = CRLF then
-            Send
-              (Desc,
-               Descriptor.Machine.Shell_Get_Status_Cmd & ASCII.CR);
+            Send (Desc, Descriptor.Machine.Shell_Get_Status_Cmd & ASCII.CR);
          else
             Send (Desc, Descriptor.Machine.Shell_Get_Status_Cmd);
          end if;
@@ -1336,21 +1349,17 @@ package body GNAT.Expect.TTY.Remote is
          --  Skip echo if needed
 
          if TTY_Data.Echoing then
-            Expect (Desc,
-                    Res,
-                    NL_Regexp,
-                    Matched,
-                    Descriptor.Machine.Timeout);
-            Trace
-              (Me, "skipped " & Expect_Out (Desc));
+            Expect (Desc, Res, NL_Regexp, Matched, Descriptor.Machine.Timeout);
+            Trace (Me, "skipped " & Expect_Out (Desc));
          end if;
 
          --  Get status
-         Expect (Desc,
-                 Res,
-                 Descriptor.Machine.Shell_Get_Status_Pattern.all,
-                 Matched,
-                 Descriptor.Machine.Timeout);
+         Expect
+           (Desc,
+            Res,
+            Descriptor.Machine.Shell_Get_Status_Pattern.all,
+            Matched,
+            Descriptor.Machine.Timeout);
 
          if Descriptor.Machine.Use_Dbg then
             Descriptor.Machine.Dbg (Expect_Out (Desc), Output);
@@ -1359,8 +1368,7 @@ package body GNAT.Expect.TTY.Remote is
          if Matched (0) /= No_Match then
             declare
                Out_Str : constant String :=
-                           Expect_Out (Desc)
-                           (Matched (1).First .. Matched (1).Last);
+                 Expect_Out (Desc) (Matched (1).First .. Matched (1).Last);
             begin
                Descriptor.Status := Integer'Value (Out_Str);
 
@@ -1370,8 +1378,8 @@ package body GNAT.Expect.TTY.Remote is
 
             exception
                when Constraint_Error =>
-                  Trace (Me, "could not evaluate status from '" &
-                         Out_Str & "'");
+                  Trace
+                    (Me, "could not evaluate status from '" & Out_Str & "'");
                   Descriptor.Status := 1;
             end;
 
@@ -1387,10 +1395,12 @@ package body GNAT.Expect.TTY.Remote is
 
          --  Get prompt
 
-         Expect (Desc, Res,
-                 Descriptor.Machine.Shell_Configured_Prompt.all,
-                 Matched,
-                 Descriptor.Machine.Timeout);
+         Expect
+           (Desc,
+            Res,
+            Descriptor.Machine.Shell_Configured_Prompt.all,
+            Matched,
+            Descriptor.Machine.Timeout);
 
          if Res = Expect_Timeout then
             --  Shell does not respond to command. Kill it
@@ -1413,12 +1423,12 @@ package body GNAT.Expect.TTY.Remote is
    -- Close --
    -----------
 
-   overriding procedure Close
-     (Descriptor : in out Remote_Process_Descriptor;
-      Status     : out Integer)
+   overriding
+   procedure Close
+     (Descriptor : in out Remote_Process_Descriptor; Status : out Integer)
    is
-      TTY_Data  : constant TTY_Data_Access :=
-                    TTY_Data_Access (Get_Data (Descriptor.Machine.all));
+      TTY_Data : constant TTY_Data_Access :=
+        TTY_Data_Access (Get_Data (Descriptor.Machine.all));
 
    begin
       if Descriptor.Session_Nb = 0 then
@@ -1431,15 +1441,15 @@ package body GNAT.Expect.TTY.Remote is
             Interrupt (Descriptor);
          end if;
 
-         Remove_Filter (TTY_Process_Descriptor (Descriptor),
-                        Filter_Out'Access);
+         Remove_Filter
+           (TTY_Process_Descriptor (Descriptor), Filter_Out'Access);
          Status := 0;
 
          declare
-            Desc : TTY_Process_Descriptor renames
-                     TTY_Data.Sessions (Descriptor.Session_Nb).Pd;
+            Desc  : TTY_Process_Descriptor renames
+              TTY_Data.Sessions (Descriptor.Session_Nb).Pd;
             State : Shell_State_Type renames
-                     TTY_Data.Sessions (Descriptor.Session_Nb).State;
+              TTY_Data.Sessions (Descriptor.Session_Nb).State;
          begin
 
             --  Close is called before remote program terminates. Close the
@@ -1462,11 +1472,11 @@ package body GNAT.Expect.TTY.Remote is
                Status := 99;
             end if;
 
-            Descriptor.Input_Fd   := GNAT.OS_Lib.Invalid_FD;
-            Descriptor.Output_Fd  := GNAT.OS_Lib.Invalid_FD;
-            Descriptor.Error_Fd   := GNAT.OS_Lib.Invalid_FD;
-            Descriptor.Pid        := Invalid_Pid;
-            Descriptor.Process    := System.Null_Address;
+            Descriptor.Input_Fd := GNAT.OS_Lib.Invalid_FD;
+            Descriptor.Output_Fd := GNAT.OS_Lib.Invalid_FD;
+            Descriptor.Error_Fd := GNAT.OS_Lib.Invalid_FD;
+            Descriptor.Pid := Invalid_Pid;
+            Descriptor.Process := System.Null_Address;
             Descriptor.Session_Nb := 0;
             Unref (Descriptor.Machine);
             Descriptor.Machine := null;
@@ -1486,9 +1496,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Close --
    -----------
 
-   overriding procedure Close
-     (Descriptor : in out Remote_Process_Descriptor)
-   is
+   overriding
+   procedure Close (Descriptor : in out Remote_Process_Descriptor) is
       Status : Integer;
    begin
       Close (Descriptor, Status);
@@ -1498,13 +1507,12 @@ package body GNAT.Expect.TTY.Remote is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt
-     (Descriptor : in out Remote_Process_Descriptor)
-   is
-      TTY_Data    : constant TTY_Data_Access :=
-                      TTY_Data_Access (Get_Data (Descriptor.Machine.all));
-      Res         : Expect_Match;
-      Matched     : GNAT.Regpat.Match_Array (0 .. 0);
+   overriding
+   procedure Interrupt (Descriptor : in out Remote_Process_Descriptor) is
+      TTY_Data : constant TTY_Data_Access :=
+        TTY_Data_Access (Get_Data (Descriptor.Machine.all));
+      Res      : Expect_Match;
+      Matched  : GNAT.Regpat.Match_Array (0 .. 0);
    begin
       --  First verify that we haven't already exited the program, but not
       --  received the prompt
@@ -1517,10 +1525,10 @@ package body GNAT.Expect.TTY.Remote is
             --  Interrupt characters are understood when they are at the
             --  beginning of a line. Send LF first then, preceded by a space
             --  so that gdb do not try to execute the last command, if any.
-            Send (Descriptor,
-                  ' ' & ASCII.LF
-                  & Descriptor.Machine.Access_Tool_Send_Interrupt,
-                  Add_LF => False);
+            Send
+              (Descriptor,
+               ' ' & ASCII.LF & Descriptor.Machine.Access_Tool_Send_Interrupt,
+               Add_LF => False);
             Expect (Descriptor, Res, ".+", Matched, 500);
 
          else
@@ -1540,8 +1548,8 @@ package body GNAT.Expect.TTY.Remote is
 
    procedure Close_All (Host : String) is
       Machine  : constant Machine_Access := Get_Server (Host);
-      TTY_Data    : constant TTY_Data_Access :=
-                      TTY_Data_Access (Get_Data (Machine.all));
+      TTY_Data : constant TTY_Data_Access :=
+        TTY_Data_Access (Get_Data (Machine.all));
    begin
       if TTY_Data = null then
          return;
@@ -1549,14 +1557,15 @@ package body GNAT.Expect.TTY.Remote is
 
       for J in TTY_Data.Sessions'Range loop
          case TTY_Data.Sessions (J).State is
-            when OFF =>
+            when OFF   =>
                --  Already shutdown
                null;
 
             when READY =>
                for K in Machine.Shell_Exit_Cmds'Range loop
-                  Send (TTY_Data.Sessions (J).Pd,
-                        Machine.Shell_Exit_Cmds (K).all);
+                  Send
+                    (TTY_Data.Sessions (J).Pd,
+                     Machine.Shell_Exit_Cmds (K).all);
                end loop;
 
                begin
@@ -1571,7 +1580,7 @@ package body GNAT.Expect.TTY.Remote is
 
                TTY_Data.Sessions (J).State := OFF;
 
-            when BUSY =>
+            when BUSY  =>
                begin
                   Interrupt (TTY_Data.Sessions (J).Pd);
                   Close (TTY_Data.Sessions (J).Pd);
@@ -1589,8 +1598,7 @@ package body GNAT.Expect.TTY.Remote is
    ---------------
 
    procedure Close_All is
-      List : constant GNAT.Strings.String_List :=
-               Gexpect.Db.Get_Servers;
+      List : constant GNAT.Strings.String_List := Gexpect.Db.Get_Servers;
    begin
       --  Be careful to not trace anything in here. This is called after
       --  the kernel is destroyed, and then cannot trace anymore
@@ -1635,8 +1643,7 @@ package body GNAT.Expect.TTY.Remote is
    ---------------------------
 
    procedure Handle_Pre_Disconnect
-     (Descriptor : Remote_Process_Descriptor;
-      Timeout    : in out Integer) is
+     (Descriptor : Remote_Process_Descriptor; Timeout : in out Integer) is
    begin
       if Descriptor.Terminated then
          --  We encountered the shell prompt. First let the caller retrieving
@@ -1664,12 +1671,9 @@ package body GNAT.Expect.TTY.Remote is
    ----------------------------
 
    procedure Handle_Post_Disconnect
-     (Descriptor : Remote_Process_Descriptor;
-      Result     : Expect_Match) is
+     (Descriptor : Remote_Process_Descriptor; Result : Expect_Match) is
    begin
-      if not Descriptor.Terminated
-        and then Descriptor.Machine.Use_Dbg
-      then
+      if not Descriptor.Terminated and then Descriptor.Machine.Use_Dbg then
          Descriptor.Machine.Dbg (Expect_Out (Descriptor), Output);
       end if;
 
@@ -1682,7 +1686,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Expect --
    ------------
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -1692,11 +1697,12 @@ package body GNAT.Expect.TTY.Remote is
       The_Timeout : Integer := Timeout;
    begin
       Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexp,
-              The_Timeout,
-              Full_Buffer);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexp,
+         The_Timeout,
+         Full_Buffer);
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
@@ -1704,46 +1710,12 @@ package body GNAT.Expect.TTY.Remote is
          --  When the remote process died, we need to call expect one more
          --  time with a timeout value of 0 to check if any non-analyzed
          --  buffer value matches the regexp.
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexp,
-                 0,
-                 Full_Buffer);
-      Handle_Post_Disconnect (Descriptor, Result);
-
-      when Process_Died =>
-         Internal_Handle_Exceptions (Descriptor);
-         raise;
-   end Expect;
-
-   ------------
-   -- Expect --
-   ------------
-
-   overriding procedure Expect
-     (Descriptor  : in out Remote_Process_Descriptor;
-      Result      : out Expect_Match;
-      Regexp      : GNAT.Regpat.Pattern_Matcher;
-      Timeout     : Integer := 10000;
-      Full_Buffer : Boolean := False)
-   is
-      The_Timeout : Integer := Timeout;
-   begin
-      Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexp,
-              The_Timeout,
-              Full_Buffer);
-      Handle_Post_Disconnect (Descriptor, Result);
-
-   exception
-      when Remote_Process_Died =>
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexp,
-                 0,
-                 Full_Buffer);
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexp,
+            0,
+            Full_Buffer);
          Handle_Post_Disconnect (Descriptor, Result);
 
       when Process_Died =>
@@ -1755,7 +1727,46 @@ package body GNAT.Expect.TTY.Remote is
    -- Expect --
    ------------
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
+     (Descriptor  : in out Remote_Process_Descriptor;
+      Result      : out Expect_Match;
+      Regexp      : GNAT.Regpat.Pattern_Matcher;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False)
+   is
+      The_Timeout : Integer := Timeout;
+   begin
+      Handle_Pre_Disconnect (Descriptor, The_Timeout);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexp,
+         The_Timeout,
+         Full_Buffer);
+      Handle_Post_Disconnect (Descriptor, Result);
+
+   exception
+      when Remote_Process_Died =>
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexp,
+            0,
+            Full_Buffer);
+         Handle_Post_Disconnect (Descriptor, Result);
+
+      when Process_Died =>
+         Internal_Handle_Exceptions (Descriptor);
+         raise;
+   end Expect;
+
+   ------------
+   -- Expect --
+   ------------
+
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -1766,22 +1777,24 @@ package body GNAT.Expect.TTY.Remote is
       The_Timeout : Integer := Timeout;
    begin
       Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexp,
-              Matched,
-              The_Timeout,
-              Full_Buffer);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexp,
+         Matched,
+         The_Timeout,
+         Full_Buffer);
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
       when Remote_Process_Died =>
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexp,
-                 Matched,
-                 0,
-                 Full_Buffer);
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexp,
+            Matched,
+            0,
+            Full_Buffer);
          Handle_Post_Disconnect (Descriptor, Result);
 
       when Process_Died =>
@@ -1793,7 +1806,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Expect --
    ------------
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
@@ -1804,22 +1818,24 @@ package body GNAT.Expect.TTY.Remote is
       The_Timeout : Integer := Timeout;
    begin
       Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexp,
-              Matched,
-              The_Timeout,
-              Full_Buffer);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexp,
+         Matched,
+         The_Timeout,
+         Full_Buffer);
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
       when Remote_Process_Died =>
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexp,
-                 Matched,
-                 0,
-                 Full_Buffer);
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexp,
+            Matched,
+            0,
+            Full_Buffer);
          Handle_Post_Disconnect (Descriptor, Result);
 
       when Process_Died =>
@@ -1831,7 +1847,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Expect --
    ------------
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -1841,20 +1858,22 @@ package body GNAT.Expect.TTY.Remote is
       The_Timeout : Integer := Timeout;
    begin
       Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexps,
-              The_Timeout,
-              Full_Buffer);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexps,
+         The_Timeout,
+         Full_Buffer);
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
       when Remote_Process_Died =>
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexps,
-                 0,
-                 Full_Buffer);
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexps,
+            0,
+            Full_Buffer);
          Handle_Post_Disconnect (Descriptor, Result);
 
       when Process_Died =>
@@ -1866,7 +1885,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Expect --
    ------------
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;
@@ -1876,20 +1896,22 @@ package body GNAT.Expect.TTY.Remote is
       The_Timeout : Integer := Timeout;
    begin
       Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexps,
-              The_Timeout,
-              Full_Buffer);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexps,
+         The_Timeout,
+         Full_Buffer);
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
       when Remote_Process_Died =>
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexps,
-                 0,
-                 Full_Buffer);
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexps,
+            0,
+            Full_Buffer);
          Handle_Post_Disconnect (Descriptor, Result);
 
       when Process_Died =>
@@ -1901,7 +1923,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Expect --
    ------------
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -1912,22 +1935,24 @@ package body GNAT.Expect.TTY.Remote is
       The_Timeout : Integer := Timeout;
    begin
       Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexps,
-              Matched,
-              The_Timeout,
-              Full_Buffer);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexps,
+         Matched,
+         The_Timeout,
+         Full_Buffer);
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
       when Remote_Process_Died =>
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexps,
-                 Matched,
-                 0,
-                 Full_Buffer);
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexps,
+            Matched,
+            0,
+            Full_Buffer);
          Handle_Post_Disconnect (Descriptor, Result);
       when Process_Died =>
          Internal_Handle_Exceptions (Descriptor);
@@ -1938,7 +1963,8 @@ package body GNAT.Expect.TTY.Remote is
    -- Expect --
    ------------
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;
@@ -1949,22 +1975,24 @@ package body GNAT.Expect.TTY.Remote is
       The_Timeout : Integer := Timeout;
    begin
       Handle_Pre_Disconnect (Descriptor, The_Timeout);
-      Expect (TTY_Process_Descriptor (Descriptor),
-              Result,
-              Regexps,
-              Matched,
-              The_Timeout,
-              Full_Buffer);
+      Expect
+        (TTY_Process_Descriptor (Descriptor),
+         Result,
+         Regexps,
+         Matched,
+         The_Timeout,
+         Full_Buffer);
       Handle_Post_Disconnect (Descriptor, Result);
 
    exception
       when Remote_Process_Died =>
-         Expect (TTY_Process_Descriptor (Descriptor),
-                 Result,
-                 Regexps,
-                 Matched,
-                 0,
-                 Full_Buffer);
+         Expect
+           (TTY_Process_Descriptor (Descriptor),
+            Result,
+            Regexps,
+            Matched,
+            0,
+            Full_Buffer);
          Handle_Post_Disconnect (Descriptor, Result);
 
       when Process_Died =>

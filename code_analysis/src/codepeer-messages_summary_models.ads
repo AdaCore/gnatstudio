@@ -25,18 +25,18 @@ with GPS.Search;
 
 package CodePeer.Messages_Summary_Models is
 
-   Entity_Icon_Name_Column            : constant :=  0;
-   Entity_Name_Column                 : constant :=  1;
-   Entity_Lifeage_Column              : constant :=  2;
-   Low_Current_Count_Column           : constant :=  3;
-   Low_Current_Color_Column           : constant :=  4;
-   Medium_Current_Count_Column        : constant :=  5;
-   Medium_Current_Color_Column        : constant :=  6;
-   High_Current_Count_Column          : constant :=  7;
-   High_Current_Color_Column          : constant :=  8;
-   Passed_Checks_Count_Column         : constant :=  9;
-   Total_Checks_Count_Column          : constant := 10;
-   Number_Of_Columns                  : constant := 11;
+   Entity_Icon_Name_Column     : constant := 0;
+   Entity_Name_Column          : constant := 1;
+   Entity_Lifeage_Column       : constant := 2;
+   Low_Current_Count_Column    : constant := 3;
+   Low_Current_Color_Column    : constant := 4;
+   Medium_Current_Count_Column : constant := 5;
+   Medium_Current_Color_Column : constant := 6;
+   High_Current_Count_Column   : constant := 7;
+   High_Current_Color_Column   : constant := 8;
+   Passed_Checks_Count_Column  : constant := 9;
+   Total_Checks_Count_Column   : constant := 10;
+   Number_Of_Columns           : constant := 11;
 
    type Messages_Summary_Model_Record is
      new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with private;
@@ -45,14 +45,14 @@ package CodePeer.Messages_Summary_Models is
      access all Messages_Summary_Model_Record'Class;
 
    procedure Gtk_New
-     (Model           : out Messages_Summary_Model;
-      Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set);
+     (Model      : out Messages_Summary_Model;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : CodePeer.Message_Category_Sets.Set);
 
    procedure Initialize
-     (Model           : access Messages_Summary_Model_Record'Class;
-      Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set);
+     (Model      : access Messages_Summary_Model_Record'Class;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : CodePeer.Message_Category_Sets.Set);
 
    procedure Set_Visible_Message_Categories
      (Self : access Messages_Summary_Model_Record'Class;
@@ -89,20 +89,21 @@ package CodePeer.Messages_Summary_Models is
 private
 
    type Messages_Summary_Model_Record is
-     new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record with record
-      Tree                 : Code_Analysis.Code_Analysis_Tree;
-      Show_All_Files       : Boolean := False;
-      Show_All_Projects    : Boolean := True;
-      Pattern              : GPS.Search.Search_Pattern_Access;
+     new Code_Analysis.Tree_Models.Filterable_Tree_Model_Record
+   with record
+      Tree              : Code_Analysis.Code_Analysis_Tree;
+      Show_All_Files    : Boolean := False;
+      Show_All_Projects : Boolean := True;
+      Pattern           : GPS.Search.Search_Pattern_Access;
 
-      Message_Categories   : CodePeer.Message_Category_Sets.Set;
+      Message_Categories : CodePeer.Message_Category_Sets.Set;
       --  Set of the message categories, which is shown in the report
-      CWE_Categories       : CodePeer.CWE_Category_Sets.Set;
+      CWE_Categories     : CodePeer.CWE_Category_Sets.Set;
       --  Set of the CWE categories, which is shown in the report.
-      Ranking              : Message_Ranking_Level_Flags;
-      Message_Lifeages     : CodePeer.Lifeage_Kinds_Flags;
+      Ranking            : Message_Ranking_Level_Flags;
+      Message_Lifeages   : CodePeer.Lifeage_Kinds_Flags;
       --  Set of the message lifeages, which is show in the report
-      Message_Statuses     : CodePeer.Review_Status_Kinds_Flags;
+      Message_Statuses   : CodePeer.Review_Status_Kinds_Flags;
       --  Set of the message review statuses, which is show in the report
    end record;
 
@@ -128,47 +129,56 @@ private
 
    --  Override FilterableTreeModel subprograms
 
-   overriding function Create
+   overriding
+   function Create
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Project_Access)
       return Code_Analysis.Tree_Models.Project_Item_Access;
 
-   overriding function Create
+   overriding
+   function Create
      (Self : access Messages_Summary_Model_Record;
       File : Code_Analysis.File_Access)
       return Code_Analysis.Tree_Models.File_Item_Access;
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean;
    --  Returns True if specified project must be visible in the tree
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean;
    --  Returns True if specified file must be visible in the tree
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self             : access Messages_Summary_Model_Record;
       Dummy_Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       Dummy_File       : Code_Analysis.Tree_Models.File_Item_Access;
       Dummy_Subprogram : Code_Analysis.Tree_Models.Subprogram_Item_Access)
-      return Boolean is (False);
+      return Boolean
+   is (False);
    --  There are no subprogram nodes in this view, nothing to display.
 
-   overriding function Is_Changed
+   overriding
+   function Is_Changed
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean;
    --  Returns True if specified project data has been changed
 
-   overriding function Is_Changed
+   overriding
+   function Is_Changed
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean;
    --  Returns True if specified file data has been changed
 
-   overriding function Is_Changed
+   overriding
+   function Is_Changed
      (Self       : access Messages_Summary_Model_Record;
       Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       File       : Code_Analysis.Tree_Models.File_Item_Access;
@@ -178,14 +188,17 @@ private
 
    --  Override standard GtkTreeModel subprograms
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Messages_Summary_Model_Record) return Glib.Gint;
 
-   overriding function Get_Column_Type
-     (Self : access Messages_Summary_Model_Record;
-      Index : Glib.Gint) return Glib.GType;
+   overriding
+   function Get_Column_Type
+     (Self : access Messages_Summary_Model_Record; Index : Glib.Gint)
+      return Glib.GType;
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Messages_Summary_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;

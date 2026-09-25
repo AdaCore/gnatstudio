@@ -45,36 +45,28 @@ package GVD.Variables.Types.Arrays is
    --  Last = Long_Integer'First, then the bounds are considered as dynamic,
    --  ie the real bounds are not known until we parse the value itself.
 
-   function New_Array_Type
-     (Num_Dimensions : Positive) return GVD_Type_Holder;
+   function New_Array_Type (Num_Dimensions : Positive) return GVD_Type_Holder;
    --  Create a new array type with a given number of dimensions.
 
    procedure Set_Dimensions
-     (Self : not null access GVD_Array_Type;
-      Dim  : Positive;
-      Size : Dimension);
+     (Self : not null access GVD_Array_Type; Dim : Positive; Size : Dimension);
    --  Set the bounds of the Dim-nth dimensions of the array.
 
    function Num_Dimensions
-     (Self : not null access GVD_Array_Type)
-     return Positive;
+     (Self : not null access GVD_Array_Type) return Positive;
    --  Return the number of dimensions in the array Item.
 
    function Get_Dimensions
-     (Self : not null access GVD_Array_Type;
-      Dim  : Positive)
-      return Dimension;
+     (Self : not null access GVD_Array_Type; Dim : Positive) return Dimension;
    --  Return the bounds of the Dim-nth dimension in Item.
 
    procedure Set_Item_Type
-     (Self     : not null access GVD_Array_Type;
-      The_Type : GVD_Type_Holder);
+     (Self : not null access GVD_Array_Type; The_Type : GVD_Type_Holder);
    --  Set the type of items contained in Item.
    --  The_Type is not duplicated, we just keep an access to it.
 
    function Get_Item_Type
-     (Self : not null access GVD_Array_Type)
-      return GVD_Type_Holder;
+     (Self : not null access GVD_Array_Type) return GVD_Type_Holder;
    --  Return the Item_Type for the array.
    --  The returned structure should not be modified!
    --  ??? Could we use an access to constant ???
@@ -95,8 +87,7 @@ package GVD.Variables.Types.Arrays is
    --  Elem_Value is not duplicated!
 
    function Get_Value
-     (Self       : not null access GVD_Array_Type;
-      Elem_Index : Long_Integer)
+     (Self : not null access GVD_Array_Type; Elem_Index : Long_Integer)
       return GVD_Type_Holder;
    --  Read a value in the array at a specific Index.
    --  If that index is covered by a Repeat_Type, a clone of the value is
@@ -124,25 +115,25 @@ private
       Index : Long_Integer;
       Value : GVD_Type_Holder := Empty_GVD_Type_Holder;
    end record;
-   package Array_Item_Vectors is new Ada.Containers.Vectors
-     (Positive, Array_Item);
+   package Array_Item_Vectors is new
+     Ada.Containers.Vectors (Positive, Array_Item);
    --  One of the item of in the array.
    --  We need to store both its value and its index. The index is calculated
    --  as the index in a one-dimensional array that would store the same number
    --  of values as the array, starting from 0 as in C.
 
-   type GVD_Array_Type (Num_Dimensions : Positive) is
-     new GVD_Generic_Type with record
-      Values      : Array_Item_Vectors.Vector;
-      Item_Type   : GVD_Type_Holder := Empty_GVD_Type_Holder;
-      Last_Value  : Natural := 0;
+   type GVD_Array_Type (Num_Dimensions : Positive) is new GVD_Generic_Type
+   with record
+      Values     : Array_Item_Vectors.Vector;
+      Item_Type  : GVD_Type_Holder := Empty_GVD_Type_Holder;
+      Last_Value : Natural := 0;
 
       Index_Width : Glib.Gint := 0;
 
       Type_Height : Glib.Gint := 0;
       --  Height of the first line used to display the type of the item.
 
-      Dimensions  : Dimension_Array (1 .. Num_Dimensions);
+      Dimensions : Dimension_Array (1 .. Num_Dimensions);
    end record;
    --  Last_Value is the last value that is relevant in Values, or 0 if the
    --  array is empty.
@@ -152,29 +143,34 @@ private
    --    - Values'Last = Last_Value, so that one can use 'Range for easier
    --      access
 
-   overriding function Get_Type_Descr
+   overriding
+   function Get_Type_Descr
      (Self : not null access GVD_Array_Type) return String;
 
-   overriding procedure Clear (Self : not null access GVD_Array_Type);
+   overriding
+   procedure Clear (Self : not null access GVD_Array_Type);
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Array_Type;
       Item : not null GVD_Generic_Type_Access);
 
-   overriding procedure Free (Self : not null access GVD_Array_Type);
+   overriding
+   procedure Free (Self : not null access GVD_Array_Type);
 
-   overriding function Replace
+   overriding
+   function Replace
      (Self         : not null access GVD_Array_Type;
       Current      : GVD_Type_Holder'Class;
-      Replace_With : GVD_Type_Holder'Class)
-      return GVD_Type_Holder'Class;
+      Replace_With : GVD_Type_Holder'Class) return GVD_Type_Holder'Class;
 
-   overriding function Structurally_Equivalent
-     (Self : not null access GVD_Array_Type;
-      Item : GVD_Type_Holder'Class)
+   overriding
+   function Structurally_Equivalent
+     (Self : not null access GVD_Array_Type; Item : GVD_Type_Holder'Class)
       return Boolean;
 
-   overriding function Start
+   overriding
+   function Start
      (Self : not null access GVD_Array_Type) return Generic_Iterator'Class;
 
 end GVD.Variables.Types.Arrays;

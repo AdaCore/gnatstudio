@@ -15,66 +15,67 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;             use Ada.Calendar;
-with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
+with Ada.Calendar;          use Ada.Calendar;
+with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.Expect;              use GNAT.Expect;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNAT.Regpat;              use GNAT.Regpat;
-with System;                   use System;
+with GNAT.Expect;           use GNAT.Expect;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.Regpat;           use GNAT.Regpat;
+with System;                use System;
 
 with VSS.String_Vectors;
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
-with GNATCOLL.Iconv;           use GNATCOLL.Iconv;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Iconv;     use GNATCOLL.Iconv;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Scripts.Gtkada;
+use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
-with Glib;                     use Glib;
-with Glib.Main;                use Glib.Main;
+with Glib;                    use Glib;
+with Glib.Main;               use Glib.Main;
 with Glib.Convert;
-with Glib.Values;              use Glib.Values;
-with Glib.Object;              use Glib.Object;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Unicode;             use Glib.Unicode;
-with Gdk.Keyval;               use Gdk.Keyval;
-with Gdk.Types;                use Gdk.Types;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.RGBA;                 use Gdk.RGBA;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Enums;                use Gtk.Enums;
+with Glib.Values;             use Glib.Values;
+with Glib.Object;             use Glib.Object;
+with Glib.Properties;         use Glib.Properties;
+with Glib.Unicode;            use Glib.Unicode;
+with Gdk.Keyval;              use Gdk.Keyval;
+with Gdk.Types;               use Gdk.Types;
+with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
+with Gdk.Event;               use Gdk.Event;
+with Gdk.RGBA;                use Gdk.RGBA;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Separator_Tool_Item;  use Gtk.Separator_Tool_Item;
-with Gtk.Style_Context;        use Gtk.Style_Context;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
-with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Text_Iter;            use Gtk.Text_Iter;
-with Gtk.Text_Mark;            use Gtk.Text_Mark;
-with Gtk.Text_Tag;             use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
-with Gtk.Toolbar;              use Gtk.Toolbar;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Selection_Data;       use Gtk.Selection_Data;
-with Gtk.Arguments;            use Gtk.Arguments;
-with Gtkada.Handlers;          use Gtkada.Handlers;
-with Gtkada.Terminal;          use Gtkada.Terminal;
-with Gtkada.MDI;               use Gtkada.MDI;
-with Pango.Enums;              use Pango.Enums;
+with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
+with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
+with Gtk.Style_Context;       use Gtk.Style_Context;
+with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
+with Gtk.Text_View;           use Gtk.Text_View;
+with Gtk.Text_Iter;           use Gtk.Text_Iter;
+with Gtk.Text_Mark;           use Gtk.Text_Mark;
+with Gtk.Text_Tag;            use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;      use Gtk.Text_Tag_Table;
+with Gtk.Toolbar;             use Gtk.Toolbar;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Selection_Data;      use Gtk.Selection_Data;
+with Gtk.Arguments;           use Gtk.Arguments;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.Terminal;         use Gtkada.Terminal;
+with Gtkada.MDI;              use Gtkada.MDI;
+with Pango.Enums;             use Pango.Enums;
 
-with Basic_Types;              use Basic_Types;
-with Config;                   use Config;
-with Histories;                use Histories;
-with Filter_Panels;            use Filter_Panels;
-with GUI_Utils;                use GUI_Utils;
+with Basic_Types;   use Basic_Types;
+with Config;        use Config;
+with Histories;     use Histories;
+with Filter_Panels; use Filter_Panels;
+with GUI_Utils;     use GUI_Utils;
 
 with GPS.Kernel.Clipboard;     use GPS.Kernel.Clipboard;
 with GPS.Default_Styles;       use GPS.Default_Styles;
@@ -104,8 +105,8 @@ package body Interactive_Consoles is
    procedure On_Console_Destroy (Console, Data : System.Address);
    pragma Convention (C, On_Console_Destroy);
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Interactive_Console);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Interactive_Console);
 
    package Foreach_Tag is new Foreach_User_Data (Interactive_Console);
 
@@ -118,46 +119,53 @@ package body Interactive_Consoles is
    -- Interactive_Virtual_Console --
    ---------------------------------
 
-   type Interactive_Virtual_Console_Record is
-     new Virtual_Console_Record
+   type Interactive_Virtual_Console_Record is new Virtual_Console_Record
    with record
-      Console   : Interactive_Console;
-      Script    : Scripting_Language;
-      Child     : MDI_Child := null;
+      Console : Interactive_Console;
+      Script  : Scripting_Language;
+      Child   : MDI_Child := null;
       --  MDI_Child cached, used in Insert_Error
    end record;
 
-   type Interactive_Virtual_Console
-     is access all Interactive_Virtual_Console_Record'Class;
+   type Interactive_Virtual_Console is
+     access all Interactive_Virtual_Console_Record'Class;
 
-   overriding procedure Ref
-     (Console : access Interactive_Virtual_Console_Record);
-   overriding procedure Unref
-     (Console : access Interactive_Virtual_Console_Record);
-   overriding procedure Insert_Text
+   overriding
+   procedure Ref (Console : access Interactive_Virtual_Console_Record);
+   overriding
+   procedure Unref (Console : access Interactive_Virtual_Console_Record);
+   overriding
+   procedure Insert_Text
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-   overriding procedure Insert_Log
+   overriding
+   procedure Insert_Log
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-   overriding procedure Insert_Prompt
+   overriding
+   procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-   overriding procedure Insert_Error
+   overriding
+   procedure Insert_Error
      (Console : access Interactive_Virtual_Console_Record; Txt : String);
-   overriding procedure Set_As_Default_Console
+   overriding
+   procedure Set_As_Default_Console
      (Console : access Interactive_Virtual_Console_Record;
       Script  : GNATCOLL.Scripts.Scripting_Language);
-   overriding procedure Set_Data_Primitive
+   overriding
+   procedure Set_Data_Primitive
      (Instance : Class_Instance;
       Console  : access Interactive_Virtual_Console_Record);
-   overriding function Get_Instance
+   overriding
+   function Get_Instance
      (Script  : access Scripting_Language_Record'Class;
       Console : access Interactive_Virtual_Console_Record)
       return Class_Instance;
-   overriding function Read
+   overriding
+   function Read
      (Console    : access Interactive_Virtual_Console_Record;
       Size       : Integer;
       Whole_Line : Boolean) return String;
-   overriding procedure Clear
-     (Console : access Interactive_Virtual_Console_Record);
+   overriding
+   procedure Clear (Console : access Interactive_Virtual_Console_Record);
    --  See inherited subprograms
 
    type Hyper_Link_Tag_Record is new Gtk_Text_Tag_Record with null record;
@@ -168,38 +176,36 @@ package body Interactive_Consoles is
    -----------------------
 
    procedure Mark_Set_Handler
-     (Console : access Gtk_Widget_Record'Class;
-      Params  : Glib.Values.GValues);
+     (Console : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues);
    --  Prevent cursor movements before the prompt
 
    function Search_Key_Press_Handler
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Event  : Gdk_Event_Key) return Boolean;
+     (Widget : access Glib.Object.GObject_Record'Class; Event : Gdk_Event_Key)
+      return Boolean;
    --  Called when a key is pressed in the search entry.
 
    function Button_Press_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Object : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Handler for the "button_press_event" signal
 
    function Button_Release_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean;
+     (Object : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
+      return Boolean;
    --  Handler for the "button_release_event" signal
 
    function Key_Press_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Object : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Handler for the "key_press_event" signal
 
    procedure Selection_Received_Handler
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues);
    --  Handler for the "selection_received" signal
 
    function Delete_Event_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Object : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Handler for the "delete_event" signal
 
    procedure Replace_Cursor (Console : Interactive_Console);
@@ -216,14 +222,11 @@ package body Interactive_Consoles is
    --  Called when the console is destroyed
 
    procedure Insert_And_Execute
-     (Object : access Gtk_Widget_Record'Class;
-      Text   : String);
+     (Object : access Gtk_Widget_Record'Class; Text : String);
    --  Interpret "Text", an ASCII.LF separated list of commands that are
    --  sequentially displayed, executed and stored in the console's history
 
-   procedure Execute_Command
-     (Console : Interactive_Console;
-      Command : String);
+   procedure Execute_Command (Console : Interactive_Console; Command : String);
    --  Execute Command, store it in the history, and display its result
    --  in the console
 
@@ -246,18 +249,14 @@ package body Interactive_Consoles is
      (Console : not null access Interactive_Console_Record'Class)
    is
       Reserved_Tags : constant array (Reserved_Tag_Kinds) of Gtk_Text_Tag :=
-        (Uneditable_Tag        =>
-            Gtk_Text_Tag_New,
+        (Uneditable_Tag        => Gtk_Text_Tag_New,
          Prompt_Tag            =>
            Get_Tag (Language_Styles (Language.Comment_Text)),
          External_Messages_Tag =>
            Get_Tag (Language_Styles (Language.Aspect_Comment_Text)),
-         Error_Messages_Tag    =>
-           Get_Tag (Error_Msg_Style),
-         Hyper_Links_Tag       =>
-           Get_Tag (Hyper_Links_Default_Style),
-         Search_Tag            =>
-           Get_Tag (Search_Results_Style));
+         Error_Messages_Tag    => Get_Tag (Error_Msg_Style),
+         Hyper_Links_Tag       => Get_Tag (Hyper_Links_Default_Style),
+         Search_Tag            => Get_Tag (Search_Results_Style));
       --  Use existing default styles that are linked to the user's color
       --  preferences. This ensures that changes made regarding color
       --  preferences will be applied to the console too.
@@ -290,10 +289,8 @@ package body Interactive_Consoles is
 
    function Get_Highlighting_Tag
      (Console : not null access Interactive_Console_Record'Class;
-      Mode    : GPS.Kernel.Message_Type)
-      return Gtk_Text_Tag
-   is
-     (case Mode is
+      Mode    : GPS.Kernel.Message_Type) return Gtk_Text_Tag
+   is (case Mode is
          when GPS.Kernel.Error   => Console.Tags (Error_Messages_Tag),
          when GPS.Kernel.Verbose => Console.Tags (External_Messages_Tag),
          when others             => null);
@@ -311,14 +308,14 @@ package body Interactive_Consoles is
    --  Same as Insert_UTF8, but the tag to use for highlighting is specified
 
    procedure Prepare_For_Output
-     (Console        : access Interactive_Console_Record'Class;
-      Text_Is_Input  : Boolean := False;
-      Internal       : out Boolean;
-      Last_Iter      : out Gtk_Text_Iter);
-   procedure Terminate_Output
      (Console       : access Interactive_Console_Record'Class;
-      Internal      : Boolean;
-      Show_Prompt   : Boolean);
+      Text_Is_Input : Boolean := False;
+      Internal      : out Boolean;
+      Last_Iter     : out Gtk_Text_Iter);
+   procedure Terminate_Output
+     (Console     : access Interactive_Console_Record'Class;
+      Internal    : Boolean;
+      Show_Prompt : Boolean);
    --  Prepare or terminate text insertion in the console. This properly takes
    --  care of the prompt, making the text read-only,... Any highlighting of
    --  the text must be done separately.
@@ -345,8 +342,8 @@ package body Interactive_Consoles is
    -- Ref --
    ---------
 
-   overriding procedure Ref
-     (Console : access Interactive_Virtual_Console_Record) is
+   overriding
+   procedure Ref (Console : access Interactive_Virtual_Console_Record) is
    begin
       Ref (Console.Console);
    end Ref;
@@ -355,8 +352,8 @@ package body Interactive_Consoles is
    -- Unref --
    -----------
 
-   overriding procedure Unref
-     (Console : access Interactive_Virtual_Console_Record) is
+   overriding
+   procedure Unref (Console : access Interactive_Virtual_Console_Record) is
    begin
       Unref (Console.Console);
    end Unref;
@@ -365,8 +362,8 @@ package body Interactive_Consoles is
    -- Clear --
    -----------
 
-   overriding procedure Clear
-     (Console : access Interactive_Virtual_Console_Record) is
+   overriding
+   procedure Clear (Console : access Interactive_Virtual_Console_Record) is
    begin
       Clear (Console.Console);
    end Clear;
@@ -375,14 +372,16 @@ package body Interactive_Consoles is
    -- Insert_Text --
    -----------------
 
-   overriding procedure Insert_Text
+   overriding
+   procedure Insert_Text
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       if Console.Console /= null then
-         Insert (Console.Console,
-                 Text        => Txt,
-                 Add_LF      => False,
-                 Show_Prompt => False);
+         Insert
+           (Console.Console,
+            Text        => Txt,
+            Add_LF      => False,
+            Show_Prompt => False);
       end if;
 
       if Console.Child = null then
@@ -397,7 +396,8 @@ package body Interactive_Consoles is
    -- Insert_Log --
    ----------------
 
-   overriding procedure Insert_Log
+   overriding
+   procedure Insert_Log
      (Console : access Interactive_Virtual_Console_Record; Txt : String)
    is
       pragma Unreferenced (Console);
@@ -409,7 +409,8 @@ package body Interactive_Consoles is
    -- Insert_Prompt --
    -------------------
 
-   overriding procedure Insert_Prompt
+   overriding
+   procedure Insert_Prompt
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       if not Get_Editable (Console.Console.View)
@@ -433,13 +434,16 @@ package body Interactive_Consoles is
    -- Insert_Error --
    ------------------
 
-   overriding procedure Insert_Error
+   overriding
+   procedure Insert_Error
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
-      Insert (Console.Console, Txt,
-              Add_LF      => False,
-              Mode   => GPS.Kernel.Error,
-              Show_Prompt => False);
+      Insert
+        (Console.Console,
+         Txt,
+         Add_LF      => False,
+         Mode        => GPS.Kernel.Error,
+         Show_Prompt => False);
 
       if Console.Child = null then
          Console.Child := Find_MDI_Child_From_Widget (Console.Console.View);
@@ -453,7 +457,8 @@ package body Interactive_Consoles is
    -- Set_As_Default_Console --
    ----------------------------
 
-   overriding procedure Set_As_Default_Console
+   overriding
+   procedure Set_As_Default_Console
      (Console : access Interactive_Virtual_Console_Record;
       Script  : GNATCOLL.Scripts.Scripting_Language) is
    begin
@@ -464,7 +469,8 @@ package body Interactive_Consoles is
    -- Set_Data_Primitive --
    ------------------------
 
-   overriding procedure Set_Data_Primitive
+   overriding
+   procedure Set_Data_Primitive
      (Instance : Class_Instance;
       Console  : access Interactive_Virtual_Console_Record) is
    begin
@@ -475,20 +481,23 @@ package body Interactive_Consoles is
    -- Get_Instance --
    ------------------
 
-   overriding function Get_Instance
+   overriding
+   function Get_Instance
      (Script  : access Scripting_Language_Record'Class;
       Console : access Interactive_Virtual_Console_Record)
       return Class_Instance is
    begin
-      return GNATCOLL.Scripts.Gtkada.Get_Instance
-        (Script, GObject (Console.Console));
+      return
+        GNATCOLL.Scripts.Gtkada.Get_Instance
+          (Script, GObject (Console.Console));
    end Get_Instance;
 
    ----------
    -- Read --
    ----------
 
-   overriding function Read
+   overriding
+   function Read
      (Console    : access Interactive_Virtual_Console_Record;
       Size       : Integer;
       Whole_Line : Boolean) return String
@@ -505,13 +514,14 @@ package body Interactive_Consoles is
    function Get_Or_Create_Instance
      (Script  : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
       Console : access Interactive_Console_Record'Class)
-         return GNATCOLL.Scripts.Class_Instance
+      return GNATCOLL.Scripts.Class_Instance
    is
       Inst : Class_Instance := Get_Instance (Script, Console);
    begin
       if Inst = No_Class_Instance then
-         Inst := New_Instance
-           (Script, New_Class (Get_Kernel (Script), Console_Class_Name));
+         Inst :=
+           New_Instance
+             (Script, New_Class (Get_Kernel (Script), Console_Class_Name));
          Set_Data (Inst, Console.Get_Or_Create_Virtual_Console);
       end if;
 
@@ -524,8 +534,7 @@ package body Interactive_Consoles is
 
    function Get_Or_Create_Virtual_Console
      (Console : access Interactive_Console_Record'Class)
-      return GNATCOLL.Scripts.Virtual_Console
-   is
+      return GNATCOLL.Scripts.Virtual_Console is
    begin
       if Console = null then
          return null;
@@ -564,8 +573,7 @@ package body Interactive_Consoles is
    ---------------------------
 
    procedure Enable_Prompt_Display
-     (Console : access Interactive_Console_Record;
-      Enable  : Boolean)
+     (Console : access Interactive_Console_Record; Enable : Boolean)
    is
       Last_Iter : Gtk_Text_Iter;
    begin
@@ -606,13 +614,14 @@ package body Interactive_Consoles is
    is
       use type GPS.Kernel.Message_Type;
 
-      UTF8 : String := Iconv
-        (Input           => Text,
-         To_Code         => GNATCOLL.Iconv.UTF8,
-         From_Code       => Locale,
-         Ignore_Errors   => True,
-         Transliteration => True,
-         Ignore          => True);
+      UTF8 : String :=
+        Iconv
+          (Input           => Text,
+           To_Code         => GNATCOLL.Iconv.UTF8,
+           From_Code       => Locale,
+           Ignore_Errors   => True,
+           Transliteration => True,
+           Ignore          => True);
 
       New_Lines : Natural;
    begin
@@ -620,7 +629,8 @@ package body Interactive_Consoles is
       Limit_Line_Count (Console.Buffer, New_Lines);
 
       Insert_UTF8_With_Tag
-        (Console, UTF8,
+        (Console,
+         UTF8,
          Add_LF         => Add_LF,
          Highlight      => Mode /= GPS.Kernel.Info,
          Highlight_Tag  => Get_Highlighting_Tag (Console, Mode),
@@ -676,10 +686,10 @@ package body Interactive_Consoles is
    ------------------------
 
    procedure Prepare_For_Output
-     (Console   : access Interactive_Console_Record'Class;
-      Text_Is_Input  : Boolean := False;
-      Internal  : out Boolean;
-      Last_Iter : out Gtk_Text_Iter)
+     (Console       : access Interactive_Console_Record'Class;
+      Text_Is_Input : Boolean := False;
+      Internal      : out Boolean;
+      Last_Iter     : out Gtk_Text_Iter)
    is
       Prompt_Iter : Gtk_Text_Iter;
    begin
@@ -697,8 +707,8 @@ package body Interactive_Consoles is
          if not Text_Is_Input and then Console.User_Input = null then
             Get_Iter_At_Mark
               (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-            Console.User_Input := new String'
-              (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
+            Console.User_Input :=
+              new String'(Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
             Delete (Console.Buffer, Prompt_Iter, Last_Iter);
          end if;
 
@@ -728,7 +738,9 @@ package body Interactive_Consoles is
          Get_End_Iter (Console.Buffer, Last_Iter);
          Apply_Tag
            (Console.Buffer,
-            Console.Tags (Uneditable_Tag), Prompt_Iter, Last_Iter);
+            Console.Tags (Uneditable_Tag),
+            Prompt_Iter,
+            Last_Iter);
 
          --  Move the prompt mark at the end of the output, so that user input
          --  is only read from that point on.
@@ -767,13 +779,11 @@ package body Interactive_Consoles is
       Show_Prompt    : Boolean := True;
       Text_Is_Input  : Boolean := False)
    is
-      Last_Iter     : Gtk_Text_Iter;
-      Internal      : Boolean;
+      Last_Iter                : Gtk_Text_Iter;
+      Internal                 : Boolean;
       Text_Inserted_In_Console : Boolean := False;
    begin
-      if Console.Kernel /= null
-        and then Console.Kernel.Is_In_Destruction
-      then
+      if Console.Kernel /= null and then Console.Kernel.Is_In_Destruction then
          --  Trying to write in a buffer while the kernel is being destroyed
          --  will trigger a deadlock in the g_mutex
          Trace (Me, UTF8);
@@ -785,8 +795,7 @@ package body Interactive_Consoles is
       if Add_LF then
          if Highlight then
             Insert_With_Tags
-              (Console.Buffer, Last_Iter, UTF8 & ASCII.LF,
-               Highlight_Tag);
+              (Console.Buffer, Last_Iter, UTF8 & ASCII.LF, Highlight_Tag);
          else
             Insert (Console.Buffer, Last_Iter, UTF8 & ASCII.LF);
          end if;
@@ -803,8 +812,7 @@ package body Interactive_Consoles is
 
          if Host = Windows
            and then UTF8'Length > 17
-           and then UTF8
-             (UTF8'First .. UTF8'First + 16) = "sys:1: GtkWarning"
+           and then UTF8 (UTF8'First .. UTF8'First + 16) = "sys:1: GtkWarning"
          then
             Trace (Me, UTF8);
          else
@@ -829,7 +837,8 @@ package body Interactive_Consoles is
          if Add_To_History and then Console.History /= null then
             if UTF8 (UTF8'Last) = ASCII.LF then
                Histories.Add_To_History
-                 (Console.History.all, History_Key (Console.Key.all),
+                 (Console.History.all,
+                  History_Key (Console.Key.all),
                   VSS.Strings.Conversions.To_Virtual_String
                     (UTF8 (UTF8'First .. UTF8'Last - 1)));
             else
@@ -859,8 +868,8 @@ package body Interactive_Consoles is
    ------------------------------
 
    function Search_Key_Press_Handler
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Event  : Gdk_Event_Key) return Boolean
+     (Widget : access Glib.Object.GObject_Record'Class; Event : Gdk_Event_Key)
+      return Boolean
    is
       Console : constant Interactive_Console := Interactive_Console (Widget);
       Key     : constant Gdk_Key_Type := Event.Keyval;
@@ -880,8 +889,8 @@ package body Interactive_Consoles is
    --------------------------
 
    function Button_Press_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Object : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       pragma Unreferenced (Event);
       Console : constant Interactive_Console := Interactive_Console (Object);
@@ -901,15 +910,16 @@ package body Interactive_Consoles is
    ----------------------------
 
    function Button_Release_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean
+     (Object : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
+      return Boolean
    is
       pragma Unreferenced (Params);
 
-      Console : constant Interactive_Console := Interactive_Console (Object);
+      Console                 : constant Interactive_Console :=
+        Interactive_Console (Object);
       Cursor_Iter, Start_Iter : Gtk_Text_Iter;
-      Link    : Hyper_Links := Console.Links;
-      Success : Boolean;
+      Link                    : Hyper_Links := Console.Links;
+      Success                 : Boolean;
    begin
       Console.Button_Press := False;
 
@@ -986,8 +996,7 @@ package body Interactive_Consoles is
 
       if Count + New_Lines > Limit then
          B.Get_Start_Iter (Start);
-         B.Get_Iter_At_Line
-           (Iter, Gint (Limit - Count - New_Lines + 1));
+         B.Get_Iter_At_Line (Iter, Gint (Limit - Count - New_Lines + 1));
          B.Delete (Start, Iter);
       end if;
    end Limit_Line_Count;
@@ -1008,14 +1017,16 @@ package body Interactive_Consoles is
 
       if Console.On_Key /= null then
          while Index <= Str'Last loop
-            Next  := UTF8_Next_Char (Str, Index);
+            Next := UTF8_Next_Char (Str, Index);
 
-            Stop := Stop
-              or Console.On_Key
-                (Console,
-                 Modifier  => 0,
-                 Uni       => UTF8_Get_Char (Str (Index .. Next - 1)),
-                 User_Data => Console.Key_User_Data);
+            Stop :=
+              Stop
+              or
+                Console.On_Key
+                  (Console,
+                   Modifier  => 0,
+                   Uni       => UTF8_Get_Char (Str (Index .. Next - 1)),
+                   User_Data => Console.Key_User_Data);
 
             Index := Next;
          end loop;
@@ -1031,18 +1042,17 @@ package body Interactive_Consoles is
    --------------------------------
 
    procedure Selection_Received_Handler
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
    is
       Console : constant Interactive_Console := Interactive_Console (Widget);
-      Args : constant Gtk_Args := Gtk_Args (Params);
-      Data : constant Gtk_Selection_Data := From_Object
-        (Get_Address (Nth (Args, 1)));
-      Tmp  : Boolean := False;
+      Args    : constant Gtk_Args := Gtk_Args (Params);
+      Data    : constant Gtk_Selection_Data :=
+        From_Object (Get_Address (Nth (Args, 1)));
+      Tmp     : Boolean := False;
    begin
       if Get_Length (Data) > 0 then
          declare
-            Str   : constant String := Strip_CR (Get_Data_As_String (Data));
+            Str : constant String := Strip_CR (Get_Data_As_String (Data));
          begin
             --  We execute the callback for each input character. If at
             --  least one of them returns True, we will not process Str
@@ -1059,7 +1069,8 @@ package body Interactive_Consoles is
       end if;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Selection_Received_Handler;
 
    --------------------------
@@ -1067,15 +1078,13 @@ package body Interactive_Consoles is
    --------------------------
 
    function Delete_Event_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Object : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       pragma Unreferenced (Event);
       Console : constant Interactive_Console := Interactive_Console (Object);
    begin
-      if Console.Idle_Registered
-        and then Console.Idle_Id /= 0
-      then
+      if Console.Idle_Registered and then Console.Idle_Id /= 0 then
          Remove (Console.Idle_Id);
          Console.Idle_Id := 0;
       end if;
@@ -1112,11 +1121,13 @@ package body Interactive_Consoles is
    begin
       return Result : String_List_Utils.String_List.Vector do
          if Console.Virtual /= null
-           and then Interactive_Virtual_Console
-             (Console.Virtual).Script /= null
+           and then
+             Interactive_Virtual_Console (Console.Virtual).Script /= null
          then
-            Complete (Interactive_Virtual_Console (Console.Virtual).Script,
-                      Input, Completions);
+            Complete
+              (Interactive_Virtual_Console (Console.Virtual).Script,
+               Input,
+               Completions);
 
             for Item of Completions loop
                Result.Append (Item);
@@ -1138,8 +1149,8 @@ package body Interactive_Consoles is
       if Console.Virtual /= null
         and then Interactive_Virtual_Console (Console.Virtual).Script /= null
       then
-         return Interrupt
-           (Interactive_Virtual_Console (Console.Virtual).Script);
+         return
+           Interrupt (Interactive_Virtual_Console (Console.Virtual).Script);
       end if;
       return False;
    end Default_Interrupt_Handler;
@@ -1162,11 +1173,13 @@ package body Interactive_Consoles is
             Errors : aliased Boolean;
          begin
             Execute_Command
-              (Script  => Interactive_Virtual_Console (Console.Virtual).Script,
-               CL           => Parse_String
-                 (Input,
-                  Command_Line_Treatment
-                    (Interactive_Virtual_Console (Console.Virtual).Script)),
+              (Script       =>
+                 Interactive_Virtual_Console (Console.Virtual).Script,
+               CL           =>
+                 Parse_String
+                   (Input,
+                    Command_Line_Treatment
+                      (Interactive_Virtual_Console (Console.Virtual).Script)),
                Show_Command => False,
                Hide_Output  => False,
                Errors       => Errors);
@@ -1210,30 +1223,31 @@ package body Interactive_Consoles is
    -----------------------
 
    function Key_Press_Handler
-     (Object : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Object : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       Console     : constant Interactive_Console :=
-                      Interactive_Console (Object);
-      Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
+        Interactive_Console (Object);
+      Key         : constant Gdk_Key_Type := Get_Key_Val (Event);
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
       Ignore      : Boolean;
 
    begin
       if Console.On_Key /= null then
-         if Console.On_Key (Console   => Console,
-                            Modifier  => Get_State (Event),
-                            Key       => Key,
-                            Uni       => To_Unicode (Key),
-                            User_Data => Console.Key_User_Data)
+         if Console.On_Key
+              (Console   => Console,
+               Modifier  => Get_State (Event),
+               Key       => Key,
+               Uni       => To_Unicode (Key),
+               User_Data => Console.Key_User_Data)
          then
             return True;
          end if;
       end if;
 
       case Key is
-         when GDK_Up | GDK_Down =>
+         when GDK_Up | GDK_Down         =>
             if Console.Input_Blocked or else Console.Waiting_For_Input then
                return True;
             end if;
@@ -1248,15 +1262,13 @@ package body Interactive_Consoles is
                   if Key = GDK_Up
                     and then
                       Console.Current_Position + Hist.First_Index
-                        < Hist.Last_Index
+                      < Hist.Last_Index
                   then
                      Console.Current_Position := Console.Current_Position + 1;
 
-                  elsif Key = GDK_Down
-                    and then Console.Current_Position /= -1
+                  elsif Key = GDK_Down and then Console.Current_Position /= -1
                   then
-                     Console.Current_Position :=
-                       Console.Current_Position - 1;
+                     Console.Current_Position := Console.Current_Position - 1;
                   end if;
 
                   Get_Iter_At_Mark
@@ -1265,7 +1277,8 @@ package body Interactive_Consoles is
                   Delete (Console.Buffer, Prompt_Iter, Last_Iter);
                   if Console.Current_Position /= -1 then
                      Insert
-                       (Console.Buffer, Prompt_Iter,
+                       (Console.Buffer,
+                        Prompt_Iter,
                         VSS.Strings.Conversions.To_UTF_8_String
                           (Hist
                              (Hist.First_Index + Console.Current_Position)));
@@ -1273,18 +1286,19 @@ package body Interactive_Consoles is
 
                   Get_End_Iter (Console.Buffer, Prompt_Iter);
                   Place_Cursor (Console.Buffer, Prompt_Iter);
-                  Ignore := Scroll_To_Iter
-                    (Console.View,
-                     Iter          => Prompt_Iter,
-                     Within_Margin => 0.0,
-                     Use_Align     => False,
-                     Xalign        => 0.0,
-                     Yalign        => 0.0);
+                  Ignore :=
+                    Scroll_To_Iter
+                      (Console.View,
+                       Iter          => Prompt_Iter,
+                       Within_Margin => 0.0,
+                       Use_Align     => False,
+                       Xalign        => 0.0,
+                       Yalign        => 0.0);
                end if;
             end;
             return True;
 
-         when GDK_Tab | GDK_KP_Tab =>
+         when GDK_Tab | GDK_KP_Tab      =>
             if Console.Completion = null or else Console.Waiting_For_Input then
                return False;
             else
@@ -1336,7 +1350,7 @@ package body Interactive_Consoles is
 
             declare
                Command : constant String :=
-                           Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
+                 Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
                H       : VSS.String_Vectors.Virtual_String_Vector;
             begin
                if Command = ""
@@ -1350,12 +1364,14 @@ package body Interactive_Consoles is
                      return True;
                   end if;
 
-                  H := Get_History
-                    (Console.History.all, History_Key (Console.Key.all));
+                  H :=
+                    Get_History
+                      (Console.History.all, History_Key (Console.Key.all));
 
                   if not H.Is_Empty then
                      Insert
-                       (Console.Buffer, Last_Iter,
+                       (Console.Buffer,
+                        Last_Iter,
                         VSS.Strings.Conversions.To_UTF_8_String
                           (H (H.First_Index + Console.Current_Position + 1)));
                      Execute_Command
@@ -1378,7 +1394,7 @@ package body Interactive_Consoles is
 
             return True;
 
-         when others =>
+         when others                    =>
             return False;
       end case;
 
@@ -1412,10 +1428,14 @@ package body Interactive_Consoles is
 
          Apply_Tag
            (Console.Buffer,
-            Console.Tags (Uneditable_Tag), First_Iter, Prompt_Iter);
+            Console.Tags (Uneditable_Tag),
+            First_Iter,
+            Prompt_Iter);
          Apply_Tag
            (Console.Buffer,
-            Console.Tags (Prompt_Tag), First_Iter, Prompt_Iter);
+            Console.Tags (Prompt_Tag),
+            First_Iter,
+            Prompt_Iter);
       else
          Get_End_Iter (Console.Buffer, Prompt_Iter);
       end if;
@@ -1430,8 +1450,8 @@ package body Interactive_Consoles is
    -- Display_Prompt --
    --------------------
 
-   procedure Display_Prompt
-     (Console : access Interactive_Console_Record'Class) is
+   procedure Display_Prompt (Console : access Interactive_Console_Record'Class)
+   is
    begin
       if Console.Prompt /= null then
          Display_Text_As_Prompt (Console, Console.Prompt.all);
@@ -1443,7 +1463,7 @@ package body Interactive_Consoles is
    ---------------------
 
    procedure Paste_Clipboard
-     (Console  : not null access Interactive_Console_Record'Class) is
+     (Console : not null access Interactive_Console_Record'Class) is
    begin
       Get_Clipboard (Console.Kernel).Paste_Clipboard;
    end Paste_Clipboard;
@@ -1497,13 +1517,12 @@ package body Interactive_Consoles is
    ----------------------
 
    procedure Mark_Set_Handler
-     (Console : access Gtk_Widget_Record'Class;
-      Params  : Glib.Values.GValues)
+     (Console : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
    is
       C         : constant Interactive_Console :=
-                    Interactive_Console (Console);
+        Interactive_Console (Console);
       Mark      : constant Gtk_Text_Mark :=
-                    Get_Text_Mark (Glib.Values.Nth (Params, 2));
+        Get_Text_Mark (Glib.Values.Nth (Params, 2));
       Mark_Name : constant String := Get_Name (Mark);
 
    begin
@@ -1525,9 +1544,7 @@ package body Interactive_Consoles is
          --  If the mark corresponds to a cursor position, set the stored
          --  Insert_Mark accordingly.
 
-         if Mark_Name = "insert"
-           or else Mark_Name = "gtk_drag_target"
-         then
+         if Mark_Name = "insert" or else Mark_Name = "gtk_drag_target" then
             C.Insert_Mark := Mark;
          end if;
       end if;
@@ -1539,7 +1556,8 @@ package body Interactive_Consoles is
       C.Internal_Insert := False;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Mark_Set_Handler;
 
    ----------------
@@ -1549,9 +1567,7 @@ package body Interactive_Consoles is
    procedure On_Destroy (Console : access Gtk_Widget_Record'Class) is
       C : constant Interactive_Console := Interactive_Console (Console);
    begin
-      if C.Idle_Registered
-        and then C.Idle_Id /= 0
-      then
+      if C.Idle_Registered and then C.Idle_Id /= 0 then
          Remove (C.Idle_Id);
          C.Idle_Id := 0;
       end if;
@@ -1603,10 +1619,19 @@ package body Interactive_Consoles is
       Toolbar_Name        : String := "") is
    begin
       Console := new Interactive_Console_Record;
-      Initialize (Console, Kernel, Prompt, Handler, User_Data,
-                  History_List, Key, Wrap_Mode,
-                  Empty_Equals_Repeat, ANSI_Support, Manage_Prompt,
-                  Toolbar_Name => Toolbar_Name);
+      Initialize
+        (Console,
+         Kernel,
+         Prompt,
+         Handler,
+         User_Data,
+         History_List,
+         Key,
+         Wrap_Mode,
+         Empty_Equals_Repeat,
+         ANSI_Support,
+         Manage_Prompt,
+         Toolbar_Name => Toolbar_Name);
    end Gtk_New;
 
    ----------------
@@ -1706,38 +1731,44 @@ package body Interactive_Consoles is
       Widget_Callback.Connect (Console, Signal_Destroy, On_Destroy'Access);
 
       Widget_Callback.Object_Connect
-        (Console.Buffer, Signal_Mark_Set,
+        (Console.Buffer,
+         Signal_Mark_Set,
          Cb          => Mark_Set_Handler'Access,
          Slot_Object => Console);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Console.View, Signal_Button_Release_Event,
+        (Console.View,
+         Signal_Button_Release_Event,
          Button_Release_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Console.View, Signal_Button_Press_Event,
+        (Console.View,
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Button_Press_Handler'Access),
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Console.View, Signal_Selection_Received,
+        (Console.View,
+         Signal_Selection_Received,
          Selection_Received_Handler'Access,
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Console.View, Signal_Key_Press_Event,
+        (Console.View,
+         Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Key_Press_Handler'Access),
          Gtk_Widget (Console),
          After => False);
 
       Gtkada.Handlers.Return_Callback.Connect
-        (Console, Gtk.Widget.Signal_Delete_Event,
+        (Console,
+         Gtk.Widget.Signal_Delete_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Delete_Event_Handler'Access),
          After => False);
@@ -1771,8 +1802,8 @@ package body Interactive_Consoles is
       Begin_Iter, End_Iter : Gtk_Text_Iter;
    begin
       --  Remove any error style class, if any
-      Get_Style_Context
-        (Console.Get_Filter.Get_Focus_Widget).Remove_Class ("error");
+      Get_Style_Context (Console.Get_Filter.Get_Focus_Widget).Remove_Class
+        ("error");
 
       --  Get start and end iters
       Console.Buffer.Get_Start_Iter (Begin_Iter);
@@ -1786,37 +1817,33 @@ package body Interactive_Consoles is
          declare
             use type Basic_Types.UTF8_Code_Unit_Count;
 
-            Buffer : GNAT.Strings.String_Access := GUI_Utils.Get_Text
-              (Console.Buffer, Begin_Iter, End_Iter);
-            Ref    : constant Buffer_Position :=
-              At_Index (Buffer'First);
+            Buffer : GNAT.Strings.String_Access :=
+              GUI_Utils.Get_Text (Console.Buffer, Begin_Iter, End_Iter);
+            Ref    : constant Buffer_Position := At_Index (Buffer'First);
             Ignore : Boolean;
 
             use GNATCOLL.Xref;
          begin
             if Console.Search_Context = GPS.Search.No_Match then
-               Console.Search_Context := Pattern.Start
-                 (Buffer      => Buffer.all,
-                  Start_Index => Buffer'First,
-                  End_Index   => Buffer'Last,
-                  Ref         => Ref);
+               Console.Search_Context :=
+                 Pattern.Start
+                   (Buffer      => Buffer.all,
+                    Start_Index => Buffer'First,
+                    End_Index   => Buffer'Last,
+                    Ref         => Ref);
 
             elsif Filter_Changed then
-                  Console.Search_Context.Start.Index :=
-                    Console.Search_Context.Start.Index - 1;
-                  Console.Search_Context.Start.Column :=
-                    Console.Search_Context.Start.Column -
-                      1;
-                  Console.Search_Context.Start.Visible_Column :=
-                    Console.Search_Context.Start.Visible_Column -
-                      1;
+               Console.Search_Context.Start.Index :=
+                 Console.Search_Context.Start.Index - 1;
+               Console.Search_Context.Start.Column :=
+                 Console.Search_Context.Start.Column - 1;
+               Console.Search_Context.Start.Visible_Column :=
+                 Console.Search_Context.Start.Visible_Column - 1;
 
-                  Console.Search_Context.Finish :=
-                    Console.Search_Context.Start;
+               Console.Search_Context.Finish := Console.Search_Context.Start;
 
-                  Pattern.Next
-                    (Buffer  => Buffer.all,
-                     Context => Console.Search_Context);
+               Pattern.Next
+                 (Buffer => Buffer.all, Context => Console.Search_Context);
 
             else
                declare
@@ -1827,9 +1854,10 @@ package body Interactive_Consoles is
 
                   Continue_At : constant Natural :=
                     (if Is_Empty_Match (Console.Search_Context)
-                     then UTF8_Next_Char
-                            (Buffer.all,
-                             Byte_Index (Console.Search_Context.Start))
+                     then
+                       UTF8_Next_Char
+                         (Buffer.all,
+                          Byte_Index (Console.Search_Context.Start))
                      else Byte_Index (Console.Search_Context.Finish));
 
                begin
@@ -1840,11 +1868,12 @@ package body Interactive_Consoles is
                      Console.Search_Context := GPS.Search.No_Match;
 
                   else
-                     Console.Search_Context := Pattern.Start
-                       (Buffer      => Buffer.all,
-                        Start_Index => Continue_At,
-                        End_Index   => Buffer'Last,
-                        Ref         => Ref);
+                     Console.Search_Context :=
+                       Pattern.Start
+                         (Buffer      => Buffer.all,
+                          Start_Index => Continue_At,
+                          End_Index   => Buffer'Last,
+                          Ref         => Ref);
                   end if;
                end;
             end if;
@@ -1853,10 +1882,8 @@ package body Interactive_Consoles is
 
             if Console.Search_Context /= GPS.Search.No_Match then
                Console.Buffer.Get_Iter_At_Line_Offset
-                 (Iter        =>
-                    Begin_Iter,
-                  Line_Number =>
-                    Gint (Console.Search_Context.Start.Line - 1),
+                 (Iter        => Begin_Iter,
+                  Line_Number => Gint (Console.Search_Context.Start.Line - 1),
                   Char_Offset =>
                     Gint (Console.Search_Context.Start.Column - 1));
 
@@ -1868,8 +1895,7 @@ package body Interactive_Consoles is
 
                else
                   Console.Buffer.Get_Iter_At_Line_Offset
-                    (Iter        =>
-                       End_Iter,
+                    (Iter        => End_Iter,
                      Line_Number =>
                        Gint (Console.Search_Context.Finish.Line - 1),
                      Char_Offset =>
@@ -1879,17 +1905,17 @@ package body Interactive_Consoles is
                Console.Buffer.Apply_Tag
                  (Console.Tags (Search_Tag), Begin_Iter, End_Iter);
 
-               Ignore := Scroll_To_Iter
-                 (Console.View,
-                  Iter          => Begin_Iter,
-                  Within_Margin => 0.0,
-                  Use_Align     => False,
-                  Xalign        => 0.0,
-                  Yalign        => 0.0);
+               Ignore :=
+                 Scroll_To_Iter
+                   (Console.View,
+                    Iter          => Begin_Iter,
+                    Within_Margin => 0.0,
+                    Use_Align     => False,
+                    Xalign        => 0.0,
+                    Yalign        => 0.0);
             else
-               Get_Style_Context
-                 (Console.Get_Filter.Get_Focus_Widget).Add_Class
-                 ("error");
+               Get_Style_Context (Console.Get_Filter.Get_Focus_Widget)
+                 .Add_Class ("error");
             end if;
          end;
       end if;
@@ -1899,7 +1925,8 @@ package body Interactive_Consoles is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Interactive_Console_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access) is
    begin
@@ -1967,7 +1994,7 @@ package body Interactive_Consoles is
       Handler   : GUI_Utils.Completion_Handler;
       User_Data : System.Address) is
    begin
-      Console.Completion           := Handler;
+      Console.Completion := Handler;
       Console.Completion_User_Data := User_Data;
    end Set_Completion_Handler;
 
@@ -1980,7 +2007,7 @@ package body Interactive_Consoles is
       Handler   : Key_Handler;
       User_Data : System.Address := System.Null_Address) is
    begin
-      Console.On_Key        := Handler;
+      Console.On_Key := Handler;
       Console.Key_User_Data := User_Data;
    end Set_Key_Handler;
 
@@ -2015,8 +2042,7 @@ package body Interactive_Consoles is
    ------------------------
 
    procedure Insert_And_Execute
-     (Object : access Gtk_Widget_Record'Class;
-      Text   : String)
+     (Object : access Gtk_Widget_Record'Class; Text : String)
    is
       procedure Get_Next_Command
         (Text     : String;
@@ -2056,8 +2082,8 @@ package body Interactive_Consoles is
 
          --  Do not trim blank spaces at the beginning of the line, since
          --  they might be relevant in some contexts (for instance python)
-         Command := new String'
-           (Trim (Text (Start_At .. End_At), Ada.Strings.Right));
+         Command :=
+           new String'(Trim (Text (Start_At .. End_At), Ada.Strings.Right));
 
          Start_At := End_At + 1;
       end Get_Next_Command;
@@ -2090,8 +2116,7 @@ package body Interactive_Consoles is
               and then Command (Command'Last) = ASCII.LF
             then
                Execute_Command
-                 (Console,
-                  Command (Command'First .. Command'Last - 1));
+                 (Console, Command (Command'First .. Command'Last - 1));
             end if;
          end if;
 
@@ -2099,7 +2124,8 @@ package body Interactive_Consoles is
       end loop;
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Insert_And_Execute;
 
    ------------------------
@@ -2117,9 +2143,7 @@ package body Interactive_Consoles is
    -- Execute_Command --
    ---------------------
 
-   procedure Execute_Command
-     (Console : Interactive_Console;
-      Command : String)
+   procedure Execute_Command (Console : Interactive_Console; Command : String)
    is
       Output      : GNAT.Strings.String_Access;
       Prompt_Iter : Gtk_Text_Iter;
@@ -2132,8 +2156,8 @@ package body Interactive_Consoles is
       Weak_Ref (Console, On_Console_Destroy'Unrestricted_Access);
 
       --  This call might close the console
-      Output := new String'
-        (Console.Handler (Console, Command, Console.User_Data));
+      Output :=
+        new String'(Console.Handler (Console, Command, Console.User_Data));
 
       if Console.Destroyed then
          return;
@@ -2159,7 +2183,9 @@ package body Interactive_Consoles is
 
       Apply_Tag
         (Console.Buffer,
-         Console.Tags (Uneditable_Tag), Prompt_Iter, Last_Iter);
+         Console.Tags (Uneditable_Tag),
+         Prompt_Iter,
+         Last_Iter);
 
       if Console.Handler /= Default_Command_Handler'Access then
          Display_Prompt (Console);
@@ -2188,8 +2214,7 @@ package body Interactive_Consoles is
    --------------------------
 
    procedure Set_Automatic_Scroll
-     (Console : access Interactive_Console_Record;
-      Active  : Boolean) is
+     (Console : access Interactive_Console_Record; Active : Boolean) is
    begin
       Console.Automatic_Scroll := Active;
    end Set_Automatic_Scroll;
@@ -2226,7 +2251,7 @@ package body Interactive_Consoles is
    ---------------
 
    function From_View
-     (View    : access Gtk.Text_View.Gtk_Text_View_Record'Class)
+     (View : access Gtk.Text_View.Gtk_Text_View_Record'Class)
       return Interactive_Console
    is
       P : Gtk_Widget;
@@ -2236,8 +2261,7 @@ package body Interactive_Consoles is
       --  of interest
 
       P := Get_Parent (View);
-      while P /= null
-        and then P.all not in Interactive_Console_Record'Class
+      while P /= null and then P.all not in Interactive_Console_Record'Class
       loop
          P := Get_Parent (P);
       end loop;
@@ -2250,8 +2274,8 @@ package body Interactive_Consoles is
    ----------
 
    function Read
-     (Console    : access Interactive_Console_Record;
-      Whole_Line : Boolean) return String
+     (Console : access Interactive_Console_Record; Whole_Line : Boolean)
+      return String
    is
       Last_Iter, Prompt_Iter : Gtk_Text_Iter;
       End_Mark               : Gtk_Text_Mark;
@@ -2295,25 +2319,29 @@ package body Interactive_Consoles is
       --  Create a new hyperlink tag if non-empty values have been provided for
       --  at least one of the parameters. Otherwise, use the defaut hyperlink
       --  tag.
-      if Foreground /= ""
-        or else Background /= ""
-        or else Font_Variant /= ""
+      if Foreground /= "" or else Background /= "" or else Font_Variant /= ""
       then
          Tag := new Hyper_Link_Tag_Record;
          Gtk.Text_Tag.Initialize (Tag);
          Add (Get_Tag_Table (Console.Buffer), Tag);
 
          if Font_Variant in "bold" | "bold_italic" then
-            Set_Property (Tag, Gtk.Text_Tag.Weight_Property,
-                          Pango.Enums.Pango_Weight_Bold);
+            Set_Property
+              (Tag,
+               Gtk.Text_Tag.Weight_Property,
+               Pango.Enums.Pango_Weight_Bold);
          elsif Font_Variant = "normal" then
-            Set_Property (Tag, Gtk.Text_Tag.Weight_Property,
-                          Pango.Enums.Pango_Weight_Normal);
+            Set_Property
+              (Tag,
+               Gtk.Text_Tag.Weight_Property,
+               Pango.Enums.Pango_Weight_Normal);
          end if;
 
          if Font_Variant in "italic" | "bold_italic" then
-            Set_Property (Tag, Gtk.Text_Tag.Style_Property,
-                          Pango.Enums.Pango_Style_Italic);
+            Set_Property
+              (Tag,
+               Gtk.Text_Tag.Style_Property,
+               Pango.Enums.Pango_Style_Italic);
          end if;
 
          if Foreground /= "" then
@@ -2332,11 +2360,12 @@ package body Interactive_Consoles is
          Tag := Console.Tags (Hyper_Links_Tag);
       end if;
 
-      Console.Links := new Hyper_Link_Record'
-        (Pattern  => new Pattern_Matcher'(Regexp),
-         Callback => Hyper_Link_Callback (Callback),
-         Tag      => Tag,
-         Next     => Console.Links);
+      Console.Links :=
+        new Hyper_Link_Record'
+          (Pattern  => new Pattern_Matcher'(Regexp),
+           Callback => Hyper_Link_Callback (Callback),
+           Tag      => Tag,
+           Next     => Console.Links);
       Console.Links_Count := Console.Links_Count + 1;
    end Create_Hyper_Link;
 
@@ -2346,8 +2375,7 @@ package body Interactive_Consoles is
 
    procedure Get_Tag
      (Tag     : not null access Gtk_Text_Tag_Record'Class;
-      Console : Interactive_Console)
-   is
+      Console : Interactive_Console) is
    begin
       if Tag.all in Hyper_Link_Tag_Record'Class then
          Console.Tag_Index := Console.Tag_Index + 1;
@@ -2359,17 +2387,18 @@ package body Interactive_Consoles is
    -- Delete_Hyper_Links --
    ------------------------
 
-   procedure Delete_Hyper_Links
-     (Console : access Interactive_Console_Record)
+   procedure Delete_Hyper_Links (Console : access Interactive_Console_Record)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Pattern_Matcher, Pattern_Matcher_Access);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Hyper_Link_Callback_Record'Class, Hyper_Link_Callback);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Hyper_Link_Record, Hyper_Links);
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Tag_Array, Tag_Array_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Pattern_Matcher, Pattern_Matcher_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Hyper_Link_Callback_Record'Class,
+           Hyper_Link_Callback);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Hyper_Link_Record, Hyper_Links);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Tag_Array, Tag_Array_Access);
 
       L, L2 : Hyper_Links;
 
@@ -2408,9 +2437,9 @@ package body Interactive_Consoles is
    -----------------------
 
    procedure Insert_With_Links
-     (Console   : access Interactive_Console_Record;
-      Text      : String;
-      Add_LF    : Boolean := True)
+     (Console : access Interactive_Console_Record;
+      Text    : String;
+      Add_LF  : Boolean := True)
    is
       type Link_And_Location is record
          Link  : Hyper_Links := null;
@@ -2444,31 +2473,31 @@ package body Interactive_Consoles is
 
          Match (Link.Pattern.all, Fixed, Matches, Data_First => Index);
 
-         if Matches (0) = No_Match
-           or else Matches (0).First > Matches (0).Last
+         if Matches (0) = No_Match or else Matches (0).First > Matches (0).Last
          then
-            Locs (L) := (Link  => Link,
-                         First => Integer'Last,
-                         Last  => Integer'Last);
+            Locs (L) :=
+              (Link => Link, First => Integer'Last, Last => Integer'Last);
 
          elsif Paren_Count (Link.Pattern.all) = 0 then
-            Locs (L) := (Link  => Link,
-                         First => Matches (0).First,
-                         Last  => Matches (0).Last);
+            Locs (L) :=
+              (Link  => Link,
+               First => Matches (0).First,
+               Last  => Matches (0).Last);
 
          else
-            Locs (L) := (Link  => Link,
-                         First => Matches (1).First,
-                         Last  => Matches (1).Last);
+            Locs (L) :=
+              (Link  => Link,
+               First => Matches (1).First,
+               Last  => Matches (1).Last);
          end if;
       end Update_Pattern_Loc;
 
-      Link        : Hyper_Links := Console.Links;
-      Min         : Natural;
-      Min_Pattern : Natural;
-      Internal    : Boolean;
+      Link                  : Hyper_Links := Console.Links;
+      Min                   : Natural;
+      Min_Pattern           : Natural;
+      Internal              : Boolean;
       Start_Iter, Last_Iter : Gtk_Text_Iter;
-      New_Lines   : Natural;
+      New_Lines             : Natural;
 
    begin
       New_Lines := Replace_Zeros_And_Count_Lines (Fixed);
@@ -2482,15 +2511,17 @@ package body Interactive_Consoles is
       end loop;
 
       Prepare_For_Output
-        (Console, Text_Is_Input => False,
-         Internal => Internal, Last_Iter => Last_Iter);
+        (Console,
+         Text_Is_Input => False,
+         Internal      => Internal,
+         Last_Iter     => Last_Iter);
 
       while Index <= Fixed'Last loop
-         Min         := Fixed'Last + 1;
+         Min := Fixed'Last + 1;
          Min_Pattern := Locs'Last + 1;
          for L in Locs'Range loop
             if Locs (L).First < Min then
-               Min         := Locs (L).First;
+               Min := Locs (L).First;
                Min_Pattern := L;
             end if;
          end loop;
@@ -2499,21 +2530,22 @@ package body Interactive_Consoles is
             --  Found a regexp. Insert the leading text first, no hyper link
             if Min - 1 >= Index then
                Get_End_Iter (Console.Buffer, Start_Iter);
-                  Insert
-                    (Buffer => Console.Buffer,
-                     Iter   => Start_Iter,
-                     Text   => Glib.Convert.Locale_To_UTF8
-                       (Fixed (Index .. Min - 1)));
+               Insert
+                 (Buffer => Console.Buffer,
+                  Iter   => Start_Iter,
+                  Text   =>
+                    Glib.Convert.Locale_To_UTF8 (Fixed (Index .. Min - 1)));
             end if;
 
             --  Then insert the hyper link
             Get_End_Iter (Console.Buffer, Start_Iter);
             Insert_With_Tags
-              (Buffer         => Console.Buffer,
-               Iter           => Start_Iter,
-               Text           => Glib.Convert.Locale_To_UTF8
-                 (Fixed (Min .. Locs (Min_Pattern).Last)),
-               Tag            => Locs (Min_Pattern).Link.Tag);
+              (Buffer => Console.Buffer,
+               Iter   => Start_Iter,
+               Text   =>
+                 Glib.Convert.Locale_To_UTF8
+                   (Fixed (Min .. Locs (Min_Pattern).Last)),
+               Tag    => Locs (Min_Pattern).Link.Tag);
 
             Index := Locs (Min_Pattern).Last + 1;
 
@@ -2631,10 +2663,11 @@ package body Interactive_Consoles is
          --  call returns True, it means we have more processing to do:
          --  do this in a timeout.
          if Process_Lines (Interactive_Console (Console)) then
-            Console.Process_Timeout := Console_Idle.Timeout_Add
-              (Interval => Line_Processing_Interval,
-               Func     => Process_Lines'Access,
-               Data     => Interactive_Console (Console));
+            Console.Process_Timeout :=
+              Console_Idle.Timeout_Add
+                (Interval => Line_Processing_Interval,
+                 Func     => Process_Lines'Access,
+                 Data     => Interactive_Console (Console));
          end if;
       end if;
    end Insert_With_Links_Protected;
@@ -2653,11 +2686,12 @@ package body Interactive_Consoles is
       Tag       : constant Gtk_Text_Tag := Console.Tags (Hyper_Links_Tag);
    begin
       --  Create the hyper link
-      Console.Links := new Hyper_Link_Record'
-        (Pattern  => null,
-         Callback => Hyper_Link_Callback (Callback),
-         Tag      => Tag,
-         Next     => Console.Links);
+      Console.Links :=
+        new Hyper_Link_Record'
+          (Pattern  => null,
+           Callback => Hyper_Link_Callback (Callback),
+           Tag      => Tag,
+           Next     => Console.Links);
       Console.Links_Count := Console.Links_Count + 1;
 
       --  Insert it in the console
@@ -2681,11 +2715,12 @@ package body Interactive_Consoles is
    -- Interrupt --
    ---------------
 
-   overriding function Interrupt
+   overriding
+   function Interrupt
      (Child : access GPS_Console_MDI_Child_Record) return Boolean
    is
       Console : constant Interactive_Console :=
-                  Interactive_Console (Get_Widget (Child));
+        Interactive_Console (Get_Widget (Child));
    begin
       return Interrupt (Console);
    end Interrupt;
@@ -2695,8 +2730,7 @@ package body Interactive_Consoles is
    -----------------------------
 
    function Get_Interactive_Console
-     (Self : access Console_Messages_Window)
-      return Interactive_Console is
+     (Self : access Console_Messages_Window) return Interactive_Console is
    begin
       return Interactive_Console (Self.Console);
    end Get_Interactive_Console;
@@ -2726,7 +2760,8 @@ package body Interactive_Consoles is
    -- Insert --
    ------------
 
-   overriding procedure Insert
+   overriding
+   procedure Insert
      (Self   : not null access Console_Messages_Window;
       Text   : String;
       Add_LF : Boolean := True;
@@ -2739,7 +2774,8 @@ package body Interactive_Consoles is
    -- Insert_UTF8 --
    -----------------
 
-   overriding procedure Insert_UTF8
+   overriding
+   procedure Insert_UTF8
      (Self   : not null access Console_Messages_Window;
       UTF8   : String;
       Add_LF : Boolean := True;
@@ -2752,8 +2788,8 @@ package body Interactive_Consoles is
    -- Clear --
    -----------
 
-   overriding procedure Clear
-     (Self   : not null access Console_Messages_Window) is
+   overriding
+   procedure Clear (Self : not null access Console_Messages_Window) is
    begin
       Self.Console.Clear;
    end Clear;
@@ -2762,9 +2798,9 @@ package body Interactive_Consoles is
    -- Raise_Console --
    -------------------
 
-   overriding procedure Raise_Console
-     (Self       : not null access Console_Messages_Window;
-      Give_Focus : Boolean) is
+   overriding
+   procedure Raise_Console
+     (Self : not null access Console_Messages_Window; Give_Focus : Boolean) is
    begin
       Raise_Child (Find_MDI_Child_From_Widget (Self.Console), Give_Focus);
    end Raise_Console;
@@ -2773,7 +2809,8 @@ package body Interactive_Consoles is
    -- Get_Virtual_Console --
    -------------------------
 
-   overriding function Get_Virtual_Console
+   overriding
+   function Get_Virtual_Console
      (Self : not null access Console_Messages_Window)
       return GNATCOLL.Scripts.Virtual_Console is
    begin
@@ -2786,12 +2823,11 @@ package body Interactive_Consoles is
 
    function Export
      (View : access Interactive_Console_Record;
-      File : GNATCOLL.VFS.Virtual_File)
-      return Boolean
+      File : GNATCOLL.VFS.Virtual_File) return Boolean
    is
       Writable    : Writable_File := File.Write_File;
       Start, Last : Gtk_Text_Iter;
-      Result : Boolean := True;
+      Result      : Boolean := True;
    begin
       View.Buffer.Get_Bounds (Start, Last);
       begin
@@ -2810,8 +2846,7 @@ package body Interactive_Consoles is
    ------------------------------
 
    function Find_Interactive_Console
-     (From : Gtk.Widget.Gtk_Widget)
-      return Gtk.Widget.Gtk_Widget
+     (From : Gtk.Widget.Gtk_Widget) return Gtk.Widget.Gtk_Widget
    is
       Result : Gtk_Widget := From;
    begin

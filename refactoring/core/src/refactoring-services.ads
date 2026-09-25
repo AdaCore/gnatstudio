@@ -131,8 +131,8 @@ package Refactoring.Services is
    --  Return the location at the end of the statement
 
    function Contains_Element
-     (Self : Ada_Statement;
-      Name : Language.Tree.Normalized_Symbol) return Boolean;
+     (Self : Ada_Statement; Name : Language.Tree.Normalized_Symbol)
+      return Boolean;
    --  Return true if the element name given in parameter is contained in the
    --  list.
 
@@ -191,8 +191,7 @@ package Refactoring.Services is
    --  Return the declaration of the entity as it should be displayed in a
    --  parameter list. This includes the name of the variable.
 
-   function Display_As_Variable
-     (Self  : Entity_Declaration) return String;
+   function Display_As_Variable (Self : Entity_Declaration) return String;
    --  Return the declaration of the entity as it should be displayed in a
    --  variable declaration. This includes the name of the variable
 
@@ -222,9 +221,9 @@ package Refactoring.Services is
       To_Line      : Integer) return Range_Of_Code;
    --  Create a range of code (ie the part of the code delimited by two lines).
 
-   function File      (Self : Range_Of_Code) return GNATCOLL.VFS.Virtual_File;
+   function File (Self : Range_Of_Code) return GNATCOLL.VFS.Virtual_File;
    function From_Line (Self : Range_Of_Code) return Integer;
-   function To_Line   (Self : Range_Of_Code) return Integer;
+   function To_Line (Self : Range_Of_Code) return Integer;
    --  Return the various components of the range
 
    type Entity_References_Flag is
@@ -236,11 +235,13 @@ package Refactoring.Services is
       --  Whether the entity is referenced outside of the function containing
       --  the range of code
 
-      Flag_Read_Before, Flag_Modified_Before,
+      Flag_Read_Before,
+      Flag_Modified_Before,
       --  Whether the entity is modified or read before the range of code, but
       --  within the same function.
 
-      Flag_Read_After, Flag_Modified_After
+      Flag_Read_After,
+      Flag_Modified_After
       --  Whether the entity is modified or read after the range of code, but
       --  within the same function
      );
@@ -250,9 +251,9 @@ package Refactoring.Services is
    procedure For_All_Variable_In_Range
      (Self               : in out Range_Of_Code;
       Db                 : access Xref.General_Xref_Database_Record'Class;
-      Callback           : not null access procedure
-        (Entity : Xref.Root_Entity'Class;
-         Flags  : Entity_References_Flags);
+      Callback           :
+        not null access procedure
+          (Entity : Xref.Root_Entity'Class; Flags : Entity_References_Flags);
       Success            : out Boolean;
       Omit_Library_Level : Boolean := False);
    --  For each entity references within the given range of code, calls
@@ -349,15 +350,15 @@ package Refactoring.Services is
 
 private
 
-   package Tokens_List is new Ada.Containers.Doubly_Linked_Lists
-     (Language.Token_Record, Language."=");
+   package Tokens_List is new
+     Ada.Containers.Doubly_Linked_Lists (Language.Token_Record, Language."=");
 
    type Ada_Statement is record
       Context              : Factory_Context;
       Sloc_Start, Sloc_End : aliased Universal_Location;
       Kind                 : Statement_Kind := Unknown_Kind;
       Tokens               : Tokens_List.List;
-      Number_Of_Elements : Integer := 0;
+      Number_Of_Elements   : Integer := 0;
       --  Number of elements if we're on a list, e.g. number of declaration
       --  on a variable declaration.
 
@@ -390,7 +391,7 @@ private
       Last      => <>,
       Shared    => False,
       Decl      => Ada.Strings.Unbounded.Null_Unbounded_String,
-      others => <>);
+      others    => <>);
 
    type Range_Of_Code is new With_Factory with record
       File         : GNATCOLL.VFS.Virtual_File;
@@ -400,10 +401,7 @@ private
    end record;
 
    Empty_Range_Of_Code : constant Range_Of_Code :=
-                           (With_Factory with
-                              File         => <>,
-                              Project_View => <>,
-                              From_Line    => -1,
-                              To_Line      => -1);
+     (With_Factory
+      with File => <>, Project_View => <>, From_Line => -1, To_Line => -1);
 
 end Refactoring.Services;

@@ -19,21 +19,21 @@ with Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
+with Glib;               use Glib;
+with Glib.Object;        use Glib.Object;
 with Glib.Types;
-with Glib.Properties;      use Glib.Properties;
-with Glib.Unicode;         use Glib.Unicode;
-with Gtk.Text_Buffer;      use Gtk.Text_Buffer;
-with Gtk.Text_Iter;        use Gtk.Text_Iter;
-with Gtk.Text_Mark;        use Gtk.Text_Mark;
-with Gtk.Text_Tag;         use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;   use Gtk.Text_Tag_Table;
-with Gtk.Widget;           use Gtk.Widget;
-with Pango.Enums;          use Pango.Enums;
-with Interfaces.C;         use Interfaces.C;
-with System;               use System;
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with Glib.Properties;    use Glib.Properties;
+with Glib.Unicode;       use Glib.Unicode;
+with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Gtk.Text_Mark;      use Gtk.Text_Mark;
+with Gtk.Text_Tag;       use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
+with Gtk.Widget;         use Gtk.Widget;
+with Pango.Enums;        use Pango.Enums;
+with Interfaces.C;       use Interfaces.C;
+with System;             use System;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 package body Gtkada.Terminal is
    Me           : constant Trace_Handle := Create (Trace_Name, Off);
@@ -44,14 +44,15 @@ package body Gtkada.Terminal is
 
    type c_char_array_access is access c_char_array;
 
-   function UC is new Ada.Unchecked_Conversion
-     (System.Address, c_char_array_access);
+   function UC is new
+     Ada.Unchecked_Conversion (System.Address, c_char_array_access);
 
-   type Insert_Callback is access procedure
-     (Widget : System.Address;
-      Pos    : access Gtk.Text_Iter.Gtk_Text_Iter;
-      Text   : System.Address;
-      Length : Gint);
+   type Insert_Callback is
+     access procedure
+       (Widget : System.Address;
+        Pos    : access Gtk.Text_Iter.Gtk_Text_Iter;
+        Text   : System.Address;
+        Length : Gint);
    pragma Convention (C, Insert_Callback);
 
    type Capability is
@@ -136,9 +137,9 @@ package body Gtkada.Terminal is
      );
 
    type FSM_State is record
-      Callback       : Capability;
+      Callback : Capability;
 
-      Any_Number     : FSM_Transition_Access;
+      Any_Number : FSM_Transition_Access;
       --  State reached after reading a %d. If set, this will not check for
       --  '0' .. '9' entries in Transitions table
 
@@ -161,50 +162,49 @@ package body Gtkada.Terminal is
    type FSM_Transition is array (Escape_Chars) of FSM_State;
 
    type GtkAda_Terminal_Class is record
-      C_Class : Ada_GObject_Class := Uninitialized_Class;
+      C_Class                 : Ada_GObject_Class := Uninitialized_Class;
       Default_Insert_Callback : Insert_Callback := null;
    end record;
    Class : GtkAda_Terminal_Class;
 
    Alternate_Charset : array (Character) of Gunichar :=
-     ('+'  => 16#2192#, --  arrow pointing right
-      ','  => 16#2190#, --  arrow pointing left
-      '-'  => 16#2191#, --  arrow pointing up
-      '.'  => 16#2193#, --  arrow pointing down
-      '0'  => 16#2588#, --  solid square block
-      '`'  => 16#25C6#, --  diamond
-      'a'  => 16#2592#, --  checker board (stipples)
-      'b'  => 16#2409#, --  HT symbol
-      'c'  => 16#240C#, --  FF symbol
-      'd'  => 16#240D#, --  CR symbol
-      'e'  => 16#240A#, --  LF symbol
-      'f'  => 16#00B0#, --  degree symbol
-      'g'  => 16#00B1#, --  plus/minus
-      'h'  => 16#2424#, --  board of squares
-      'i'  => 16#240B#, --  lantern symbol
-      'j'  => 16#2518#, --  lower right corner
-      'k'  => 16#2510#, --  upper right corner
-      'l'  => 16#250C#, --  upper left corner
-      'm'  => 16#2514#, --  lower left corner
-      'n'  => 16#253C#, --  large plus or crossover
-      'o'  => 16#23BA#, --  scan line 1
-      'p'  => 16#23BB#, --  scan line 3
-      'q'  => 16#2500#, --  horizontal line
-      'r'  => 16#23BC#, --  scan line 7
-      's'  => 16#23BD#, --  scan line 9
-      't'  => 16#251C#, --  tee pointing right
-      'u'  => 16#2524#, --  tee pointing left
-      'v'  => 16#2534#, --  tee pointing up
-      'w'  => 16#252C#, --  tee pointing down
-      'x'  => 16#2502#, --  vertical line
-      'y'  => 16#2264#, --  less-than-or-equal-to
-      'z'  => 16#2265#, --  greater-than-or-equal-to
-      '{'  => 16#03C0#, --  greek pi
-      '|'  => 16#2260#, --  not-equal
-      '}'  => 16#00A3#, --  UK pound sign
-      '~'  => 16#00B7#, --  bullet
-      others => 0
-      );
+     ('+'    => 16#2192#, --  arrow pointing right
+      ','    => 16#2190#, --  arrow pointing left
+      '-'    => 16#2191#, --  arrow pointing up
+      '.'    => 16#2193#, --  arrow pointing down
+      '0'    => 16#2588#, --  solid square block
+      '`'    => 16#25C6#, --  diamond
+      'a'    => 16#2592#, --  checker board (stipples)
+      'b'    => 16#2409#, --  HT symbol
+      'c'    => 16#240C#, --  FF symbol
+      'd'    => 16#240D#, --  CR symbol
+      'e'    => 16#240A#, --  LF symbol
+      'f'    => 16#00B0#, --  degree symbol
+      'g'    => 16#00B1#, --  plus/minus
+      'h'    => 16#2424#, --  board of squares
+      'i'    => 16#240B#, --  lantern symbol
+      'j'    => 16#2518#, --  lower right corner
+      'k'    => 16#2510#, --  upper right corner
+      'l'    => 16#250C#, --  upper left corner
+      'm'    => 16#2514#, --  lower left corner
+      'n'    => 16#253C#, --  large plus or crossover
+      'o'    => 16#23BA#, --  scan line 1
+      'p'    => 16#23BB#, --  scan line 3
+      'q'    => 16#2500#, --  horizontal line
+      'r'    => 16#23BC#, --  scan line 7
+      's'    => 16#23BD#, --  scan line 9
+      't'    => 16#251C#, --  tee pointing right
+      'u'    => 16#2524#, --  tee pointing left
+      'v'    => 16#2534#, --  tee pointing up
+      'w'    => 16#252C#, --  tee pointing down
+      'x'    => 16#2502#, --  vertical line
+      'y'    => 16#2264#, --  less-than-or-equal-to
+      'z'    => 16#2265#, --  greater-than-or-equal-to
+      '{'    => 16#03C0#, --  greek pi
+      '|'    => 16#2260#, --  not-equal
+      '}'    => 16#00A3#, --  UK pound sign
+      '~'    => 16#00B7#, --  bullet
+      others => 0);
    --  Translates one set of characters into unicode. This is the alternate
    --  charset mode used by terminals to display graphical 8bit characters
 
@@ -252,20 +252,15 @@ package body Gtkada.Terminal is
       Count           : Natural;
       Preserve_Column : Boolean);
    procedure On_Set_Attribute
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Ansi  : Integer);
+     (Term : access Gtkada_Terminal_Record'Class; Ansi : Integer);
    procedure On_Clear_Screen_And_Home
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter);
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter);
    procedure On_Clear_To_End_Of_Screen
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter);
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter);
    procedure On_Clear_To_End_Of_Line
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter);
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter);
    procedure On_Newline
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter);
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter);
    procedure On_Move_Cursor
      (Term   : access Gtkada_Terminal_Record'Class;
       Iter   : in out Gtk_Text_Iter;
@@ -277,21 +272,21 @@ package body Gtkada.Terminal is
    --  Terminates all special highlighting modes and colors
 
    procedure Set_Col_In_Line
-     (Term   : access Gtkada_Terminal_Record'Class;
-      Iter   : in out Gtk_Text_Iter;
-      Col    : Gint);
+     (Term : access Gtkada_Terminal_Record'Class;
+      Iter : in out Gtk_Text_Iter;
+      Col  : Gint);
    --  Set the cursor onto a specific column in its current line
 
    procedure Default_Insert
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
-      S     : String;
+     (Term           : access Gtkada_Terminal_Record'Class;
+      Iter           : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S              : String;
       Overwrite_Mode : Boolean := True);
    procedure Default_Insert
-     (Term   : access Gtkada_Terminal_Record'Class;
-      Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
-      S      : System.Address;
-      Length : Gint;
+     (Term           : access Gtkada_Terminal_Record'Class;
+      Iter           : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S              : System.Address;
+      Length         : Gint;
       Overwrite_Mode : Boolean := True);
    --  Insert a string using the default insert method of GtkTextBuffer,
    --  bypassing our own handler for terminals
@@ -301,8 +296,8 @@ package body Gtkada.Terminal is
    ----------
 
    procedure Free (FSM : in out FSM_Transition_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (FSM_Transition, FSM_Transition_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (FSM_Transition, FSM_Transition_Access);
    begin
       if FSM /= null then
          for S in FSM'Range loop
@@ -324,17 +319,17 @@ package body Gtkada.Terminal is
    ------------------
 
    procedure Add_Sequence
-     (FSM      : in out FSM_Transition_Access;
-      Sequence : String;
-      Func     : Capability) is
+     (FSM : in out FSM_Transition_Access; Sequence : String; Func : Capability)
+   is
    begin
       if FSM = null then
          FSM := new FSM_Transition'(others => Null_State);
       end if;
 
-      Assert (Me,
-              char (Sequence (Sequence'First)) in Escape_Chars,
-              "Invalid sequence: " & Sequence);
+      Assert
+        (Me,
+         char (Sequence (Sequence'First)) in Escape_Chars,
+         "Invalid sequence: " & Sequence);
 
       if Sequence'Length = 1 then
          FSM (char (Sequence (Sequence'First))).Callback := Func;
@@ -355,14 +350,16 @@ package body Gtkada.Terminal is
            and then Sequence (Sequence'First + 1) = '%'
            and then Sequence (Sequence'First + 2) = 'd'
          then
-            Add_Sequence (FSM (char (Sequence (Sequence'First))).Any_Number,
-                          Sequence (Sequence'First + 3 .. Sequence'Last),
-                          Func);
+            Add_Sequence
+              (FSM (char (Sequence (Sequence'First))).Any_Number,
+               Sequence (Sequence'First + 3 .. Sequence'Last),
+               Func);
 
          else
-            Add_Sequence (FSM (char (Sequence (Sequence'First))).Transitions,
-                          Sequence (Sequence'First + 1 .. Sequence'Last),
-                          Func);
+            Add_Sequence
+              (FSM (char (Sequence (Sequence'First))).Transitions,
+               Sequence (Sequence'First + 1 .. Sequence'Last),
+               Func);
          end if;
       end if;
    end Add_Sequence;
@@ -375,111 +372,110 @@ package body Gtkada.Terminal is
       FSM : FSM_Transition_Access;
    begin
       --  The following are ANSI sequences which seem to work fine
-      Add_Sequence (FSM, ASCII.ESC & "[u",       Restore_Saved_Position);
-      Add_Sequence (FSM, ASCII.ESC & "[s",       Save_Position);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dH",  Move_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[H",       Cursor_Home);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%df",  Move_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[%dm",     Set_Char_Attribute);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dm",  Set_Char_Attribute);
-      Add_Sequence (FSM, ASCII.ESC & "[m",       Reset_Char_Attribute);
-      Add_Sequence (FSM, ASCII.ESC & "[%dD",     Cursor_Left_Multiple);
-      Add_Sequence (FSM, ASCII.ESC & "[D",       Cursor_Left);
-      Add_Sequence (FSM, ASCII.ESC & "[%dC",     Cursor_Right_Multiple);
-      Add_Sequence (FSM, ASCII.ESC & "[C",       Cursor_Right);
-      Add_Sequence (FSM, ASCII.ESC & "[%dA",     Cursor_Up_Multiple);
-      Add_Sequence (FSM, ASCII.ESC & "[A",       Cursor_Up);
-      Add_Sequence (FSM, ASCII.ESC & "[%dB",     Cursor_Down_Multiple);
-      Add_Sequence (FSM, ASCII.ESC & "[B",       Cursor_Down);
-      Add_Sequence (FSM, ASCII.ESC & "[2J",      Clear_Screen_And_Home);
-      Add_Sequence (FSM, ASCII.ESC & "]0;%s" & ASCII.BEL,
-                    Display_In_Status_Line);
-      Add_Sequence (FSM, ASCII.ESC & "]1;%s" & ASCII.BEL,
-                    Do_Nothing);  --  Output by bash
-      Add_Sequence (FSM, ASCII.ESC & "]2;%s" & ASCII.BEL,
-                    Do_Nothing);  --  Output by bash
-      Add_Sequence (FSM, ASCII.LF & "",               Newline);
-      Add_Sequence (FSM, ASCII.CR & "",               Beginning_Of_Line);
-      Add_Sequence (FSM, ASCII.BS & "",               Cursor_Left);
-      Add_Sequence (FSM, ASCII.BEL & "",              Do_Nothing);
-      Add_Sequence (FSM, ASCII.ESC & "[J",            Clear_To_End_Of_Screen);
-      Add_Sequence (FSM, ASCII.ESC & "[K",            Clear_To_End_Of_Line);
-      Add_Sequence (FSM, ASCII.ESC & "[7h",           Enable_Line_Wrap);
-      Add_Sequence (FSM, ASCII.ESC & "[7l",           Disable_Line_Wrap);
-      Add_Sequence (FSM, ASCII.ESC & "[%dr",          Scroll_Region);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dr",       Scroll_Region);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%d;%dr",    Scroll_Region);
+      Add_Sequence (FSM, ASCII.ESC & "[u", Restore_Saved_Position);
+      Add_Sequence (FSM, ASCII.ESC & "[s", Save_Position);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dH", Move_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[H", Cursor_Home);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%df", Move_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[%dm", Set_Char_Attribute);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dm", Set_Char_Attribute);
+      Add_Sequence (FSM, ASCII.ESC & "[m", Reset_Char_Attribute);
+      Add_Sequence (FSM, ASCII.ESC & "[%dD", Cursor_Left_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[D", Cursor_Left);
+      Add_Sequence (FSM, ASCII.ESC & "[%dC", Cursor_Right_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[C", Cursor_Right);
+      Add_Sequence (FSM, ASCII.ESC & "[%dA", Cursor_Up_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[A", Cursor_Up);
+      Add_Sequence (FSM, ASCII.ESC & "[%dB", Cursor_Down_Multiple);
+      Add_Sequence (FSM, ASCII.ESC & "[B", Cursor_Down);
+      Add_Sequence (FSM, ASCII.ESC & "[2J", Clear_Screen_And_Home);
+      Add_Sequence
+        (FSM, ASCII.ESC & "]0;%s" & ASCII.BEL, Display_In_Status_Line);
+      Add_Sequence
+        (FSM, ASCII.ESC & "]1;%s" & ASCII.BEL, Do_Nothing);  --  Output by bash
+      Add_Sequence
+        (FSM, ASCII.ESC & "]2;%s" & ASCII.BEL, Do_Nothing);  --  Output by bash
+      Add_Sequence (FSM, ASCII.LF & "", Newline);
+      Add_Sequence (FSM, ASCII.CR & "", Beginning_Of_Line);
+      Add_Sequence (FSM, ASCII.BS & "", Cursor_Left);
+      Add_Sequence (FSM, ASCII.BEL & "", Do_Nothing);
+      Add_Sequence (FSM, ASCII.ESC & "[J", Clear_To_End_Of_Screen);
+      Add_Sequence (FSM, ASCII.ESC & "[K", Clear_To_End_Of_Line);
+      Add_Sequence (FSM, ASCII.ESC & "[7h", Enable_Line_Wrap);
+      Add_Sequence (FSM, ASCII.ESC & "[7l", Disable_Line_Wrap);
+      Add_Sequence (FSM, ASCII.ESC & "[%dr", Scroll_Region);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dr", Scroll_Region);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%d;%dr", Scroll_Region);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%d;%d;%dr", Scroll_Region);
 
-      Add_Sequence (FSM, ASCII.ESC & "[?1h"
-                    & ASCII.ESC & "=",           Turn_Keypad_On);
+      Add_Sequence (FSM, ASCII.ESC & "[?1h" & ASCII.ESC & "=", Turn_Keypad_On);
 
       --  These are sequences from termcap entries, but some of them seem
       --  incorrect
 
-      Add_Sequence (FSM, ASCII.ESC & "(0",   Start_Alternative_Charset);
-      Add_Sequence (FSM, ASCII.ESC & "(B",   End_Alternative_Charset);
+      Add_Sequence (FSM, ASCII.ESC & "(0", Start_Alternative_Charset);
+      Add_Sequence (FSM, ASCII.ESC & "(B", End_Alternative_Charset);
 
       --  Sequences used by vi
 
       Add_Sequence (FSM, ASCII.ESC & "[>c", Do_Nothing); --  ??? What is this
       Add_Sequence (FSM, ASCII.ESC & "[?12l", Do_Nothing); --  ??? What is this
       Add_Sequence (FSM, ASCII.ESC & "[?1h" & ASCII.ESC & "=", Turn_Keypad_On);
-      Add_Sequence (FSM, ASCII.ESC & "[?1049l",  End_Program_Using_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[?1049h",  Begin_Program_Using_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[?25h",    Normal_Cursor_Visible);
-      Add_Sequence (FSM, ASCII.ESC & "[?25l",    Cursor_Invisible);
+      Add_Sequence (FSM, ASCII.ESC & "[?1049l", End_Program_Using_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[?1049h", Begin_Program_Using_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[?25h", Normal_Cursor_Visible);
+      Add_Sequence (FSM, ASCII.ESC & "[?25l", Cursor_Invisible);
       Add_Sequence (FSM, ASCII.ESC & "[?12;25h", Standout_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[?1034h",  Meta_Mode_On);
-      Add_Sequence (FSM, ASCII.ESC & "[?1034l",  Meta_Mode_Off);
+      Add_Sequence (FSM, ASCII.ESC & "[?1034h", Meta_Mode_On);
+      Add_Sequence (FSM, ASCII.ESC & "[?1034l", Meta_Mode_Off);
 
-      Add_Sequence (FSM, ASCII.ESC & "[%dL",     Insert_Lines);
-      Add_Sequence (FSM, ASCII.ESC & "[%dP",     Delete_Chars);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dP",  Delete_Chars);
-      Add_Sequence (FSM, ASCII.ESC & "[%dM",     Delete_Lines);
-      Add_Sequence (FSM, ASCII.ESC & "[%d@",     Insert_Chars);
-      Add_Sequence (FSM, ASCII.ESC & "OE",       Keypad_Center_Key);
-      Add_Sequence (FSM, ASCII.ESC & "[%dS",     Normal_Scroll);
-      Add_Sequence (FSM, ASCII.ESC & "[%dT",     Scroll_Back);
-      Add_Sequence (FSM, ASCII.ESC & "[L",       Insert_One_Line);
-      Add_Sequence (FSM, ASCII.BEL & "",         Audio_Bell);
-      Add_Sequence (FSM, ASCII.ESC & "[Z",       Move_To_Prev_Tab);
-      Add_Sequence (FSM, ASCII.ESC & "[3g",      Clear_Tabs);
-      Add_Sequence (FSM, ASCII.ESC & "[P",       Delete_One_Char);
-      Add_Sequence (FSM, ASCII.ESC & "[M",       Delete_One_Line);
-      Add_Sequence (FSM, ASCII.ESC & "[%dX",     Erase_Chars_At_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[4l",      End_Insert_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "[4h",      Begin_Insert_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "OP",       Function_1);
-      Add_Sequence (FSM, ASCII.ESC & "OQ",       Function_2);
-      Add_Sequence (FSM, ASCII.ESC & "OR",       Function_3);
-      Add_Sequence (FSM, ASCII.ESC & "OS",       Function_4);
-      Add_Sequence (FSM, ASCII.ESC & "[15~",     Function_5);
-      Add_Sequence (FSM, ASCII.ESC & "[17~",     Function_6);
-      Add_Sequence (FSM, ASCII.ESC & "[18~",     Function_7);
-      Add_Sequence (FSM, ASCII.ESC & "[19~",     Function_8);
-      Add_Sequence (FSM, ASCII.ESC & "[20~",     Function_9);
-      Add_Sequence (FSM, ASCII.ESC & "[3~",      Key_For_Delete_Char);
-      Add_Sequence (FSM, ASCII.ESC & "[2~",      Key_Insert_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "[6~",      Key_Next_Page);
-      Add_Sequence (FSM, ASCII.ESC & "[5~",      Key_Prev_Page);
-      Add_Sequence (FSM, ASCII.ESC & "OB",       Key_Cursor_Down);
-      Add_Sequence (FSM, ASCII.ESC & "[?1l"
-                    & ASCII.ESC & ">",           Turn_Keypad_Off);
-      Add_Sequence (FSM, ASCII.ESC & "OH",       Key_Cursor_Home);
-      Add_Sequence (FSM, ASCII.ESC & "OD",       Key_Cursor_Left);
-      Add_Sequence (FSM, ASCII.ESC & "OC",       Key_Cursor_Right);
-      Add_Sequence (FSM, ASCII.ESC & "OA",       Key_Cursor_Up);
-      Add_Sequence (FSM, ASCII.ESC & "[C",       Cursor_Right);
-      Add_Sequence (FSM, ASCII.ESC & "M",        Reverse_Scroll);
-      Add_Sequence (FSM, ASCII.ESC & "H",        Set_Tabulator_Stop);
-      Add_Sequence (FSM, ASCII.ESC & "[A",       Cursor_Up);
-      Add_Sequence (FSM, ASCII.ESC & "[?5h"
-                    & ASCII.ESC & "[?51",        Visible_Bell);
+      Add_Sequence (FSM, ASCII.ESC & "[%dL", Insert_Lines);
+      Add_Sequence (FSM, ASCII.ESC & "[%dP", Delete_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dP", Delete_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "[%dM", Delete_Lines);
+      Add_Sequence (FSM, ASCII.ESC & "[%d@", Insert_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "OE", Keypad_Center_Key);
+      Add_Sequence (FSM, ASCII.ESC & "[%dS", Normal_Scroll);
+      Add_Sequence (FSM, ASCII.ESC & "[%dT", Scroll_Back);
+      Add_Sequence (FSM, ASCII.ESC & "[L", Insert_One_Line);
+      Add_Sequence (FSM, ASCII.BEL & "", Audio_Bell);
+      Add_Sequence (FSM, ASCII.ESC & "[Z", Move_To_Prev_Tab);
+      Add_Sequence (FSM, ASCII.ESC & "[3g", Clear_Tabs);
+      Add_Sequence (FSM, ASCII.ESC & "[P", Delete_One_Char);
+      Add_Sequence (FSM, ASCII.ESC & "[M", Delete_One_Line);
+      Add_Sequence (FSM, ASCII.ESC & "[%dX", Erase_Chars_At_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[4l", End_Insert_Mode);
+      Add_Sequence (FSM, ASCII.ESC & "[4h", Begin_Insert_Mode);
+      Add_Sequence (FSM, ASCII.ESC & "OP", Function_1);
+      Add_Sequence (FSM, ASCII.ESC & "OQ", Function_2);
+      Add_Sequence (FSM, ASCII.ESC & "OR", Function_3);
+      Add_Sequence (FSM, ASCII.ESC & "OS", Function_4);
+      Add_Sequence (FSM, ASCII.ESC & "[15~", Function_5);
+      Add_Sequence (FSM, ASCII.ESC & "[17~", Function_6);
+      Add_Sequence (FSM, ASCII.ESC & "[18~", Function_7);
+      Add_Sequence (FSM, ASCII.ESC & "[19~", Function_8);
+      Add_Sequence (FSM, ASCII.ESC & "[20~", Function_9);
+      Add_Sequence (FSM, ASCII.ESC & "[3~", Key_For_Delete_Char);
+      Add_Sequence (FSM, ASCII.ESC & "[2~", Key_Insert_Mode);
+      Add_Sequence (FSM, ASCII.ESC & "[6~", Key_Next_Page);
+      Add_Sequence (FSM, ASCII.ESC & "[5~", Key_Prev_Page);
+      Add_Sequence (FSM, ASCII.ESC & "OB", Key_Cursor_Down);
+      Add_Sequence
+        (FSM, ASCII.ESC & "[?1l" & ASCII.ESC & ">", Turn_Keypad_Off);
+      Add_Sequence (FSM, ASCII.ESC & "OH", Key_Cursor_Home);
+      Add_Sequence (FSM, ASCII.ESC & "OD", Key_Cursor_Left);
+      Add_Sequence (FSM, ASCII.ESC & "OC", Key_Cursor_Right);
+      Add_Sequence (FSM, ASCII.ESC & "OA", Key_Cursor_Up);
+      Add_Sequence (FSM, ASCII.ESC & "[C", Cursor_Right);
+      Add_Sequence (FSM, ASCII.ESC & "M", Reverse_Scroll);
+      Add_Sequence (FSM, ASCII.ESC & "H", Set_Tabulator_Stop);
+      Add_Sequence (FSM, ASCII.ESC & "[A", Cursor_Up);
+      Add_Sequence
+        (FSM, ASCII.ESC & "[?5h" & ASCII.ESC & "[?51", Visible_Bell);
 
-      Add_Sequence (FSM, ASCII.ESC & "[l",       Memory_Lock);
-      Add_Sequence (FSM, ASCII.ESC & "[G",       Cursor_Horizontal_Absolute);
-      Add_Sequence (FSM, ASCII.ESC & "[%dG",     Cursor_Horizontal_Absolute);
+      Add_Sequence (FSM, ASCII.ESC & "[l", Memory_Lock);
+      Add_Sequence (FSM, ASCII.ESC & "[G", Cursor_Horizontal_Absolute);
+      Add_Sequence (FSM, ASCII.ESC & "[%dG", Cursor_Horizontal_Absolute);
 
       --  No meaning in GUI mode (?)
       --  do=^J            Cursor down one line
@@ -494,8 +490,7 @@ package body Gtkada.Terminal is
    ------------------
 
    procedure On_Set_Title
-     (Term  : access Gtkada_Terminal_Record;
-      Title : String)
+     (Term : access Gtkada_Terminal_Record; Title : String)
    is
       pragma Unreferenced (Term);
    begin
@@ -506,10 +501,10 @@ package body Gtkada.Terminal is
    -- Place_Cursor --
    ------------------
 
-   overriding procedure Place_Cursor
-     (Self   : access Gtkada_Terminal_Record;
-      Where  : Gtk.Text_Iter.Gtk_Text_Iter)
-   is
+   overriding
+   procedure Place_Cursor
+     (Self  : access Gtkada_Terminal_Record;
+      Where : Gtk.Text_Iter.Gtk_Text_Iter) is
    begin
       if Self.Cursor_Mark /= null then
          Move_Mark (Self, Self.Cursor_Mark, Where);
@@ -539,9 +534,9 @@ package body Gtkada.Terminal is
    ---------------------
 
    procedure Set_Col_In_Line
-     (Term   : access Gtkada_Terminal_Record'Class;
-      Iter   : in out Gtk_Text_Iter;
-      Col    : Gint)
+     (Term : access Gtkada_Terminal_Record'Class;
+      Iter : in out Gtk_Text_Iter;
+      Col  : Gint)
    is
       C : constant Gint := Col + Term.Region.Min_Col;
    begin
@@ -568,10 +563,10 @@ package body Gtkada.Terminal is
       Line_Chars : Gint := Get_Chars_In_Line (Iter);
       --  Number of chars in current line, including trailing '\n' if any
 
-      Offset     : constant Gint := Get_Line_Offset (Iter);
+      Offset : constant Gint := Get_Line_Offset (Iter);
       --  Offset in current line, starting at 0
 
-      Iter2 : Gtk_Text_Iter;
+      Iter2   : Gtk_Text_Iter;
       Success : Boolean;
 
    begin
@@ -592,11 +587,15 @@ package body Gtkada.Terminal is
             end if;
 
             declare
-               S : aliased constant
-                 String (1 .. Integer
-                   (Get_Offset (Iter) + Gint (Count)
-                      - Get_Offset (Iter2)))
-                 := (others => ' ');
+               S :
+                 aliased constant String
+                                    (1
+                                     ..
+                                       Integer
+                                         (Get_Offset (Iter)
+                                          + Gint (Count)
+                                          - Get_Offset (Iter2))) :=
+                   (others => ' ');
             begin
                --  We must test whether we are already on line ends, since
                --  otherwise the call to Forward_To_Line_End would jump to next
@@ -607,7 +606,9 @@ package body Gtkada.Terminal is
 
                Class.Default_Insert_Callback
                  (Get_Object (Term),
-                  Iter'Unrestricted_Access, S'Address, S'Length);
+                  Iter'Unrestricted_Access,
+                  S'Address,
+                  S'Length);
             end;
 
          else
@@ -628,12 +629,12 @@ package body Gtkada.Terminal is
       Count           : Natural;
       Preserve_Column : Boolean)
    is
-      Start     : constant Gint := Get_Line_Offset (Iter);
-      Success   : Boolean;
-      Missing   : Integer;
-      Eob       : Gtk_Text_Iter;
+      Start   : constant Gint := Get_Line_Offset (Iter);
+      Success : Boolean;
+      Missing : Integer;
+      Eob     : Gtk_Text_Iter;
    begin
-      Get_End_Iter   (Term, Eob);
+      Get_End_Iter (Term, Eob);
 
       if Count = 0 then
          --  Already on the right line
@@ -641,16 +642,19 @@ package body Gtkada.Terminal is
 
       elsif Get_Line (Eob) < Get_Line (Iter) + Gint (Count) then
          --  Lines missing in the buffer, add them
-         Missing := Integer (Get_Line (Iter)) + 1
-           + Count - Integer (Get_Line (Eob) + 1);
+         Missing :=
+           Integer (Get_Line (Iter))
+           + 1
+           + Count
+           - Integer (Get_Line (Eob) + 1);
          Default_Insert (Term, Eob, (1 .. Missing => ASCII.LF));
          Copy (Source => Eob, Dest => Iter);
 
       else
          Forward_Lines (Iter, Gint (Count), Success);
          if not Success then
-            Trace (Me,
-                   "Error: could not move" & Integer'Image (Count) & " down");
+            Trace
+              (Me, "Error: could not move" & Integer'Image (Count) & " down");
          end if;
       end if;
 
@@ -671,8 +675,8 @@ package body Gtkada.Terminal is
       Count           : Natural;
       Preserve_Column : Boolean)
    is
-      Start     : constant Gint := Get_Line_Offset (Iter);
-      Success   : Boolean;
+      Start   : constant Gint := Get_Line_Offset (Iter);
+      Success : Boolean;
    begin
       Backward_Lines (Iter, Gint (Count), Success);
 
@@ -689,7 +693,7 @@ package body Gtkada.Terminal is
 
    procedure On_Move_Cursor
      (Term   : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
       Line   : Integer;
       Column : Integer)
    is
@@ -708,8 +712,8 @@ package body Gtkada.Terminal is
 
       if Gint (Line) > Term.Region.Max_Line then
          declare
-            Bor : Gtk_Text_Iter;  --  beginning of region
-            Bos : Gtk_Text_Iter;  --  beginning of scroll
+            Bor    : Gtk_Text_Iter;  --  beginning of region
+            Bos    : Gtk_Text_Iter;  --  beginning of scroll
             Result : Boolean;
          begin
             --  If the region does not extend to the end of the buffer, add
@@ -718,9 +722,10 @@ package body Gtkada.Terminal is
             Forward_Lines (Bor, Term.Region.Max_Line + 1, Result);
             Set_Line_Offset (Bor, 0);
             Default_Insert
-               (Term, Bor,
-                (1 .. Line - Integer (Term.Region.Max_Line) => ASCII.LF),
-                Overwrite_Mode => False);
+              (Term,
+               Bor,
+               (1 .. Line - Integer (Term.Region.Max_Line) => ASCII.LF),
+               Overwrite_Mode => False);
 
             --  Remove the no longer needed lines at the beginning of the
             --  region (preserve the ones in the buffer before the beginning
@@ -735,7 +740,7 @@ package body Gtkada.Terminal is
 
       --  Move down, creating lines as needed
       Get_Start_Iter (Term, Iter);
-      Get_End_Iter   (Term, Eob);
+      Get_End_Iter (Term, Eob);
 
       if Get_Line (Iter) + 1 = L then
          --  Already on the right line
@@ -750,9 +755,7 @@ package body Gtkada.Terminal is
       else
          Forward_Lines (Iter, L - 1, Success);
          if not Success then
-            Trace (Me,
-                   "Error: could not move"
-                   & Gint'Image (L - 1) & " down");
+            Trace (Me, "Error: could not move" & Gint'Image (L - 1) & " down");
          end if;
       end if;
 
@@ -764,8 +767,7 @@ package body Gtkada.Terminal is
    ----------------
 
    procedure On_Newline
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter)
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter)
    is
    begin
       On_Move_Cursor_Down (Term, Iter, 1, Preserve_Column => False);
@@ -778,8 +780,7 @@ package body Gtkada.Terminal is
    ------------------------------
 
    procedure On_Clear_Screen_And_Home
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter)
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter)
    is
       Frm : Gtk_Text_Iter;
    begin
@@ -788,7 +789,7 @@ package body Gtkada.Terminal is
       --  visible area and we don't have access to the view
 
       Get_Start_Iter (Term, Frm);
-      Get_End_Iter   (Term, Iter);
+      Get_End_Iter (Term, Iter);
       Delete (Term, Frm, Iter);
    end On_Clear_Screen_And_Home;
 
@@ -797,8 +798,7 @@ package body Gtkada.Terminal is
    -------------------------------
 
    procedure On_Clear_To_End_Of_Screen
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter)
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter)
    is
       To : Gtk_Text_Iter;
    begin
@@ -811,8 +811,7 @@ package body Gtkada.Terminal is
    -----------------------------
 
    procedure On_Clear_To_End_Of_Line
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk_Text_Iter)
+     (Term : access Gtkada_Terminal_Record'Class; Iter : in out Gtk_Text_Iter)
    is
       To      : Gtk_Text_Iter;
       Success : Boolean;
@@ -839,70 +838,99 @@ package body Gtkada.Terminal is
    ----------------------
 
    procedure On_Set_Attribute
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Ansi  : Integer)
-   is
+     (Term : access Gtkada_Terminal_Record'Class; Ansi : Integer) is
    begin
       case Ansi is
-         when 0 =>
+         when 0        =>
             End_All_Modes (Term);
 
          --  See https://en.wikipedia.org/wiki/ANSI_escape_code#graphics
-         when 1  =>  --  bold mode
+
+         when 1        =>
+            --  bold mode
             End_All_Modes (Term);
             Term.Bold := True;
-         when 4  => null;  --  underline: single
-         when 5  => null;  --  blink: slow
-         when 7  =>  --  start standout mode
+
+         when 4        =>
+            null;  --  underline: single
+
+         when 5        =>
+            null;  --  blink: slow
+
+         when 7        =>
+            --  start standout mode
             End_All_Modes (Term);
             Term.Standout := True;
-         when 24 => null;  --  underline: none
-         when 27 =>   --  end standout mode
+
+         when 24       =>
+            null;  --  underline: none
+
+         when 27       =>
+            --  end standout mode
             End_All_Modes (Term);
             Term.Standout := False;
-         when 30 | 90 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Black);
-         when 31 | 91 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Red);
-         when 32 | 92 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Green);
-         when 33 | 93 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Yellow);
-         when 34 | 94 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Blue);
-         when 35 | 95 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Magenta);
-         when 36 | 96 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Cyan);
-         when 37 | 97 => Term.Current_Foreground :=
-              (Is_Active => True, Color => White);
-         when 38 | 98 => Term.Current_Foreground :=
-              (Is_Active => True, Color => Black);
-         when 39 | 99 => Term.Current_Foreground :=
-              (Is_Active => False);
 
-         when 40 | 100 => Term.Current_Background :=
-              (Is_Active => True, Color => Black);
-         when 41 | 101 => Term.Current_Background :=
-              (Is_Active => True, Color => Red);
-         when 42 | 102 => Term.Current_Background :=
-              (Is_Active => True, Color => Green);
-         when 43 | 103 => Term.Current_Background :=
-              (Is_Active => True, Color => Yellow);
-         when 44 | 104 => Term.Current_Background :=
-              (Is_Active => True, Color => Blue);
-         when 45 | 105 => Term.Current_Background :=
-              (Is_Active => True, Color => Magenta);
-         when 46 | 106 => Term.Current_Background :=
-              (Is_Active => True, Color => Cyan);
-         when 47 | 107 => Term.Current_Background :=
-              (Is_Active => True, Color => White);
-         when 48 | 108 => Term.Current_Background :=
-              (Is_Active => True, Color => Black);
-         when 49 | 109 => Term.Current_Background :=
-              (Is_Active => False);
+         when 30 | 90  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Black);
 
-         when others =>
+         when 31 | 91  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Red);
+
+         when 32 | 92  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Green);
+
+         when 33 | 93  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Yellow);
+
+         when 34 | 94  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Blue);
+
+         when 35 | 95  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Magenta);
+
+         when 36 | 96  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Cyan);
+
+         when 37 | 97  =>
+            Term.Current_Foreground := (Is_Active => True, Color => White);
+
+         when 38 | 98  =>
+            Term.Current_Foreground := (Is_Active => True, Color => Black);
+
+         when 39 | 99  =>
+            Term.Current_Foreground := (Is_Active => False);
+
+         when 40 | 100 =>
+            Term.Current_Background := (Is_Active => True, Color => Black);
+
+         when 41 | 101 =>
+            Term.Current_Background := (Is_Active => True, Color => Red);
+
+         when 42 | 102 =>
+            Term.Current_Background := (Is_Active => True, Color => Green);
+
+         when 43 | 103 =>
+            Term.Current_Background := (Is_Active => True, Color => Yellow);
+
+         when 44 | 104 =>
+            Term.Current_Background := (Is_Active => True, Color => Blue);
+
+         when 45 | 105 =>
+            Term.Current_Background := (Is_Active => True, Color => Magenta);
+
+         when 46 | 106 =>
+            Term.Current_Background := (Is_Active => True, Color => Cyan);
+
+         when 47 | 107 =>
+            Term.Current_Background := (Is_Active => True, Color => White);
+
+         when 48 | 108 =>
+            Term.Current_Background := (Is_Active => True, Color => Black);
+
+         when 49 | 109 =>
+            Term.Current_Background := (Is_Active => False);
+
+         when others   =>
             Trace (Me, "Set_Attribute:" & Ansi'Img);
       end case;
    end On_Set_Attribute;
@@ -912,17 +940,17 @@ package body Gtkada.Terminal is
    --------------------
 
    procedure Default_Insert
-     (Term   : access Gtkada_Terminal_Record'Class;
-      Iter   : in out Gtk.Text_Iter.Gtk_Text_Iter;
-      S      : System.Address;
-      Length : Gint;
+     (Term           : access Gtkada_Terminal_Record'Class;
+      Iter           : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S              : System.Address;
+      Length         : Gint;
       Overwrite_Mode : Boolean := True)
    is
       Start_Offset : constant Gint := Get_Offset (Iter);
-      Off     : Gint;
-      Iter2   : Gtk_Text_Iter;
-      Eol     : Gtk_Text_Iter;
-      Success : Boolean;
+      Off          : Gint;
+      Iter2        : Gtk_Text_Iter;
+      Eol          : Gtk_Text_Iter;
+      Success      : Boolean;
    begin
       --  Simulate overwrite mode. Rather than computing how many UTF8 chars we
       --  have inserted we rely on Offset for that. However, we must make sure
@@ -944,15 +972,19 @@ package body Gtkada.Terminal is
       if Term.Current_Foreground.Is_Active then
          Get_Iter_At_Offset (Term, Iter2, Start_Offset);
          Apply_Tag
-           (Term, Term.Foreground_Tags
-              (Term.Current_Foreground.Color), Iter2, Iter);
+           (Term,
+            Term.Foreground_Tags (Term.Current_Foreground.Color),
+            Iter2,
+            Iter);
       end if;
 
       if Term.Current_Background.Is_Active then
          Get_Iter_At_Offset (Term, Iter2, Start_Offset);
          Apply_Tag
-           (Term, Term.Background_Tags
-              (Term.Current_Background.Color), Iter2, Iter);
+           (Term,
+            Term.Background_Tags (Term.Current_Background.Color),
+            Iter2,
+            Iter);
       end if;
 
       if Overwrite_Mode then
@@ -998,9 +1030,9 @@ package body Gtkada.Terminal is
    --------------------
 
    procedure Default_Insert
-     (Term  : access Gtkada_Terminal_Record'Class;
-      Iter  : in out Gtk.Text_Iter.Gtk_Text_Iter;
-      S     : String;
+     (Term           : access Gtkada_Terminal_Record'Class;
+      Iter           : in out Gtk.Text_Iter.Gtk_Text_Iter;
+      S              : String;
       Overwrite_Mode : Boolean := True) is
    begin
       Default_Insert (Term, Iter, S'Address, S'Length, Overwrite_Mode);
@@ -1025,8 +1057,8 @@ package body Gtkada.Terminal is
       Str_Arg_First, Str_Arg_Last : size_t;
       --  Integer arguments
 
-      C                 : size_t := 0;
-      Stopper           : char;
+      C       : size_t := 0;
+      Stopper : char;
 
       procedure Insert_Substr (Frm, To : size_t);
       --  Write a specific substring to the buffer
@@ -1154,23 +1186,30 @@ package body Gtkada.Terminal is
             if Term.State.Current_Arg = 1 then
                Trace (Me, Func'Img);
             elsif Term.State.Current_Arg = 2 then
-               Trace (Me, Func'Img
-                      & Term.State.Arg (Numerical_Arguments'First)'Img);
+               Trace
+                 (Me,
+                  Func'Img & Term.State.Arg (Numerical_Arguments'First)'Img);
             elsif Term.State.Current_Arg = 3 then
-               Trace (Me, Func'Img
-                      & Term.State.Arg (Term.State.Arg'First)'Img
-                      & Term.State.Arg (Term.State.Arg'First + 1)'Img);
+               Trace
+                 (Me,
+                  Func'Img
+                  & Term.State.Arg (Term.State.Arg'First)'Img
+                  & Term.State.Arg (Term.State.Arg'First + 1)'Img);
             elsif Term.State.Current_Arg = 4 then
-               Trace (Me, Func'Img
-                      & Term.State.Arg (Term.State.Arg'First)'Img
-                      & Term.State.Arg (Term.State.Arg'First + 1)'Img
-                      & Term.State.Arg (Term.State.Arg'First + 2)'Img);
+               Trace
+                 (Me,
+                  Func'Img
+                  & Term.State.Arg (Term.State.Arg'First)'Img
+                  & Term.State.Arg (Term.State.Arg'First + 1)'Img
+                  & Term.State.Arg (Term.State.Arg'First + 2)'Img);
             elsif Term.State.Current_Arg = 5 then
-               Trace (Me, Func'Img
-                      & Term.State.Arg (Term.State.Arg'First)'Img
-                      & Term.State.Arg (Term.State.Arg'First + 1)'Img
-                      & Term.State.Arg (Term.State.Arg'First + 2)'Img
-                      & Term.State.Arg (Term.State.Arg'First + 3)'Img);
+               Trace
+                 (Me,
+                  Func'Img
+                  & Term.State.Arg (Term.State.Arg'First)'Img
+                  & Term.State.Arg (Term.State.Arg'First + 1)'Img
+                  & Term.State.Arg (Term.State.Arg'First + 2)'Img
+                  & Term.State.Arg (Term.State.Arg'First + 3)'Img);
             else
                Trace (Me, Func'Img & " ...");
             end if;
@@ -1181,54 +1220,60 @@ package body Gtkada.Terminal is
          --  sure the previous chars are displayed with the right set)
 
          case Func is
-            when Do_Nothing =>
+            when Do_Nothing                               =>
                null;
-            when Display_In_Status_Line =>
+
+            when Display_In_Status_Line                   =>
                On_Set_Title (Term, To_String (Str_Arg_First, Str_Arg_Last));
 
-            when Start_Alternative_Charset =>
+            when Start_Alternative_Charset                =>
                Term.Alternate_Charset := True;
-            when End_Alternative_Charset =>
+
+            when End_Alternative_Charset                  =>
                Term.Alternate_Charset := False;
                End_All_Modes (Term);  --  ??? Is this correct
-            when End_All_Modes =>
+
+            when End_All_Modes                            =>
                End_All_Modes (Term);
 
-            when Beginning_Of_Line =>
+            when Beginning_Of_Line                        =>
                Set_Line_Offset (Iter.all, 0);
                Place_Cursor (Term, Iter.all);
 
-            when Cursor_Left_Multiple =>
+            when Cursor_Left_Multiple                     =>
                On_Move_Cursor_Left (Term, Iter.all, Term.State.Arg (1));
-            when Cursor_Left =>
+
+            when Cursor_Left                              =>
                On_Move_Cursor_Left (Term, Iter.all, 1);
 
-            when Cursor_Right_Multiple =>
+            when Cursor_Right_Multiple                    =>
                On_Move_Cursor_Right (Term, Iter.all, Term.State.Arg (1));
-            when Cursor_Right =>
+
+            when Cursor_Right                             =>
                On_Move_Cursor_Right (Term, Iter.all, 1);
 
-            when Cursor_Up_Multiple =>
+            when Cursor_Up_Multiple                       =>
                On_Move_Cursor_Up
                  (Term, Iter.all, Term.State.Arg (1), Preserve_Column => True);
-            when Cursor_Up =>
-               On_Move_Cursor_Up
-                 (Term, Iter.all, 1, Preserve_Column => True);
 
-            when Cursor_Down_Multiple =>
+            when Cursor_Up                                =>
+               On_Move_Cursor_Up (Term, Iter.all, 1, Preserve_Column => True);
+
+            when Cursor_Down_Multiple                     =>
                On_Move_Cursor_Down
                  (Term, Iter.all, Term.State.Arg (1), Preserve_Column => True);
-            when Cursor_Down =>
+
+            when Cursor_Down                              =>
                On_Move_Cursor_Down
                  (Term, Iter.all, 1, Preserve_Column => True);
 
-            when Clear_To_End_Of_Screen =>
+            when Clear_To_End_Of_Screen                   =>
                On_Clear_To_End_Of_Screen (Term, Iter.all);
 
-            when Clear_To_End_Of_Line =>
+            when Clear_To_End_Of_Line                     =>
                On_Clear_To_End_Of_Line (Term, Iter.all);
 
-            when Delete_Chars =>
+            when Delete_Chars                             =>
                declare
                   To      : Gtk_Text_Iter;
                   Success : Boolean;
@@ -1238,21 +1283,23 @@ package body Gtkada.Terminal is
                   Delete (Term, Iter.all, To);
                end;
 
-            when Newline =>
+            when Newline                                  =>
                On_Newline (Term, Iter.all);
-            when Memory_Unlock | Memory_Lock =>
+
+            when Memory_Unlock | Memory_Lock              =>
                null;
 
-            when Clear_Screen_And_Home =>
+            when Clear_Screen_And_Home                    =>
                On_Clear_Screen_And_Home (Term, Iter.all);
 
-            when Move_Cursor =>
+            when Move_Cursor                              =>
                On_Move_Cursor
                  (Term, Iter.all, Term.State.Arg (1), Term.State.Arg (2));
-            when Cursor_Home =>
+
+            when Cursor_Home                              =>
                On_Move_Cursor (Term, Iter.all, 1, 1);
 
-            when Cursor_Horizontal_Absolute =>
+            when Cursor_Horizontal_Absolute               =>
                if Term.State.Current_Arg = 1 then
                   Set_Line_Offset (Iter.all, 0);
                else
@@ -1260,31 +1307,31 @@ package body Gtkada.Terminal is
                end if;
                Place_Cursor (Term, Iter.all);
 
-            when Set_Char_Attribute =>
+            when Set_Char_Attribute                       =>
                for A in 1 .. Term.State.Current_Arg - 1 loop
                   On_Set_Attribute (Term, Term.State.Arg (A));
                end loop;
 
-            when Reset_Char_Attribute =>
+            when Reset_Char_Attribute                     =>
                On_Set_Attribute (Term, 0);
 
             when Cursor_Invisible | Normal_Cursor_Visible =>
                null;
 
-            when Turn_Keypad_On | Turn_Keypad_Off =>
+            when Turn_Keypad_On | Turn_Keypad_Off         =>
                null;
 
-            when Audio_Bell =>
+            when Audio_Bell                               =>
                null;
 
-            when Insert_One_Line =>
+            when Insert_One_Line                          =>
                declare
                   It, It2 : Gtk_Text_Iter;
                   Success : Boolean;
                begin
                   Copy (Source => Iter.all, Dest => It);
                   Default_Insert
-                     (Term, It, ASCII.LF & "", Overwrite_Mode => False);
+                    (Term, It, ASCII.LF & "", Overwrite_Mode => False);
 
                   --  Remove the last line in the current scrolling region
                   if Term.Region.Max_Line /= Gint'Last then
@@ -1296,7 +1343,7 @@ package body Gtkada.Terminal is
                   end if;
                end;
 
-            when Insert_Chars =>
+            when Insert_Chars                             =>
                declare
                   Count : Integer := 1;
                begin
@@ -1305,43 +1352,46 @@ package body Gtkada.Terminal is
                   end if;
 
                   Default_Insert
-                    (Term, Iter.all,
+                    (Term,
+                     Iter.all,
                      (1 .. Count => ' '),
                      Overwrite_Mode => False);
                   On_Move_Cursor_Left (Term, Iter.all, Count);
                end;
 
             --  http://www.sweger.com/ansiplus/EscSeqScroll.html
-            when Scroll_Region =>
+
+            when Scroll_Region                            =>
                if Term.State.Current_Arg = 1 then
                   Term.Region.Min_Line := 0;
                else
                   Term.Region.Min_Line :=
-                     Gint (Term.State.Arg (Term.State.Arg'First)) - 1;
+                    Gint (Term.State.Arg (Term.State.Arg'First)) - 1;
                end if;
 
                if Term.State.Current_Arg <= 2 then
                   Term.Region.Max_Line := Term.Get_Line_Count - 1;
                else
                   Term.Region.Max_Line :=
-                     Gint (Term.State.Arg (Term.State.Arg'First + 1)) - 1;
+                    Gint (Term.State.Arg (Term.State.Arg'First + 1)) - 1;
                end if;
 
                if Term.State.Current_Arg <= 3 then
                   Term.Region.Min_Col := 0;
                else
                   Term.Region.Min_Col :=
-                     Gint (Term.State.Arg (Term.State.Arg'First + 2)) - 1;
+                    Gint (Term.State.Arg (Term.State.Arg'First + 2)) - 1;
                end if;
 
                if Term.State.Current_Arg <= 4 then
                   Term.Region.Max_Col := Gint'Last;  --   ??? Unsupported
+
                else
                   Term.Region.Max_Col :=
-                     Gint (Term.State.Arg (Term.State.Arg'First + 3)) - 1;
+                    Gint (Term.State.Arg (Term.State.Arg'First + 3)) - 1;
                end if;
 
-            when others =>
+            when others                                   =>
                Trace (Me_Unhandled, "Unhandled capability: " & Func'Img);
          end case;
 
@@ -1360,8 +1410,8 @@ package body Gtkada.Terminal is
          end if;
 
          Term.State.Start_Of_Sequence := C;
-         Term.State.Current_Arg       := Numerical_Arguments'First;
-         Str_Arg_First                := size_t (Length) - 1;
+         Term.State.Current_Arg := Numerical_Arguments'First;
+         Str_Arg_First := size_t (Length) - 1;
       end Send_Current_Sequence;
 
       Cursor : Gtk_Text_Iter;
@@ -1388,7 +1438,7 @@ package body Gtkada.Terminal is
 
       else
          --  Make sure we move the cursor to its old position, if appropriate
-         if Term.Cursor_Mark /= null  then
+         if Term.Cursor_Mark /= null then
             Get_Iter_At_Mark (Term, Cursor, Term.Cursor_Mark);
             if Get_Offset (Cursor) /= Get_Offset (Iter.all) then
                Place_Cursor (Term, Cursor);
@@ -1402,8 +1452,10 @@ package body Gtkada.Terminal is
             if Term.State.Parsing_Number then
                if Txt (C) in '0' .. '9' then
                   Term.State.Arg (Term.State.Current_Arg) :=
-                    Term.State.Arg (Term.State.Current_Arg) * 10
-                    + char'Pos (Txt (C)) - char'Pos ('0');
+                    Term.State.Arg (Term.State.Current_Arg)
+                    * 10
+                    + char'Pos (Txt (C))
+                    - char'Pos ('0');
 
                   if Term.State.Tmp /= null then
                      if Term.State.Tmp (Txt (C)) /= Null_State then
@@ -1413,8 +1465,7 @@ package body Gtkada.Terminal is
                         --  (and therefore we test again after the loop, ie
                         --  when we have encountered the first non-numerical
                         --  character
-                        if Term.State.Tmp (Txt (C)).Callback /=
-                          Self_Insert
+                        if Term.State.Tmp (Txt (C)).Callback /= Self_Insert
                         then
                            Perform (Term.State.Tmp (Txt (C)).Callback);
                            Term.State.Current := Term.FSM;
@@ -1457,8 +1508,7 @@ package body Gtkada.Terminal is
                   end if;
                end if;
 
-            elsif Term.State.Current (Txt (C)).String_Stopper /=
-              char'Val (127)
+            elsif Term.State.Current (Txt (C)).String_Stopper /= char'Val (127)
             then
                --  Read a string parameter. This is a relatively rare case, for
                --  now we assume the string and the terminator come in the same
@@ -1466,9 +1516,7 @@ package body Gtkada.Terminal is
 
                Str_Arg_First := C + 1;
                Stopper := Term.State.Current (Txt (C)).String_Stopper;
-               while C < size_t (Length)
-                 and then Txt (C) /= Stopper
-               loop
+               while C < size_t (Length) and then Txt (C) /= Stopper loop
                   C := C + 1;
                end loop;
 
@@ -1494,7 +1542,7 @@ package body Gtkada.Terminal is
                --  standard transitions. So we use Tmp to follow the
                --  potential states from here on.
 
-               Term.State.Tmp     := Term.State.Current (Txt (C)).Transitions;
+               Term.State.Tmp := Term.State.Current (Txt (C)).Transitions;
                Term.State.Current := Term.State.Current (Txt (C)).Any_Number;
                Term.State.Arg (Term.State.Current_Arg) := 0;
 
@@ -1611,8 +1659,7 @@ package body Gtkada.Terminal is
       Prevent_Cursor_Motion_With_Mouse : Boolean := False)
    is
       function Replace_Insert_Text
-        (Class : GObject_Class; Func : Insert_Callback)
-         return Insert_Callback;
+        (Class : GObject_Class; Func : Insert_Callback) return Insert_Callback;
       pragma Import (C, Replace_Insert_Text, "replace_insert_text");
 
       Iter  : Gtk_Text_Iter;
@@ -1634,9 +1681,10 @@ package body Gtkada.Terminal is
       end if;
 
       if Class.Default_Insert_Callback = null then
-         Class.Default_Insert_Callback := Replace_Insert_Text
-           (Glib.Types.Class_Peek (Class.C_Class.The_Type),
-            On_Insert_Text'Access);
+         Class.Default_Insert_Callback :=
+           Replace_Insert_Text
+             (Glib.Types.Class_Peek (Class.C_Class.The_Type),
+              On_Insert_Text'Access);
 
          --  Initialize charset tables
          for C in Alternate_Charset'Range loop
@@ -1672,13 +1720,15 @@ package body Gtkada.Terminal is
          Gtk_New (F);
          Self.Foreground_Tags (T) := F;
          Set_Property
-           (F, Gtk.Text_Tag.Foreground_Property,
+           (F,
+            Gtk.Text_Tag.Foreground_Property,
             Ada.Characters.Handling.To_Lower (Color_Kind'Image (T)));
 
          Gtk_New (B);
          Self.Background_Tags (T) := B;
          Set_Property
-           (B, Gtk.Text_Tag.Background_Property,
+           (B,
+            Gtk.Text_Tag.Background_Property,
             Ada.Characters.Handling.To_Lower (Color_Kind'Image (T)));
 
          Table.Add (F);

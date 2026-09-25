@@ -34,12 +34,13 @@ package Learn.Views is
 
 private
 
-   package Boolean_Preference_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Boolean_Preference,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package Boolean_Preference_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Boolean_Preference,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    type Learn_View_Module_Type is new Module_ID_Record with record
       Show_Providers_Preferences : Boolean_Preference_Maps.Map;

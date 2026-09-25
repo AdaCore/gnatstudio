@@ -15,55 +15,57 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;              use Ada.Calendar;
-with Ada.Tags;                  use Ada.Tags;
-with GNAT.Regpat;               use GNAT.Regpat;
+with Ada.Calendar; use Ada.Calendar;
+with Ada.Tags;     use Ada.Tags;
+with GNAT.Regpat;  use GNAT.Regpat;
 
 with VSS.Strings.Conversions;
 with VSS.String_Vectors;
 
-with Glib.Object;               use Glib, Glib.Object;
-with XML_Utils;                 use XML_Utils;
+with Glib.Object;
+use Glib, Glib.Object;
+with XML_Utils;               use XML_Utils;
 with Gdk.Display;
-with Gdk.Event;                 use Gdk.Event;
-with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Event;               use Gdk.Event;
+with Gdk.Rectangle;           use Gdk.Rectangle;
 with Gdk.Monitor;
-with Gdk.Window;                use Gdk.Window;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Separator_Tool_Item;   use Gtk.Separator_Tool_Item;
-with Gtk.Toggle_Tool_Button;    use Gtk.Toggle_Tool_Button;
-with Gtk.Tool_Item;             use Gtk.Tool_Item;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
-with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gdk.Window;              use Gdk.Window;
+with Gtk.Box;                 use Gtk.Box;
+with Gtk.Button;              use Gtk.Button;
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Frame;               use Gtk.Frame;
+with Gtk.Menu;                use Gtk.Menu;
+with Gtk.Style_Context;       use Gtk.Style_Context;
+with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
+with Gtk.Toggle_Tool_Button;  use Gtk.Toggle_Tool_Button;
+with Gtk.Tool_Item;           use Gtk.Tool_Item;
+with Gtk.Toolbar;             use Gtk.Toolbar;
+with Gtk.Widget;              use Gtk.Widget;
+with Gtk.Window;              use Gtk.Window;
+with Gtkada.Entry_Completion; use Gtkada.Entry_Completion;
+with Gtkada.Handlers;         use Gtkada.Handlers;
+with Gtkada.MDI;              use Gtkada.MDI;
 
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Intl;                  use GPS.Intl;
-with Histories;                 use Histories;
-with Config;                    use Config;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Intl;              use GPS.Intl;
+with Histories;             use Histories;
+with Config;                use Config;
 with System;
 
 package body Generic_Views is
-   Me : constant Trace_Handle := Create ("GPS.KERNEL.GENERIC_VIEWS");
+   Me                 : constant Trace_Handle :=
+     Create ("GPS.KERNEL.GENERIC_VIEWS");
    No_Transient_Views : constant Trace_Handle :=
-     Create ("GPS.INTERNAL.VIEWS_NO_TRANSIENT_VIEWS",
-             Default => Off);
+     Create ("GPS.INTERNAL.VIEWS_NO_TRANSIENT_VIEWS", Default => Off);
 
-   Duplicate_Pattern  : constant Pattern_Matcher :=
+   Duplicate_Pattern : constant Pattern_Matcher :=
      Compile ("<\d+>$", Single_Line);
 
    function Has_Right_Expander
@@ -80,8 +82,7 @@ package body Generic_Views is
    --  the config button (unpressed)
 
    procedure On_Menu_Detached
-     (Attach_Widget : System.Address;
-      Menu          : System.Address);
+     (Attach_Widget : System.Address; Menu : System.Address);
    --  Called when the menu is detached
    pragma Convention (C, On_Menu_Detached);
 
@@ -115,8 +116,8 @@ package body Generic_Views is
    -----------------
 
    function Get_Toolbar
-     (View    : not null access View_Record'Class)
-      return Gtk.Toolbar.Gtk_Toolbar is
+     (View : not null access View_Record'Class) return Gtk.Toolbar.Gtk_Toolbar
+   is
    begin
       return View.Toolbar;
    end Get_Toolbar;
@@ -136,10 +137,7 @@ package body Generic_Views is
    -- Set_Filter --
    ----------------
 
-   procedure Set_Filter
-     (Self : not null access View_Record;
-      Text : String)
-   is
+   procedure Set_Filter (Self : not null access View_Record; Text : String) is
       use Filter_Panels;
    begin
       if Self.Filter /= null then
@@ -152,12 +150,13 @@ package body Generic_Views is
    ------------------
 
    procedure Build_Search
-     (Self    : not null access View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
-      P       : not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
-      Name                : Histories.History_Key;
-      Case_Sensitive      : Boolean := False;
-      Placeholder         : String := "search") is
+     (Self           : not null access View_Record;
+      Toolbar        : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      P              :
+        not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
+      Name           : Histories.History_Key;
+      Case_Sensitive : Boolean := False;
+      Placeholder    : String := "search") is
    begin
       --  If the view already contains a search panel, don't create another
       --  one.
@@ -189,9 +188,8 @@ package body Generic_Views is
       Self.Search.Completion_Entry.Set_Can_Focus (True);
 
       --  Append it to the toolbar
-      Self.Append_Toolbar (Toolbar     => Toolbar,
-                           Item        => Self.Search,
-                           Right_Align => True);
+      Self.Append_Toolbar
+        (Toolbar => Toolbar, Item => Self.Search, Right_Align => True);
    end Build_Search;
 
    ------------------------------
@@ -222,16 +220,14 @@ package body Generic_Views is
 
    function Is_Search_Provider_Overridden
      (Self : not null access View_Record) return Boolean
-   is
-     (Self.Search.Is_Provider_Overriden);
+   is (Self.Search.Is_Provider_Overriden);
 
    ------------------------------------------
    -- Set_Activity_Progress_Bar_Visibility --
    ------------------------------------------
 
    procedure Set_Activity_Progress_Bar_Visibility
-     (Self    : not null access View_Record'Class;
-      Visible : Boolean) is
+     (Self : not null access View_Record'Class; Visible : Boolean) is
    begin
       Self.Progress_Bar.Set_Activity_Progress_Bar_Visibility (Visible);
    end Set_Activity_Progress_Bar_Visibility;
@@ -282,8 +278,8 @@ package body Generic_Views is
    ------------
 
    function Kernel
-     (Self : not null access View_Record'Class)
-      return GPS.Kernel.Kernel_Handle is
+     (Self : not null access View_Record'Class) return GPS.Kernel.Kernel_Handle
+   is
    begin
       return Self.Kernel;
    end Kernel;
@@ -324,9 +320,7 @@ package body Generic_Views is
       Loc : Gint;
    begin
       if Right_Align then
-         if not Item.Get_Expand
-            and then Has_Right_Expander (Toolbar) = -1
-         then
+         if not Item.Get_Expand and then Has_Right_Expander (Toolbar) = -1 then
             Gtk_New (Sep);
             Sep.Set_Draw (False);
             Sep.Set_Expand (True);
@@ -366,9 +360,8 @@ package body Generic_Views is
    -- On_Filter_Changed --
    -----------------------
 
-   procedure On_Filter_Changed (View : access Gtk_Widget_Record'Class)
-   is
-      V : constant Abstract_View_Access    := Abstract_View_Access (View);
+   procedure On_Filter_Changed (View : access Gtk_Widget_Record'Class) is
+      V : constant Abstract_View_Access := Abstract_View_Access (View);
       P : GPS.Search.Search_Pattern_Access := V.Filter.Get_Filter_Pattern;
    begin
       V.Filter_Changed (P);
@@ -379,7 +372,7 @@ package body Generic_Views is
    ------------------------
 
    procedure On_Menu_Deactivate (View : access GObject_Record'Class) is
-      V  : constant Abstract_View_Access := Abstract_View_Access (View);
+      V : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
       if not V.In_Destruction then
          V.Config.Set_Active (False);
@@ -391,8 +384,7 @@ package body Generic_Views is
    ----------------------
 
    procedure On_Menu_Detached
-     (Attach_Widget : System.Address;
-      Menu          : System.Address)
+     (Attach_Widget : System.Address; Menu : System.Address)
    is
       pragma Unreferenced (Menu);
       V : constant Abstract_View_Access :=
@@ -411,18 +403,19 @@ package body Generic_Views is
    package body Simple_Views is
       Module : Module_ID;
 
-      Window_X_Hist_Key  : constant History_Key :=
+      Window_X_Hist_Key : constant History_Key :=
         "window_x_" & History_Key (View_Name);
-      Window_Y_Hist_Key  : constant History_Key :=
+      Window_Y_Hist_Key : constant History_Key :=
         "window_y_" & History_Key (View_Name);
 
-      type Local_Formal_MDI_Child_Access
-         is access all Local_Formal_MDI_Child'Class;
+      type Local_Formal_MDI_Child_Access is
+        access all Local_Formal_MDI_Child'Class;
 
       type Open_Command is new Interactive_Command with null record;
-      overriding function Execute
-        (Self    : access Open_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type;
+      overriding
+      function Execute
+        (Self : access Open_Command; Context : Interactive_Command_Context)
+         return Command_Return_Type;
       --  Open the view
 
       type Toplevel_Box is new Gtk_Box_Record with record
@@ -437,8 +430,9 @@ package body Generic_Views is
          Child           : out GPS_MDI_Child;
          View            : out View_Access;
          Toolbar_Id      : String := View_Name;
-         Init            : access procedure
-           (View : not null access Formal_View_Record'Class) := null;
+         Init            :
+           access procedure
+             (View : not null access Formal_View_Record'Class) := null;
          Is_Load_Desktop : Boolean := False);
       --  Create or reuse a view.
 
@@ -456,9 +450,7 @@ package body Generic_Views is
       --  Store in history the position of the view's dialog
 
       procedure Get_Stored_Position
-        (View           : View_Access;
-         Position_Found : out Boolean;
-         X, Y           : out Gint);
+        (View : View_Access; Position_Found : out Boolean; X, Y : out Gint);
       --  Retrieve from history the position of the view's dialog.
       --  Position_Found is set to True if the position was set, and, in this
       --  case, (X, Y) is set to the position.
@@ -468,13 +460,11 @@ package body Generic_Views is
       -------------------------
 
       procedure Get_Stored_Position
-        (View           : View_Access;
-         Position_Found : out Boolean;
-         X, Y           : out Gint)
+        (View : View_Access; Position_Found : out Boolean; X, Y : out Gint)
       is
-         Hist_X  : constant VSS.String_Vectors.Virtual_String_Vector :=
+         Hist_X : constant VSS.String_Vectors.Virtual_String_Vector :=
            Get_History (Get_History (View.Kernel).all, Window_X_Hist_Key);
-         Hist_Y  : constant VSS.String_Vectors.Virtual_String_Vector :=
+         Hist_Y : constant VSS.String_Vectors.Virtual_String_Vector :=
            Get_History (Get_History (View.Kernel).all, Window_Y_Hist_Key);
 
          Monitor : Gdk.Monitor.Gdk_Monitor;
@@ -507,10 +497,12 @@ package body Generic_Views is
          Monitor := Gdk.Display.Get_Default.Get_Monitor_At_Point (X, Y);
          Monitor.Get_Geometry (Rect);
 
-         X := Gint'Min
-           (Gint'Max (X, Rect.X), Rect.X + Rect.Width - Default_Width);
-         Y := Gint'Min
-           (Gint'Max (Y, Rect.Y), Rect.Y + Rect.Height - Default_Height);
+         X :=
+           Gint'Min
+             (Gint'Max (X, Rect.X), Rect.X + Rect.Width - Default_Width);
+         Y :=
+           Gint'Min
+             (Gint'Max (Y, Rect.Y), Rect.Y + Rect.Height - Default_Height);
 
          Position_Found := True;
       end Get_Stored_Position;
@@ -520,9 +512,9 @@ package body Generic_Views is
       --------------------
 
       procedure Store_Position (View : View_Access) is
-         Child   : constant MDI_Child := Child_From_View (View);
-         Win  : Gtk_Widget;
-         X, Y : Gint;
+         Child : constant MDI_Child := Child_From_View (View);
+         Win   : Gtk_Widget;
+         X, Y  : Gint;
       begin
          if Child = null then
             return;
@@ -534,10 +526,12 @@ package body Generic_Views is
          Get_Root_Origin (Get_Window (Win), X, Y);
 
          Add_To_History
-           (Get_History (View.Kernel).all, Window_X_Hist_Key,
+           (Get_History (View.Kernel).all,
+            Window_X_Hist_Key,
             VSS.Strings.To_Virtual_String (Gint'Wide_Wide_Image (X)));
          Add_To_History
-           (Get_History (View.Kernel).all, Window_Y_Hist_Key,
+           (Get_History (View.Kernel).all,
+            Window_Y_Hist_Key,
             VSS.Strings.To_Virtual_String (Gint'Wide_Wide_Image (Y)));
       end Store_Position;
 
@@ -546,8 +540,8 @@ package body Generic_Views is
       -----------------------------
 
       function On_Display_Local_Config
-        (View  : access GObject_Record'Class;
-         Event : Gdk_Event_Button) return Boolean
+        (View : access GObject_Record'Class; Event : Gdk_Event_Button)
+         return Boolean
       is
          V                   : constant Abstract_View_Access :=
            Abstract_View_Access (View);
@@ -568,9 +562,12 @@ package body Generic_Views is
             V.Config_Menu.Attach_To_Widget
               (V, Detacher => On_Menu_Detached'Access);
 
-            V.Unfloat_Menu := Append_Menu (V.Kernel, V.Config_Menu,
-                                           Label => "Unfloat",
-                                           Action => "unfloat view");
+            V.Unfloat_Menu :=
+              Append_Menu
+                (V.Kernel,
+                 V.Config_Menu,
+                 Label  => "Unfloat",
+                 Action => "unfloat view");
 
             V.Config_Menu.On_Deactivate (On_Menu_Deactivate'Access, V);
          end if;
@@ -589,13 +586,11 @@ package body Generic_Views is
             Popup_Custom_Contextual_Menu
               (V.Config_Menu,
                V.Kernel,
-               Activate_Time => Event.Time
-               + Guint32 ((Clock - Time_Before_Factory) * 1000));
+               Activate_Time =>
+                 Event.Time + Guint32 ((Clock - Time_Before_Factory) * 1000));
          else
             Popup_Custom_Contextual_Menu
-              (V.Config_Menu,
-               V.Kernel,
-               Activate_Time => Event.Time);
+              (V.Config_Menu, V.Kernel, Activate_Time => Event.Time);
          end if;
 
          V.Config.Set_Active (True);
@@ -611,9 +606,7 @@ package body Generic_Views is
          Visible_Only : Boolean := False)
       is
          View : constant View_Access :=
-           Retrieve_View
-             (Kernel       => Kernel,
-              Visible_Only => Visible_Only);
+           Retrieve_View (Kernel => Kernel, Visible_Only => Visible_Only);
 
       begin
          if View /= null then
@@ -627,16 +620,18 @@ package body Generic_Views is
 
       function Child_From_View
         (View : not null access Formal_View_Record'Class)
-         return access Local_Formal_MDI_Child'Class
-      is
+         return access Local_Formal_MDI_Child'Class is
       begin
          if Local_Config or else Local_Toolbar then
-            return Access_Local_Formal_MDI_Child (Find_MDI_Child
-              (Get_MDI (View.Kernel),
-               View.Get_Parent));  --  the box
+            return
+              Access_Local_Formal_MDI_Child
+                (Find_MDI_Child
+                   (Get_MDI (View.Kernel), View.Get_Parent));  --  the box
+
          else
-            return Access_Local_Formal_MDI_Child
-              (Find_MDI_Child (Get_MDI (View.Kernel), View));
+            return
+              Access_Local_Formal_MDI_Child
+                (Find_MDI_Child (Get_MDI (View.Kernel), View));
          end if;
       end Child_From_View;
 
@@ -644,7 +639,8 @@ package body Generic_Views is
       -- Get_Actual_Widget --
       -----------------------
 
-      overriding function Get_Actual_Widget
+      overriding
+      function Get_Actual_Widget
         (Self : not null access Local_Formal_MDI_Child) return Gtk_Widget
       is
          W : constant Gtk_Widget := Get_Widget (Self);
@@ -679,8 +675,9 @@ package body Generic_Views is
          View := null;
 
          if MDI /= null then
-            Child := GPS_MDI_Child
-              (MDI.Find_MDI_Child_By_Tag (T, Visible_Only => Visible_Only));
+            Child :=
+              GPS_MDI_Child
+                (MDI.Find_MDI_Child_By_Tag (T, Visible_Only => Visible_Only));
             if Child /= null then
                View := View_From_Child (Child);
             end if;
@@ -705,8 +702,7 @@ package body Generic_Views is
       -- On_Close_Floating_Child --
       -----------------------------
 
-      procedure On_Close_Floating_Child
-        (Self : access Gtk_Widget_Record'Class)
+      procedure On_Close_Floating_Child (Self : access Gtk_Widget_Record'Class)
       is
          View : constant View_Access := View_Access (Self);
       begin
@@ -728,11 +724,11 @@ package body Generic_Views is
       --------------------
 
       procedure On_Float_Child (Child : access Gtk_Widget_Record'Class) is
-         Self   : constant Local_Formal_MDI_Child_Access :=
+         Self : constant Local_Formal_MDI_Child_Access :=
            Local_Formal_MDI_Child_Access (Child);
-         View   : constant View_Access := View_From_Child (Self);
-         V      : constant Abstract_View_Access := Abstract_View_Access (View);
-         Req    : Gtk_Requisition;
+         View : constant View_Access := View_From_Child (Self);
+         V    : constant Abstract_View_Access := Abstract_View_Access (View);
+         Req  : Gtk_Requisition;
       begin
          --  Show the 'Close' button if present
          if V.Close_Button /= null then
@@ -740,8 +736,10 @@ package body Generic_Views is
          end if;
 
          Return_Callback.Object_Connect
-           (View.Get_Toplevel, Gtk.Widget.Signal_Delete_Event,
-            On_Delete_Floating_Child_Access, View);
+           (View.Get_Toplevel,
+            Gtk.Widget.Signal_Delete_Event,
+            On_Delete_Floating_Child_Access,
+            View);
 
          --  Set the size of the floating window
          View.Set_Size_Request (-1, -1);
@@ -756,10 +754,10 @@ package body Generic_Views is
       procedure On_Before_Unfloat_Child
         (Child : access Gtk_Widget_Record'Class)
       is
-         Self   : constant Local_Formal_MDI_Child_Access :=
+         Self : constant Local_Formal_MDI_Child_Access :=
            Local_Formal_MDI_Child_Access (Child);
-         View   : constant View_Access := View_From_Child (Self);
-         V      : constant Abstract_View_Access := Abstract_View_Access (View);
+         View : constant View_Access := View_From_Child (Self);
+         V    : constant Abstract_View_Access := Abstract_View_Access (View);
       begin
          --  Hide the 'Close' button if present
          if V.Close_Button /= null then
@@ -780,8 +778,9 @@ package body Generic_Views is
          Child           : out GPS_MDI_Child;
          View            : out View_Access;
          Toolbar_Id      : String := View_Name;
-         Init            : access procedure
-           (View : not null access Formal_View_Record'Class) := null;
+         Init            :
+           access procedure
+             (View : not null access Formal_View_Record'Class) := null;
          Is_Load_Desktop : Boolean := False)
       is
          use Filter_Panels;
@@ -811,14 +810,13 @@ package body Generic_Views is
          --  Create the view's progress bar. Don't show it on show all though,
          --  we only need to show it if requested.
          GUI_Utils.Gtk_New_Activity_Progress_Bar
-           (Abstract_View.Progress_Bar,
-            Container => Abstract_View);
+           (Abstract_View.Progress_Bar, Container => Abstract_View);
 
          Focus_Widget := Initialize (View);
 
          --  Create the finalized view, creating its local toolbar if needed
-         Finalized_View := Create_Finalized_View
-           (View, Toolbar_Id => Toolbar_Id);
+         Finalized_View :=
+           Create_Finalized_View (View, Toolbar_Id => Toolbar_Id);
 
          --  A simple check that the widget can indeed get the keyboard focus.
          --  If it can't, this might result in surprising behavior: for
@@ -847,32 +845,29 @@ package body Generic_Views is
          --  Child does not exist yet, create it
          Child := new Local_Formal_MDI_Child;
          Child.Set_Toolbar (View.Get_Toolbar);
-         Initialize (Child, Finalized_View,
-                     Kernel         => Kernel,
-                     Default_Width  => Default_Width,
-                     Default_Height => Default_Height,
-                     Focus_Widget   => Focus_Widget,
-                     Flags          =>
-                       (if Active (No_Transient_Views) then
-                         MDI_Flags
-                           and not (Float_As_Transient or Float_To_Main)
-                        else
-                           MDI_Flags),
-                     Module         => Module,
-                     Group          => Group,
-                     Areas          => Areas);
+         Initialize
+           (Child,
+            Finalized_View,
+            Kernel         => Kernel,
+            Default_Width  => Default_Width,
+            Default_Height => Default_Height,
+            Focus_Widget   => Focus_Widget,
+            Flags          =>
+              (if Active (No_Transient_Views)
+               then MDI_Flags and not (Float_As_Transient or Float_To_Main)
+               else MDI_Flags),
+            Module         => Module,
+            Group          => Group,
+            Areas          => Areas);
          Set_Title (Child, View_Name, View_Name);
 
          --  Create the button box area at the bottom
 
          Gtk_New (Button_Box_Frame);
          View.Pack_End (Button_Box_Frame, Expand => False);
-         Get_Style_Context (Button_Box_Frame).Add_Class
-           ("dialog-action-box");
+         Get_Style_Context (Button_Box_Frame).Add_Class ("dialog-action-box");
 
-         Gtk_New
-           (Abstract_View.Button_Box,
-            Orientation_Horizontal);
+         Gtk_New (Abstract_View.Button_Box, Orientation_Horizontal);
          Abstract_View.Button_Box.Set_Layout (Buttonbox_End);
          Button_Box_Frame.Add (Abstract_View.Button_Box);
 
@@ -883,13 +878,16 @@ package body Generic_Views is
             Widget_Callback.Connect
               (Child, Signal_Float_Child, On_Float_Child_Access);
             Widget_Callback.Connect
-              (Child, Signal_Before_Unfloat_Child,
+              (Child,
+               Signal_Before_Unfloat_Child,
                On_Before_Unfloat_Child_Access);
 
             Gtk_New (Abstract_View.Close_Button, -"Close");
             Widget_Callback.Object_Connect
-              (Abstract_View.Close_Button, Gtk.Button.Signal_Clicked,
-               On_Close_Floating_Child_Access, View);
+              (Abstract_View.Close_Button,
+               Gtk.Button.Signal_Clicked,
+               On_Close_Floating_Child_Access,
+               View);
             Abstract_View.Button_Box.Add (Abstract_View.Close_Button);
          end if;
 
@@ -907,10 +905,13 @@ package body Generic_Views is
                Get_Stored_Position (View, Found, X, Y);
             end if;
 
-            Put (Get_MDI (Kernel), Child,
-                 Initial_Position => Position,
-                 Position_At_Mouse => not Found,
-                 X => X, Y => Y);
+            Put
+              (Get_MDI (Kernel),
+               Child,
+               Initial_Position  => Position,
+               Position_At_Mouse => not Found,
+               X                 => X,
+               Y                 => Y);
          end;
 
          if Init /= null then
@@ -938,13 +939,12 @@ package body Generic_Views is
       ------------------
 
       function Load_Desktop
-        (MDI  : MDI_Window;
-         Node : Node_Ptr;
-         User : Kernel_Handle) return MDI_Child
+        (MDI : MDI_Window; Node : Node_Ptr; User : Kernel_Handle)
+         return MDI_Child
       is
          pragma Unreferenced (MDI);
-         View         : View_Access;
-         Child        : GPS_MDI_Child;
+         View  : View_Access;
+         Child : GPS_MDI_Child;
       begin
          if Node.Tag.all = Module_Name then
             Create_If_Needed (User, Child, View, Is_Load_Desktop => True);
@@ -958,12 +958,13 @@ package body Generic_Views is
       -- Save_Desktop --
       ------------------
 
-      overriding function Save_Desktop
+      overriding
+      function Save_Desktop
         (Self : not null access Local_Formal_MDI_Child) return Node_Ptr
       is
          Widget : constant Gtk_Widget := Get_Widget (Self);
-         N : Node_Ptr;
-         Tb : constant Boolean := Local_Toolbar or else Local_Config;
+         N      : Node_Ptr;
+         Tb     : constant Boolean := Local_Toolbar or else Local_Config;
       begin
          if not Save_Duplicates_In_Perspectives
            and then Match (Duplicate_Pattern, Self.Get_Title)
@@ -988,9 +989,7 @@ package body Generic_Views is
             Save_To_XML (Toplevel_Box (Widget.all).Initial, N);
             return N;
 
-         elsif not Tb
-           and then Widget.all in Formal_View_Record'Class
-         then
+         elsif not Tb and then Widget.all in Formal_View_Record'Class then
             N := new Node;
             N.Tag := new String'(Module_Name);
             Save_To_XML (View_Access (Widget), N);
@@ -1003,9 +1002,10 @@ package body Generic_Views is
       -- Execute --
       -------------
 
-      overriding function Execute
-        (Self    : access Open_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type
+      overriding
+      function Execute
+        (Self : access Open_Command; Context : Interactive_Command_Context)
+         return Command_Return_Type
       is
          Ignore : View_Access;
          pragma Unreferenced (Self, Ignore);
@@ -1020,11 +1020,10 @@ package body Generic_Views is
 
       function Retrieve_View
         (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Visible_Only : Boolean := False)
-         return View_Access
+         Visible_Only : Boolean := False) return View_Access
       is
-         Child        : GPS_MDI_Child;
-         View         : View_Access;
+         Child : GPS_MDI_Child;
+         View  : View_Access;
       begin
          Find
            (Kernel,
@@ -1090,8 +1089,8 @@ package body Generic_Views is
         (View       : not null access Formal_View_Record'Class;
          Toolbar_Id : String := View_Name) return Gtk_Widget
       is
-         Box            : Gtk_Box;
-         Toolbar        : Gtk_Toolbar := View.Get_Toolbar;
+         Box     : Gtk_Box;
+         Toolbar : Gtk_Toolbar := View.Get_Toolbar;
       begin
          --  If no local toolbar is needed, either to contain a custom toolbar
          --  or for a local config menu, return View.
@@ -1129,13 +1128,14 @@ package body Generic_Views is
         (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
          Focus      : Boolean := True;
          Toolbar_Id : String := View_Name;
-         Init       : access procedure
-            (View : not null access Formal_View_Record'Class) := null)
+         Init       :
+           access procedure
+             (View : not null access Formal_View_Record'Class) := null)
          return View_Access
       is
-         Child        : GPS_MDI_Child;
+         Child          : GPS_MDI_Child;
          Existed_Before : Boolean := False;
-         View         : View_Access;
+         View           : View_Access;
       begin
          if Active (No_Transient_Views) then
             Find (Kernel, Child, View);
@@ -1145,7 +1145,7 @@ package body Generic_Views is
          end if;
 
          Create_If_Needed
-            (Kernel, Child, View, Toolbar_Id => Toolbar_Id, Init => Init);
+           (Kernel, Child, View, Toolbar_Id => Toolbar_Id, Init => Init);
 
          if Focus then
             Raise_Child (Child);
@@ -1155,13 +1155,11 @@ package body Generic_Views is
                --  If this mode is active, this means we are on an old X11
                --  implementation, where the Present() called by Raise_Child
                --  above might not work. Force the presentation here.
-               if Child.Is_Floating
-                 and then Existed_Before
-               then
+               if Child.Is_Floating and then Existed_Before then
                   declare
                      Window : constant Gtk_Window :=
                        Gtk_Window (View.Get_Toplevel);
-                     X, Y : Gint;
+                     X, Y   : Gint;
                   begin
                      Window.Get_Position (X, Y);
                      --  This is of course a hack, but the only way (I found)
@@ -1173,8 +1171,9 @@ package body Generic_Views is
                end if;
             end if;
 
-            --  ??? browsers used to do the following:
-            --  Add_Navigation_Location (Kernel, -"Call graph Browser");
+         --  ??? browsers used to do the following:
+         --  Add_Navigation_Location (Kernel, -"Call graph Browser");
+
          end if;
 
          if Child = null then
@@ -1189,8 +1188,8 @@ package body Generic_Views is
       ---------------------
 
       procedure Register_Module
-        (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-         ID          : GPS.Kernel.Modules.Module_ID := null) is
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+         ID     : GPS.Kernel.Modules.Module_ID := null) is
       begin
          if ID = null then
             Module := new Module_ID_Record;
@@ -1200,9 +1199,14 @@ package body Generic_Views is
 
          if Commands_Category /= "" then
             Register_Action
-              (Kernel, "open " & View_Name,
-               new Open_Command, "Open (or reuse if it already exists) the '"
-               & View_Name & "' view", null, Commands_Category);
+              (Kernel,
+               "open " & View_Name,
+               new Open_Command,
+               "Open (or reuse if it already exists) the '"
+               & View_Name
+               & "' view",
+               null,
+               Commands_Category);
          end if;
 
          Register_Module

@@ -35,14 +35,15 @@ generic
    with function Prev (I : Iterator) return Iterator is <>;
    with function At_End (I : Iterator) return Boolean is <>;
 
-package Diffing is
+package Diffing
+is
 
    type Diff_State is (Equal, Added, Removed);
    --  This type is used to identify the state of an element during the diff
    --  process
 
-   type Diff_Callback is access procedure
-     (Old_Obj, New_Obj : Object; State : Diff_State);
+   type Diff_Callback is
+     access procedure (Old_Obj, New_Obj : Object; State : Diff_State);
    --  This function is called by the generic diff algorithm. Depending on the
    --  value of State, arguments means something different:
    --    Equal:   Old_Obj contains the object from the old container, New_Obj
@@ -54,8 +55,7 @@ package Diffing is
    --             removed object from the old container.
 
    procedure Diff
-     (Old_Container, New_Container : Container;
-      Callback                     : Diff_Callback);
+     (Old_Container, New_Container : Container; Callback : Diff_Callback);
    --  Performs a diff operation between the new and the old container. The
    --  overall complexity of the algoritm is rather high, but optimization is
    --  done to avoid computing diff on the firsts and lasts equals characters.

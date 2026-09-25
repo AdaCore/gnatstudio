@@ -44,7 +44,9 @@ package body GPS.Python_Core is
             declare
                Packaged_Python_Location : constant Virtual_File :=
                  Create (+Executable_Location)
-                 / (+"share") / (+"gnatstudio") / (+"python");
+                 / (+"share")
+                 / (+"gnatstudio")
+                 / (+"python");
             begin
                Register_Python_Scripting
                  (Kernel.Scripts,
@@ -75,42 +77,45 @@ package body GPS.Python_Core is
          --  if the DLLs are not relatively located to PYTHONHOME.
          if Config.Host = Windows then
             Script.Execute_Command
-              (CL           => GNATCOLL.Arg_Lists.Create
-                 ("import os; import io;"
-                  & "save_stdout = sys.stdout; sys.stdout = io.StringIO()"),
-               Hide_Output  => True,
-               Errors       => Errors);
+              (CL          =>
+                 GNATCOLL.Arg_Lists.Create
+                   ("import os; import io;"
+                    & "save_stdout = sys.stdout; sys.stdout = io.StringIO()"),
+               Hide_Output => True,
+               Errors      => Errors);
             for Path of Paths loop
                Script.Execute_Command
-                 (CL           => GNATCOLL.Arg_Lists.Create
-                    ("os.add_dll_directory('"
-                     & VSS.Strings.Conversions.To_UTF_8_String (Path)
-                     & "')"),
-                  Hide_Output  => True,
-                  Errors       => Errors);
+                 (CL          =>
+                    GNATCOLL.Arg_Lists.Create
+                      ("os.add_dll_directory('"
+                       & VSS.Strings.Conversions.To_UTF_8_String (Path)
+                       & "')"),
+                  Hide_Output => True,
+                  Errors      => Errors);
             end loop;
             Script.Execute_Command
-              (CL           => GNATCOLL.Arg_Lists.Create
-                 ("sys.stdout = save_stdout"),
-               Hide_Output  => True,
-               Errors       => Errors);
+              (CL          =>
+                 GNATCOLL.Arg_Lists.Create ("sys.stdout = save_stdout"),
+               Hide_Output => True,
+               Errors      => Errors);
          end if;
 
          --  Register GPS module as GS to use both in transition period
          Script.Execute_Command
-           (CL           => GNATCOLL.Arg_Lists.Create
-              ("sys.modules['GS'] = GPS"),
-            Hide_Output  => True,
-            Errors       => Errors);
+           (CL          =>
+              GNATCOLL.Arg_Lists.Create ("sys.modules['GS'] = GPS"),
+            Hide_Output => True,
+            Errors      => Errors);
          pragma Assert (not Errors);
 
          --  Force the interpreter to load all files as utf8
          Script.Execute_Command
-           (CL           => GNATCOLL.Arg_Lists.Create
-              ("import _locale; _locale._getdefaultlocale" &
-                 " = (lambda *args: ['en_US', 'utf8'])"),
-            Hide_Output  => True,
-            Errors       => Errors);
+           (CL          =>
+              GNATCOLL.Arg_Lists.Create
+                ("import _locale; _locale._getdefaultlocale"
+                 & " = (lambda *args: ['en_US', 'utf8'])"),
+            Hide_Output => True,
+            Errors      => Errors);
          pragma Assert (not Errors);
       end;
    end Register_Python;

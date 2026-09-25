@@ -15,19 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with System.Assertions;         use System.Assertions;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with System.Assertions; use System.Assertions;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
 with VSS.Strings.Conversions;
 
-with GUI_Utils;                 use GUI_Utils;
-with XML_Utils;                 use XML_Utils;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GUI_Utils;                use GUI_Utils;
+with XML_Utils;                use XML_Utils;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with XML_Parsers;
 
 package body GPS.Kernel.Custom is
@@ -42,7 +42,8 @@ package body GPS.Kernel.Custom is
    end record;
    type Scripts_Htable_Access is access all Scripts_Htable_Record'Class;
 
-   overriding procedure Reset (Table : access Scripts_Htable_Record);
+   overriding
+   procedure Reset (Table : access Scripts_Htable_Record);
    --  Reset the table
 
    procedure Parse_Custom_Dir
@@ -62,8 +63,8 @@ package body GPS.Kernel.Custom is
    function Autoload_System_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir
-        (Get_System_Dir (Kernel), "share/gnatstudio/plug-ins");
+      return
+        Create_From_Dir (Get_System_Dir (Kernel), "share/gnatstudio/plug-ins");
    end Autoload_System_Dir;
 
    ----------------------------
@@ -73,8 +74,8 @@ package body GPS.Kernel.Custom is
    function No_Autoload_System_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir
-        (Get_System_Dir (Kernel), "share/gnatstudio/library");
+      return
+        Create_From_Dir (Get_System_Dir (Kernel), "share/gnatstudio/library");
    end No_Autoload_System_Dir;
 
    -----------------------
@@ -85,7 +86,7 @@ package body GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File
    is
       Dir : constant Virtual_File :=
-              Create_From_Dir (Get_Home_Dir (Kernel), "plug-ins");
+        Create_From_Dir (Get_Home_Dir (Kernel), "plug-ins");
    begin
       if not Is_Directory (Dir) then
          Make_Dir (Dir);
@@ -101,8 +102,9 @@ package body GPS.Kernel.Custom is
    function Support_Core_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gnatstudio/support/core");
+      return
+        Create_From_Dir
+          (Get_System_Dir (Kernel), "share/gnatstudio/support/core");
    end Support_Core_Dir;
 
    --------------------
@@ -112,8 +114,9 @@ package body GPS.Kernel.Custom is
    function Support_UI_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gnatstudio/support/ui");
+      return
+        Create_From_Dir
+          (Get_System_Dir (Kernel), "share/gnatstudio/support/ui");
    end Support_UI_Dir;
 
    ---------------------------
@@ -123,8 +126,9 @@ package body GPS.Kernel.Custom is
    function Support_Languages_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gnatstudio/support/languages");
+      return
+        Create_From_Dir
+          (Get_System_Dir (Kernel), "share/gnatstudio/support/languages");
    end Support_Languages_Dir;
 
    -----------------------------
@@ -134,8 +138,9 @@ package body GPS.Kernel.Custom is
    function Support_No_Autoload_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
    begin
-      return Create_From_Dir
-         (Get_System_Dir (Kernel), "share/gnatstudio/support/noload");
+      return
+        Create_From_Dir
+          (Get_System_Dir (Kernel), "share/gnatstudio/support/noload");
    end Support_No_Autoload_Dir;
 
    ---------------------
@@ -155,13 +160,13 @@ package body GPS.Kernel.Custom is
    ----------------------
 
    procedure Parse_Custom_Dir
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Directory : Virtual_File;
-      Level     : Customization_Level;
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Directory        : Virtual_File;
+      Level            : Customization_Level;
       Default_Autoload : Boolean;
       Force_Load       : Boolean)
    is
-      Files : File_Array_Access;
+      Files     : File_Array_Access;
       File_Node : Node_Ptr;
    begin
       if Is_Directory (Directory) then
@@ -176,17 +181,19 @@ package body GPS.Kernel.Custom is
                  and then Is_Regular_File (F)
                then
                   if Force_Load
-                    or else Load_File_At_Startup
-                      (Kernel, F,
-                       Default        => Default_Autoload)
+                    or else
+                      Load_File_At_Startup
+                        (Kernel, F, Default => Default_Autoload)
                   then
                      Trace (Me, "Loading " & Display_Full_Name (F));
 
                      XML_Parsers.Parse (F, File_Node, Error);
 
                      if File_Node = null then
-                        Trace (Me, "Could not parse XML file: "
-                               & Display_Full_Name (F));
+                        Trace
+                          (Me,
+                           "Could not parse XML file: "
+                           & Display_Full_Name (F));
                         Kernel.Insert (Error.all, Mode => GPS.Kernel.Error);
                         Free (Error);
                      else
@@ -200,8 +207,8 @@ package body GPS.Kernel.Custom is
             exception
                when Assert_Failure =>
                   Kernel.Insert
-                    (-"Could not parse custom file "
-                     & Display_Full_Name (F), Mode => GPS.Kernel.Error);
+                    (-"Could not parse custom file " & Display_Full_Name (F),
+                     Mode => GPS.Kernel.Error);
             end;
          end loop;
 
@@ -232,10 +239,7 @@ package body GPS.Kernel.Custom is
       if Kernel.Customization_Strings /= null then
          Trace (Me, "Executing customization strings previously registered");
          Execute_Customization_String
-           (Kernel,
-            No_File,
-            Kernel.Customization_Strings,
-            Hard_Coded);
+           (Kernel, No_File, Kernel.Customization_Strings, Hard_Coded);
 
          --  Can't call Free itself, since it doesn't free the siblings
          while Kernel.Customization_Strings /= null loop
@@ -248,19 +252,28 @@ package body GPS.Kernel.Custom is
       --  Load the system plugins directory first, so that its contents can
       --  be overridden locally by the user
       Parse_Custom_Dir
-        (Kernel, Autoload_System_Dir (Kernel), System_Wide,
-         Default_Autoload => True, Force_Load => False);
+        (Kernel,
+         Autoload_System_Dir (Kernel),
+         System_Wide,
+         Default_Autoload => True,
+         Force_Load       => False);
       Parse_Custom_Dir
-        (Kernel, No_Autoload_System_Dir (Kernel), System_Wide,
-         Default_Autoload => False, Force_Load => False);
+        (Kernel,
+         No_Autoload_System_Dir (Kernel),
+         System_Wide,
+         Default_Autoload => False,
+         Force_Load       => False);
 
       for J in Env_Path'Range loop
          if Env_Path (J) /= No_File then
-            Trace (Me, "Loading XML file from "
-                & Env_Path (J).Display_Full_Name);
+            Trace
+              (Me, "Loading XML file from " & Env_Path (J).Display_Full_Name);
             Parse_Custom_Dir
-              (Kernel, Env_Path (J), Project_Wide,
-               Default_Autoload => True, Force_Load => False);
+              (Kernel,
+               Env_Path (J),
+               Project_Wide,
+               Default_Autoload => True,
+               Force_Load       => False);
          end if;
       end loop;
    end Load_System_Custom_Files;
@@ -282,10 +295,7 @@ package body GPS.Kernel.Custom is
       if Kernel.Customization_Strings /= null then
          Trace (Me, "Executing customization strings previously registered");
          Execute_Customization_String
-           (Kernel,
-            No_File,
-            Kernel.Customization_Strings,
-            Hard_Coded);
+           (Kernel, No_File, Kernel.Customization_Strings, Hard_Coded);
 
          --  Can't call Free itself, since it doesn't free the siblings
          while Kernel.Customization_Strings /= null loop
@@ -296,8 +306,11 @@ package body GPS.Kernel.Custom is
       end if;
 
       Parse_Custom_Dir
-        (Kernel, Autoload_User_Dir (Kernel), User_Specific,
-         Default_Autoload => True, Force_Load => False);
+        (Kernel,
+         Autoload_User_Dir (Kernel),
+         User_Specific,
+         Default_Autoload => True,
+         Force_Load       => False);
    end Load_User_Custom_Files;
 
    -----------------------------------
@@ -308,8 +321,11 @@ package body GPS.Kernel.Custom is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Parse_Custom_Dir
-        (Kernel, No_Autoload_System_Dir (Kernel), System_Wide,
-         Default_Autoload => False, Force_Load => False);
+        (Kernel,
+         No_Autoload_System_Dir (Kernel),
+         System_Wide,
+         Default_Autoload => False,
+         Force_Load       => False);
    end Load_No_Autoload_Custom_Files;
 
    ------------------------------
@@ -334,7 +350,8 @@ package body GPS.Kernel.Custom is
 
       --  If the string appears to be a complete file, accept it as is
       if Customization'Length > 5
-        and then Customization (Customization'First .. Customization'First + 4)
+        and then
+          Customization (Customization'First .. Customization'First + 4)
           = "<?xml"
       then
          XML_Parsers.Parse_Buffer
@@ -413,8 +430,12 @@ package body GPS.Kernel.Custom is
       when E : others =>
          --  This is purely internal error for programmers, no need for console
 
-         Trace (Me, "Could not parse custom string " & Customization
-                & ' ' & Exception_Message (E));
+         Trace
+           (Me,
+            "Could not parse custom string "
+            & Customization
+            & ' '
+            & Exception_Message (E));
          Free (Err);
          Free (Node);
          return "Internal error";
@@ -428,7 +449,7 @@ package body GPS.Kernel.Custom is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Startup : constant Virtual_File :=
-                  Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
+        Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
       Err     : GNAT.Strings.String_Access;
       Node, N : Node_Ptr;
       Script  : Script_Description_Access;
@@ -437,16 +458,12 @@ package body GPS.Kernel.Custom is
       Kernel.Startup_Scripts := new Scripts_Htable_Record;
 
       if Is_Regular_File (Startup) then
-         XML_Parsers.Parse
-           (File  => Startup,
-            Tree  => Node,
-            Error => Err);
+         XML_Parsers.Parse (File => Startup, Tree => Node, Error => Err);
 
          if Node = null then
             Trace (Me, "Error while loading startup.xml: " & Err.all);
             Kernel.Insert
-              ("Could not parse startup.xml: " & Err.all,
-               Mode => Error);
+              ("Could not parse startup.xml: " & Err.all, Mode => Error);
             Free (Err);
 
          else
@@ -464,14 +481,14 @@ package body GPS.Kernel.Custom is
                         Mode := Explicit_On;
                   end;
 
-                  Script := new Script_Description'
-                    (Mode           => Mode,
-                     Loaded         => False,
-                     File           => GNATCOLL.VFS.No_File);
+                  Script :=
+                    new Script_Description'
+                      (Mode   => Mode,
+                       Loaded => False,
+                       File   => GNATCOLL.VFS.No_File);
 
                   Set
-                    (Scripts_Htable_Access
-                       (Kernel.Startup_Scripts).Table,
+                    (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
                      K => Get_Attribute_S (N, "file"),
                      E => Script);
                end if;
@@ -491,15 +508,15 @@ package body GPS.Kernel.Custom is
    procedure Save_Startup_Scripts_List
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Startup : constant Virtual_File :=
-                  Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
+      Startup     : constant Virtual_File :=
+        Create_From_Dir (Get_Home_Dir (Kernel), "startup.xml");
       File, Child : Node_Ptr;
       Iter        : Scripts_Hash.String_Hash_Table.Cursor;
       Script      : Script_Description_Access;
       Success     : Boolean;
 
    begin
-      File     := new Node;
+      File := new Node;
       File.Tag := new String'("GNAT_Studio");
 
       Get_First (Scripts_Htable_Access (Kernel.Startup_Scripts).Table, Iter);
@@ -508,7 +525,7 @@ package body GPS.Kernel.Custom is
          exit when Script = null;
 
          case Script.Mode is
-            when Automatic =>
+            when Automatic                  =>
                null;
 
             when Explicit_On | Explicit_Off =>
@@ -539,12 +556,13 @@ package body GPS.Kernel.Custom is
    -----------------------------
 
    procedure For_All_Startup_Scripts
-     (Kernel : access Kernel_Handle_Record'Class;
-      Callback : not null access procedure
-        (Name     : String;
-         File     : GNATCOLL.VFS.Virtual_File;
-         Loaded   : Boolean;
-         Explicit : Boolean))
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Callback :
+        not null access procedure
+          (Name     : String;
+           File     : GNATCOLL.VFS.Virtual_File;
+           Loaded   : Boolean;
+           Explicit : Boolean))
    is
       Iter : Scripts_Hash.String_Hash_Table.Cursor;
       S    : Script_Description_Access;
@@ -574,24 +592,25 @@ package body GPS.Kernel.Custom is
    -----------------------------
 
    procedure Override_Startup_Script
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Base_Name      : String;
-      Load           : Boolean)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Base_Name : String;
+      Load      : Boolean)
    is
       Startup : Script_Description_Access :=
-                  Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                       K => Base_Name);
-      Mode : constant Load_Mode :=
+        Get
+          (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+           K => Base_Name);
+      Mode    : constant Load_Mode :=
         (if Load then Explicit_On else Explicit_Off);
    begin
       if Startup = null then
-         Startup := new Script_Description'
-           (Mode           => Mode,
-            Loaded         => False,
-            File           => GNATCOLL.VFS.No_File);
-         Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-              K => Base_Name,
-              E => Startup);
+         Startup :=
+           new Script_Description'
+             (Mode => Mode, Loaded => False, File => GNATCOLL.VFS.No_File);
+         Set
+           (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+            K => Base_Name,
+            E => Startup);
       else
          Startup.Mode := Mode;
       end if;
@@ -602,51 +621,57 @@ package body GPS.Kernel.Custom is
    --------------------------
 
    function Load_File_At_Startup
-     (Kernel         : access Kernel_Handle_Record'Class;
-      File           : GNATCOLL.VFS.Virtual_File;
-      Default        : Boolean) return Boolean
+     (Kernel  : access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Default : Boolean) return Boolean
    is
       Startup : Script_Description_Access;
    begin
       --  The base name would be "" for python module (ie subdirectories).
 
       if File.Base_Name = "" then
-         Startup := Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                         K => +File.Base_Dir_Name);
+         Startup :=
+           Get
+             (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+              K => +File.Base_Dir_Name);
       else
-         Startup := Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                         K => +File.Base_Name);
+         Startup :=
+           Get
+             (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+              K => +File.Base_Name);
       end if;
 
       if Startup = null then
-         Startup := new Script_Description'
-           (Mode             => Automatic,
-            Loaded           => Default,
-            File             => File);
+         Startup :=
+           new Script_Description'
+             (Mode => Automatic, Loaded => Default, File => File);
 
          if File.Base_Name = "" then
-            Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                 K => +File.Base_Dir_Name,
-                 E => Startup);
+            Set
+              (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+               K => +File.Base_Dir_Name,
+               E => Startup);
          else
-            Set (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                 K => +File.Base_Name,
-                 E => Startup);
+            Set
+              (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+               K => +File.Base_Name,
+               E => Startup);
          end if;
 
-      elsif Startup.File /= File
-        and then Startup.File /= GNATCOLL.VFS.No_File
+      elsif Startup.File /= File and then Startup.File /= GNATCOLL.VFS.No_File
       then
-         Insert (Kernel,
-                 -"There are several startup scripts with the same name: "
-                 & Startup.File.Display_Full_Name
-                 & ASCII.LF
-                 & (-"Not loading: ") & File.Display_Full_Name,
-                 Mode => Error);
+         Insert
+           (Kernel,
+            -"There are several startup scripts with the same name: "
+            & Startup.File.Display_Full_Name
+            & ASCII.LF
+            & (-"Not loading: ")
+            & File.Display_Full_Name,
+            Mode => Error);
          return False;
 
       else
-         Startup.File   := File;
+         Startup.File := File;
          Startup.Loaded :=
            Startup.Mode = Explicit_On
            or else (Startup.Mode /= Explicit_Off and then Default);
@@ -660,12 +685,13 @@ package body GPS.Kernel.Custom is
    -------------------------------
 
    function Get_Script_From_Base_Name
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Base_Name : String) return Script_Description_Access
+     (Kernel : not null access Kernel_Handle_Record'Class; Base_Name : String)
+      return Script_Description_Access
    is
       Script : constant Script_Description_Access :=
-                 Get (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
-                      K => Base_Name);
+        Get
+          (Scripts_Htable_Access (Kernel.Startup_Scripts).Table,
+           K => Base_Name);
    begin
       return Script;
    end Get_Script_From_Base_Name;
@@ -675,8 +701,10 @@ package body GPS.Kernel.Custom is
    ----------
 
    procedure Free (File : in out Script_Description_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Script_Description, Script_Description_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Script_Description,
+           Script_Description_Access);
    begin
       Unchecked_Free (File);
    end Free;
@@ -685,7 +713,8 @@ package body GPS.Kernel.Custom is
    -- Reset --
    -----------
 
-   overriding procedure Reset (Table : access Scripts_Htable_Record) is
+   overriding
+   procedure Reset (Table : access Scripts_Htable_Record) is
    begin
       Reset (Table.Table);
    end Reset;

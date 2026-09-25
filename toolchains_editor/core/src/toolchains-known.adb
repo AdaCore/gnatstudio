@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;               use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Fixed.Hash;
 with Ada.Unchecked_Deallocation;
@@ -25,17 +25,19 @@ with XML_Parsers; use XML_Parsers;
 
 package body Toolchains.Known is
 
-   package Name_Map is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => String,
-      Hash            => Ada.Strings.Fixed.Hash,
-      Equivalent_Keys => "=");
-   package Toolchain_Map is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Name_Map.Map,
-      Hash            => Ada.Strings.Fixed.Hash,
-      Equivalent_Keys => "=",
-      "="             => Name_Map."=");
+   package Name_Map is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => String,
+        Hash            => Ada.Strings.Fixed.Hash,
+        Equivalent_Keys => "=");
+   package Toolchain_Map is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Name_Map.Map,
+        Hash            => Ada.Strings.Fixed.Hash,
+        Equivalent_Keys => "=",
+        "="             => Name_Map."=");
 
    Default_Naming : Name_Map.Map;
    The_Map        : Toolchain_Map.Map;
@@ -118,7 +120,7 @@ package body Toolchains.Known is
    -- Is_Known_Toolchain_Name --
    -----------------------------
 
-   function Is_Known_Toolchain_Name (Name    : String) return Boolean is
+   function Is_Known_Toolchain_Name (Name : String) return Boolean is
    begin
       return The_Map.Contains (Name);
    end Is_Known_Toolchain_Name;
@@ -129,7 +131,7 @@ package body Toolchains.Known is
 
    function Get_Known_Toolchain_Names return String_List_Access is
       Ret  : constant String_List_Access :=
-               new String_List (1 .. Natural (The_Map.Length));
+        new String_List (1 .. Natural (The_Map.Length));
       Iter : Toolchain_Map.Cursor := The_Map.First;
       Idx  : Natural := 0;
 
@@ -144,7 +146,7 @@ package body Toolchains.Known is
                if Ret (J).all > Tc then
                   Ret (1 .. Idx + 1) :=
                     Ret (1 .. J - 1) & new String'(Tc) & Ret (J .. Idx);
-                  Idx  := Idx + 1;
+                  Idx := Idx + 1;
                   Done := True;
 
                   exit;
@@ -251,8 +253,8 @@ package body Toolchains.Known is
       N_Languages : Natural := 0;
       Ret         : String_List_Access := new String_List (1 .. 10);
 
-      procedure Simple_Free is new Ada.Unchecked_Deallocation
-        (String_List, String_List_Access);
+      procedure Simple_Free is new
+        Ada.Unchecked_Deallocation (String_List, String_List_Access);
 
       procedure Append_Lang (Lang : String);
 
@@ -267,7 +269,7 @@ package body Toolchains.Known is
          if N_Languages > Ret'Last then
             declare
                Tmp : constant String_List_Access :=
-                       new String_List (1 .. Ret'Length * 2);
+                 new String_List (1 .. Ret'Length * 2);
             begin
                Tmp (1 .. Ret'Length) := Ret.all;
                Simple_Free (Ret);
@@ -312,7 +314,7 @@ package body Toolchains.Known is
               and then Key (Key'First .. Key'First + 8) = "compiler_"
             then
                declare
-                  Lang : constant String := Key (Key'First + 9 .. Key'Last);
+                  Lang  : constant String := Key (Key'First + 9 .. Key'Last);
                   Found : Boolean;
                begin
                   if Val = "" then
@@ -353,7 +355,7 @@ package body Toolchains.Known is
 
       declare
          Tmp : constant String_List_Access :=
-                 new String_List'(Ret (1 .. N_Languages));
+           new String_List'(Ret (1 .. N_Languages));
       begin
          Simple_Free (Ret);
 

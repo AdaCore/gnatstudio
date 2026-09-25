@@ -15,9 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with Basic_Types;                  use Basic_Types;
-with Commands.Interactive;         use Commands, Commands.Interactive;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Basic_Types;           use Basic_Types;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -28,14 +29,14 @@ with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
 
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Gtkada.MDI;                   use Gtkada.MDI;
-with Gtk.Enums;                    use Gtk.Enums;
-with Gtk.Text_Tag;                 use Gtk.Text_Tag;
-with Gtk.Widget;                   use Gtk.Widget;
+with Gtkada.MDI;   use Gtkada.MDI;
+with Gtk.Enums;    use Gtk.Enums;
+with Gtk.Text_Tag; use Gtk.Text_Tag;
+with Gtk.Widget;   use Gtk.Widget;
 
-with VCS2.Engines;                 use VCS2.Engines;
+with VCS2.Engines; use VCS2.Engines;
 with Vdiff2_Module.Utils;
 
 package body VCS2.Diff is
@@ -43,22 +44,25 @@ package body VCS2.Diff is
    Diff_Name : constant Filesystem_String := "vcs2_diff.diff";
 
    type Diff_Head_For_File is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Diff_Head_For_File;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Diff_Head_For_File; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Show the local changes for the current file
 
-   type Diff_Head_For_File_In_Editor is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Diff_Head_For_File_In_Editor is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Self    : access Diff_Head_For_File_In_Editor;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Show the local changes for the current file
 
    type Diff_Head is new Interactive_Command with null record;
-   overriding function Execute
-     (Self    : access Diff_Head;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Self : access Diff_Head; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Show the local changes for the current file
 
    type On_Diff_Visitor is new Task_Visitor with record
@@ -66,12 +70,12 @@ package body VCS2.Diff is
       File   : Virtual_File;
       Ref    : Unbounded_String;
    end record;
-   overriding procedure On_Diff_Computed
-     (Self   : not null access On_Diff_Visitor;
-      Diff   : String);
-   overriding procedure On_File_Computed
-     (Self     : not null access On_Diff_Visitor;
-      Contents : String);
+   overriding
+   procedure On_Diff_Computed
+     (Self : not null access On_Diff_Visitor; Diff : String);
+   overriding
+   procedure On_File_Computed
+     (Self : not null access On_Diff_Visitor; Contents : String);
 
    ---------------------------------
    -- Create_Or_Reuse_Diff_Editor --
@@ -87,10 +91,9 @@ package body VCS2.Diff is
       File   : constant Virtual_File :=
         Create_From_Dir (Get_Project (Kernel).Artifacts_Dir, Diff_Name);
       Buffer : constant GPS_Editor_Buffer'Class :=
-        GPS_Editor_Buffer'Class
-          (Kernel.Get_Buffer_Factory.Get (File => File));
-      Child  : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
-        (Buffer.Current_View);
+        GPS_Editor_Buffer'Class (Kernel.Get_Buffer_Factory.Get (File => File));
+      Child  : constant MDI_Child :=
+        GPS.Editors.GtkAda.Get_MDI_Child (Buffer.Current_View);
 
       procedure Highlight_Header;
 
@@ -98,10 +101,8 @@ package body VCS2.Diff is
       -- Highlight_Header --
       ----------------------
 
-      procedure Highlight_Header
-      is
-         From_Line : constant Integer :=
-           Buffer.End_Of_Buffer.Line;
+      procedure Highlight_Header is
+         From_Line : constant Integer := Buffer.End_Of_Buffer.Line;
          To_Line   : Integer;
       begin
          if Header /= "" then
@@ -133,9 +134,8 @@ package body VCS2.Diff is
    -- Clear_Diff_Editor --
    -----------------------
 
-   procedure Clear_Diff_Editor (Kernel : Kernel_Handle)
-   is
-      File   : constant Virtual_File :=
+   procedure Clear_Diff_Editor (Kernel : Kernel_Handle) is
+      File : constant Virtual_File :=
         Create_From_Dir (Get_Project (Kernel).Artifacts_Dir, Diff_Name);
    begin
       if File.Is_Regular_File then
@@ -158,25 +158,29 @@ package body VCS2.Diff is
    -- On_Diff_Computed --
    ----------------------
 
-   overriding procedure On_Diff_Computed
-     (Self   : not null access On_Diff_Visitor;
-      Diff   : String) is
+   overriding
+   procedure On_Diff_Computed
+     (Self : not null access On_Diff_Visitor; Diff : String) is
    begin
       if Diff = "" then
          if Self.File = No_File then
             Insert (Self.Kernel, "No difference found");
          else
             Insert
-              (Self.Kernel, "No difference found for "
-               & Self.File.Display_Full_Name);
+              (Self.Kernel,
+               "No difference found for " & Self.File.Display_Full_Name);
          end if;
       else
          Clear_Diff_Editor (Kernel_Handle (Self.Kernel));
          Create_Or_Reuse_Diff_Editor
            (Kernel => Kernel_Handle (Self.Kernel),
             Patch  => Diff,
-            Title  => "Diff " & Self.File.Display_Base_Name
-            & " [" & To_String (Self.Ref) & "]",
+            Title  =>
+              "Diff "
+              & Self.File.Display_Base_Name
+              & " ["
+              & To_String (Self.Ref)
+              & "]",
             Header => "");
       end if;
    end On_Diff_Computed;
@@ -185,17 +189,17 @@ package body VCS2.Diff is
    -- On_File_Computed --
    ----------------------
 
-   overriding procedure On_File_Computed
-     (Self     : not null access On_Diff_Visitor;
-      Contents : String)
+   overriding
+   procedure On_File_Computed
+     (Self : not null access On_Diff_Visitor; Contents : String)
    is
-      Tmp_File  : Virtual_File;
-      W         : Writable_File;
-      Dummy     : Boolean;
+      Tmp_File : Virtual_File;
+      W        : Writable_File;
+      Dummy    : Boolean;
    begin
       --  We are using vdiff2 thus mimick the naming convention
-      Tmp_File := Create_From_Dir
-        (Get_Tmp_Directory, "ref$" & Self.File.Base_Name);
+      Tmp_File :=
+        Create_From_Dir (Get_Tmp_Directory, "ref$" & Self.File.Base_Name);
 
       if Tmp_File.Is_Regular_File then
          --  If file still exists ensure we can rewrite it.
@@ -222,26 +226,28 @@ package body VCS2.Diff is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Diff_Head_For_File;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Diff_Head_For_File; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      File   : constant Virtual_File  := File_Information (Context.Context);
+      File   : constant Virtual_File := File_Information (Context.Context);
       VCS    : VCS_Engine_Access;
    begin
       if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS :=
+           VCS_Engine_Access (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
          VCS.Queue_Diff
-           (new On_Diff_Visitor'(
-               Task_Visitor with
-               Kernel => Kernel,
-               File   => File,
-               Ref     => To_Unbounded_String ("HEAD")),
-            Ref   => "HEAD",
-            File  => File);
+           (new On_Diff_Visitor'
+              (Task_Visitor
+               with
+                 Kernel => Kernel,
+                 File   => File,
+                 Ref    => To_Unbounded_String ("HEAD")),
+            Ref  => "HEAD",
+            File => File);
       end if;
       return Success;
    end Execute;
@@ -250,7 +256,8 @@ package body VCS2.Diff is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Diff_Head_For_File_In_Editor;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -260,16 +267,17 @@ package body VCS2.Diff is
       VCS    : VCS_Engine_Access;
    begin
       if File /= No_File then
-         VCS := VCS_Engine_Access
-           (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
+         VCS :=
+           VCS_Engine_Access (Kernel.VCS.Guess_VCS_For_Directory (File.Dir));
          VCS.Queue_View_File
            (new On_Diff_Visitor'
-              (Task_Visitor with
-               Kernel => Kernel,
-               Ref    => To_Unbounded_String ("HEAD"),
-               File   => File),
-            Ref   => "HEAD",
-            File  => File);
+              (Task_Visitor
+               with
+                 Kernel => Kernel,
+                 Ref    => To_Unbounded_String ("HEAD"),
+                 File   => File),
+            Ref  => "HEAD",
+            File => File);
       end if;
       return Success;
    end Execute;
@@ -278,21 +286,23 @@ package body VCS2.Diff is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self    : access Diff_Head;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Diff_Head; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Self);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       VCS    : constant VCS_Engine_Access := Active_VCS (Kernel);
    begin
       VCS.Queue_Diff
-        (new On_Diff_Visitor'(
-            Task_Visitor with
-            Kernel => Kernel,
-            File   => No_File,
-            Ref    => To_Unbounded_String ("HEAD")),
-         Ref   => "HEAD");
+        (new On_Diff_Visitor'
+           (Task_Visitor
+            with
+              Kernel => Kernel,
+              File   => No_File,
+              Ref    => To_Unbounded_String ("HEAD")),
+         Ref => "HEAD");
       return Success;
    end Execute;
 
@@ -307,9 +317,9 @@ package body VCS2.Diff is
       Head_Action : constant String := "diff against head for file in editor";
    begin
       Register_Action
-        (Kernel, File_Action,
-         Description =>
-           "Display the local changes for the current file",
+        (Kernel,
+         File_Action,
+         Description => "Display the local changes for the current file",
          Command     => new Diff_Head_For_File,
          Filter      => Kernel.Lookup_Filter ("File"),
          Icon_Name   => "vcs-diff-symbolic",
@@ -317,31 +327,33 @@ package body VCS2.Diff is
 
       Register_Contextual_Menu
         (Kernel,
-         Action   => File_Action,
-         Label    => "Version Control/Show local changes for %f",
-         Group    => VCS_Contextual_Group);
+         Action => File_Action,
+         Label  => "Version Control/Show local changes for %f",
+         Group  => VCS_Contextual_Group);
 
       Register_Action
-        (Kernel, Head_Action,
+        (Kernel,
+         Head_Action,
          Description =>
            "Display the local changes for the current file in an editor",
-         Command  => new Diff_Head_For_File_In_Editor,
-         Filter   => Kernel.Lookup_Filter ("File"),
-         Category => "VCS2");
+         Command     => new Diff_Head_For_File_In_Editor,
+         Filter      => Kernel.Lookup_Filter ("File"),
+         Category    => "VCS2");
 
       Register_Contextual_Menu
         (Kernel,
-         Action   => Head_Action,
-         Label    => "Version Control/Show local changes for %f (in editor)",
-         Group    => VCS_Contextual_Group);
+         Action => Head_Action,
+         Label  => "Version Control/Show local changes for %f (in editor)",
+         Group  => VCS_Contextual_Group);
 
       Register_Action
-        (Kernel, "diff all against head",
+        (Kernel,
+         "diff all against head",
          Description =>
            ("Display all the local changes for the current version control"
             & " system"),
-         Command  => new Diff_Head,
-         Category => "VCS2");
+         Command     => new Diff_Head,
+         Category    => "VCS2");
    end Register_Module;
 
 end VCS2.Diff;

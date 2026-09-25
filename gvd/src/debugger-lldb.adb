@@ -15,36 +15,36 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Tags;                            use Ada.Tags;
+with Ada.Tags; use Ada.Tags;
 with Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Expect;                         use GNAT.Expect;
-with GNAT.OS_Lib;                         use GNAT.OS_Lib;
-with GNAT.Regpat;                         use GNAT.Regpat;
+with GNAT.Expect; use GNAT.Expect;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Strings;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.VFS;                        use GNATCOLL.VFS;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
-with GNATCOLL.Utils;                      use GNATCOLL.Utils;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 
-with Default_Preferences;                 use Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 
 with GPS.Core_Kernels;
-with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 
-with GVD.Preferences;                     use GVD.Preferences;
-with GVD.Proc_Utils;                      use GVD.Proc_Utils;
-with GVD.Process;                         use GVD.Process;
-with GVD.Trace;                           use GVD.Trace;
-with GVD.Types;                           use GVD.Types;
+with GVD.Preferences; use GVD.Preferences;
+with GVD.Proc_Utils;  use GVD.Proc_Utils;
+with GVD.Process;     use GVD.Process;
+with GVD.Trace;       use GVD.Trace;
+with GVD.Types;       use GVD.Types;
 
-with Language;                            use Language;
-with Process_Proxies;                     use Process_Proxies;
-with Remote;                              use Remote;
+with Language;        use Language;
+with Process_Proxies; use Process_Proxies;
+with Remote;          use Remote;
 
 with Language.Debugger;                   use Language.Debugger;
 with Language.Debugger.Lldb.C;            use Language.Debugger.Lldb.C;
@@ -57,174 +57,184 @@ use GVD.Variables.Types.Simples.Strings;
 with GVD.Variables.Types.Records;         use GVD.Variables.Types.Records;
 with GVD.Variables.Types.Classes;         use GVD.Variables.Types.Classes;
 
-with String_Utils;                        use String_Utils;
+with String_Utils; use String_Utils;
 
 package body Debugger.LLDB is
 
    Me : constant Trace_Handle := Create ("GPS.DEBUGGING.LLDB", On);
 
-   LLDB_Options                    : constant String := "--debug";
+   LLDB_Options : constant String := "--debug";
    --  Options always passed to lldb
    --    -d
    --    --debug
    --    Tells the debugger to print out extra information for debugging
    --    itself.
 
-   Prompt_String                   : constant String := "(lldb) ";
+   Prompt_String : constant String := "(lldb) ";
    --  The prompt used by the debugger
 
-   Prompt_Regexp                   : constant Pattern_Matcher := Compile
-     ("^\(lldb\).*$", Multiple_Lines);
+   Prompt_Regexp : constant Pattern_Matcher :=
+     Compile ("^\(lldb\).*$", Multiple_Lines);
    --  lldb prompt
 
-   Highlight_Pattern               : constant Pattern_Matcher :=
+   Highlight_Pattern : constant Pattern_Matcher :=
      Compile ("\(lldb\) ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window
 
-   Main_Method_Regexp              : constant Pattern_Matcher := Compile
-     ("^procedure\s*(\S*)\s*is", Multiple_Lines);
+   Main_Method_Regexp : constant Pattern_Matcher :=
+     Compile ("^procedure\s*(\S*)\s*is", Multiple_Lines);
    --  program's main method
 
-   Binder_File_Name_Regexp         : constant Pattern_Matcher :=
+   Binder_File_Name_Regexp : constant Pattern_Matcher :=
      Compile ("(b(~|_).+\.(adb|c))", Multiple_Lines);
    --  Matches a binder file name
 
-   Image_Lookup_Regexp             : constant Pattern_Matcher := Compile
-     ("^(\d+) matches found", Multiple_Lines);
+   Image_Lookup_Regexp : constant Pattern_Matcher :=
+     Compile ("^(\d+) matches found", Multiple_Lines);
    --  Detects the 'image lookup' command's result
 
-   Image_Lookup_Summary_Regexp     : constant Pattern_Matcher := Compile
-     ("Summary:.*at\s*(\S*)", Single_Line);
+   Image_Lookup_Summary_Regexp : constant Pattern_Matcher :=
+     Compile ("Summary:.*at\s*(\S*)", Single_Line);
    --  Retrive file name and line from 'image lookup' command's result
 
-   Image_Lookup_Address_Regexp     : constant Pattern_Matcher := Compile
-     ("Address:.*\[(0x[0-9a-zA-Z]+)\]", Single_Line);
+   Image_Lookup_Address_Regexp : constant Pattern_Matcher :=
+     Compile ("Address:.*\[(0x[0-9a-zA-Z]+)\]", Single_Line);
    --  Retrive address from 'image lookup' command's result
 
-   Image_Lookup_CompileUnit_Regexp : constant Pattern_Matcher := Compile
-     ("CompileUnit: id = {0x[0-9a-zA-Z]+}, " &
-        "file = ""(.*)"", language = ""(.*)""", Single_Line);
+   Image_Lookup_CompileUnit_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("CompileUnit: id = {0x[0-9a-zA-Z]+}, "
+        & "file = ""(.*)"", language = ""(.*)""",
+        Single_Line);
    --  Retrive full path and language from 'image lookup' command's result
 
-   File_Line_Regexp                : constant Pattern_Matcher := Compile
-     ("(.+):(\d+)$", Single_Line);
+   File_Line_Regexp : constant Pattern_Matcher :=
+     Compile ("(.+):(\d+)$", Single_Line);
    --  Regular expression to separate line from file name
 
-   Breakpoint_Regexp               : constant Pattern_Matcher := Compile
-     ("^Breakpoint (\d+):|(\d+) breakpoints (deleted|enabled|disabled)",
-      Multiple_Lines);
+   Breakpoint_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("^Breakpoint (\d+):|(\d+) breakpoints (deleted|enabled|disabled)",
+        Multiple_Lines);
    --  Regular expression for catching breackpoints' changes
 
-   Watchpoint_Regexp               : constant Pattern_Matcher := Compile
-     ("^Watchpoint created:|^(\d+) watchpoints (modified|deleted).",
-      Multiple_Lines);
+   Watchpoint_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("^Watchpoint created:|^(\d+) watchpoints (modified|deleted).",
+        Multiple_Lines);
    --  Regular expression for catching watchpoints' changes
 
-   Breakpoint_Info_Regexp          : constant Pattern_Matcher := Compile
-     ("^(\d+):\s(file = '(\S+)',\sline = (\d+),\sexact_match = (\d+))?" &
-        "(name = '(\S+)')?(address =[\s\S]+\[(0x[0-9a-zA-Z]+)\])?," &
-        "\slocations = (\d+)",
-      Single_Line);
+   Breakpoint_Info_Regexp             : constant Pattern_Matcher :=
+     Compile
+       ("^(\d+):\s(file = '(\S+)',\sline = (\d+),\sexact_match = (\d+))?"
+        & "(name = '(\S+)')?(address =[\s\S]+\[(0x[0-9a-zA-Z]+)\])?,"
+        & "\slocations = (\d+)",
+        Single_Line);
    Breakpoint_Info_Regexp_Address_Idx : constant := 9;
    Breakpoint_Info_Regexp_Last        : constant := 10;
    --  Regular expression for parsing a breackpoint information
 
-   Breakpoint_Num_Regexp              : constant Pattern_Matcher := Compile
-     ("^(\d+):", Single_Line);
+   Breakpoint_Num_Regexp : constant Pattern_Matcher :=
+     Compile ("^(\d+):", Single_Line);
 
-   Breakpoint_Where_Regexp         : constant Pattern_Matcher := Compile
-     ("(\d+.\d+):\swhere = ([\S\s]+),\saddress = " &
-        "(\S+)?(\[)?(0x[0-9a-zA-Z]+)(\])?",
-      Single_Line);
+   Breakpoint_Where_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("(\d+.\d+):\swhere = ([\S\s]+),\saddress = "
+        & "(\S+)?(\[)?(0x[0-9a-zA-Z]+)(\])?",
+        Single_Line);
    --  Regular expression for parsing a breackpoint's where information
 
-   Exception_Breakpoint_Regexp     : constant Pattern_Matcher := Compile
-     ("^(\d+): Exception breakpoint \(catch: (on) throw: (on)\)",
-      Single_Line);
+   Exception_Breakpoint_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("^(\d+): Exception breakpoint \(catch: (on) throw: (on)\)",
+        Single_Line);
 
-   Breakpoint_Options_Regexp       : constant Pattern_Matcher := Compile
-     ("Options:\s*([\s\S]*)", Single_Line);
+   Breakpoint_Options_Regexp : constant Pattern_Matcher :=
+     Compile ("Options:\s*([\s\S]*)", Single_Line);
 
-   Breakpoint_Condition_Regexp     : constant Pattern_Matcher := Compile
-     ("Condition:\s*([\s\S]*)", Single_Line);
+   Breakpoint_Condition_Regexp : constant Pattern_Matcher :=
+     Compile ("Condition:\s*([\s\S]*)", Single_Line);
 
-   Breakpoint_Where_File_Regexp    : constant Pattern_Matcher := Compile
-     ("^([\s\S]+) at (\S+):(\d+)$", Single_Line);
+   Breakpoint_Where_File_Regexp : constant Pattern_Matcher :=
+     Compile ("^([\s\S]+) at (\S+):(\d+)$", Single_Line);
    --  Regular expression for parsing a breackpoint's where information
 
-   Watchpoint_Info_Regexp          : constant Pattern_Matcher := Compile
-     ("^Watchpoint (\d+): addr = (0x[0-9a-zA-Z]+) size = (\d+)" &
-        " state = (\S+) type = (\S+)",
-      Single_Line);
+   Watchpoint_Info_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("^Watchpoint (\d+): addr = (0x[0-9a-zA-Z]+) size = (\d+)"
+        & " state = (\S+) type = (\S+)",
+        Single_Line);
    --  Regular expression for parsing a watchpoint's information
 
-   Watchpoint_Expression_Regexp    : constant Pattern_Matcher := Compile
-     ("watchpoint spec = '(.+)'", Single_Line);
+   Watchpoint_Expression_Regexp : constant Pattern_Matcher :=
+     Compile ("watchpoint spec = '(.+)'", Single_Line);
    --  Regular expression for parsing a watchpoint's expression
 
-   Watchpoint_Condition_Regexp     : constant Pattern_Matcher := Compile
-     ("condition = '(.+)'", Single_Line);
+   Watchpoint_Condition_Regexp : constant Pattern_Matcher :=
+     Compile ("condition = '(.+)'", Single_Line);
    --  Regular expression for parsing a watchpoint's expression
 
-   Watchpoint_Location_Regexp     : constant Pattern_Matcher := Compile
-     ("declare @ '(.+):(\d+)'", Single_Line);
+   Watchpoint_Location_Regexp : constant Pattern_Matcher :=
+     Compile ("declare @ '(.+):(\d+)'", Single_Line);
    --  Regular expression for parsing a watchpoint's location
 
-   Error_Regexp                    : constant Pattern_Matcher := Compile
-     ("^error: ([\s\S]+)", Multiple_Lines);
+   Error_Regexp : constant Pattern_Matcher :=
+     Compile ("^error: ([\s\S]+)", Multiple_Lines);
    --  Regular expression for detect error
 
-   Frame_Regexp                    : constant Pattern_Matcher := Compile
-     ("frame #(\d+): (0x[0-9a-zA-Z]+) (([\S]+)( at (\S+))?)",
-      Multiple_Lines);
+   Frame_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("frame #(\d+): (0x[0-9a-zA-Z]+) (([\S]+)( at (\S+))?)",
+        Multiple_Lines);
    --  Regular expression for parse a frame information
    --    frame #0: 0x0000000000402b1c foo`_ada_foo at foo.adb:15
 
-   Running_Regexp                  : constant Pattern_Matcher := Compile
-     ("^Process \d+ launched:", Multiple_Lines);
+   Running_Regexp : constant Pattern_Matcher :=
+     Compile ("^Process \d+ launched:", Multiple_Lines);
    --  Regular expression for detecting whether a debugging process is running
 
-   Stopped_Regexp                  : constant Pattern_Matcher := Compile
-     ("^Process \d+ stopped", Multiple_Lines);
+   Stopped_Regexp : constant Pattern_Matcher :=
+     Compile ("^Process \d+ stopped", Multiple_Lines);
    --  Regular expression for detecting whether a debugging process is stopped
 
-   Disassemble_Regexp              : constant Pattern_Matcher := Compile
-     ("^(->)?\s+(0x[0-9a-zA-Z]+) (\<\+\d+\>):\s+(.+)()", Single_Line);
+   Disassemble_Regexp : constant Pattern_Matcher :=
+     Compile ("^(->)?\s+(0x[0-9a-zA-Z]+) (\<\+\d+\>):\s+(.+)()", Single_Line);
    --  Regular expression for parsing disassemble output
 
-   LineEntry_Regexp              : constant Pattern_Matcher := Compile
-     ("LineEntry: \[(0x[0-9a-zA-Z]+)-(0x[0-9a-zA-Z]+)\):", Multiple_Lines);
+   LineEntry_Regexp : constant Pattern_Matcher :=
+     Compile
+       ("LineEntry: \[(0x[0-9a-zA-Z]+)-(0x[0-9a-zA-Z]+)\):", Multiple_Lines);
    --  Regular expression for parsing line lookup
 
-   Register_Regexp              : constant Pattern_Matcher := Compile
-     ("(\S+) = (.+)", Single_Line);
+   Register_Regexp : constant Pattern_Matcher :=
+     Compile ("(\S+) = (.+)", Single_Line);
    --  Regular expression for parsing registers
 
-   Language_Regexp              : constant Pattern_Matcher := Compile
-     ("^CompileUnit:.+, language = \""(\S+)\""", Multiple_Lines);
+   Language_Regexp : constant Pattern_Matcher :=
+     Compile ("^CompileUnit:.+, language = \""(\S+)\""", Multiple_Lines);
    --  Expression for detecting language
 
-   Type_Of_Regexp              : constant Pattern_Matcher := Compile
-     ("^\((.+)\)", Multiple_Lines);
+   Type_Of_Regexp : constant Pattern_Matcher :=
+     Compile ("^\((.+)\)", Multiple_Lines);
    --  Expression for extracting type_of information
 
-   Type_Lookuo_Regexp          : constant Pattern_Matcher := Compile
-     ("compiler_type = ""([^""]+)""", Multiple_Lines);
+   Type_Lookuo_Regexp : constant Pattern_Matcher :=
+     Compile ("compiler_type = ""([^""]+)""", Multiple_Lines);
 
-   C_Languages_Regexp          : constant Pattern_Matcher := Compile
-     ("^c$|^c11$|^c89$|^c99$", Multiple_Lines);
+   C_Languages_Regexp : constant Pattern_Matcher :=
+     Compile ("^c$|^c11$|^c89$|^c99$", Multiple_Lines);
 
-   Cpp_Languages_Regexp        : constant Pattern_Matcher := Compile
-     ("^c\+\+", Multiple_Lines);
+   Cpp_Languages_Regexp : constant Pattern_Matcher :=
+     Compile ("^c\+\+", Multiple_Lines);
 
-   Value_Of_Regexp             : constant Pattern_Matcher := Compile
-     ("^\([^\)]+\)[^=]+=\s([\s\S]+)$", Multiple_Lines);
+   Value_Of_Regexp : constant Pattern_Matcher :=
+     Compile ("^\([^\)]+\)[^=]+=\s([\s\S]+)$", Multiple_Lines);
 
-   Addr_Of_Variable_Regexp     : constant Pattern_Matcher := Compile
-     ("^\(.+\) \$[\d]+ = (0x[0-9a-f]+)$", Multiple_Lines);
+   Addr_Of_Variable_Regexp : constant Pattern_Matcher :=
+     Compile ("^\(.+\) \$[\d]+ = (0x[0-9a-f]+)$", Multiple_Lines);
 
-   Type_Name_Regexp            : constant Pattern_Matcher := Compile
-     ("^\((.+\)) \S+ =", Multiple_Lines);
+   Type_Name_Regexp : constant Pattern_Matcher :=
+     Compile ("^\((.+\)) \S+ =", Multiple_Lines);
 
    procedure Connect_To_Target_If_Needed (Debugger : access LLDB_Debugger);
    --  Check and connect to remoute target if it's needed
@@ -242,9 +252,9 @@ package body Debugger.LLDB is
    --  Process changes in breakpoints
 
    function Internal_Set_Breakpoint
-     (Debugger  : access LLDB_Debugger;
-      Command   : String;
-      Mode      : GVD.Types.Command_Type)
+     (Debugger : access LLDB_Debugger;
+      Command  : String;
+      Mode     : GVD.Types.Command_Type)
       return GVD.Types.Breakpoint_Identifier;
    --  Executes breakpoint command and return number of created one
 
@@ -256,9 +266,7 @@ package body Debugger.LLDB is
    --  Shared code beteen Run/Start
 
    function Set_File
-     (Debugger : access LLDB_Debugger;
-      File     : String)
-      return Virtual_File;
+     (Debugger : access LLDB_Debugger; File : String) return Virtual_File;
    --  Retrives file information
 
    procedure Filter_Running
@@ -271,9 +279,7 @@ package body Debugger.LLDB is
       Str     : String;
       Matched : Match_Array);
 
-   procedure Parse_Disassembled
-     (S    : String;
-      Code : out Disassemble_Elements);
+   procedure Parse_Disassembled (S : String; Code : out Disassemble_Elements);
 
    procedure Filter_Language
      (Process : access Visual_Debugger_Record'Class;
@@ -290,7 +296,8 @@ package body Debugger.LLDB is
    -- Spawn --
    -----------
 
-   overriding procedure Spawn
+   overriding
+   procedure Spawn
      (Debugger        : access LLDB_Debugger;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Executable      : GNATCOLL.VFS.Virtual_File;
@@ -302,15 +309,17 @@ package body Debugger.LLDB is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
    is
-      LLDB_Arguments   : Argument_List_Access :=
+      LLDB_Arguments  : Argument_List_Access :=
         Argument_String_To_List (LLDB_Options);
       Num_Options     : constant Natural := LLDB_Arguments'Length;
-      Local_Arguments : Argument_List
-        (1 .. Debugger_Args'Length + Num_Options);
+      Local_Arguments :
+        Argument_List (1 .. Debugger_Args'Length + Num_Options);
       Process         : Visual_Debugger;
 
-      procedure Free is new Standard.Ada.Unchecked_Deallocation
-        (Argument_List, Argument_List_Access);
+      procedure Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Argument_List,
+           Argument_List_Access);
 
    begin
       Local_Arguments (1 .. Num_Options) := LLDB_Arguments.all;
@@ -322,9 +331,7 @@ package body Debugger.LLDB is
         (Kernel        => Kernel,
          Arguments     => Local_Arguments,
          Debugger_Name =>
-           (if Debugger_Name = ""
-            then "lldb"
-            else Debugger_Name),
+           (if Debugger_Name = "" then "lldb" else Debugger_Name),
          Debugger_Num  => Debugger_Num,
          Proxy         => Proxy);
 
@@ -343,7 +350,7 @@ package body Debugger.LLDB is
       end if;
 
       if Remote_Target /= "" then
-         Debugger.Remote_Target   := new String'(Remote_Target);
+         Debugger.Remote_Target := new String'(Remote_Target);
          Debugger.Remote_Protocol := new String'(Remote_Protocol);
       end if;
 
@@ -372,8 +379,8 @@ package body Debugger.LLDB is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize (Debugger : access LLDB_Debugger)
-   is
+   overriding
+   procedure Initialize (Debugger : access LLDB_Debugger) is
       Num     : Expect_Match;
       Lang    : Language_Access;
       Process : Visual_Debugger;
@@ -386,12 +393,12 @@ package body Debugger.LLDB is
       --  Make sure lldb will not ask too much interactive questions.
       --  Interactive questions are better left to the GUI itself.
       Debugger.Send ("settings set auto-confirm true", Mode => Internal);
-      Debugger.Send ("settings set target.move-to-nearest-code true",
-                     Mode => Internal);
-      Debugger.Send ("settings set interpreter.prompt-on-quit false",
-                     Mode => Internal);
-      Debugger.Send ("settings set target.process.disable-stdio false",
-                     Mode => Internal);
+      Debugger.Send
+        ("settings set target.move-to-nearest-code true", Mode => Internal);
+      Debugger.Send
+        ("settings set interpreter.prompt-on-quit false", Mode => Internal);
+      Debugger.Send
+        ("settings set target.process.disable-stdio false", Mode => Internal);
       --  settings set target.source-map ./ ./../
 
       --  Load the module to debug, if any
@@ -426,8 +433,8 @@ package body Debugger.LLDB is
 
       if Debugger.Executable_Args /= null then
          Debugger.Send
-           ("settings set target.run-args " &
-              Debugger.Executable_Args.all, Mode => Internal);
+           ("settings set target.run-args " & Debugger.Executable_Args.all,
+            Mode => Internal);
       end if;
 
    exception
@@ -442,7 +449,8 @@ package body Debugger.LLDB is
    -- Send --
    ----------
 
-   overriding procedure Send
+   overriding
+   procedure Send
      (Debugger        : access LLDB_Debugger;
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
@@ -464,7 +472,8 @@ package body Debugger.LLDB is
    -- Connect_To_Target --
    -----------------------
 
-   overriding procedure Connect_To_Target
+   overriding
+   procedure Connect_To_Target
      (Debugger : access LLDB_Debugger;
       Target   : String;
       Protocol : String;
@@ -483,11 +492,10 @@ package body Debugger.LLDB is
    -- Is_Connected_To_Target --
    ----------------------------
 
-   overriding function Is_Connected_To_Target
-     (Debugger : access LLDB_Debugger)
-      return Boolean
-   is
-      (Debugger.Target_Connected);
+   overriding
+   function Is_Connected_To_Target
+     (Debugger : access LLDB_Debugger) return Boolean
+   is (Debugger.Target_Connected);
 
    -------------------
    -- Is_Expression --
@@ -511,25 +519,23 @@ package body Debugger.LLDB is
    -- Send_And_Get_Clean_Output --
    -------------------------------
 
-   overriding function Send_And_Get_Clean_Output
+   overriding
+   function Send_And_Get_Clean_Output
      (Debugger    : access LLDB_Debugger;
       Cmd         : String;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden;
-      Synchronous : Boolean := True)
-      return String is
+      Synchronous : Boolean := True) return String is
    begin
       Debugger.Reset_State;
 
       declare
-         S   : constant String := Debugger.Send_And_Get_Output
-           (Cmd, Mode, Synchronous);
+         S   : constant String :=
+           Debugger.Send_And_Get_Output (Cmd, Mode, Synchronous);
          Pos : Integer;
       begin
          if Ends_With (S, Prompt_String) then
             Pos := S'Last - Prompt_String'Length;
-            if Pos >= S'First
-              and then S (Pos) = ASCII.LF
-            then
+            if Pos >= S'First and then S (Pos) = ASCII.LF then
                Pos := Pos - 1;
             end if;
 
@@ -544,9 +550,9 @@ package body Debugger.LLDB is
    -- Highlighting_Pattern --
    --------------------------
 
-   overriding function Highlighting_Pattern
-     (Debugger : access LLDB_Debugger)
-      return GNAT.Regpat.Pattern_Matcher
+   overriding
+   function Highlighting_Pattern
+     (Debugger : access LLDB_Debugger) return GNAT.Regpat.Pattern_Matcher
    is
       pragma Unreferenced (Debugger);
    begin
@@ -557,7 +563,8 @@ package body Debugger.LLDB is
    -- Detect_Language --
    ---------------------
 
-   overriding procedure Detect_Language (Debugger : access LLDB_Debugger) is
+   overriding
+   procedure Detect_Language (Debugger : access LLDB_Debugger) is
       Language : Language_Access;
 
    begin
@@ -576,17 +583,18 @@ package body Debugger.LLDB is
 
       else
          declare
-            Responce : constant String := Debugger.Send_And_Get_Clean_Output
-              ("frame info", Internal);
+            Responce : constant String :=
+              Debugger.Send_And_Get_Clean_Output ("frame info", Internal);
             Matched  : Match_Array (0 .. 6);
          begin
             Match (Frame_Regexp, Responce, Matched);
             if Matched (0) /= No_Match then
                declare
-                  S : constant String := Debugger.Send_And_Get_Clean_Output
-                    ("image lookup --verbose -a " &
-                       Responce (Matched (2).First .. Matched (2).Last),
-                     Mode => Internal);
+                  S : constant String :=
+                    Debugger.Send_And_Get_Clean_Output
+                      ("image lookup --verbose -a "
+                       & Responce (Matched (2).First .. Matched (2).Last),
+                       Mode => Internal);
                   pragma Unreferenced (S);
                begin
                   null;
@@ -600,7 +608,8 @@ package body Debugger.LLDB is
    -- Wait_Prompt --
    -----------------
 
-   overriding procedure Wait_Prompt (Debugger : access LLDB_Debugger) is
+   overriding
+   procedure Wait_Prompt (Debugger : access LLDB_Debugger) is
       Dummy : Expect_Match;
    begin
       Debugger.Get_Process.Wait (Dummy, Prompt_Regexp, Timeout => -1);
@@ -610,10 +619,9 @@ package body Debugger.LLDB is
    -- Wait_Prompt --
    -----------------
 
-   overriding function Wait_Prompt
-     (Debugger : access LLDB_Debugger;
-      Timeout  : Integer)
-      return Boolean
+   overriding
+   function Wait_Prompt
+     (Debugger : access LLDB_Debugger; Timeout : Integer) return Boolean
    is
       Num : Expect_Match;
    begin
@@ -625,7 +633,8 @@ package body Debugger.LLDB is
    -- Display_Prompt --
    --------------------
 
-   overriding procedure Display_Prompt (Debugger : access LLDB_Debugger) is
+   overriding
+   procedure Display_Prompt (Debugger : access LLDB_Debugger) is
       Proc : constant Visual_Debugger := Convert (Debugger);
    begin
       if Proc /= null then
@@ -638,10 +647,9 @@ package body Debugger.LLDB is
    -- Type_Of --
    -------------
 
-   overriding function Type_Of
-     (Debugger : access LLDB_Debugger;
-      Entity   : String)
-      return String is
+   overriding
+   function Type_Of
+     (Debugger : access LLDB_Debugger; Entity : String) return String is
    begin
       --  If Entity contains a LF, this is an invalid entity, so give up
       --  immediately.
@@ -653,11 +661,13 @@ package body Debugger.LLDB is
       end loop;
 
       declare
-         S   : constant String := Debugger.Send_And_Get_Clean_Output
-           ((if Is_Expression (Entity)
-             then "expression --show-types -- "
-             else "frame variable --show-types ") & Entity,
-            Mode => Internal);
+         S       : constant String :=
+           Debugger.Send_And_Get_Clean_Output
+             ((if Is_Expression (Entity)
+               then "expression --show-types -- "
+               else "frame variable --show-types ")
+              & Entity,
+              Mode => Internal);
          Matched : Match_Array (0 .. 1);
       begin
          Match (Type_Of_Regexp, S, Matched);
@@ -674,14 +684,14 @@ package body Debugger.LLDB is
    --------------
 
    function Get_Type
-     (Debugger : access LLDB_Debugger;
-      Entity   : String) return String
+     (Debugger : access LLDB_Debugger; Entity : String) return String
    is
       use Ada.Strings.Unbounded;
 
-      S   : Unbounded_String := To_Unbounded_String
-        (Debugger.Send_And_Get_Clean_Output
-           ("image lookup --type " & Entity, Mode => Internal));
+      S       : Unbounded_String :=
+        To_Unbounded_String
+          (Debugger.Send_And_Get_Clean_Output
+             ("image lookup --type " & Entity, Mode => Internal));
       Matched : Match_Array (0 .. 1);
       Result  : Unbounded_String;
    begin
@@ -699,13 +709,14 @@ package body Debugger.LLDB is
    -- Info_Locals --
    -----------------
 
-   overriding function Info_Locals
+   overriding
+   function Info_Locals
      (Debugger : access LLDB_Debugger)
       return VSS.String_Vectors.Virtual_String_Vector
    is
-      S : constant String := Debugger.Send_And_Get_Clean_Output
-        ("frame variable --no-args",
-         Mode => GVD.Types.Internal);
+      S : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("frame variable --no-args", Mode => GVD.Types.Internal);
 
       Pattern : constant Pattern_Matcher := Compile ("\)(?: )?([^ ])?");
       From    : Integer := S'First;
@@ -729,10 +740,8 @@ package body Debugger.LLDB is
    -- Info_Args --
    ---------------
 
-   overriding function Info_Args
-     (Debugger : access LLDB_Debugger)
-      return String
-   is
+   overriding
+   function Info_Args (Debugger : access LLDB_Debugger) return String is
       pragma Unreferenced (Debugger);
    begin
       return "frame variable --no-locals";
@@ -742,7 +751,8 @@ package body Debugger.LLDB is
    -- Info_Tasks --
    ----------------
 
-   overriding procedure Info_Tasks
+   overriding
+   procedure Info_Tasks
      (Debugger : access LLDB_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural)
@@ -756,13 +766,14 @@ package body Debugger.LLDB is
    -- Info_Threads --
    ------------------
 
-   overriding procedure Info_Threads
+   overriding
+   procedure Info_Threads
      (Debugger : access LLDB_Debugger;
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      Output : constant String := Debugger.Send_And_Get_Clean_Output
-        ("thread list", Mode => Internal);
+      Output : constant String :=
+        Debugger.Send_And_Get_Clean_Output ("thread list", Mode => Internal);
       EOL    : Natural;
       Index  : Integer := Output'Last;
 
@@ -787,7 +798,7 @@ package body Debugger.LLDB is
          Info (Len) :=
            (Information =>
               [VSS.Strings.Conversions.To_Virtual_String
-                   (Output (EOL + 1 .. Index))]);
+                 (Output (EOL + 1 .. Index))]);
          Index := EOL - 1;
       end loop;
    end Info_Threads;
@@ -796,7 +807,8 @@ package body Debugger.LLDB is
    -- Info_PD --
    -------------
 
-   overriding procedure Info_PD
+   overriding
+   procedure Info_PD
      (Debugger : access LLDB_Debugger;
       Info     : out PD_Information_Array;
       Len      : out Natural)
@@ -813,11 +825,20 @@ package body Debugger.LLDB is
    function Convert (F : Value_Format) return String is
    begin
       case F is
-         when Default_Format => return "";
-         when Decimal        => return "decimal";
-         when Binary         => return "binary";
-         when Hexadecimal    => return "hex";
-         when Octal       => return "octal";
+         when Default_Format =>
+            return "";
+
+         when Decimal        =>
+            return "decimal";
+
+         when Binary         =>
+            return "binary";
+
+         when Hexadecimal    =>
+            return "hex";
+
+         when Octal          =>
+            return "octal";
       end case;
    end Convert;
 
@@ -825,24 +846,25 @@ package body Debugger.LLDB is
    -- Value_Of --
    --------------
 
-   overriding function Value_Of
+   overriding
+   function Value_Of
      (Debugger : access LLDB_Debugger;
       Entity   : String;
       Format   : Value_Format := Default_Format;
-      From_API : Boolean := False)
-      return String
+      From_API : Boolean := False) return String
    is
       pragma Unreferenced (From_API);
 
-      S   : constant String := Debugger.Send_And_Get_Clean_Output
-        ((if Is_Expression (Entity)
-          then "expression "
-          else "frame variable ") &
-         (if Format = Default_Format
-            then ""
-            else "--format " & Convert (Format)  & " ") &
-           Entity,
-         Mode => Internal);
+      S       : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ((if Is_Expression (Entity)
+            then "expression "
+            else "frame variable ")
+           & (if Format = Default_Format
+              then ""
+              else "--format " & Convert (Format) & " ")
+           & Entity,
+           Mode => Internal);
       Matched : Match_Array (0 .. 1);
    begin
       Match (Value_Of_Regexp, S, Matched);
@@ -858,13 +880,11 @@ package body Debugger.LLDB is
    -----------------------------
 
    procedure Prepare_Target_For_Send
-     (Debugger : access LLDB_Debugger;
-      Cmd      : String)
+     (Debugger : access LLDB_Debugger; Cmd : String)
    is
       J, K : Integer;
    begin
-      if Cmd'Length > 10
-        and then Cmd (Cmd'First .. Cmd'First + 6) = "target "
+      if Cmd'Length > 10 and then Cmd (Cmd'First .. Cmd'First + 6) = "target "
       then
          J := Cmd'First + 7;
          Skip_Blanks (Cmd, J);
@@ -887,10 +907,9 @@ package body Debugger.LLDB is
    -- Print_Value_Cmd --
    ---------------------
 
-   overriding function Print_Value_Cmd
-     (Debugger : access LLDB_Debugger;
-      Entity   : String)
-      return String
+   overriding
+   function Print_Value_Cmd
+     (Debugger : access LLDB_Debugger; Entity : String) return String
    is
       pragma Unreferenced (Debugger);
    begin
@@ -901,10 +920,11 @@ package body Debugger.LLDB is
    -- Change_Directory --
    ----------------------
 
-   overriding procedure Change_Directory
-     (Debugger    : access LLDB_Debugger;
-      Dir         : GNATCOLL.VFS.Virtual_File;
-      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
+   overriding
+   procedure Change_Directory
+     (Debugger : access LLDB_Debugger;
+      Dir      : GNATCOLL.VFS.Virtual_File;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       Directory : constant String := +Dir.Unix_Style_Full_Name;
    begin
@@ -916,16 +936,16 @@ package body Debugger.LLDB is
    -- Set_Executable --
    --------------------
 
-   overriding procedure Set_Executable
-     (Debugger   : access LLDB_Debugger;
-      Executable : GNATCOLL.VFS.Virtual_File)
+   overriding
+   procedure Set_Executable
+     (Debugger : access LLDB_Debugger; Executable : GNATCOLL.VFS.Virtual_File)
    is
-      Remote_Exec         : constant Virtual_File := To_Remote
-        (Executable, Get_Nickname (Debug_Server));
+      Remote_Exec         : constant Virtual_File :=
+        To_Remote (Executable, Get_Nickname (Debug_Server));
       Full_Name           : constant String :=
         +Remote_Exec.Unix_Style_Full_Name;
-      No_Such_File_Regexp : constant Pattern_Matcher := Compile
-        ("error: unable to find executable for");
+      No_Such_File_Regexp : constant Pattern_Matcher :=
+        Compile ("error: unable to find executable for");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
 
@@ -941,20 +961,19 @@ package body Debugger.LLDB is
       procedure Launch_Command_And_Output (Command : String) is
          Cmd : GNAT.Strings.String_Access;
       begin
-         Cmd := new String'
-           (Command &
-            (if Is_Local (Debug_Server)
-               then " "
-               else " -r ") &
-              Full_Name);
+         Cmd :=
+           new String'
+             (Command
+              & (if Is_Local (Debug_Server) then " " else " -r ")
+              & Full_Name);
 
          if Process /= null then
             Process.Output_Text (Cmd.all & ASCII.LF, Set_Position => True);
          end if;
 
          declare
-            S : constant String := Debugger.Send_And_Get_Clean_Output
-              (Cmd.all, Mode => Hidden);
+            S : constant String :=
+              Debugger.Send_And_Get_Clean_Output (Cmd.all, Mode => Hidden);
          begin
             Free (Cmd);
 
@@ -997,7 +1016,8 @@ package body Debugger.LLDB is
    -- Catch_Exception --
    ---------------------
 
-   overriding procedure Catch_Exception (Debugger : access LLDB_Debugger) is
+   overriding
+   procedure Catch_Exception (Debugger : access LLDB_Debugger) is
       Process : Visual_Debugger;
    begin
       Process := Convert (Debugger);
@@ -1005,8 +1025,8 @@ package body Debugger.LLDB is
       if Get_Pref (Break_On_Exception) then
          declare
             Cmd : constant String :=
-              "breakpoint set --language-exception c " &
-              "--on-throw true --on-catch true";
+              "breakpoint set --language-exception c "
+              & "--on-throw true --on-catch true";
             S   : constant String := Debugger.Send_And_Get_Clean_Output (Cmd);
 
          begin
@@ -1027,9 +1047,9 @@ package body Debugger.LLDB is
    -- Get_Executable --
    --------------------
 
-   overriding function Get_Executable
-     (Debugger : access LLDB_Debugger)
-      return GNATCOLL.VFS.Virtual_File is
+   overriding
+   function Get_Executable
+     (Debugger : access LLDB_Debugger) return GNATCOLL.VFS.Virtual_File is
    begin
       return Debugger.Executable;
    end Get_Executable;
@@ -1038,7 +1058,8 @@ package body Debugger.LLDB is
    -- Load_Core_File --
    --------------------
 
-   overriding procedure Load_Core_File
+   overriding
+   procedure Load_Core_File
      (Debugger : access LLDB_Debugger;
       Core     : GNATCOLL.VFS.Virtual_File;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -1052,7 +1073,8 @@ package body Debugger.LLDB is
    -- Add_Symbols --
    -----------------
 
-   overriding procedure Add_Symbols
+   overriding
+   procedure Add_Symbols
      (Debugger : access LLDB_Debugger;
       Module   : GNATCOLL.VFS.Virtual_File;
       Address  : String;
@@ -1073,7 +1095,8 @@ package body Debugger.LLDB is
    -- Load_Executable --
    ---------------------
 
-   overriding procedure Load_Executable
+   overriding
+   procedure Load_Executable
      (Debugger   : access LLDB_Debugger;
       Executable : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -1082,8 +1105,10 @@ package body Debugger.LLDB is
 
          if Executable /= GNATCOLL.VFS.No_File then
             Send
-              (Debugger, "platform put-file """ &
-               (+Executable.Unix_Style_Full_Name) & '"',
+              (Debugger,
+               "platform put-file """
+               & (+Executable.Unix_Style_Full_Name)
+               & '"',
                Mode => Mode);
          end if;
 
@@ -1126,7 +1151,8 @@ package body Debugger.LLDB is
    -- Run --
    ---------
 
-   overriding procedure Run
+   overriding
+   procedure Run
      (Debugger  : access LLDB_Debugger;
       Arguments : String := "";
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -1138,10 +1164,11 @@ package body Debugger.LLDB is
    -- Start --
    -----------
 
-   overriding procedure Start
-     (Debugger : access LLDB_Debugger;
+   overriding
+   procedure Start
+     (Debugger  : access LLDB_Debugger;
       Arguments : String := "";
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       Run_Helper (Debugger, Arguments, Mode, Start => True);
    end Start;
@@ -1150,7 +1177,8 @@ package body Debugger.LLDB is
    -- Attach_Process --
    --------------------
 
-   overriding procedure Attach_Process
+   overriding
+   procedure Attach_Process
      (Debugger : access LLDB_Debugger;
       Process  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -1179,7 +1207,8 @@ package body Debugger.LLDB is
    -- Detach_Process --
    --------------------
 
-   overriding procedure Detach_Process
+   overriding
+   procedure Detach_Process
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1191,7 +1220,8 @@ package body Debugger.LLDB is
    -- Kill_Process --
    ------------------
 
-   overriding procedure Kill_Process
+   overriding
+   procedure Kill_Process
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1203,7 +1233,8 @@ package body Debugger.LLDB is
    -- Step_Into --
    ---------------
 
-   overriding procedure Step_Into
+   overriding
+   procedure Step_Into
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1214,7 +1245,8 @@ package body Debugger.LLDB is
    -- Step_Over --
    ---------------
 
-   overriding procedure Step_Over
+   overriding
+   procedure Step_Over
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1225,7 +1257,8 @@ package body Debugger.LLDB is
    -- Step_Into_Instruction --
    ---------------------------
 
-   overriding procedure Step_Into_Instruction
+   overriding
+   procedure Step_Into_Instruction
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1236,7 +1269,8 @@ package body Debugger.LLDB is
    -- Step_Over_Instruction --
    ---------------------------
 
-   overriding procedure Step_Over_Instruction
+   overriding
+   procedure Step_Over_Instruction
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1247,7 +1281,8 @@ package body Debugger.LLDB is
    -- Continue --
    --------------
 
-   overriding procedure Continue
+   overriding
+   procedure Continue
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1258,21 +1293,21 @@ package body Debugger.LLDB is
    -- Continue_Until_Location --
    -----------------------------
 
-   overriding procedure Continue_Until_Location
+   overriding
+   procedure Continue_Until_Location
      (Debugger : access LLDB_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
-      BP_Identifier : GVD.Types.Breakpoint_Identifier with Unreferenced;
+      BP_Identifier : GVD.Types.Breakpoint_Identifier
+      with Unreferenced;
    begin
       --  There is no real equivalent of the GDB "until" command in LLDB so
       --  set a temporary breakpoint and continue until we reach it instead.
-      BP_Identifier := Debugger.Break_Source
-        (File      => File,
-         Line      => Line,
-         Temporary => True,
-         Mode      => Mode);
+      BP_Identifier :=
+        Debugger.Break_Source
+          (File => File, Line => Line, Temporary => True, Mode => Mode);
       Debugger.Continue (Mode => Mode);
    end Continue_Until_Location;
 
@@ -1280,8 +1315,9 @@ package body Debugger.LLDB is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt (Debugger : access LLDB_Debugger) is
-      Proxy      : constant Process_Proxy_Access      := Debugger.Get_Process;
+   overriding
+   procedure Interrupt (Debugger : access LLDB_Debugger) is
+      Proxy      : constant Process_Proxy_Access := Debugger.Get_Process;
       Descriptor : constant Process_Descriptor_Access := Proxy.Get_Descriptor;
 
    begin
@@ -1295,9 +1331,9 @@ package body Debugger.LLDB is
    -- Command_Kind --
    ------------------
 
-   overriding function Command_Kind
-     (Debugger : access LLDB_Debugger;
-      Command  : String)
+   overriding
+   function Command_Kind
+     (Debugger : access LLDB_Debugger; Command : String)
       return Command_Category
    is
       Index : Natural;
@@ -1389,18 +1425,19 @@ package body Debugger.LLDB is
    -- Breakpoints_Changed --
    -------------------------
 
-   overriding function Breakpoints_Changed
-     (Debugger : access LLDB_Debugger;
-      Command  : String)
-      return Boolean
-   is
+   overriding
+   function Breakpoints_Changed
+     (Debugger : access LLDB_Debugger; Command : String) return Boolean is
    begin
-      return Debugger.Breakpoints_Changed
-        or else (Starts_With (Command, "breakpoint")
-                 and then not Starts_With (Command, "breakpoint list")
-                 and then not Starts_With (Command, "breakpoint name"))
-        or else (Starts_With (Command, "watchpoint")
-                 and then not Starts_With (Command, "watchpoint list"))
+      return
+        Debugger.Breakpoints_Changed
+        or else
+          (Starts_With (Command, "breakpoint")
+           and then not Starts_With (Command, "breakpoint list")
+           and then not Starts_With (Command, "breakpoint name"))
+        or else
+          (Starts_With (Command, "watchpoint")
+           and then not Starts_With (Command, "watchpoint list"))
         or else Starts_With (Command, "b")
         or else Starts_With (Command, "rbreak")
         or else Starts_With (Command, "tbreak");
@@ -1410,7 +1447,8 @@ package body Debugger.LLDB is
    -- Stack_Down --
    ----------------
 
-   overriding procedure Stack_Down
+   overriding
+   procedure Stack_Down
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1421,7 +1459,8 @@ package body Debugger.LLDB is
    -- Stack_Up --
    --------------
 
-   overriding procedure Stack_Up
+   overriding
+   procedure Stack_Up
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1432,7 +1471,8 @@ package body Debugger.LLDB is
    -- Stack_Frame --
    -----------------
 
-   overriding procedure Stack_Frame
+   overriding
+   procedure Stack_Frame
      (Debugger : access LLDB_Debugger;
       Frame    : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -1493,13 +1533,12 @@ package body Debugger.LLDB is
          elsif Cpp (0) /= No_Match then
             Language := new LLDB_Cpp_Language;
 
---           elsif Lang = "ada" then
---              Language := new Gdb_Ada_Language;
+         --           elsif Lang = "ada" then
+         --              Language := new Gdb_Ada_Language;
 
          else
             Output_Error
-              (Process.Kernel,
-               "Language unknown, defaulting to C: " & Lang);
+              (Process.Kernel, "Language unknown, defaulting to C: " & Lang);
 
             --  We need to check whether we already have C defined:
             Language := Debugger.Get_Language ("c");
@@ -1519,7 +1558,8 @@ package body Debugger.LLDB is
    -- Filter_Output --
    -------------------
 
-   overriding procedure Filter_Output
+   overriding
+   procedure Filter_Output
      (Debugger        : access LLDB_Debugger;
       Mode            : GVD.Types.Command_Type;
       Str             : String;
@@ -1528,8 +1568,9 @@ package body Debugger.LLDB is
       Debuggee_Output : out Unbounded_String;
       Results_Output  : out Unbounded_String)
    is
-      pragma Unreferenced
-        (Debugger, Mode, Log_Output, Debuggee_Output, Results_Output);
+      pragma
+        Unreferenced
+          (Debugger, Mode, Log_Output, Debuggee_Output, Results_Output);
    begin
       Set_Unbounded_String (Console_Output, Str);
    end Filter_Output;
@@ -1566,11 +1607,11 @@ package body Debugger.LLDB is
    -- Find_Main_Unit --
    --------------------
 
-   procedure Find_Main_Unit (Debugger : access LLDB_Debugger)
-   is
-      Str : constant String := Ada.Characters.Handling.To_Lower
-        (Debugger.Send_And_Get_Clean_Output
-           ("source list --count 1", Mode => Internal));
+   procedure Find_Main_Unit (Debugger : access LLDB_Debugger) is
+      Str     : constant String :=
+        Ada.Characters.Handling.To_Lower
+          (Debugger.Send_And_Get_Clean_Output
+             ("source list --count 1", Mode => Internal));
       Matched : Match_Array (0 .. 1);
    begin
       Match (Main_Method_Regexp, Str, Matched);
@@ -1579,8 +1620,8 @@ package body Debugger.LLDB is
       end if;
 
       Debugger.Send
-        ("image lookup --no-inlines --verbose --function " &
-           Str (Matched (1).First .. Matched (1).Last),
+        ("image lookup --no-inlines --verbose --function "
+         & Str (Matched (1).First .. Matched (1).Last),
          Mode => Internal);
    end Find_Main_Unit;
 
@@ -1588,7 +1629,8 @@ package body Debugger.LLDB is
    -- Finish --
    ------------
 
-   overriding procedure Finish
+   overriding
+   procedure Finish
      (Debugger : access LLDB_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
@@ -1599,12 +1641,13 @@ package body Debugger.LLDB is
    -- Found_File_Name --
    ---------------------
 
-   overriding procedure Found_File_Name
-     (Debugger    : access LLDB_Debugger;
-      Str         : String;
-      Name        : out Unbounded_String;
-      Line        : out Natural;
-      Addr        : out GVD.Types.Address_Type)
+   overriding
+   procedure Found_File_Name
+     (Debugger : access LLDB_Debugger;
+      Str      : String;
+      Name     : out Unbounded_String;
+      Line     : out Natural;
+      Addr     : out GVD.Types.Address_Type)
    is
       Matched  : Match_Array (0 .. 6);
       FMatched : Match_Array (0 .. 2);
@@ -1616,8 +1659,8 @@ package body Debugger.LLDB is
 
       Match (Frame_Regexp, Str, Matched);
       if Matched (0) /= No_Match then
-         Addr := String_To_Address
-           (Str (Matched (2).First .. Matched (2).Last));
+         Addr :=
+           String_To_Address (Str (Matched (2).First .. Matched (2).Last));
 
          if Matched (6) /= No_Match then
             Match
@@ -1626,19 +1669,21 @@ package body Debugger.LLDB is
                FMatched);
 
             if FMatched (0) /= No_Match then
-               Name := To_Unbounded_String
-                 (+Set_File
-                    (Debugger,
-                     Str
-                       (FMatched (1).First .. FMatched (1).Last)).Full_Name);
+               Name :=
+                 To_Unbounded_String
+                   (+Set_File
+                       (Debugger,
+                        Str (FMatched (1).First .. FMatched (1).Last))
+                       .Full_Name);
 
-               Line := Natural'Value
-                 (Str (FMatched (2).First .. FMatched (2).Last));
+               Line :=
+                 Natural'Value (Str (FMatched (2).First .. FMatched (2).Last));
             else
-               Name := To_Unbounded_String
-                 (+Set_File
-                    (Debugger,
-                     Str (Matched (6).First .. Matched (6).Last)).Full_Name);
+               Name :=
+                 To_Unbounded_String
+                   (+Set_File
+                       (Debugger, Str (Matched (6).First .. Matched (6).Last))
+                       .Full_Name);
             end if;
          end if;
 
@@ -1648,8 +1693,8 @@ package body Debugger.LLDB is
       Match (Image_Lookup_Regexp, Str, Matched);
       if Matched (0) /= No_Match then
          declare
-            List         : String_List_Access;
-            File_Match   : Match_Array (0 .. 3);
+            List       : String_List_Access;
+            File_Match : Match_Array (0 .. 3);
          begin
             List := Split (Str, ASCII.LF);
 
@@ -1657,8 +1702,9 @@ package body Debugger.LLDB is
                --  Address
                Match (Image_Lookup_Address_Regexp, L.all, Matched);
                if Matched (0) /= No_Match then
-                  Addr := String_To_Address
-                    (L (Matched (1).First .. Matched (1).Last));
+                  Addr :=
+                    String_To_Address
+                      (L (Matched (1).First .. Matched (1).Last));
 
                   Name := Null_Unbounded_String;
                   Line := 0;
@@ -1672,16 +1718,16 @@ package body Debugger.LLDB is
                      L (Matched (1).First .. Matched (1).Last),
                      File_Match);
 
-                  Name := To_Unbounded_String
-                    (L (File_Match (1).First .. File_Match (1).Last));
+                  Name :=
+                    To_Unbounded_String
+                      (L (File_Match (1).First .. File_Match (1).Last));
 
-                  Line := Integer'Value
-                    (L (File_Match (2).First .. File_Match (2).Last));
+                  Line :=
+                    Integer'Value
+                      (L (File_Match (2).First .. File_Match (2).Last));
 
                   Match
-                    (Binder_File_Name_Regexp,
-                     To_String (Name),
-                     File_Match);
+                    (Binder_File_Name_Regexp, To_String (Name), File_Match);
 
                   if Matched (0) /= No_Match then
                      Name := Null_Unbounded_String;
@@ -1693,8 +1739,9 @@ package body Debugger.LLDB is
                if Name /= Null_Unbounded_String then
                   Match (Image_Lookup_CompileUnit_Regexp, L.all, Matched);
                   if Matched (0) /= No_Match then
-                     Name := To_Unbounded_String
-                       (L (File_Match (1).First .. File_Match (1).Last));
+                     Name :=
+                       To_Unbounded_String
+                         (L (File_Match (1).First .. File_Match (1).Last));
 
                      Free (List);
                      return;
@@ -1721,7 +1768,8 @@ package body Debugger.LLDB is
    -- Found_Frame_Info --
    ----------------------
 
-   overriding procedure Found_Frame_Info
+   overriding
+   procedure Found_Frame_Info
      (Debugger : access LLDB_Debugger;
       Str      : String;
       Frame    : out Unbounded_String;
@@ -1729,10 +1777,10 @@ package body Debugger.LLDB is
    is
       pragma Unreferenced (Debugger);
 
-      Matched  : Match_Array (0 .. 6);
+      Matched : Match_Array (0 .. 6);
 
    begin
-      Frame   := Null_Unbounded_String;
+      Frame := Null_Unbounded_String;
       Message := No_Debug_Info;
 
       Match (Frame_Regexp, Str, Matched);
@@ -1743,8 +1791,8 @@ package body Debugger.LLDB is
             Message := No_Debug_Info;
          end if;
 
-         Frame   := To_Unbounded_String
-           (Str (Matched (1).First .. Matched (1).Last));
+         Frame :=
+           To_Unbounded_String (Str (Matched (1).First .. Matched (1).Last));
       end if;
 
    exception
@@ -1756,22 +1804,27 @@ package body Debugger.LLDB is
    -- Backtrace --
    ---------------
 
-   overriding procedure Backtrace
+   overriding
+   procedure Backtrace
      (Debugger : access LLDB_Debugger;
       From     : Integer;
       To       : Integer;
       Value    : out Backtrace_Vector)
    is
-      Block : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
-      Responce : constant String := Debugger.Send_And_Get_Clean_Output
-        ("thread backtrace" &
-         (if From >= 0
-            then " --start" & Integer'Image (From) &
-              " --count" & Integer'Image (To - From + 1)
-            else ""),
-         Internal);
+      Responce : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("thread backtrace"
+           & (if From >= 0
+              then
+                " --start"
+                & Integer'Image (From)
+                & " --count"
+                & Integer'Image (To - From + 1)
+              else ""),
+           Internal);
       Matched  : Match_Array (0 .. 6);
       FMatched : Match_Array (0 .. 2);
    begin
@@ -1790,19 +1843,22 @@ package body Debugger.LLDB is
                   declare
                      Rec : Backtrace_Record;
                   begin
-                     Rec.Selected := Ada.Strings.Fixed.Index
-                       (Line (Line'First .. Matched (1).First - 1), "*") >=
-                       Line'First;
+                     Rec.Selected :=
+                       Ada.Strings.Fixed.Index
+                         (Line (Line'First .. Matched (1).First - 1), "*")
+                       >= Line'First;
 
-                     Rec.Frame_Id := Natural'Value
-                       (Line (Matched (1).First .. Matched (1).Last));
+                     Rec.Frame_Id :=
+                       Natural'Value
+                         (Line (Matched (1).First .. Matched (1).Last));
 
-                     Rec.Address := String_To_Address
-                       (Line (Matched (2).First .. Matched (2).Last));
+                     Rec.Address :=
+                       String_To_Address
+                         (Line (Matched (2).First .. Matched (2).Last));
 
                      if Matched (4) /= No_Match then
                         declare
-                           N : constant String :=
+                           N   : constant String :=
                              Line (Matched (4).First .. Matched (4).Last);
                            Idx : constant Natural :=
                              Ada.Strings.Fixed.Index (N, "`");
@@ -1810,8 +1866,8 @@ package body Debugger.LLDB is
                            if Idx < N'First then
                               Rec.Subprogram := new String'(N);
                            else
-                              Rec.Subprogram := new String'
-                                (N (Idx + 1 .. N'Last));
+                              Rec.Subprogram :=
+                                new String'(N (Idx + 1 .. N'Last));
                            end if;
                         end;
                      end if;
@@ -1823,16 +1879,21 @@ package body Debugger.LLDB is
                            FMatched);
 
                         if FMatched (0) /= No_Match then
-                           Rec.File := Set_File
-                             (Debugger,
-                              Line (FMatched (1).First .. FMatched (1).Last));
+                           Rec.File :=
+                             Set_File
+                               (Debugger,
+                                Line
+                                  (FMatched (1).First .. FMatched (1).Last));
 
-                           Rec.Line := Natural'Value
-                             (Line (FMatched (2).First .. FMatched (2).Last));
+                           Rec.Line :=
+                             Natural'Value
+                               (Line
+                                  (FMatched (2).First .. FMatched (2).Last));
                         else
-                           Rec.File := Set_File
-                             (Debugger,
-                              Line (Matched (6).First .. Matched (6).Last));
+                           Rec.File :=
+                             Set_File
+                               (Debugger,
+                                Line (Matched (6).First .. Matched (6).Last));
                         end if;
                      end if;
 
@@ -1854,18 +1915,16 @@ package body Debugger.LLDB is
    -- Current_Frame --
    -------------------
 
-   overriding function Current_Frame
-     (Debugger : access LLDB_Debugger)
-      return Integer
-   is
-      Responce : constant String := Debugger.Send_And_Get_Clean_Output
-        ("frame info", Internal);
+   overriding
+   function Current_Frame (Debugger : access LLDB_Debugger) return Integer is
+      Responce : constant String :=
+        Debugger.Send_And_Get_Clean_Output ("frame info", Internal);
       Matched  : Match_Array (0 .. 6);
    begin
       Match (Frame_Regexp, Responce, Matched);
       if Matched (0) /= No_Match then
-         return Integer'Value
-           (Responce (Matched (1).First .. Matched (1).Last));
+         return
+           Integer'Value (Responce (Matched (1).First .. Matched (1).Last));
       else
          return 0;
       end if;
@@ -1875,7 +1934,8 @@ package body Debugger.LLDB is
    -- Configure_Backtrace --
    -------------------------
 
-   overriding procedure Configure_Backtrace
+   overriding
+   procedure Configure_Backtrace
      (Self                 : not null access LLDB_Debugger;
       Show_Id              : Boolean := True;
       Show_PC              : Boolean := True;
@@ -1891,19 +1951,19 @@ package body Debugger.LLDB is
    -----------------------------
 
    function Internal_Set_Breakpoint
-     (Debugger  : access LLDB_Debugger;
-      Command   : String;
-      Mode      : GVD.Types.Command_Type)
-      return GVD.Types.Breakpoint_Identifier
+     (Debugger : access LLDB_Debugger;
+      Command  : String;
+      Mode     : GVD.Types.Command_Type) return GVD.Types.Breakpoint_Identifier
    is
-      Responce : constant String := Debugger.Send_And_Get_Clean_Output
-        (Cmd => Command, Mode => Mode);
-      Matched : Match_Array (0 .. 3);
+      Responce : constant String :=
+        Debugger.Send_And_Get_Clean_Output (Cmd => Command, Mode => Mode);
+      Matched  : Match_Array (0 .. 3);
    begin
       Match (Breakpoint_Regexp, Responce, Matched);
       if Matched (0) /= No_Match then
-         return Breakpoint_Identifier'Value
-           (Responce (Matched (1).First .. Matched (1).Last));
+         return
+           Breakpoint_Identifier'Value
+             (Responce (Matched (1).First .. Matched (1).Last));
       else
          return No_Breakpoint;
       end if;
@@ -1913,24 +1973,30 @@ package body Debugger.LLDB is
    -- Break_Subprogram --
    ----------------------
 
-   overriding function Break_Subprogram
+   overriding
+   function Break_Subprogram
      (Debugger  : access LLDB_Debugger;
       Name      : String;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier is
    begin
-      return Internal_Set_Breakpoint
-        (Debugger, "breakpoint set " &
-         (if Temporary then "--one-shot true " else "") &
-           "--name " & Name, Mode => Mode);
+      return
+        Internal_Set_Breakpoint
+          (Debugger,
+           "breakpoint set "
+           & (if Temporary then "--one-shot true " else "")
+           & "--name "
+           & Name,
+           Mode => Mode);
    end Break_Subprogram;
 
    ------------------
    -- Break_Source --
    ------------------
 
-   overriding function Break_Source
+   overriding
+   function Break_Source
      (Debugger  : access LLDB_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Editable_Line_Type;
@@ -1938,42 +2004,49 @@ package body Debugger.LLDB is
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier is
    begin
-      return Internal_Set_Breakpoint
-        (Debugger,
-         "breakpoint set " & (if Temporary then "--one-shot true " else "") &
-           "--line " & Line'Img & " --file """ &
-         (+Full_Name (File)) & """",
-         Mode);
+      return
+        Internal_Set_Breakpoint
+          (Debugger,
+           "breakpoint set "
+           & (if Temporary then "--one-shot true " else "")
+           & "--line "
+           & Line'Img
+           & " --file """
+           & (+Full_Name (File))
+           & """",
+           Mode);
    end Break_Source;
 
    ---------------------
    -- Break_Exception --
    ---------------------
 
-   overriding function Break_Exception
+   overriding
+   function Break_Exception
      (Debugger  : access LLDB_Debugger;
-      Name      : String  := "";
+      Name      : String := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier is
    begin
       if Name = "" or else Name = "all" then
-         return Internal_Set_Breakpoint
-           (Debugger,
-            "breakpoint set --language-exception c" &
-            (if Temporary then " --one-shot true" else "") &
-            (if Unhandled
-               then " --on-throw true"
-               else " --on-catch true"),
-            Mode);
+         return
+           Internal_Set_Breakpoint
+             (Debugger,
+              "breakpoint set --language-exception c"
+              & (if Temporary then " --one-shot true" else "")
+              & (if Unhandled then " --on-throw true" else " --on-catch true"),
+              Mode);
       else
-         return Internal_Set_Breakpoint
-           (Debugger,
-            "breakpoint set" &
-            (if Temporary then " --one-shot true" else "") &
-              " --name " & Name,
-           Mode);
+         return
+           Internal_Set_Breakpoint
+             (Debugger,
+              "breakpoint set"
+              & (if Temporary then " --one-shot true" else "")
+              & " --name "
+              & Name,
+              Mode);
       end if;
    end Break_Exception;
 
@@ -1981,7 +2054,8 @@ package body Debugger.LLDB is
    -- Catch_Assertions --
    ----------------------
 
-   overriding function Catch_Assertions
+   overriding
+   function Catch_Assertions
      (Debugger  : access LLDB_Debugger;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -1997,15 +2071,17 @@ package body Debugger.LLDB is
    -- Close --
    -----------
 
-   overriding procedure Close (Debugger : access LLDB_Debugger) is
+   overriding
+   procedure Close (Debugger : access LLDB_Debugger) is
    begin
       --  If the debugger process is dead, do not attempt to communicate
       --  with the underlying process.
 
       if Debugger.Get_Process /= null
         and then Debugger.Get_Process.Get_Descriptor /= null
-        and then Debugger.Get_Process.Get_Descriptor.Get_Pid /=
-          GNAT.Expect.Invalid_Pid
+        and then
+          Debugger.Get_Process.Get_Descriptor.Get_Pid
+          /= GNAT.Expect.Invalid_Pid
       then
          --  In case the debugger is busy processing a command.
 
@@ -2024,20 +2100,24 @@ package body Debugger.LLDB is
    -- Break_Address --
    -------------------
 
-   overriding function Break_Address
-     (Debugger   : access LLDB_Debugger;
-      Address    : GVD.Types.Address_Type;
-      Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+   overriding
+   function Break_Address
+     (Debugger  : access LLDB_Debugger;
+      Address   : GVD.Types.Address_Type;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
    is
       Result : GVD.Types.Breakpoint_Identifier;
    begin
-      Result := Internal_Set_Breakpoint
-        (Debugger,
-         "breakpoint set " & (if Temporary then "--one-shot true " else "") &
-           "--address " & Address_To_String (Address),
-         Mode);
+      Result :=
+        Internal_Set_Breakpoint
+          (Debugger,
+           "breakpoint set "
+           & (if Temporary then "--one-shot true " else "")
+           & "--address "
+           & Address_To_String (Address),
+           Mode);
 
       return Result;
    end Break_Address;
@@ -2046,36 +2126,38 @@ package body Debugger.LLDB is
    -- Break_Regexp --
    ------------------
 
-   overriding function Break_Regexp
-     (Debugger   : access LLDB_Debugger;
-      Regexp     : String;
-      Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+   overriding
+   function Break_Regexp
+     (Debugger  : access LLDB_Debugger;
+      Regexp    : String;
+      Temporary : Boolean := False;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier is
    begin
-      return Internal_Set_Breakpoint
-        (Debugger, "breakpoint set --func-regex " & Regexp &
-         (if Temporary
-            then " --one-shot true"
-            else ""),
-         Mode => Mode);
+      return
+        Internal_Set_Breakpoint
+          (Debugger,
+           "breakpoint set --func-regex "
+           & Regexp
+           & (if Temporary then " --one-shot true" else ""),
+           Mode => Mode);
    end Break_Regexp;
 
    ------------------------
    -- Enable_Breakpoints --
    ------------------------
 
-   overriding procedure Enable_Breakpoints
+   overriding
+   procedure Enable_Breakpoints
      (Debugger    : access LLDB_Debugger;
       Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
       Enable      : Boolean := True;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       Cmd : Unbounded_String :=
-              (if Enable then
-                  To_Unbounded_String ("breakpoint enable")
-               else
-                  To_Unbounded_String ("breakpoint disable"));
+        (if Enable
+         then To_Unbounded_String ("breakpoint enable")
+         else To_Unbounded_String ("breakpoint disable"));
    begin
       for Breakpoint of Breakpoints loop
          Cmd := Cmd & Breakpoint_Identifier'Image (Breakpoint);
@@ -2088,7 +2170,8 @@ package body Debugger.LLDB is
    -- Remove_Breakpoints --
    ------------------------
 
-   overriding procedure Remove_Breakpoints
+   overriding
+   procedure Remove_Breakpoints
      (Debugger    : access LLDB_Debugger;
       Breakpoints : GVD.Types.Breakpoint_Identifier_Lists.List;
       Mode        : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -2106,7 +2189,8 @@ package body Debugger.LLDB is
    -- Remove_Breakpoint_At --
    --------------------------
 
-   overriding procedure Remove_Breakpoint_At
+   overriding
+   procedure Remove_Breakpoint_At
      (Debugger : not null access LLDB_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Editable_Line_Type;
@@ -2131,17 +2215,19 @@ package body Debugger.LLDB is
    --    1.1: where = foo`_ada_foo + 25, address = 0x0000000000402a6b, ->
    --      resolved, hit count = 0
 
-   overriding procedure List_Breakpoints
-     (Debugger  : not null access LLDB_Debugger;
-      Kernel    : not null access Kernel_Handle_Record'Class;
-      List      : out Breakpoint_Vectors.Vector)
+   overriding
+   procedure List_Breakpoints
+     (Debugger : not null access LLDB_Debugger;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      List     : out Breakpoint_Vectors.Vector)
    is
 
-      Block   : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
-      Str     : constant String := Debugger.Send_And_Get_Clean_Output
-        ("breakpoint list --full", Internal);
+      Str     : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("breakpoint list --full", Internal);
       Lines   : String_List_Access;
       Matched : Match_Array (0 .. Breakpoint_Info_Regexp_Last);
       B       : Breakpoint_Data;
@@ -2154,10 +2240,9 @@ package body Debugger.LLDB is
       procedure Set_Location (File, Line : String) is
          F : constant Virtual_File := Set_File (Debugger, File);
       begin
-         B.Location := Kernel.Get_Buffer_Factory.Create_Marker
-           (File   => F,
-            Line   => Editable_Line_Type'Value (Line),
-            Column => 1);
+         B.Location :=
+           Kernel.Get_Buffer_Factory.Create_Marker
+             (File => F, Line => Editable_Line_Type'Value (Line), Column => 1);
       end Set_Location;
 
       ------------------
@@ -2165,15 +2250,14 @@ package body Debugger.LLDB is
       ------------------
 
       procedure Read_Options (Item : String);
-      procedure Read_Options (Item : String)
-      is
+      procedure Read_Options (Item : String) is
          Matched : Match_Array (0 .. 1);
       begin
          Match (Breakpoint_Options_Regexp, Item, Matched);
          if Matched (0) /= No_Match then
             declare
-               L   : String_List_Access := Split
-                 (Item (Matched (1).First .. Matched (1).Last), ' ');
+               L   : String_List_Access :=
+                 Split (Item (Matched (1).First .. Matched (1).Last), ' ');
                Pos : Natural := L'First;
                I   : GNAT.Strings.String_Access;
             begin
@@ -2205,12 +2289,12 @@ package body Debugger.LLDB is
       List.Clear;
 
       Lines := Split (Str, ASCII.LF);
-      Pos   := Lines'First;
+      Pos := Lines'First;
 
       while Pos <= Lines'Last loop
          Item := Lines (Pos);
---              Scope       : Scope_Type := No_Scope;
---              Action      : Action_Type := No_Action;
+         --              Scope       : Scope_Type := No_Scope;
+         --              Action      : Action_Type := No_Action;
 
          Match (Breakpoint_Info_Regexp, Item.all, Matched);
          if Matched (0) /= No_Match then
@@ -2219,29 +2303,31 @@ package body Debugger.LLDB is
                B := Null_Breakpoint;
             end if;
 
-            B.Num         := Breakpoint_Identifier'Value
-              (Item (Matched (1).First .. Matched (1).Last));
-            B.The_Type    := Breakpoint;
-            B.Enabled     := True;
+            B.Num :=
+              Breakpoint_Identifier'Value
+                (Item (Matched (1).First .. Matched (1).Last));
+            B.The_Type := Breakpoint;
+            B.Enabled := True;
             B.Disposition := Keep;
 
-            if Matched (3) /= No_Match
-              and then Matched (4) /= No_Match
-            then
+            if Matched (3) /= No_Match and then Matched (4) /= No_Match then
                Set_Location
                  (Item (Matched (3).First .. Matched (3).Last),
                   Item (Matched (4).First .. Matched (4).Last));
             end if;
 
             if Matched (7) /= No_Match then
-               B.Subprogram := To_Unbounded_String
-                 (Item (Matched (7).First .. Matched (7).Last));
+               B.Subprogram :=
+                 To_Unbounded_String
+                   (Item (Matched (7).First .. Matched (7).Last));
             end if;
 
             if Matched (Breakpoint_Info_Regexp_Address_Idx) /= No_Match then
-               B.Address := String_To_Address
-                 (Item (Matched (Breakpoint_Info_Regexp_Address_Idx).First ..
-                    Matched (Breakpoint_Info_Regexp_Address_Idx).Last));
+               B.Address :=
+                 String_To_Address
+                   (Item
+                      (Matched (Breakpoint_Info_Regexp_Address_Idx).First
+                       .. Matched (Breakpoint_Info_Regexp_Address_Idx).Last));
             end if;
 
             Read_Options (Item.all);
@@ -2254,56 +2340,58 @@ package body Debugger.LLDB is
                B := Null_Breakpoint;
             end if;
 
-            B.Num         := Breakpoint_Identifier'Value
-              (Item (Matched (1).First .. Matched (1).Last));
-            B.The_Type    := Breakpoint;
-            B.Enabled     := True;
+            B.Num :=
+              Breakpoint_Identifier'Value
+                (Item (Matched (1).First .. Matched (1).Last));
+            B.The_Type := Breakpoint;
+            B.Enabled := True;
             B.Disposition := Keep;
-            B.Except      := To_Unbounded_String ("all exceptions");
+            B.Except := To_Unbounded_String ("all exceptions");
 
             Read_Options (Item.all);
          end if;
 
          Match (Breakpoint_Condition_Regexp, Item.all, Matched);
          if Matched (0) /= No_Match then
-            B.Condition := Ada.Strings.Unbounded.To_Unbounded_String
-              (Item (Matched (1).First .. Matched (1).Last));
+            B.Condition :=
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Item (Matched (1).First .. Matched (1).Last));
          end if;
 
          Match (Breakpoint_Where_Regexp, Item.all, Matched);
          if Matched (0) /= No_Match then
             if Matched (5) /= No_Match then
-               B.Address := String_To_Address
-                 (Item (Matched (5).First .. Matched (5).Last));
+               B.Address :=
+                 String_To_Address
+                   (Item (Matched (5).First .. Matched (5).Last));
             end if;
 
             if Matched (2) /= No_Match then
                declare
-                  F : constant String := Item
-                    (Matched (2).First .. Matched (2).Last);
+                  F        : constant String :=
+                    Item (Matched (2).First .. Matched (2).Last);
                   FMatched : Match_Array (0 .. 3);
 
                begin
-                  Match (Breakpoint_Where_File_Regexp,  F, FMatched);
+                  Match (Breakpoint_Where_File_Regexp, F, FMatched);
                   if FMatched (0) /= No_Match then
                      Set_Location
                        (F (FMatched (2).First .. FMatched (2).Last),
                         F (FMatched (3).First .. FMatched (3).Last));
 
-                     B.Subprogram := To_Unbounded_String
-                       (F (FMatched (1).First .. FMatched (1).Last));
+                     B.Subprogram :=
+                       To_Unbounded_String
+                         (F (FMatched (1).First .. FMatched (1).Last));
                   end if;
                end;
             end if;
          end if;
 
-         if Ada.Strings.Fixed.Index
-           (Item.all, "Breakpoint commands:") > Item'First
+         if Ada.Strings.Fixed.Index (Item.all, "Breakpoint commands:")
+           > Item'First
          then
             Pos := Pos + 1;
-            while Pos <= Lines'Last
-              and then Lines (Pos).all /= ""
-            loop
+            while Pos <= Lines'Last and then Lines (Pos).all /= "" loop
                if B.Commands /= Null_Unbounded_String then
                   Append (B.Commands, "" & ASCII.LF);
                end if;
@@ -2323,18 +2411,20 @@ package body Debugger.LLDB is
 
       Free (Lines);
 
---  Watchpoint 4: addr = 0x7fffffffd85c size = 4 state = enabled type = rw
---      declare @ '/gvd_testsuite/parse_c.c:44'
---      watchpoint spec = 'A'
---      new value: 1
---      condition = 'A = 3'
+      --  Watchpoint 4: addr = 0x7fffffffd85c size = 4 state
+      --      = enabled type = rw
+      --      declare @ '/gvd_testsuite/parse_c.c:44'
+      --      watchpoint spec = 'A'
+      --      new value: 1
+      --      condition = 'A = 3'
 
       declare
-         Str : constant String := Debugger.Send_And_Get_Clean_Output
-           ("watchpoint list --full", Internal);
+         Str : constant String :=
+           Debugger.Send_And_Get_Clean_Output
+             ("watchpoint list --full", Internal);
       begin
          Lines := Split (Str, ASCII.LF);
-         Pos   := Lines'First;
+         Pos := Lines'First;
 
          while Pos <= Lines'Last loop
             Item := Lines (Pos);
@@ -2345,11 +2435,12 @@ package body Debugger.LLDB is
                   B := Null_Breakpoint;
                end if;
 
-               B.Num         := Breakpoint_Identifier'Value
-                 (Item (Matched (1).First .. Matched (1).Last));
-               B.The_Type    := Watchpoint;
-               B.Enabled     := Item
-                 (Matched (4).First .. Matched (4).Last) = "enabled";
+               B.Num :=
+                 Breakpoint_Identifier'Value
+                   (Item (Matched (1).First .. Matched (1).Last));
+               B.The_Type := Watchpoint;
+               B.Enabled :=
+                 Item (Matched (4).First .. Matched (4).Last) = "enabled";
 
                if Item (Matched (5).First .. Matched (5).Last) = "rw" then
                   B.Trigger := Read_Write;
@@ -2360,21 +2451,24 @@ package body Debugger.LLDB is
                end if;
 
                if Matched (2) /= No_Match then
-                  B.Address := String_To_Address
-                    (Item (Matched (2).First .. Matched (2).Last));
+                  B.Address :=
+                    String_To_Address
+                      (Item (Matched (2).First .. Matched (2).Last));
                end if;
             end if;
 
             Match (Watchpoint_Expression_Regexp, Item.all, Matched);
             if Matched (0) /= No_Match then
-               B.Expression := Ada.Strings.Unbounded.To_Unbounded_String
-                 (Item (Matched (1).First .. Matched (1).Last));
+               B.Expression :=
+                 Ada.Strings.Unbounded.To_Unbounded_String
+                   (Item (Matched (1).First .. Matched (1).Last));
             end if;
 
             Match (Watchpoint_Condition_Regexp, Item.all, Matched);
             if Matched (0) /= No_Match then
-               B.Condition := Ada.Strings.Unbounded.To_Unbounded_String
-                 (Item (Matched (1).First .. Matched (1).Last));
+               B.Condition :=
+                 Ada.Strings.Unbounded.To_Unbounded_String
+                   (Item (Matched (1).First .. Matched (1).Last));
             end if;
 
             Match (Watchpoint_Location_Regexp, Item.all, Matched);
@@ -2402,7 +2496,8 @@ package body Debugger.LLDB is
    -- List_Exceptions --
    ---------------------
 
-   overriding function List_Exceptions
+   overriding
+   function List_Exceptions
      (Debugger : access LLDB_Debugger) return GVD.Types.Exception_Array
    is
       pragma Unreferenced (Debugger);
@@ -2416,12 +2511,13 @@ package body Debugger.LLDB is
    -- Get_Last_Breakpoint_Id --
    ----------------------------
 
-   overriding function Get_Last_Breakpoint_Id
-     (Debugger  : access LLDB_Debugger)
-      return GVD.Types.Breakpoint_Identifier
+   overriding
+   function Get_Last_Breakpoint_Id
+     (Debugger : access LLDB_Debugger) return GVD.Types.Breakpoint_Identifier
    is
-      S       : constant String := Debugger.Send_And_Get_Clean_Output
-        ("breakpoint list --brief", Mode => Internal);
+      S       : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("breakpoint list --brief", Mode => Internal);
       Num     : GVD.Types.Breakpoint_Identifier := 0;
       List    : String_List_Access;
       Matched : Match_Array (0 .. 1);
@@ -2430,8 +2526,10 @@ package body Debugger.LLDB is
       for L of List.all loop
          Match (Breakpoint_Num_Regexp, L.all, Matched);
          if Matched (1) /= No_Match then
-            Num := GVD.Types.Breakpoint_Identifier'Value
-              (L (Matched (1).First .. Matched (1).Last)) + 1;
+            Num :=
+              GVD.Types.Breakpoint_Identifier'Value
+                (L (Matched (1).First .. Matched (1).Last))
+              + 1;
          end if;
       end loop;
       Free (List);
@@ -2443,22 +2541,27 @@ package body Debugger.LLDB is
    -- Set_Breakpoint_Condition --
    ------------------------------
 
-   overriding procedure Set_Breakpoint_Condition
+   overriding
+   procedure Set_Breakpoint_Condition
      (Debugger  : access LLDB_Debugger;
       Num       : GVD.Types.Breakpoint_Identifier;
       Condition : String;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
-   is
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Debugger.Send ("breakpoint modify --condition '" & Condition & "'" &
-                       Breakpoint_Identifier'Image (Num), Mode => Mode);
+      Debugger.Send
+        ("breakpoint modify --condition '"
+         & Condition
+         & "'"
+         & Breakpoint_Identifier'Image (Num),
+         Mode => Mode);
    end Set_Breakpoint_Condition;
 
    ----------------------------
    -- Set_Breakpoint_Command --
    ----------------------------
 
-   overriding procedure Set_Breakpoint_Command
+   overriding
+   procedure Set_Breakpoint_Command
      (Debugger : access LLDB_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Commands : String;
@@ -2470,8 +2573,13 @@ package body Debugger.LLDB is
             Mode => Mode);
       else
          Debugger.Send
-           ("breakpoint command add " & Breakpoint_Identifier'Image (Num)
-               & ASCII.LF & Commands & ASCII.LF & "DONE", Mode => Mode);
+           ("breakpoint command add "
+            & Breakpoint_Identifier'Image (Num)
+            & ASCII.LF
+            & Commands
+            & ASCII.LF
+            & "DONE",
+            Mode => Mode);
       end if;
    end Set_Breakpoint_Command;
 
@@ -2479,22 +2587,26 @@ package body Debugger.LLDB is
    -- Set_Breakpoint_Ignore_Count --
    ---------------------------------
 
-   overriding procedure Set_Breakpoint_Ignore_Count
+   overriding
+   procedure Set_Breakpoint_Ignore_Count
      (Debugger : access LLDB_Debugger;
       Num      : GVD.Types.Breakpoint_Identifier;
       Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       Debugger.Send
-        ("breakpoint modify --ignore-count" & Integer'Image (Count) &
-           Breakpoint_Identifier'Image (Num), Mode => Mode);
+        ("breakpoint modify --ignore-count"
+         & Integer'Image (Count)
+         & Breakpoint_Identifier'Image (Num),
+         Mode => Mode);
    end Set_Breakpoint_Ignore_Count;
 
    ----------------------
    -- Set_Scope_Action --
    ----------------------
 
-   overriding procedure Set_Scope_Action
+   overriding
+   procedure Set_Scope_Action
      (Debugger : access LLDB_Debugger;
       Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
@@ -2510,7 +2622,8 @@ package body Debugger.LLDB is
    -- Watch --
    -----------
 
-   overriding function Watch
+   overriding
+   function Watch
      (Debugger  : access LLDB_Debugger;
       Name      : String;
       Trigger   : GVD.Types.Watchpoint_Trigger;
@@ -2531,23 +2644,28 @@ package body Debugger.LLDB is
       function Command return String is
       begin
          case Trigger is
-            when GVD.Types.Read =>
+            when GVD.Types.Read       =>
                return "watchpoint set variable --watch read ";
-            when GVD.Types.Write =>
+
+            when GVD.Types.Write      =>
                return "watchpoint set variable --watch write ";
+
             when GVD.Types.Read_Write =>
                return "watchpoint set variable --watch read_write ";
          end case;
       end Command;
 
    begin
-      Num := Internal_Set_Breakpoint
-        (Debugger, Command & " " & Name, Mode => Mode);
+      Num :=
+        Internal_Set_Breakpoint (Debugger, Command & " " & Name, Mode => Mode);
 
       if Condition /= "" then
          Debugger.Send
-           ("watchpoint modify --condition '" & Condition & "'" &
-              GVD.Types.Breakpoint_Identifier'Image (Num), Mode => Mode);
+           ("watchpoint modify --condition '"
+            & Condition
+            & "'"
+            & GVD.Types.Breakpoint_Identifier'Image (Num),
+            Mode => Mode);
       end if;
 
       return Num;
@@ -2557,7 +2675,8 @@ package body Debugger.LLDB is
    -- Task_Switch --
    -----------------
 
-   overriding procedure Task_Switch
+   overriding
+   procedure Task_Switch
      (Debugger : access LLDB_Debugger;
       Task_Num : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -2571,7 +2690,8 @@ package body Debugger.LLDB is
    -- Thread_Switch --
    -------------------
 
-   overriding procedure Thread_Switch
+   overriding
+   procedure Thread_Switch
      (Debugger : access LLDB_Debugger;
       Thread   : Natural;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
@@ -2583,7 +2703,8 @@ package body Debugger.LLDB is
    -- PD_Switch --
    ---------------
 
-   overriding procedure PD_Switch
+   overriding
+   procedure PD_Switch
      (Debugger : access LLDB_Debugger;
       PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
@@ -2597,7 +2718,8 @@ package body Debugger.LLDB is
    -- Open_Processes --
    --------------------
 
-   overriding procedure Open_Processes (Debugger : access LLDB_Debugger) is
+   overriding
+   procedure Open_Processes (Debugger : access LLDB_Debugger) is
    begin
       Open_Processes (Debugger.Handle, Debugger.Kernel);
    end Open_Processes;
@@ -2606,7 +2728,8 @@ package body Debugger.LLDB is
    -- Next_Process --
    ------------------
 
-   overriding procedure Next_Process
+   overriding
+   procedure Next_Process
      (Debugger : access LLDB_Debugger;
       Info     : out GVD.Proc_Utils.Process_Info;
       Success  : out Boolean) is
@@ -2618,7 +2741,8 @@ package body Debugger.LLDB is
    -- Close_Processes --
    ---------------------
 
-   overriding procedure Close_Processes (Debugger : access LLDB_Debugger)  is
+   overriding
+   procedure Close_Processes (Debugger : access LLDB_Debugger) is
    begin
       Close_Processes (Debugger.Handle);
    end Close_Processes;
@@ -2627,9 +2751,7 @@ package body Debugger.LLDB is
    -- Parse_Disassembled --
    ------------------------
 
-   procedure Parse_Disassembled
-     (S    : String;
-      Code : out Disassemble_Elements)
+   procedure Parse_Disassembled (S : String; Code : out Disassemble_Elements)
    is
       List    : String_List_Access := Split (S, ASCII.LF);
       Matched : Match_Array (0 .. 4);
@@ -2641,17 +2763,20 @@ package body Debugger.LLDB is
             declare
                El : Disassemble_Element;
             begin
-               El.Address := String_To_Address
-                 (Line (Matched (2).First .. Matched (2).Last));
-               El.Method_Offset := To_Unbounded_String
-                 (Line (Matched (3).First .. Matched (3).Last));
+               El.Address :=
+                 String_To_Address
+                   (Line (Matched (2).First .. Matched (2).Last));
+               El.Method_Offset :=
+                 To_Unbounded_String
+                   (Line (Matched (3).First .. Matched (3).Last));
 
                while String_Utils.Is_Blank (Line (Matched (4).Last)) loop
                   Matched (4).Last := Matched (4).Last - 1;
                end loop;
 
-               El.Instr := To_Unbounded_String
-                 (Line (Matched (4).First .. Matched (4).Last));
+               El.Instr :=
+                 To_Unbounded_String
+                   (Line (Matched (4).First .. Matched (4).Last));
 
                Code.Append (El);
             end;
@@ -2669,22 +2794,23 @@ package body Debugger.LLDB is
    -- Get_Machine_Code --
    ----------------------
 
-   overriding procedure Get_Machine_Code
-     (Debugger        : access LLDB_Debugger;
-      Range_Start     : out GVD.Types.Address_Type;
-      Range_End       : out GVD.Types.Address_Type;
-      Code            : out Disassemble_Elements;
-      Start_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
-      End_Address     : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
+   overriding
+   procedure Get_Machine_Code
+     (Debugger      : access LLDB_Debugger;
+      Range_Start   : out GVD.Types.Address_Type;
+      Range_End     : out GVD.Types.Address_Type;
+      Code          : out Disassemble_Elements;
+      Start_Address : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
+      End_Address   : GVD.Types.Address_Type := GVD.Types.Invalid_Address)
    is
-      S : constant String := Address_To_String (Start_Address);
-      E : constant String := Address_To_String (End_Address);
-      Block : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+      S     : constant String := Address_To_String (Start_Address);
+      E     : constant String := Address_To_String (End_Address);
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
    begin
       Range_Start := Invalid_Address;
-      Range_End   := Invalid_Address;
+      Range_End := Invalid_Address;
 
       if S = "" or else E = "" then
          Parse_Disassembled
@@ -2701,7 +2827,7 @@ package body Debugger.LLDB is
 
       if not Code.Is_Empty then
          Range_Start := Code.First_Element.Address;
-         Range_End   := Code.Last_Element.Address;
+         Range_End := Code.Last_Element.Address;
       end if;
    end Get_Machine_Code;
 
@@ -2709,15 +2835,15 @@ package body Debugger.LLDB is
    -- Get_Machine_Code --
    ----------------------
 
-   overriding procedure Get_Machine_Code
+   overriding
+   procedure Get_Machine_Code
      (Debugger : access LLDB_Debugger;
       File     : String;
       From     : Natural;
       To       : Natural;
       Code     : out Disassemble_Elements)
    is
-      F             : constant Virtual_File :=
-        Debugger.Kernel.Create_From_Base (+(File));
+      F : constant Virtual_File := Debugger.Kernel.Create_From_Base (+(File));
 
       Start_Address : GVD.Types.Address_Type;
       End_Address   : GVD.Types.Address_Type;
@@ -2745,35 +2871,39 @@ package body Debugger.LLDB is
    -- Get_Line_Address --
    ----------------------
 
-   overriding procedure Get_Line_Address
-     (Debugger        : access LLDB_Debugger;
-      Line            : Natural;
-      File            : GNATCOLL.VFS.Virtual_File;
-      Range_Start     : out GVD.Types.Address_Type;
-      Range_End       : out GVD.Types.Address_Type)
+   overriding
+   procedure Get_Line_Address
+     (Debugger    : access LLDB_Debugger;
+      Line        : Natural;
+      File        : GNATCOLL.VFS.Virtual_File;
+      Range_Start : out GVD.Types.Address_Type;
+      Range_End   : out GVD.Types.Address_Type)
    is
-      Block : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
-      S : constant String := Debugger.Send_And_Get_Clean_Output
-        ("image lookup --verbose -line" & Line'Img &
-           " --file " & (+(Full_Name (File))),
-         Mode => Internal);
+      S       : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("image lookup --verbose -line"
+           & Line'Img
+           & " --file "
+           & (+(Full_Name (File))),
+           Mode => Internal);
       Matched : Match_Array (0 .. 2);
 
    begin
       Match (LineEntry_Regexp, S, Matched);
 
       if Matched (0) /= No_Match then
-         Range_Start := String_To_Address
-           (S (Matched (1).First .. Matched (1).Last));
+         Range_Start :=
+           String_To_Address (S (Matched (1).First .. Matched (1).Last));
 
-         Range_End := String_To_Address
-           (S (Matched (2).First .. Matched (2).Last));
+         Range_End :=
+           String_To_Address (S (Matched (2).First .. Matched (2).Last));
 
       else
          Range_Start := Invalid_Address;
-         Range_End   := Invalid_Address;
+         Range_End := Invalid_Address;
       end if;
    end Get_Line_Address;
 
@@ -2781,20 +2911,22 @@ package body Debugger.LLDB is
    -- Get_Register_Names --
    ------------------------
 
-   overriding function Get_Register_Names
-     (Debugger : access LLDB_Debugger)
-      return GVD.Types.Strings_Vectors.Vector is
+   overriding
+   function Get_Register_Names
+     (Debugger : access LLDB_Debugger) return GVD.Types.Strings_Vectors.Vector
+   is
    begin
       if not Debugger.Register_Names.Is_Empty then
          return Debugger.Register_Names;
       end if;
 
       declare
-         Block : Process_Proxies.Parse_File_Switch
-           (Debugger.Process) with Unreferenced;
+         Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+         with Unreferenced;
 
-         S : constant String := Debugger.Send_And_Get_Clean_Output
-           ("register read --all", Mode => Internal);
+         S : constant String :=
+           Debugger.Send_And_Get_Clean_Output
+             ("register read --all", Mode => Internal);
 
          List    : String_List_Access := Split (S, ASCII.LF);
          Matched : Match_Array (0 .. 4);
@@ -2822,25 +2954,37 @@ package body Debugger.LLDB is
    -- Get_Registers_Values --
    --------------------------
 
-   overriding function Get_Registers_Values
+   overriding
+   function Get_Registers_Values
      (Debugger : access LLDB_Debugger;
       Names    : GVD.Types.Strings_Vectors.Vector;
       Format   : GVD.Types.Registers_Format)
       return GVD.Types.String_To_String_Maps.Map
    is
-      Block : Process_Proxies.Parse_File_Switch
-        (Debugger.Process) with Unreferenced;
+      Block : Process_Proxies.Parse_File_Switch (Debugger.Process)
+      with Unreferenced;
 
       function Convert (F : GVD.Types.Registers_Format) return String;
       function Convert (F : GVD.Types.Registers_Format) return String is
       begin
          case F is
-            when Hexadecimal => return "hex";
-            when Octal       => return "octal";
-            when Binary      => return "binary";
-            when Decimal     => return "decimal";
-            when Raw         => return "default";
-            when Naturals    => return "unsigned";
+            when Hexadecimal =>
+               return "hex";
+
+            when Octal       =>
+               return "octal";
+
+            when Binary      =>
+               return "binary";
+
+            when Decimal     =>
+               return "decimal";
+
+            when Raw         =>
+               return "default";
+
+            when Naturals    =>
+               return "unsigned";
          end case;
       end Convert;
 
@@ -2861,9 +3005,10 @@ package body Debugger.LLDB is
          end loop;
       end if;
 
-      S := To_Unbounded_String
-        (Debugger.Send_And_Get_Clean_Output
-           (To_String (Cmd), Mode => Internal));
+      S :=
+        To_Unbounded_String
+          (Debugger.Send_And_Get_Clean_Output
+             (To_String (Cmd), Mode => Internal));
 
       List := Split (To_String (S), ASCII.LF);
       for Line of List.all loop
@@ -2891,23 +3036,19 @@ package body Debugger.LLDB is
    --------------
 
    function Set_File
-     (Debugger : access LLDB_Debugger;
-      File     : String)
-      return Virtual_File
+     (Debugger : access LLDB_Debugger; File : String) return Virtual_File
    is
       Result : Virtual_File;
    begin
-      if Ada.Strings.Fixed.Index
-        (File, "" & GNAT.OS_Lib.Path_Separator) < File'First
+      if Ada.Strings.Fixed.Index (File, "" & GNAT.OS_Lib.Path_Separator)
+        < File'First
       then
          Result := GPS.Core_Kernels.To_File (Debugger.Get_Kernel, File);
       else
          Result := Debugger.Get_Kernel.Create_From_Base (+File);
       end if;
 
-      if not Result.Is_Absolute_Path
-        or else not Result.Is_Regular_File
-      then
+      if not Result.Is_Absolute_Path or else not Result.Is_Regular_File then
          Result := Debugger.Kernel.Create_From_Base (Result.Full_Name);
       end if;
 
@@ -2918,11 +3059,9 @@ package body Debugger.LLDB is
    -- Set_Register --
    ------------------
 
-   overriding procedure Set_Register
-     (Debugger : access LLDB_Debugger;
-      Name     : String;
-      Value    : String)
-   is
+   overriding
+   procedure Set_Register
+     (Debugger : access LLDB_Debugger; Name : String; Value : String) is
    begin
       Debugger.Send ("register write " & Name & " " & Value);
    end Set_Register;
@@ -2931,16 +3070,13 @@ package body Debugger.LLDB is
    -- Get_Memory --
    ----------------
 
-   overriding function Get_Memory
-     (Debugger : access LLDB_Debugger;
-      Size     : Integer;
-      Address  : String)
+   overriding
+   function Get_Memory
+     (Debugger : access LLDB_Debugger; Size : Integer; Address : String)
       return Memory_Dump_Access
    is
       procedure Get_Label
-        (Text  : String;
-         From  : in out Positive;
-         Value : out Unbounded_String);
+        (Text : String; From : in out Positive; Value : out Unbounded_String);
       --  Scan Text starting from From position and search for label.
       --  If found put label into Value.
 
@@ -2956,9 +3092,7 @@ package body Debugger.LLDB is
       ---------------
 
       procedure Get_Label
-        (Text  : String;
-         From  : in out Positive;
-         Value : out Unbounded_String)
+        (Text : String; From : in out Positive; Value : out Unbounded_String)
       is
          --  We expect Text in the form: "address <label> : 0x...", for example
          --  0x1234567 <label+123>: 0xff
@@ -3005,10 +3139,11 @@ package body Debugger.LLDB is
 
       Error_String : constant String := "Cannot access memory at";
       Image        : constant String := Integer'Image (Size / 8);
-      S              : GNAT.OS_Lib.String_Access := new String'
-        (Debugger.Send_And_Get_Clean_Output
-           ("x/" & Image (Image'First + 1 .. Image'Last)
-            & "gx " & Address, Mode => Internal));
+      S            : GNAT.OS_Lib.String_Access :=
+        new String'
+          (Debugger.Send_And_Get_Clean_Output
+             ("x/" & Image (Image'First + 1 .. Image'Last) & "gx " & Address,
+              Mode => Internal));
       S_Index      : Integer := S'First + 2;
       Last_Index   : Integer := S'First + 2;
       Result       : constant Memory_Dump_Access :=
@@ -3037,10 +3172,15 @@ package body Debugger.LLDB is
          declare
             Image : constant String := Integer'Image (Size);
          begin
-            S := new String'(Send_And_Get_Clean_Output
-              (Debugger,
-                 "x/" & Image (Image'First + 1 .. Image'Last)
-                 & "b " & Address, Mode => Internal));
+            S :=
+              new String'
+                (Send_And_Get_Clean_Output
+                   (Debugger,
+                    "x/"
+                    & Image (Image'First + 1 .. Image'Last)
+                    & "b "
+                    & Address,
+                    Mode => Internal));
 
             S_Index := S'First + 2;
             Last_Index := S'First + 2;
@@ -3061,11 +3201,13 @@ package body Debugger.LLDB is
 
                --  Detect actual data : 0xXX... right after an ASCII.HT
                if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
-                  Append (Result (Result_Index).Value,
-                          S (S_Index + 2 .. S_Index + 3));
+                  Append
+                    (Result (Result_Index).Value,
+                     S (S_Index + 2 .. S_Index + 3));
                   Total := Total + 1;
-               elsif S (S_Index) = ASCII.LF and then
-                 Length (Result (Result_Index).Value) >= Dump_Item_Size * 2
+               elsif S (S_Index) = ASCII.LF
+                 and then
+                   Length (Result (Result_Index).Value) >= Dump_Item_Size * 2
                then
                   --  If new line and we have collected enought bytes
                   --  Read label in new string
@@ -3087,8 +3229,9 @@ package body Debugger.LLDB is
             --  Detect actual data : 0xXX... right after an ASCII.HT
 
             if S (S_Index) = '0' and S (S_Index - 1) = ASCII.HT then
-               Append (Result (Result_Index).Value,
-                       Swap (S (S_Index + 2 .. S_Index + 17)));
+               Append
+                 (Result (Result_Index).Value,
+                  Swap (S (S_Index + 2 .. S_Index + 17)));
                Total := Total + 8;
             elsif S (S_Index) = ASCII.LF then
                --  Read label in new string
@@ -3126,10 +3269,9 @@ package body Debugger.LLDB is
    -- Put_Memory_Byte --
    ---------------------
 
-   overriding procedure Put_Memory_Byte
-     (Debugger : access LLDB_Debugger;
-      Address  : String;
-      Byte     : String) is
+   overriding
+   procedure Put_Memory_Byte
+     (Debugger : access LLDB_Debugger; Address : String; Byte : String) is
    begin
       Debugger.Send
         ("memory write " & Address & " 0x" & Byte, Mode => Internal);
@@ -3139,11 +3281,13 @@ package body Debugger.LLDB is
    -- Get_Uniq_Id --
    -----------------
 
-   overriding function Get_Uniq_Id
+   overriding
+   function Get_Uniq_Id
      (Debugger : access LLDB_Debugger; Entity : String) return String
    is
-      S       : constant String := Debugger.Send_And_Get_Clean_Output
-        ("expression &(" & Entity & ")", Mode => Internal);
+      S       : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("expression &(" & Entity & ")", Mode => Internal);
       Matched : Match_Array (0 .. 1);
 
    begin
@@ -3160,14 +3304,14 @@ package body Debugger.LLDB is
    -- Get_Type_Info --
    -------------------
 
-   overriding function Get_Type_Info
-     (Debugger  : access LLDB_Debugger;
-      Entity    : String;
-      Default   : String) return String
+   overriding
+   function Get_Type_Info
+     (Debugger : access LLDB_Debugger; Entity : String; Default : String)
+      return String
    is
-      S : constant String := Debugger.Send_And_Get_Clean_Output
-        ("frame variable " & Entity,
-         Mode => Internal);
+      S       : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("frame variable " & Entity, Mode => Internal);
       Matched : Match_Array (0 .. 1);
    begin
       Match (Type_Name_Regexp, S, Matched);
@@ -3182,14 +3326,13 @@ package body Debugger.LLDB is
    -- Get_Variable_Address --
    --------------------------
 
-   overriding function Get_Variable_Address
-     (Debugger  : access LLDB_Debugger;
-      Variable  : String)
-      return String
+   overriding
+   function Get_Variable_Address
+     (Debugger : access LLDB_Debugger; Variable : String) return String
    is
-      S : constant String := Debugger.Send_And_Get_Clean_Output
-        ("expression --raw -- &" & Variable,
-         Mode => Internal);
+      S       : constant String :=
+        Debugger.Send_And_Get_Clean_Output
+          ("expression --raw -- &" & Variable, Mode => Internal);
       Matched : Match_Array (0 .. 1);
    begin
       Match (Value_Of_Regexp, S, Matched);
@@ -3204,9 +3347,9 @@ package body Debugger.LLDB is
    -- Get_Endian_Type --
    ---------------------
 
-   overriding function Get_Endian_Type
-     (Debugger : access LLDB_Debugger)
-      return Endian_Type
+   overriding
+   function Get_Endian_Type
+     (Debugger : access LLDB_Debugger) return Endian_Type
    is
       pragma Unreferenced (Debugger);
    begin
@@ -3217,9 +3360,9 @@ package body Debugger.LLDB is
    -- Complete --
    --------------
 
-   overriding function Complete
-     (Debugger  : access LLDB_Debugger;
-      Beginning : String)
+   overriding
+   function Complete
+     (Debugger : access LLDB_Debugger; Beginning : String)
       return GNAT.Strings.String_List
    is
       S           : constant String :=
@@ -3256,7 +3399,7 @@ package body Debugger.LLDB is
             end if;
 
             Result (Index) := new String'(S (First_Index .. Last_Index - 1));
-            Last_Index  := Last_Index + 1;
+            Last_Index := Last_Index + 1;
             First_Index := Last_Index;
          end loop;
 
@@ -3287,10 +3430,8 @@ package body Debugger.LLDB is
    -- Set_TTY --
    -------------
 
-   overriding procedure Set_TTY
-     (Debugger : access LLDB_Debugger;
-      TTY      : String)
-   is
+   overriding
+   procedure Set_TTY (Debugger : access LLDB_Debugger; TTY : String) is
       pragma Unreferenced (Debugger, TTY);
    begin
       raise Unknown_Command;
@@ -3300,15 +3441,13 @@ package body Debugger.LLDB is
    -- Is_Quit_Command --
    ---------------------
 
-   overriding function Is_Quit_Command
-     (Debugger : access LLDB_Debugger;
-      Command : String)
-      return Boolean
+   overriding
+   function Is_Quit_Command
+     (Debugger : access LLDB_Debugger; Command : String) return Boolean
    is
       pragma Unreferenced (Debugger);
    begin
-      return Starts_With (Command, "quit")
-        or else Starts_With (Command, "q");
+      return Starts_With (Command, "quit") or else Starts_With (Command, "q");
    end Is_Quit_Command;
 
    --------------------------
@@ -3337,9 +3476,7 @@ package body Debugger.LLDB is
       begin
          if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
             Index := Index + 1;
-            while Num /= 0
-              and then Index <= Type_Str'Last
-            loop
+            while Num /= 0 and then Index <= Type_Str'Last loop
                if Type_Str (Index) = ')' then
                   Num := Num - 1;
                elsif Type_Str (Index) = '(' then
@@ -3352,7 +3489,7 @@ package body Debugger.LLDB is
       end Skip_Parenthesis;
 
       Context : constant Language_Debugger_Context :=
-                  Get_Language_Debugger_Context (Lang);
+        Get_Language_Debugger_Context (Lang);
       Dim     : Dimension;
 
    begin
@@ -3360,7 +3497,8 @@ package body Debugger.LLDB is
 
       if Looking_At (Type_Str, Index, "Cannot access memory at address") then
          while Index <= Type_Str'Last loop
-            exit when Type_Str (Index) = ','
+            exit when
+              Type_Str (Index) = ','
               or else Type_Str (Index) = ')'
               or else Type_Str (Index) = '}'
               or else Type_Str (Index) = '>';
@@ -3397,10 +3535,12 @@ package body Debugger.LLDB is
             declare
                Int : constant Natural := Index;
             begin
-               Skip_Simple_Value (Type_Str, Index,
-                                  Array_Item_Separator => ',',
-                               End_Of_Array         => Context.Array_End,
-                                  Repeat_Item_Start    => '<');
+               Skip_Simple_Value
+                 (Type_Str,
+                  Index,
+                  Array_Item_Separator => ',',
+                  End_Of_Array         => Context.Array_End,
+                  Repeat_Item_Start    => '<');
                GVD_Simple_Type_Access (Result.Get_Type).Set_Value
                  (Type_Str (Int .. Index - 1));
             end;
@@ -3452,10 +3592,11 @@ package body Debugger.LLDB is
                   Skip_To_Char (Type_Str, Index, '>');
                   Index := Index + 1;
 
-                  --  Also keep string indications (for char* in C)
+               --  Also keep string indications (for char* in C)
                elsif Index < Type_Str'Last - 2
-                 and then (Type_Str (Index + 1) = '"'
-                           or else Type_Str (Index + 1) = ''')
+                 and then
+                   (Type_Str (Index + 1) = '"'
+                    or else Type_Str (Index + 1) = ''')
                then
                   declare
                      Str      : String (1 .. 0);
@@ -3463,9 +3604,12 @@ package body Debugger.LLDB is
                   begin
                      Index := Index + 1;
                      Parse_Cst_String
-                       (Type_Str, Index, Str, Str_Last,
-                        Backslash_Special => Get_Language_Context
-                          (Lang).Quote_Character = '\');
+                       (Type_Str,
+                        Index,
+                        Str,
+                        Str_Last,
+                        Backslash_Special =>
+                          Get_Language_Context (Lang).Quote_Character = '\');
                      Index := Index - 1;
                   end;
                end if;
@@ -3482,9 +3626,7 @@ package body Debugger.LLDB is
       elsif Result.Get_Type'Tag = GVD_Array_Type'Tag
         and then GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions = 1
         and then Type_Str'Length /= 0
-        and then
-          (Type_Str (Index) = '"'
-           or else Type_Str (Index) = ''')
+        and then (Type_Str (Index) = '"' or else Type_Str (Index) = ''')
       then
          Dim := GVD_Array_Type_Access (Result.Get_Type).Get_Dimensions (1);
 
@@ -3493,8 +3635,8 @@ package body Debugger.LLDB is
 
          if Dim.Last < Dim.First then
             declare
-               Tmp : Natural := Index;
-               S   : String (1 .. 0);
+               Tmp    : Natural := Index;
+               S      : String (1 .. 0);
                S_Last : Natural;
             begin
                Parse_Cst_String (Type_Str, Tmp, S, S_Last);
@@ -3509,11 +3651,14 @@ package body Debugger.LLDB is
 
          begin
             Parse_Cst_String
-              (Type_Str, Index, S, S_Last,
-               Backslash_Special => Get_Language_Context
-               (Lang).Quote_Character = '\');
-            Simple := GVD_Array_Type_Access
-              (Result.Get_Type).Get_Value (Dim.First);
+              (Type_Str,
+               Index,
+               S,
+               S_Last,
+               Backslash_Special =>
+                 Get_Language_Context (Lang).Quote_Character = '\');
+            Simple :=
+              GVD_Array_Type_Access (Result.Get_Type).Get_Value (Dim.First);
 
             if Simple = Empty_GVD_Type_Holder then
                Simple := New_Simple_Type;
@@ -3526,8 +3671,7 @@ package body Debugger.LLDB is
             --  displaying it.
 
             GVD_Array_Type_Access (Result.Get_Type).Set_Value
-              (Elem_Value => Simple,
-               Elem_Index => 0);
+              (Elem_Value => Simple, Elem_Index => 0);
             GVD_Array_Type_Access (Result.Get_Type).Shrink_Values;
          end;
 
@@ -3578,8 +3722,9 @@ package body Debugger.LLDB is
               (Lang, Entity, Type_Str, Index, Result, Repeat_Num, Parent);
 
          elsif Type_Str (Index) /= Context.Array_Start
-           or else (Index + 5 <= Type_Str'Last
-                    and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
+           or else
+             (Index + 5 <= Type_Str'Last
+              and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
          then
             --  If we have "(<ref> array (...) of string) @0xbffff5fc: ((null),
             --  (null))", this is still considered as an array, which is
@@ -3591,8 +3736,7 @@ package body Debugger.LLDB is
                Skip_To_Char (Type_Str, Tmp, ')');
                Skip_To_Char (Type_Str, Tmp, ':');
 
-               if Tmp < Type_Str'Last
-                 and then Type_Str (Tmp .. Tmp + 1) = " ("
+               if Tmp < Type_Str'Last and then Type_Str (Tmp .. Tmp + 1) = " ("
                then
                   Index := Tmp;
                   Parse_Array_Value (Lang, Type_Str, Index, Result);
@@ -3603,14 +3747,20 @@ package body Debugger.LLDB is
             --  Otherwise, we convert to an access type
 
             if Parent /= Empty_GVD_Type_Holder then
-               Result := GVD_Type_Holder
-                 (Parent.Get_Type.Replace (Result, New_Access_Type));
+               Result :=
+                 GVD_Type_Holder
+                   (Parent.Get_Type.Replace (Result, New_Access_Type));
             else
                Result := New_Access_Type;
             end if;
 
             Internal_Parse_Value
-              (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
+              (Lang,
+               Entity,
+               Type_Str,
+               Index,
+               Result,
+               Repeat_Num,
                Parent => Parent);
 
          else
@@ -3625,10 +3775,10 @@ package body Debugger.LLDB is
         or else Result.Get_Type'Tag = GVD_Union_Type'Tag
       then
          declare
-            Int : Natural;
+            Int               : Natural;
             Close_Parentheses : Boolean := False;
          begin
-         --  Skip initial '(' if we are still looking at it (we might not
+            --  Skip initial '(' if we are still looking at it (we might not
             --  if we are parsing a variant part)
 
             if Index <= Type_Str'Last
@@ -3638,20 +3788,20 @@ package body Debugger.LLDB is
                Close_Parentheses := True;
             end if;
 
-            for J in 1 .. GVD_Record_Type_Access
-              (Result.Get_Type).Num_Fields
+            for J in 1 .. GVD_Record_Type_Access (Result.Get_Type).Num_Fields
             loop
 
                exit when Index >= Type_Str'Last;
 
                --  If we are expecting a field
 
-               if GVD_Record_Type_Access
-                 (Result.Get_Type).Get_Variant_Parts (J) = 0
+               if GVD_Record_Type_Access (Result.Get_Type).Get_Variant_Parts
+                    (J)
+                 = 0
                then
                   declare
-                     V          : GVD_Type_Holder := GVD_Record_Type_Access
-                       (Result.Get_Type).Get_Value (J);
+                     V          : GVD_Type_Holder :=
+                       GVD_Record_Type_Access (Result.Get_Type).Get_Value (J);
                      Repeat_Num : Positive;
                   begin
                      --  Skips '=>'
@@ -3663,7 +3813,12 @@ package body Debugger.LLDB is
                      Skip_To_String (Type_Str, Index, Context.Record_Field);
                      Index := Index + 1 + Context.Record_Field_Length;
                      Internal_Parse_Value
-                       (Lang, Entity, Type_Str, Index, V, Repeat_Num,
+                       (Lang,
+                        Entity,
+                        Type_Str,
+                        Index,
+                        V,
+                        Repeat_Num,
                         Parent => Result);
                   end;
 
@@ -3695,10 +3850,11 @@ package body Debugger.LLDB is
                      Repeat_Num : Positive;
                      V          : GVD_Type_Holder;
                   begin
-                     V := GVD_Record_Type_Access
-                       (Result.Get_Type).Find_Variant_Part
-                       (Field    => J,
-                        Contains => Type_Str (Index .. Int - 1));
+                     V :=
+                       GVD_Record_Type_Access (Result.Get_Type)
+                         .Find_Variant_Part
+                            (Field    => J,
+                             Contains => Type_Str (Index .. Int - 1));
 
                      --  Variant part not found. This happens for instance when
                      --  gdb doesn't report the "when others" part of a variant
@@ -3719,7 +3875,12 @@ package body Debugger.LLDB is
 
                      if V /= Empty_GVD_Type_Holder then
                         Internal_Parse_Value
-                          (Lang, Entity, Type_Str, Index, V, Repeat_Num,
+                          (Lang,
+                           Entity,
+                           Type_Str,
+                           Index,
+                           V,
+                           Repeat_Num,
                            Parent => Result);
                      end if;
                   end;
@@ -3729,7 +3890,8 @@ package body Debugger.LLDB is
             Skip_Blanks (Type_Str, Index);
 
             --  Skip closing ')', if seen
-            if Close_Parentheses and then Index <= Type_Str'Last
+            if Close_Parentheses
+              and then Index <= Type_Str'Last
               and then Type_Str (Index) = Context.Record_End
             then
                Index := Index + 1;
@@ -3742,10 +3904,10 @@ package body Debugger.LLDB is
 
       elsif Result.Get_Type'Tag = GVD_Class_Type'Tag then
          declare
-            R : GVD_Type_Holder;
+            R                 : GVD_Type_Holder;
             Close_Parentheses : Boolean := False;
          begin
-         --  Skip initial '(' if we are still looking at it (we might not
+            --  Skip initial '(' if we are still looking at it (we might not
             --  if we are parsing a variant part)
 
             if Index <= Type_Str'Last
@@ -3755,26 +3917,37 @@ package body Debugger.LLDB is
                Close_Parentheses := True;
             end if;
 
-            for A in 1 .. GVD_Class_Type_Access
-              (Result.Get_Type).Get_Num_Ancestors
+            for A in
+              1 .. GVD_Class_Type_Access (Result.Get_Type).Get_Num_Ancestors
             loop
                R := GVD_Class_Type_Access (Result.Get_Type).Get_Ancestor (A);
                Internal_Parse_Value
-                 (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                 (Lang,
+                  Entity,
+                  Type_Str,
+                  Index,
+                  R,
+                  Repeat_Num,
                   Parent => Result);
             end loop;
             R := GVD_Class_Type_Access (Result.Get_Type).Get_Child;
 
             if GVD_Record_Type_Access (R.Get_Type).Num_Fields /= 0 then
                Internal_Parse_Value
-                 (Lang, Entity, Type_Str, Index, R, Repeat_Num,
+                 (Lang,
+                  Entity,
+                  Type_Str,
+                  Index,
+                  R,
+                  Repeat_Num,
                   Parent => Result);
             end if;
 
             Skip_Blanks (Type_Str, Index);
 
             --  Skip closing ')', if seen
-            if Close_Parentheses and then Index <= Type_Str'Last
+            if Close_Parentheses
+              and then Index <= Type_Str'Last
               and then Type_Str (Index) = Context.Record_End
             then
                Index := Index + 1;
@@ -3791,10 +3964,9 @@ package body Debugger.LLDB is
       Skip_Blanks (Type_Str, Index);
       if Looking_At (Type_Str, Index, "<repeats ") then
          Index := Index + 9;
-         Parse_Num (Type_Str,
-                    Index,
-                    Long_Integer (Repeat_Num));
+         Parse_Num (Type_Str, Index, Long_Integer (Repeat_Num));
          Index := Index + 7;  --  skips " times>"
+
       end if;
    end Internal_Parse_Value;
 

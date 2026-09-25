@@ -27,17 +27,21 @@ with GNAT.Strings;
 with VSS.Strings;
 with VSS.Unicode;
 
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Xref;
 
 package Basic_Types is
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Strings.String_List,
+        GNAT.Strings.String_List_Access);
    --  Free the array, but not the strings it contains.
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Regpat.Pattern_Matcher,
+        GNAT.Expect.Pattern_Matcher_Access);
 
    subtype Unchecked_String is String (Positive);
    pragma Suppress (All_Checks, Unchecked_String);
@@ -71,10 +75,11 @@ package Basic_Types is
       Day   : Ada.Calendar.Day_Number;
    end record;
 
-   Null_Date : constant Date_Type := Date_Type'
-     (Year  => Ada.Calendar.Year_Number'First,
-      Month => Ada.Calendar.Month_Number'First,
-      Day   => Ada.Calendar.Day_Number'First);
+   Null_Date : constant Date_Type :=
+     Date_Type'
+       (Year  => Ada.Calendar.Year_Number'First,
+        Month => Ada.Calendar.Month_Number'First,
+        Day   => Ada.Calendar.Day_Number'First);
 
    function "<" (Left, Right : Date_Type) return Boolean;
    --  Compares the two dates, return true if left is before right
@@ -91,7 +96,8 @@ package Basic_Types is
    type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
    procedure Error
      (Report : in out File_Error_Reporter_Record;
-      File   : GNATCOLL.VFS.Virtual_File) is abstract;
+      File   : GNATCOLL.VFS.Virtual_File)
+   is abstract;
    --  Used to report errors while parsing files
 
    ----------------
@@ -168,9 +174,10 @@ package Basic_Types is
    --  in vfs.ads.
 
    pragma Suppress (Container_Checks);
-   package File_Sets is new Ada.Containers.Hashed_Sets
-     (Element_Type        => GNATCOLL.VFS.Virtual_File,
-      Hash                => GNATCOLL.VFS.Full_Name_Hash,
-      Equivalent_Elements => GNATCOLL.VFS."=");
+   package File_Sets is new
+     Ada.Containers.Hashed_Sets
+       (Element_Type        => GNATCOLL.VFS.Virtual_File,
+        Hash                => GNATCOLL.VFS.Full_Name_Hash,
+        Equivalent_Elements => GNATCOLL.VFS."=");
 
 end Basic_Types;

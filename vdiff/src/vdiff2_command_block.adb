@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with GNATCOLL.Utils;      use GNATCOLL.Utils;
+with GNAT.OS_Lib;    use GNAT.OS_Lib;
+with GNATCOLL.Utils; use GNATCOLL.Utils;
 
 with GPS.Intl;            use GPS.Intl;
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
@@ -61,8 +61,7 @@ package body Vdiff2_Command_Block is
    -----------------------
 
    procedure Unchecked_Execute
-     (Command : access Diff_Command_Block;
-      Diff    : access Diff_Head) is
+     (Command : access Diff_Command_Block; Diff : access Diff_Head) is
    begin
       Command.Action (Command.Kernel, Diff);
    end Unchecked_Execute;
@@ -71,7 +70,8 @@ package body Vdiff2_Command_Block is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Block;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -79,8 +79,8 @@ package body Vdiff2_Command_Block is
    begin
       Trace
         (Me,
-         "Files (1): " &
-         Display_Full_Name (Command.Last_Active_Diff.Files (1)));
+         "Files (1): "
+         & Display_Full_Name (Command.Last_Active_Diff.Files (1)));
       return Execute (Command);
    end Execute;
 
@@ -88,13 +88,14 @@ package body Vdiff2_Command_Block is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Block) return Command_Return_Type
    is
       use Diff_Head_List.Std_Vectors;
 
       Context       : constant Selection_Context :=
-                        Get_Current_Context (Command.Kernel);
+        Get_Current_Context (Command.Kernel);
       Curr_Node     : Diff_Head_List.Std_Vectors.Cursor;
       Diff          : Diff_Head_Access;
       Selected_File : Virtual_File;
@@ -133,8 +134,7 @@ package body Vdiff2_Command_Block is
    -----------------------
 
    procedure Reload_Difference
-     (Kernel : Kernel_Handle;
-      Item   : access Diff_Head)
+     (Kernel : Kernel_Handle; Item : access Diff_Head)
    is
       Tmp : Diff_List;
    begin
@@ -160,16 +160,12 @@ package body Vdiff2_Command_Block is
    -- Close_Difference --
    ----------------------
 
-   procedure Close_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head)
+   procedure Close_Difference (Kernel : Kernel_Handle; Diff : access Diff_Head)
    is
       Files : constant T_VFile := Diff.Files;
       CL    : Arg_List;
-      Args1 : Argument_List :=
-                (1 => new String'(+Full_Name (Files (1))));
-      Args2 : Argument_List :=
-                (1 => new String'(+Full_Name (Files (2))));
+      Args1 : Argument_List := (1 => new String'(+Full_Name (Files (1))));
+      Args2 : Argument_List := (1 => new String'(+Full_Name (Files (2))));
       Args3 : Argument_List (1 .. 1);
 
    begin
@@ -189,7 +185,8 @@ package body Vdiff2_Command_Block is
          CL := Create ("Editor.close");
          Append_Argument (CL, +Full_Name (Files (3)), One_Arg);
          Execute_GPS_Shell_Command (Kernel, CL);
-         --  At this point all the memory associated with Diff is freed
+      --  At this point all the memory associated with Diff is freed
+
       end if;
 
       Free (Args1);
@@ -202,8 +199,7 @@ package body Vdiff2_Command_Block is
    ----------------------------
 
    procedure Unhighlight_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head) is
+     (Kernel : Kernel_Handle; Diff : access Diff_Head) is
    begin
       Hide_Differences (Kernel, Diff);
    end Unhighlight_Difference;
@@ -213,8 +209,7 @@ package body Vdiff2_Command_Block is
    -----------------------
 
    procedure Remove_Difference
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head) is
+     (Kernel : Kernel_Handle; Diff : access Diff_Head) is
    begin
       Unhighlight_Difference (Kernel, Diff);
       Diff.List.Clear;
@@ -224,9 +219,8 @@ package body Vdiff2_Command_Block is
    -- Change_Ref_File --
    ---------------------
 
-   procedure Change_Ref_File
-     (Kernel : Kernel_Handle;
-      Diff   : access Diff_Head) is
+   procedure Change_Ref_File (Kernel : Kernel_Handle; Diff : access Diff_Head)
+   is
    begin
       Unhighlight_Difference (Kernel, Diff);
       Show_Differences3 (Kernel, Diff);

@@ -18,20 +18,20 @@
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
-with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
-with Glib.Object;          use Glib.Object;
-with Glib.Properties;      use Glib.Properties;
-with Glib.Types;           use Glib.Types;
-with Glib.Values;          use Glib.Values;
-with Gtkada.Handlers;      use Gtkada.Handlers;
-with Gtk.Cell_Renderer;    use Gtk.Cell_Renderer;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Selection_Data;   use Gtk.Selection_Data;
-with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtkada.Types;         use Gtkada.Types;
-with System;               use System;
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
+with Gdk.Drag_Contexts;  use Gdk.Drag_Contexts;
+with Glib.Object;        use Glib.Object;
+with Glib.Properties;    use Glib.Properties;
+with Glib.Types;         use Glib.Types;
+with Glib.Values;        use Glib.Values;
+with Gtkada.Handlers;    use Gtkada.Handlers;
+with Gtk.Cell_Renderer;  use Gtk.Cell_Renderer;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Selection_Data; use Gtk.Selection_Data;
+with Gtk.Tree_Drag_Dest; use Gtk.Tree_Drag_Dest;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Types;       use Gtkada.Types;
+with System;             use System;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
 
 package body Gtkada.Tree_View is
    Me : constant Trace_Handle := Create ("GPS.WIDGETS.TREE_VIEW", Off);
@@ -50,32 +50,32 @@ package body Gtkada.Tree_View is
    --  Support for creating a new gtk+ class for Filter_Model_With_Dnd_Klass
 
    type Gtkada_Tree_Model_Filter_Record is new Gtk_Tree_Model_Filter_Record
-     with null record;
+   with null record;
    type Gtkada_Tree_Model_Filter is
      access all Gtkada_Tree_Model_Filter_Record'Class;
 
    procedure Init_Tree_Drag_IFace
-     (IFace : Tree_Drag_Dest_Interface_Descr;
-      Data  : System.Address)
-     with Convention => C;
+     (IFace : Tree_Drag_Dest_Interface_Descr; Data : System.Address)
+   with Convention => C;
    --  Initialize the interfaces that the tree model implements
 
    function On_Drag_Data_Received_Proxy
      (Self           : Gtk_Tree_Drag_Dest;
       Dest           : System.Address;
       Selection_Data : System.Address) return Glib.Gboolean
-     with Convention => C;
+   with Convention => C;
    function On_Row_Drop_Possible_Proxy
      (Self           : Gtk_Tree_Drag_Dest;
       Dest           : System.Address;
       Selection_Data : System.Address) return Glib.Gboolean
-     with Convention => C;
+   with Convention => C;
    --  Forward events to the child model
 
-   package Implements_Gtk_Tree_Drag_Dest is new Glib.Types.Implements
-     (Gtk.Tree_Drag_Dest.Gtk_Tree_Drag_Dest,
-      Gtkada_Tree_Model_Filter_Record,
-      Gtkada_Tree_Model_Filter);
+   package Implements_Gtk_Tree_Drag_Dest is new
+     Glib.Types.Implements
+       (Gtk.Tree_Drag_Dest.Gtk_Tree_Drag_Dest,
+        Gtkada_Tree_Model_Filter_Record,
+        Gtkada_Tree_Model_Filter);
 
    package Tree_Sources is new Glib.Main.Generic_Sources (Tree_View);
    function On_Idle_Scroll (Self : Tree_View) return Boolean;
@@ -119,8 +119,8 @@ package body Gtkada.Tree_View is
       Iter   : Gtk_Tree_Iter);   --  relative to Widget.Model always
    --  Callback for the "row_inserted" signal.
 
-   package Set_Visible_Funcs is new Set_Visible_Func_User_Data
-     (User_Data_Type => Tree_View);
+   package Set_Visible_Funcs is new
+     Set_Visible_Func_User_Data (User_Data_Type => Tree_View);
    function Is_Visible
      (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -155,21 +155,20 @@ package body Gtkada.Tree_View is
    end record;
    type Editing_Data is access all Editing_Data_Record;
    package Rename_Idle is new Glib.Main.Generic_Sources (Editing_Data);
-   package Editing_Callbacks is new Gtk.Handlers.User_Callback
-     (Gtk_Cell_Renderer_Text_Record, Editing_Data);
+   package Editing_Callbacks is new
+     Gtk.Handlers.User_Callback (Gtk_Cell_Renderer_Text_Record, Editing_Data);
 
    function Start_Editing_Idle (Data : Editing_Data) return Boolean;
    --  Start interactive editing in an idle loop
 
    procedure On_Edited
-     (V           : access Gtk_Cell_Renderer_Text_Record'Class;
-      Params      : Glib.Values.GValues;
-      Data        : Editing_Data);
+     (V      : access Gtk_Cell_Renderer_Text_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Editing_Data);
    --  Called when a line is edited in the view
 
    procedure On_Editing_Canceled
-     (V    : access Gtk_Cell_Renderer_Text_Record'Class;
-      Data : Editing_Data);
+     (V : access Gtk_Cell_Renderer_Text_Record'Class; Data : Editing_Data);
    --  Called when interactive editing has finished.
 
    -----------
@@ -181,43 +180,46 @@ package body Gtkada.Tree_View is
    Flag_Is_Expanded : constant Flags := 2 ** 1;
    --  Whether the corresponding row was expanded when its parent was expanded
 
-   Flag_Is_Visible  : constant Flags := 2 ** 2;
+   Flag_Is_Visible : constant Flags := 2 ** 2;
    --  Whether the row has been filtered out.
 
-   Flag_Is_Dummy    : constant Flags := 2 ** 3;
+   Flag_Is_Dummy : constant Flags := 2 ** 3;
    --  Whether this row is a dummy row added so that the parent has an
    --  expansion arrow. Such a row is not meant to be visible to the user ever.
 
    function Get_Flags
-     (Self : not null access Tree_View_Record'Class;
-      Iter : Gtk_Tree_Iter) return Flags
-     is (Flags (Get_Int (Self.Model, Iter, Self.Column_Extra)))
-     with Inline;
+     (Self : not null access Tree_View_Record'Class; Iter : Gtk_Tree_Iter)
+      return Flags
+   is (Flags (Get_Int (Self.Model, Iter, Self.Column_Extra)))
+   with Inline;
    --  Get the flags for the row
 
    function Get_Flag
      (Self : not null access Tree_View_Record'Class;
       Iter : Gtk_Tree_Iter;
       F    : Flags) return Boolean
-     is ((Flags (Get_Int (Self.Model, Iter, Self.Column_Extra)) and F) /= 0)
-     with Inline;
+   is ((Flags (Get_Int (Self.Model, Iter, Self.Column_Extra)) and F) /= 0)
+   with Inline;
    --  Get the value for a specific flag
 
    procedure Set_Flag
      (Self : not null access Tree_View_Record'Class;
       Iter : Gtk_Tree_Iter;
-      F    : Flags) with Inline;
+      F    : Flags)
+   with Inline;
    procedure Clear_Flag
      (Self : not null access Tree_View_Record'Class;
       Iter : Gtk_Tree_Iter;
-      F    : Flags) with Inline;
+      F    : Flags)
+   with Inline;
    --   Set or unset a flag on a specific row
 
    ----------------
    -- Expand_All --
    ----------------
 
-   overriding procedure Expand_All (Self : not null access Tree_View_Record) is
+   overriding
+   procedure Expand_All (Self : not null access Tree_View_Record) is
    begin
       --  Block the Row_Expanded_Callback while expanding all the nodes: we
       --  don't want to scroll the view to the last node in this case.
@@ -231,21 +233,18 @@ package body Gtkada.Tree_View is
    -- Force_Expansion --
    ---------------------
 
-   procedure Force_Expansion (Self : not null access Tree_View_Record'Class)
-   is
+   procedure Force_Expansion (Self : not null access Tree_View_Record'Class) is
       function Expand_Node
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter) return Boolean;
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean;
 
       -----------------
       -- Expand_Node --
       -----------------
 
       function Expand_Node
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter) return Boolean
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean
       is
          pragma Unreferenced (Model, Path);
 
@@ -292,10 +291,11 @@ package body Gtkada.Tree_View is
       --  the selection_data will contains paths relative to the child model.
       --  This is why we connect to drag-begin to disable filtering
 
-      Result := Gtk.Tree_Drag_Dest.Drag_Data_Received
-        (Self           => Child_IFace,
-         Dest           => Path,
-         Selection_Data => From_Object (Selection_Data));
+      Result :=
+        Gtk.Tree_Drag_Dest.Drag_Data_Received
+          (Self           => Child_IFace,
+           Dest           => Path,
+           Selection_Data => From_Object (Selection_Data));
       Path_Free (Path);
       return (if Result then 1 else 0);
    end On_Drag_Data_Received_Proxy;
@@ -325,10 +325,11 @@ package body Gtkada.Tree_View is
       if Path = Null_Gtk_Tree_Path then
          return 0;
       else
-         Result := Gtk.Tree_Drag_Dest.Row_Drop_Possible
-           (Self           => Child_IFace,
-            Dest_Path      => Path,
-            Selection_Data => From_Object (Selection_Data));
+         Result :=
+           Gtk.Tree_Drag_Dest.Row_Drop_Possible
+             (Self           => Child_IFace,
+              Dest_Path      => Path,
+              Selection_Data => From_Object (Selection_Data));
          Path_Free (Path);
          return (if Result then 1 else 0);
       end if;
@@ -339,17 +340,14 @@ package body Gtkada.Tree_View is
    --------------------------
 
    procedure Init_Tree_Drag_IFace
-     (IFace : Tree_Drag_Dest_Interface_Descr;
-      Data  : System.Address)
+     (IFace : Tree_Drag_Dest_Interface_Descr; Data : System.Address)
    is
       pragma Unreferenced (Data);
    begin
       Set_Drag_Data_Received
-        (Self    => IFace,
-         Handler => On_Drag_Data_Received_Proxy'Access);
+        (Self => IFace, Handler => On_Drag_Data_Received_Proxy'Access);
       Set_Row_Drop_Possible
-        (Self    => IFace,
-         Handler => On_Row_Drop_Possible_Proxy'Access);
+        (Self => IFace, Handler => On_Row_Drop_Possible_Proxy'Access);
    end Init_Tree_Drag_IFace;
 
    -------------------
@@ -401,18 +399,18 @@ package body Gtkada.Tree_View is
 
    begin
       if Initialize_Class_Record
-        (Ancestor     => Gtk.Tree_Model_Filter.Get_Type,
-         Class_Record => Filter_Model_With_Dnd_Klass'Access,
-         Type_Name    => "Gtkada_Filter_Model",
-         Class_Init   => null)
+           (Ancestor     => Gtk.Tree_Model_Filter.Get_Type,
+            Class_Record => Filter_Model_With_Dnd_Klass'Access,
+            Type_Name    => "Gtkada_Filter_Model",
+            Class_Init   => null)
       then
-         Info := new GInterface_Info'
-           (Interface_Init     => Init_Tree_Drag_IFace'Access,
-            Interface_Finalize => null,
-            Interface_Data     => System.Null_Address);
-         Add_Interface (Filter_Model_With_Dnd_Klass,
-                        Gtk.Tree_Drag_Dest.Get_Type,
-                        Info);
+         Info :=
+           new GInterface_Info'
+             (Interface_Init     => Init_Tree_Drag_IFace'Access,
+              Interface_Finalize => null,
+              Interface_Data     => System.Null_Address);
+         Add_Interface
+           (Filter_Model_With_Dnd_Klass, Gtk.Tree_Drag_Dest.Get_Type, Info);
       end if;
       return Filter_Model_With_Dnd_Klass.The_Type;
    end Get_Filter_Model_Type;
@@ -426,8 +424,11 @@ package body Gtkada.Tree_View is
       Iter : Gtk_Tree_Iter;
       F    : Flags) is
    begin
-      Set (Self.Model, Iter, Self.Column_Extra,
-           Gint (Get_Flags (Self, Iter) or F));
+      Set
+        (Self.Model,
+         Iter,
+         Self.Column_Extra,
+         Gint (Get_Flags (Self, Iter) or F));
    end Set_Flag;
 
    ----------------
@@ -439,8 +440,11 @@ package body Gtkada.Tree_View is
       Iter : Gtk_Tree_Iter;
       F    : Flags) is
    begin
-      Set (Self.Model, Iter, Self.Column_Extra,
-           Gint (Get_Flags (Self, Iter) and not F));
+      Set
+        (Self.Model,
+         Iter,
+         Self.Column_Extra,
+         Gint (Get_Flags (Self, Iter) and not F));
    end Clear_Flag;
 
    ----------------
@@ -462,9 +466,8 @@ package body Gtkada.Tree_View is
    ----------------------------
 
    function Convert_To_Filter_Iter
-     (Self        : access Tree_View_Record'Class;
-      Store_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk_Tree_Iter
+     (Self       : access Tree_View_Record'Class;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
       Filter_Iter : Gtk_Tree_Iter;
    begin
@@ -482,8 +485,7 @@ package body Gtkada.Tree_View is
 
    function Convert_To_Store_Iter
      (Self : access Tree_View_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk_Tree_Iter
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
       Filter_Iter : Gtk_Tree_Iter;
       Store_Iter  : Gtk_Tree_Iter;
@@ -493,8 +495,7 @@ package body Gtkada.Tree_View is
 
       if Self.Sortable_Model /= null and then Iter /= Null_Iter then
          Self.Sortable_Model.Convert_Iter_To_Child_Iter
-           (Child_Iter  => Filter_Iter,
-            Sorted_Iter => Iter);
+           (Child_Iter => Filter_Iter, Sorted_Iter => Iter);
       else
          Filter_Iter := Iter;
       end if;
@@ -504,8 +505,7 @@ package body Gtkada.Tree_View is
 
       if Self.Filter /= null and then Filter_Iter /= Null_Iter then
          Self.Filter.Convert_Iter_To_Child_Iter
-           (Child_Iter  => Store_Iter,
-            Filter_Iter => Filter_Iter);
+           (Child_Iter => Store_Iter, Filter_Iter => Filter_Iter);
       else
          Store_Iter := Filter_Iter;
       end if;
@@ -529,8 +529,9 @@ package body Gtkada.Tree_View is
       Filter_Iter := Self.Convert_To_Filter_Iter (Store_Iter);
 
       if Self.Sortable_Model /= null and then Filter_Iter /= Null_Iter then
-         Result := Self.Sortable_Model.Convert_Child_Iter_To_Iter
-           (Sortable_Model_Iter'Access, Filter_Iter);
+         Result :=
+           Self.Sortable_Model.Convert_Child_Iter_To_Iter
+             (Sortable_Model_Iter'Access, Filter_Iter);
          return (if Result then Sortable_Model_Iter else Filter_Iter);
       else
          return Filter_Iter;
@@ -587,8 +588,7 @@ package body Gtkada.Tree_View is
    function Get_Store_Path_For_Filter_Path
      (Self        : access Tree_View_Record'Class;
       Filter_Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Path
-   is
+      return Gtk.Tree_Model.Gtk_Tree_Path is
    begin
       if Self.Filter /= null then
          return Self.Filter.Convert_Path_To_Child_Path (Filter_Path);
@@ -646,9 +646,9 @@ package body Gtkada.Tree_View is
    ------------------------
 
    procedure Get_First_Selected
-     (Self   : not null access Tree_View_Record'Class;
-      Model  : out Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter)
+     (Self  : not null access Tree_View_Record'Class;
+      Model : out Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
       List : Gtk_Tree_Path_List.Glist;
       Path : Gtk_Tree_Path;
@@ -656,8 +656,9 @@ package body Gtkada.Tree_View is
    begin
       Self.Get_Selection.Get_Selected_Rows (Model, List);
       if List /= Null_List then
-         Path := Gtk_Tree_Path
-           (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
+         Path :=
+           Gtk_Tree_Path
+             (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
          Iter := Gtk.Tree_Model.Get_Iter (Model, Path);
       else
          Iter := Null_Iter;
@@ -679,6 +680,7 @@ package body Gtkada.Tree_View is
          Iter := Self.Model.Children (Store_Iter);
          if Get_Flag (Self, Iter, Flag_Is_Dummy) then
             Self.Model.Remove (Iter);   --  remove dummy node
+
          end if;
       end if;
    end Remove_Dummy_Child;
@@ -688,8 +690,8 @@ package body Gtkada.Tree_View is
    ----------------------
 
    procedure Add_Row_Children
-      (Self       : not null access Tree_View_Record'Class;
-       Store_Iter : Gtk_Tree_Iter)
+     (Self       : not null access Tree_View_Record'Class;
+      Store_Iter : Gtk_Tree_Iter)
    is
       Iter : Gtk_Tree_Iter;
       Row  : Gtk_Tree_Row_Reference;
@@ -723,7 +725,7 @@ package body Gtkada.Tree_View is
    begin
       if Self.Target_Path_For_Scroll /= Null_Gtk_Tree_Path then
          Gtk_Tree_View_Record (Self.all).Scroll_To_Cell
-            (Self.Target_Path_For_Scroll, null, False, 0.0, 0.0);
+           (Self.Target_Path_For_Scroll, null, False, 0.0, 0.0);
          Path_Free (Self.Target_Path_For_Scroll);
          Self.Target_Path_For_Scroll := Null_Gtk_Tree_Path;
       end if;
@@ -814,7 +816,7 @@ package body Gtkada.Tree_View is
          Iter := Children (Tree.Model, Store_Iter);
          while Iter /= Null_Iter loop
             if Get_Flag (Tree, Iter, Flag_Is_Expanded) then
-               Path  := Tree.Get_Filter_Path_For_Store_Iter (Iter);
+               Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
                Dummy := Expand_Row (Tree, Path, False);
                Path_Free (Path);
             end if;
@@ -836,7 +838,7 @@ package body Gtkada.Tree_View is
 
          if Tree.Background_Scroll_Id = No_Source_Id then
             Tree.Background_Scroll_Id :=
-               Tree_Sources.Idle_Add (On_Idle_Scroll'Access, Tree);
+              Tree_Sources.Idle_Add (On_Idle_Scroll'Access, Tree);
          end if;
       end if;
 
@@ -883,8 +885,7 @@ package body Gtkada.Tree_View is
    -----------------------------
 
    procedure Set_Might_Have_Children
-     (Self    : not null access Tree_View_Record'Class;
-      Iter    : Gtk_Tree_Iter)
+     (Self : not null access Tree_View_Record'Class; Iter : Gtk_Tree_Iter)
    is
       Dummy_Node : Gtk_Tree_Iter;
    begin
@@ -933,51 +934,54 @@ package body Gtkada.Tree_View is
       Gtk_New (Widget.Model, Real_Column_Types);
 
       case Capability_Type is
-      when Filtered | Filtered_And_Sortable =>
-         Init (Params (1).Value, Gtk.Tree_Model.Get_Type);
-         Set_Object (Params (1).Value, Widget.Model);
-         Params (1).Name := New_String ("child-model");
+         when Filtered | Filtered_And_Sortable =>
+            Init (Params (1).Value, Gtk.Tree_Model.Get_Type);
+            Set_Object (Params (1).Value, Widget.Model);
+            Params (1).Name := New_String ("child-model");
 
-         Widget.Filter := new Gtkada_Tree_Model_Filter_Record;
-         G_New (Widget.Filter, Get_Filter_Model_Type, Params);
+            Widget.Filter := new Gtkada_Tree_Model_Filter_Record;
+            G_New (Widget.Filter, Get_Filter_Model_Type, Params);
 
-         Free (Params);
+            Free (Params);
 
-         Unref (Widget.Model);  --  owned by the filter
+            Unref (Widget.Model);  --  owned by the filter
 
-         --  Create a Tree_Model_Sort wrapper around the Tree_Model_Filter to
-         --  when the tree view needs sorting capabilities.
-         if Capability_Type = Filtered_And_Sortable then
-            Gtk_New_With_Model (Widget.Sortable_Model, +Widget.Filter);
-            Initialize (Gtk_Tree_View (Widget), +Widget.Sortable_Model);
-            Unref (Widget.Sortable_Model); --  owned by the widget
-         else
-            Initialize (Gtk_Tree_View (Widget), +Widget.Filter);
-         end if;
+            --  Create a Tree_Model_Sort wrapper around the Tree_Model_Filter
+            --  to when the tree view needs sorting capabilities.
+            if Capability_Type = Filtered_And_Sortable then
+               Gtk_New_With_Model (Widget.Sortable_Model, +Widget.Filter);
+               Initialize (Gtk_Tree_View (Widget), +Widget.Sortable_Model);
+               Unref (Widget.Sortable_Model); --  owned by the widget
 
-         Unref (Widget.Filter);  --  owned by the widget or the sortable model
+            else
+               Initialize (Gtk_Tree_View (Widget), +Widget.Filter);
+            end if;
 
-         Widget.On_Drag_Begin (On_Drag_Begin'Access, Slot => Widget);
-         Widget.On_Drag_End (On_Drag_End'Access, Slot => Widget);
+            Unref
+              (Widget.Filter);  --  owned by the widget or the sortable model
 
-         if Set_Visible_Func then
-            Set_Visible_Funcs.Set_Visible_Func
-              (Widget.Filter, Is_Visible'Access, Tree_View (Widget));
-         end if;
+            Widget.On_Drag_Begin (On_Drag_Begin'Access, Slot => Widget);
+            Widget.On_Drag_End (On_Drag_End'Access, Slot => Widget);
 
-      when Sortable =>
-         Initialize (Gtk_Tree_View (Widget), +Widget.Model);
-         Unref (Widget.Model);  --  owned by the widget
+            if Set_Visible_Func then
+               Set_Visible_Funcs.Set_Visible_Func
+                 (Widget.Filter, Is_Visible'Access, Tree_View (Widget));
+            end if;
+
+         when Sortable                         =>
+            Initialize (Gtk_Tree_View (Widget), +Widget.Model);
+            Unref (Widget.Model);  --  owned by the widget
       end case;
 
       --  We can't connect with After => True, because then the Gtk_Tree_Iter
       --  might have been modified, and in particular would no longer be
       --  relative to the filter model if we use one.
 
-      Widget.Row_Expanded_Callback_ID := Widget_Callback.Connect
-        (Widget,
-         Gtk.Tree_View.Signal_Row_Expanded,
-         Widget_Callback.To_Marshaller (Row_Expanded_Callback'Access));
+      Widget.Row_Expanded_Callback_ID :=
+        Widget_Callback.Connect
+          (Widget,
+           Gtk.Tree_View.Signal_Row_Expanded,
+           Widget_Callback.To_Marshaller (Row_Expanded_Callback'Access));
       Widget.On_Row_Collapsed (Row_Collapsed_Callback'Access, After => False);
       Widget.On_Destroy (On_Destroy'Access);
 
@@ -1013,10 +1017,11 @@ package body Gtkada.Tree_View is
       --  might have been modified, and in particular would no longer be
       --  relative to the filter model if we use one.
 
-      Widget.Row_Expanded_Callback_ID := Widget_Callback.Connect
-        (Widget,
-         Gtk.Tree_View.Signal_Row_Expanded,
-         Widget_Callback.To_Marshaller (Row_Expanded_Callback'Access));
+      Widget.Row_Expanded_Callback_ID :=
+        Widget_Callback.Connect
+          (Widget,
+           Gtk.Tree_View.Signal_Row_Expanded,
+           Widget_Callback.To_Marshaller (Row_Expanded_Callback'Access));
       Widget.On_Row_Collapsed (Row_Collapsed_Callback'Access, After => False);
       Widget.On_Destroy (On_Destroy'Access);
 
@@ -1031,8 +1036,7 @@ package body Gtkada.Tree_View is
    -----------------------------------
 
    procedure Set_Propagate_Filtered_Status
-     (Self      : not null access Tree_View_Record;
-      Propagate : Boolean := True) is
+     (Self : not null access Tree_View_Record; Propagate : Boolean := True) is
    begin
       Self.Propagate_Filtered_Status := Propagate;
    end Set_Propagate_Filtered_Status;
@@ -1042,17 +1046,15 @@ package body Gtkada.Tree_View is
    --------------
 
    procedure Refilter
-     (Self    : not null access Tree_View_Record'Class;
-      Iter    : Gtk_Tree_Iter := Null_Iter)
+     (Self : not null access Tree_View_Record'Class;
+      Iter : Gtk_Tree_Iter := Null_Iter)
    is
       function Check_Node
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter) return Boolean;
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean;
       function Check_Node
-        (Model : Gtk_Tree_Model;
-         Path  : Gtk_Tree_Path;
-         Iter  : Gtk_Tree_Iter) return Boolean
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean
       is
          pragma Unreferenced (Model, Path);
          Child : Gtk_Tree_Iter;
@@ -1060,6 +1062,7 @@ package body Gtkada.Tree_View is
          if Self.Filter_Disabled then
             Set_Flag (Self, Iter, Flag_Is_Visible);
             return False;  --  keep traversing
+
          end if;
 
          --  A dummy node is always visible, so that its parent can be
@@ -1068,6 +1071,7 @@ package body Gtkada.Tree_View is
          if Get_Flag (Self, Iter, Flag_Is_Dummy) then
             Set_Flag (Self, Iter, Flag_Is_Visible);
             return False;  --  keep traversing
+
          end if;
 
          --  Since we are doing depth-first search, the children have already
@@ -1079,6 +1083,7 @@ package body Gtkada.Tree_View is
                if Get_Flag (Self, Child, Flag_Is_Visible) then
                   Set_Flag (Self, Iter, Flag_Is_Visible);
                   return False;  --  keep traversing
+
                end if;
                Self.Model.Next (Child);
             end loop;
@@ -1123,17 +1128,17 @@ package body Gtkada.Tree_View is
 
    package body Expansion_Support is
 
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Detached_Data_Access);
+      function Convert is new
+        Ada.Unchecked_Conversion (System.Address, Detached_Data_Access);
 
       ------------------
       -- Set_Expanded --
       ------------------
 
       procedure Set_Expanded
-        (Status    : in out Expansion_Status;
-         Row       : Id;
-         Expanded  : Boolean := True) is
+        (Status   : in out Expansion_Status;
+         Row      : Id;
+         Expanded : Boolean := True) is
       begin
          if Expanded then
             Status.Expanded.Include (Row);
@@ -1147,9 +1152,8 @@ package body Gtkada.Tree_View is
       ------------------
 
       procedure Set_Expanded
-        (Status    : in out Detached_Model;
-         Row       : Id;
-         Expanded  : Boolean := True) is
+        (Status : in out Detached_Model; Row : Id; Expanded : Boolean := True)
+      is
       begin
          if Status.Data /= null then
             Set_Expanded (Status.Data.Expansion, Row, Expanded);
@@ -1187,9 +1191,7 @@ package body Gtkada.Tree_View is
          --  Called for each selected row
 
          procedure On_Selected
-           (Model : Gtk_Tree_Model;
-            Path  : Gtk_Tree_Path;
-            Iter  : Gtk_Tree_Iter)
+           (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
          is
             pragma Unreferenced (Model, Iter);
          begin
@@ -1224,23 +1226,21 @@ package body Gtkada.Tree_View is
       --------------------------
 
       procedure Set_Expansion_Status
-        (Self   : not null access Tree_Record'Class;
-         Status : Expansion_Status;
+        (Self               : not null access Tree_Record'Class;
+         Status             : Expansion_Status;
          Collapse_All_First : Boolean := True)
       is
          function Expand_Node
-           (Model : Gtk_Tree_Model;
-            Path  : Gtk_Tree_Path;
-            Iter  : Gtk_Tree_Iter) return Boolean;
+           (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+            return Boolean;
 
          -----------------
          -- Expand_Node --
          -----------------
 
          function Expand_Node
-           (Model : Gtk_Tree_Model;
-            Path  : Gtk_Tree_Path;
-            Iter  : Gtk_Tree_Iter) return Boolean
+           (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+            return Boolean
          is
             pragma Unreferenced (Model, Path);
 
@@ -1294,18 +1294,16 @@ package body Gtkada.Tree_View is
          --  not all data is loaded
 
          function Expand_Node
-           (Model : Gtk_Tree_Model;
-            Path  : Gtk_Tree_Path;
-            Iter  : Gtk_Tree_Iter) return Boolean;
+           (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+            return Boolean;
 
          -----------------
          -- Expand_Node --
          -----------------
 
          function Expand_Node
-           (Model : Gtk_Tree_Model;
-            Path  : Gtk_Tree_Path;
-            Iter  : Gtk_Tree_Iter) return Boolean
+           (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+            return Boolean
          is
             pragma Unreferenced (Path);
 
@@ -1319,8 +1317,8 @@ package body Gtkada.Tree_View is
 
                --  check whether the node contains the dummy node
                if Model.Has_Child (Iter) then
-                  Stopped := Get_Flag
-                    (Self, Model.Children (Iter), Flag_Is_Dummy);
+                  Stopped :=
+                    Get_Flag (Self, Model.Children (Iter), Flag_Is_Dummy);
                end if;
 
                Sortable_Path := Self.Get_Sortable_Path_For_Store_Iter (Iter);
@@ -1374,8 +1372,7 @@ package body Gtkada.Tree_View is
       -----------------------
 
       procedure On_Tree_Destroyed
-        (Data   : System.Address;
-         Tree   : System.Address)
+        (Data : System.Address; Tree : System.Address)
       is
          pragma Unreferenced (Tree);
          D : constant Detached_Data_Access := Convert (Data);
@@ -1397,11 +1394,10 @@ package body Gtkada.Tree_View is
       ----------------------------
 
       function Detach_Model_From_View
-         (Self           : not null access Tree_Record'Class;
-          Freeze         : Boolean := True;
-          Save_Expansion : Boolean := True;
-          Save_Scrolling : Boolean := True)
-          return Detached_Model
+        (Self           : not null access Tree_Record'Class;
+         Freeze         : Boolean := True;
+         Save_Expansion : Boolean := True;
+         Save_Scrolling : Boolean := True) return Detached_Model
       is
          Data : constant Detached_Data_Access := new Detached_Data;
       begin
@@ -1478,9 +1474,10 @@ package body Gtkada.Tree_View is
       -- Finalize --
       --------------
 
-      overriding procedure Finalize (Self : in out Detached_Model) is
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (Detached_Data, Detached_Data_Access);
+      overriding
+      procedure Finalize (Self : in out Detached_Model) is
+         procedure Unchecked_Free is new
+           Ada.Unchecked_Deallocation (Detached_Data, Detached_Data_Access);
          Data : Detached_Data_Access := Self.Data;
       begin
          Self.Data := null;   --  make finalize idempotent
@@ -1522,11 +1519,10 @@ package body Gtkada.Tree_View is
    -------------------------
 
    procedure On_Editing_Canceled
-     (V    : access Gtk_Cell_Renderer_Text_Record'Class;
-      Data : Editing_Data)
+     (V : access Gtk_Cell_Renderer_Text_Record'Class; Data : Editing_Data)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Editing_Data_Record, Editing_Data);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Editing_Data_Record, Editing_Data);
       Id : Handler_Id;
       D  : Editing_Data;
    begin
@@ -1552,13 +1548,13 @@ package body Gtkada.Tree_View is
    ---------------
 
    procedure On_Edited
-     (V           : access Gtk_Cell_Renderer_Text_Record'Class;
-      Params      : Glib.Values.GValues;
-      Data        : Editing_Data)
+     (V      : access Gtk_Cell_Renderer_Text_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Editing_Data)
    is
       Filter_Path : constant UTF8_String := Get_String (Nth (Params, 1));
       Text        : constant UTF8_String := Get_String (Nth (Params, 2));
-      Filter_Iter  : Gtk_Tree_Iter;
+      Filter_Iter : Gtk_Tree_Iter;
    begin
       if Data.Tree.Being_Edited then
          Filter_Iter := Data.Tree.Filter.Get_Iter_From_String (Filter_Path);
@@ -1628,18 +1624,22 @@ package body Gtkada.Tree_View is
             Render      => Gtk_Cell_Renderer_Text (Render),
             Filter_Path => Get_Path (Model, Filter_Iter),
             View_Column => View_Column,
-            Edited_Cb   => Editing_Callbacks.Connect
-              (Render, Signal_Edited, On_Edited'Access, Data),
-            Canceled_Cb => Editing_Callbacks.Connect
-              (Render, Gtk.Cell_Renderer.Signal_Editing_Canceled,
-               Editing_Callbacks.To_Marshaller (On_Editing_Canceled'Access),
-               Data));
+            Edited_Cb   =>
+              Editing_Callbacks.Connect
+                (Render, Signal_Edited, On_Edited'Access, Data),
+            Canceled_Cb =>
+              Editing_Callbacks.Connect
+                (Render,
+                 Gtk.Cell_Renderer.Signal_Editing_Canceled,
+                 Editing_Callbacks.To_Marshaller (On_Editing_Canceled'Access),
+                 Data));
 
          --  Start the edition in idle mode, since otherwise the tree gains
          --  the focus when the menu is hidden, and stops the edition
          --  immediately.
-         Dummy := Rename_Idle.Idle_Add
-           (Start_Editing_Idle'Access, Data, Priority   => Priority_High_Idle);
+         Dummy :=
+           Rename_Idle.Idle_Add
+             (Start_Editing_Idle'Access, Data, Priority => Priority_High_Idle);
       end if;
    end Start_Editing;
 
@@ -1647,7 +1647,8 @@ package body Gtkada.Tree_View is
    -- Scroll_To_Cell --
    --------------------
 
-   overriding procedure Scroll_To_Cell
+   overriding
+   procedure Scroll_To_Cell
      (Self      : not null access Tree_View_Record;
       Path      : Gtk.Tree_Model.Gtk_Tree_Path;
       Column    : access Gtk_Tree_View_Column_Record'Class;
@@ -1657,12 +1658,14 @@ package body Gtkada.Tree_View is
    begin
       if Self.User_Scroll_Id = No_Source_Id then
          if Self.Background_Scroll_Id /= No_Source_Id then
-            Self.User_Scroll_Data := User_Scroll_Data_Type'
-              (Path      => Gtk_Tree_Row_Reference_New (Self.Get_Model, Path),
-               Column    => Column,
-               Use_Align => Use_Align,
-               Row_Align => Row_Align,
-               Col_Align => Col_Align);
+            Self.User_Scroll_Data :=
+              User_Scroll_Data_Type'
+                (Path      =>
+                   Gtk_Tree_Row_Reference_New (Self.Get_Model, Path),
+                 Column    => Column,
+                 Use_Align => Use_Align,
+                 Row_Align => Row_Align,
+                 Col_Align => Col_Align);
             Self.User_Scroll_Id :=
               Tree_Sources.Idle_Add (On_User_Scroll'Access, Tree_View (Self));
 

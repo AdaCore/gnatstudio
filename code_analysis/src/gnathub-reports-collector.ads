@@ -31,7 +31,8 @@ package GNAThub.Reports.Collector is
    type GNAThub_Report_Collector_Access is
      access all GNAThub_Report_Collector'Class;
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access GNAThub_Report_Collector;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
@@ -42,8 +43,7 @@ package GNAThub.Reports.Collector is
    function Get_Or_Create_View
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module  : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class;
-      Created : out Boolean)
-      return GNAThub_Report_Collector_Access;
+      Created : out Boolean) return GNAThub_Report_Collector_Access;
    --  Get or create a report collector view.
    --  Created is set to True if the view has been created.
 
@@ -53,7 +53,7 @@ package GNAThub.Reports.Collector is
 
 private
 
-   type GNAThub_Report_Collector is new Generic_Views.View_Record  with record
+   type GNAThub_Report_Collector is new Generic_Views.View_Record with record
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Messages_Report : GNAThub.Reports.Messages.GNAThub_Report_Messages;
    end record;

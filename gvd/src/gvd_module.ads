@@ -17,7 +17,7 @@
 
 --  This package defines the debugger module (called GVD)
 
-with GPS.Debuggers;           use GPS.Debuggers;
+with GPS.Debuggers; use GPS.Debuggers;
 with GPS.Kernel.Modules;
 
 package GVD_Module is
@@ -36,8 +36,7 @@ package GVD_Module is
    --  Register the module into the list
 
    procedure Initialize_Debugger
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Args   : String);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Args : String);
    --  Initialize the debugger if needed
 
    procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
@@ -65,13 +64,14 @@ package GVD_Module is
 
    procedure For_Each_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Action : access procedure
-        (Object : not null access Base_Visual_Debugger'Class));
+      Action :
+        access procedure
+          (Object : not null access Base_Visual_Debugger'Class));
    --  Execute callback Action for each debugger
 
    function Count_Running_Debuggers
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-     return Natural;
+      return Natural;
    --  Return the number of debuggers that are currently running
 
 end GVD_Module;

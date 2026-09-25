@@ -21,9 +21,9 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 package body Commands is
 
    procedure Enqueue
-     (Queue         : Command_Queue;
-      Action        : access Root_Command'Class;
-      Modify_Group  : Boolean);
+     (Queue        : Command_Queue;
+      Action       : access Root_Command'Class;
+      Modify_Group : Boolean);
    --  Internal version of Enqueue.
    --  Modify_Group indicates whether we should modify the current group.
 
@@ -54,7 +54,7 @@ package body Commands is
 
    procedure Free_Queue (Q : in out Queue_Internal) is
       use Identifier_And_Command_List;
-      C : Identifier_And_Command_List.Cursor;
+      C       : Identifier_And_Command_List.Cursor;
       Command : Command_Access;
    begin
       Free (Q.Undo_Queue);
@@ -110,8 +110,8 @@ package body Commands is
    -----------
 
    procedure Unref (Command : in out Command_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
-        (Root_Command'Class, Command_Access);
+      procedure Unchecked_Free is new
+        Unchecked_Deallocation (Root_Command'Class, Command_Access);
    begin
       if Command /= null then
          Command.Ref_Count := Command.Ref_Count - 1;
@@ -148,9 +148,7 @@ package body Commands is
    -- Set_Idle_Label --
    --------------------
 
-   procedure Set_Idle_Label
-     (Command : access Root_Command;
-      To      : String) is
+   procedure Set_Idle_Label (Command : access Root_Command; To : String) is
    begin
       Command.Idle_Label := Ada.Strings.Unbounded.To_Unbounded_String (To);
    end Set_Idle_Label;
@@ -169,8 +167,7 @@ package body Commands is
    ------------------
 
    procedure Set_Progress
-     (Command  : access Root_Command;
-      Progress : Progress_Record) is
+     (Command : access Root_Command; Progress : Progress_Record) is
    begin
       Command.Progress := Progress;
    end Set_Progress;
@@ -190,8 +187,7 @@ package body Commands is
    -------------
 
    procedure Enqueue
-     (Queue         : Command_Queue;
-      Action        : access Root_Command'Class) is
+     (Queue : Command_Queue; Action : access Root_Command'Class) is
    begin
       Enqueue (Queue, Action, True);
    end Enqueue;
@@ -201,9 +197,9 @@ package body Commands is
    -------------
 
    procedure Enqueue
-     (Queue         : Command_Queue;
-      Action        : access Root_Command'Class;
-      Modify_Group  : Boolean) is
+     (Queue        : Command_Queue;
+      Action       : access Root_Command'Class;
+      Modify_Group : Boolean) is
    begin
       if Queue = Null_Command_Queue then
          return;
@@ -253,9 +249,9 @@ package body Commands is
       Queue.Ref.Get.Command_In_Progress := True;
 
       declare
-         Action : constant Command_Access :=
+         Action         : constant Command_Access :=
            Queue.Ref.Get.The_Queue.First_Element;
-         Ignore : Boolean;
+         Ignore         : Boolean;
          Ignore_Command : Command_Return_Type;
          pragma Unreferenced (Ignore, Ignore_Command);
 
@@ -266,7 +262,7 @@ package body Commands is
             when Normal | Undone =>
                Ignore_Command := Execute (Action);
 
-            when Done =>
+            when Done            =>
                Ignore := Undo (Action);
          end case;
       end;
@@ -277,8 +273,7 @@ package body Commands is
    -----------------------------
 
    procedure Command_Finished_Status
-     (Action  : access Root_Command'Class;
-      Success : in out Boolean)
+     (Action : access Root_Command'Class; Success : in out Boolean)
    is
       Queue : Command_Queue renames Action.Queue;
       use Identifier_And_Command_List;
@@ -320,7 +315,7 @@ package body Commands is
             Free (Queue.Ref.Get.Redo_Queue);
             Queue.Ref.Get.Position := Queue.Ref.Get.Position + 1;
 
-         when Done =>
+         when Done   =>
             Action.Mode := Undone;
             Prepend (Queue.Ref.Get.Redo_Queue, Command_Access (Action));
             Queue.Ref.Get.Position := Queue.Ref.Get.Position - 1;
@@ -348,8 +343,7 @@ package body Commands is
    ----------------------
 
    procedure Command_Finished
-     (Action  : access Root_Command'Class;
-      Success : Boolean)
+     (Action : access Root_Command'Class; Success : Boolean)
    is
       S : Boolean := Success;
    begin
@@ -361,13 +355,11 @@ package body Commands is
    ---------------------------
 
    procedure Add_Queue_Change_Hook
-     (Queue      : Command_Queue;
-      Command    : Command_Access;
-      Identifier : String)
+     (Queue : Command_Queue; Command : Command_Access; Identifier : String)
    is
       use Identifier_And_Command_List;
-      Hook_Node : Identifier_And_Command_List.Cursor;
-      Previous_Command   : Command_Access;
+      Hook_Node        : Identifier_And_Command_List.Cursor;
+      Previous_Command : Command_Access;
    begin
       Hook_Node := First (Queue.Ref.Get.Queue_Change_Hook);
 
@@ -383,8 +375,9 @@ package body Commands is
          Hook_Node := Next (Hook_Node);
       end loop;
 
-      Append (Queue.Ref.Get.Queue_Change_Hook,
-              (To_Unbounded_String (Identifier), Command));
+      Append
+        (Queue.Ref.Get.Queue_Change_Hook,
+         (To_Unbounded_String (Identifier), Command));
    end Add_Queue_Change_Hook;
 
    -------------
@@ -402,8 +395,8 @@ package body Commands is
    -- Get_Previous_Command --
    --------------------------
 
-   function Get_Previous_Command
-     (Queue : Command_Queue) return Command_Access is
+   function Get_Previous_Command (Queue : Command_Queue) return Command_Access
+   is
    begin
       if not Is_Empty (Queue.Ref.Get.Undo_Queue) then
          return First_Element (Queue.Ref.Get.Undo_Queue);
@@ -416,8 +409,7 @@ package body Commands is
    -- Get_Next_Command --
    ----------------------
 
-   function Get_Next_Command
-     (Queue : Command_Queue) return Command_Access is
+   function Get_Next_Command (Queue : Command_Queue) return Command_Access is
    begin
       if not Is_Empty (Queue.Ref.Get.Redo_Queue) then
          return First_Element (Queue.Ref.Get.Redo_Queue);
@@ -457,8 +449,7 @@ package body Commands is
 
    function Can_Undo (Queue : Command_Queue) return Boolean is
    begin
-      return Queue /= Null_Command_Queue
-        and then not Undo_Queue_Empty (Queue);
+      return Queue /= Null_Command_Queue and then not Undo_Queue_Empty (Queue);
    end Can_Undo;
 
    ----------
@@ -509,8 +500,7 @@ package body Commands is
    ------------------------
 
    procedure Launch_Synchronous
-     (Command : access Root_Command'Class;
-      Wait    : Duration := 0.0)
+     (Command : access Root_Command'Class; Wait : Duration := 0.0)
    is
       Result : Command_Return_Type;
    begin
@@ -581,8 +571,8 @@ package body Commands is
    -- Debug_Get_Undo_Queue --
    --------------------------
 
-   function Debug_Get_Undo_Queue
-     (Q : Command_Queue) return Command_Lists.List is
+   function Debug_Get_Undo_Queue (Q : Command_Queue) return Command_Lists.List
+   is
    begin
       return Q.Ref.Get.Undo_Queue;
    end Debug_Get_Undo_Queue;
@@ -591,8 +581,8 @@ package body Commands is
    -- Debug_Get_Redo_Queue --
    --------------------------
 
-   function Debug_Get_Redo_Queue
-     (Q : Command_Queue) return Command_Lists.List is
+   function Debug_Get_Redo_Queue (Q : Command_Queue) return Command_Lists.List
+   is
    begin
       return Q.Ref.Get.Redo_Queue;
    end Debug_Get_Redo_Queue;
@@ -601,8 +591,7 @@ package body Commands is
    -- Debug_Get_Group --
    ---------------------
 
-   function Debug_Get_Group
-     (C : Command_Access) return Natural is
+   function Debug_Get_Group (C : Command_Access) return Natural is
    begin
       return C.Group;
    end Debug_Get_Group;
@@ -613,7 +602,7 @@ package body Commands is
 
    procedure Free (List : in out Command_Lists.List) is
       Command : Command_Access;
-      Tmp : Command_Lists.List := List;
+      Tmp     : Command_Lists.List := List;
    begin
       --  Clear the list, so that when we unref below, we do not
       --  end up executing other commands in the list
@@ -671,7 +660,8 @@ package body Commands is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Group_Block) is
+   overriding
+   procedure Finalize (Self : in out Group_Block) is
    begin
       if Self.Already_Left then
          return;

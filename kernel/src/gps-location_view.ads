@@ -21,11 +21,11 @@
 with VSS.Strings;
 
 with GNATCOLL.VFS;
-with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
-with Gtk.Tree_Model;                 use Gtk.Tree_Model;
-with Gtk.Widget;                     use Gtk.Widget;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Widget;           use Gtk.Widget;
 
-with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package GPS.Location_View is
 
@@ -80,8 +80,7 @@ package GPS.Location_View is
    --  by locations-auto-jump-to-first preference
 
    procedure Set_Activity_Progress_Bar_Visibility
-     (Self    : not null Location_View_Access;
-      Visible : Boolean);
+     (Self : not null Location_View_Access; Visible : Boolean);
    --  Show or hide the Locations view activity progress bar.
    --  This progress bar can be used to tell the user that messages are
    --  currently being processed and will be shown in the Locations view.

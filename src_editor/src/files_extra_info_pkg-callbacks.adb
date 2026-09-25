@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Window;             use Gtk.Window;
-with Gtkada.File_Selector;   use Gtkada.File_Selector;
+with Gtk.Window;           use Gtk.Window;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
@@ -29,22 +29,22 @@ package body Files_Extra_Info_Pkg.Callbacks is
    -- On_Browse_Button_Clicked --
    ------------------------------
 
-   procedure On_Browse_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class)
+   procedure On_Browse_Button_Clicked (Object : access Gtk_Widget_Record'Class)
    is
       Extra : constant Files_Extra_Info_Access :=
-                Files_Extra_Info_Access (Object);
+        Files_Extra_Info_Access (Object);
       S     : constant GNATCOLL.VFS.Virtual_File :=
-                Select_Directory
-                  (-"Select a directory",
-                   Parent  => Gtk_Window (Get_Toplevel (Object)),
-                   Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                   History           => null);  --  ??? No history
+        Select_Directory
+          (-"Select a directory",
+           Parent            => Gtk_Window (Get_Toplevel (Object)),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           History           => null);  --  ??? No history
 
    begin
       if S /= No_File then
          Set_Text (Extra.Directory_Entry, GNATCOLL.VFS.Display_Full_Name (S));
-         --  ??? What if the filesystem path is non-UTF8?
+      --  ??? What if the filesystem path is non-UTF8?
+
       end if;
    end On_Browse_Button_Clicked;
 

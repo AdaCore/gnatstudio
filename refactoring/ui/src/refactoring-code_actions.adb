@@ -18,11 +18,11 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Projects;
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Markup;   use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
@@ -36,12 +36,13 @@ package body Refactoring.Code_Actions is
    --  place of the cursor. We guarantee in this module that there is only
    --  one such message. This message always belongs to the category below.
 
-   type On_Location_Changed is new File_Location_Hooks_Function with
-     null record;
-   overriding procedure Execute
-     (Self   : On_Location_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
+   type On_Location_Changed is new File_Location_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
       Line, Column : Integer;
       Project      : GNATCOLL.Projects.Project_Type);
    --  Clear code action messages in response to the location changing
@@ -50,10 +51,11 @@ package body Refactoring.Code_Actions is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Location_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File;
+   overriding
+   procedure Execute
+     (Self         : On_Location_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
       Line, Column : Integer;
       Project      : GNATCOLL.Projects.Project_Type) is
    begin
@@ -77,16 +79,16 @@ package body Refactoring.Code_Actions is
       Category : String;
       Command  : Command_Access)
    is
-      Message : constant Markup_Message_Access
-        := Create_Markup_Message
-          (Container  => Kernel.Get_Messages_Container,
-           Category   => Msg_Category,
-           File       => File,
-           Line       => Natural (Line),
-           Column     => Column,
-           Text       => Markup,
-           Importance => Unspecified,
-           Flags      => Sides_Only,
+      Message : constant Markup_Message_Access :=
+        Create_Markup_Message
+          (Container                => Kernel.Get_Messages_Container,
+           Category                 => Msg_Category,
+           File                     => File,
+           Line                     => Natural (Line),
+           Column                   => Column,
+           Text                     => Markup,
+           Importance               => Unspecified,
+           Flags                    => Sides_Only,
            Allow_Auto_Jump_To_First => False);
 
       Action : GPS.Editors.Line_Information.Line_Information_Access;
@@ -96,14 +98,15 @@ package body Refactoring.Code_Actions is
          return;
       end if;
 
-      Action := new Line_Information_Record'
-        (Text                     => To_Unbounded_String (Markup),
-         Tooltip_Text             => To_Unbounded_String (Markup),
-         Image                    => To_Unbounded_String ("gps-light-bulb"),
-         Message                  => <>,
-         Category                 => To_Unbounded_String (Category),
-         Associated_Command       => Command,
-         Display_Popup_When_Alone => True);
+      Action :=
+        new Line_Information_Record'
+          (Text                     => To_Unbounded_String (Markup),
+           Tooltip_Text             => To_Unbounded_String (Markup),
+           Image                    => To_Unbounded_String ("gps-light-bulb"),
+           Message                  => <>,
+           Category                 => To_Unbounded_String (Category),
+           Associated_Command       => Command,
+           Display_Popup_When_Alone => True);
 
       Message.Set_Action (Action);
    end Add_Code_Action;

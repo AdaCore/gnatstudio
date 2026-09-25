@@ -26,8 +26,8 @@ with VSS.Strings;
 package GNATCOLL.Scripts.VSS_Utils is
 
    function Nth_Arg
-     (Data : Callback_Data'Class;
-      N    : Positive) return VSS.Strings.Virtual_String;
+     (Data : Callback_Data'Class; N : Positive)
+      return VSS.Strings.Virtual_String;
 
    procedure Set_Nth_Arg
      (Data  : in out Callback_Data'Class;
@@ -35,7 +35,6 @@ package GNATCOLL.Scripts.VSS_Utils is
       Value : VSS.Strings.Virtual_String);
 
    procedure Set_Return_Value
-     (Data  : in out Callback_Data'Class;
-      Value : VSS.Strings.Virtual_String);
+     (Data : in out Callback_Data'Class; Value : VSS.Strings.Virtual_String);
 
 end GNATCOLL.Scripts.VSS_Utils;

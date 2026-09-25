@@ -106,8 +106,8 @@ with GPS.Kernel;
 with Build_Configurations;  use Build_Configurations;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with Build_Command_Utils;   use Build_Command_Utils;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with Build_Command_Utils; use Build_Command_Utils;
 
 package Builder_Facility_Module is
 

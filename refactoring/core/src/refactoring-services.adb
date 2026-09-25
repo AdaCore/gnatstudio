@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;    use Ada.Characters.Handling;
-with Ada.Strings;                use Ada.Strings;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings;             use Ada.Strings;
 with Ada.Unchecked_Deallocation;
 
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Xref;              use GNATCOLL.Xref;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.Xref;   use GNATCOLL.Xref;
 
 with VSS.Characters.Latin;
 
@@ -48,8 +48,8 @@ package body Refactoring.Services is
    --  Remove all blanks from From onwards (spaces, tabs and newlines)
 
    function Skip_Comments
-     (From : Editor_Location'Class;
-      Direction : Integer := 1) return Editor_Location'Class;
+     (From : Editor_Location'Class; Direction : Integer := 1)
+      return Editor_Location'Class;
    --  Skip any following or preceding comment lines (depending on Direction).
    --  If there are no comments immediately before or after, From is returned.
    --
@@ -59,8 +59,8 @@ package body Refactoring.Services is
    --  A line where we could insert code (preferably before the "end pkg" line,
    --  or if there is no package default to the first line in the file
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Root_Entity'Class, Root_Entity_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Root_Entity'Class, Root_Entity_Access);
 
    ----------
    -- Free --
@@ -84,16 +84,15 @@ package body Refactoring.Services is
 
       Loc : aliased Universal_Location := Location;
 
-      Start_Index : Integer := Integer (Get_Index_In_File (Loc'Access));
-      End_Index   : Integer := Start_Index;
-      Buffer      : constant GNAT.Strings.String_Access :=
-                      Get_Buffer (Get_File (Loc'Access));
-      Paren_Depth : Integer := 0;
+      Start_Index  : Integer := Integer (Get_Index_In_File (Loc'Access));
+      End_Index    : Integer := Start_Index;
+      Buffer       : constant GNAT.Strings.String_Access :=
+        Get_Buffer (Get_File (Loc'Access));
+      Paren_Depth  : Integer := 0;
       Skip_Private : Boolean := False;
 
       procedure Backwards_Callback
-        (Token : Token_Record;
-         Stop : in out Boolean);
+        (Token : Token_Record; Stop : in out Boolean);
 
       function Forwards_Callback
         (Entity         : Language_Entity;
@@ -106,23 +105,25 @@ package body Refactoring.Services is
       -----------------------
 
       procedure Backwards_Callback
-        (Token : Token_Record;
-         Stop : in out Boolean) is
+        (Token : Token_Record; Stop : in out Boolean) is
       begin
          Stop := False;
 
-         Trace (Me, "[" & Buffer
-                           (Integer (Token.Token_First)
-                            .. Integer (Token.Token_Last)) & "]");
+         Trace
+           (Me,
+            "["
+            & Buffer
+                (Integer (Token.Token_First) .. Integer (Token.Token_Last))
+            & "]");
 
          case Token.Tok_Type is
             when Tok_Semicolon | Tok_Arrow =>
                Stop := True;
                return;
 
-               --  ??? This does not take into account cases where we have
-               --  P (A => 0);
-               --  and the cursor is placed after the arrow.
+            --  ??? This does not take into account cases where we have
+            --  P (A => 0);
+            --  and the cursor is placed after the arrow.
 
             when Tok_Declare
                | Tok_Begin
@@ -133,7 +134,7 @@ package body Refactoring.Services is
                | Tok_Else
                | Tok_Do
                | Tok_Select
-               | Tok_Exception =>
+               | Tok_Exception             =>
 
                --  ??? This does not take into account "or else" and
                --  "and then" operators. Cursor place after won't come
@@ -142,7 +143,7 @@ package body Refactoring.Services is
                Stop := True;
                return;
 
-            when Tok_Private =>
+            when Tok_Private               =>
                if Skip_Private then
                   Skip_Private := False;
                else
@@ -150,15 +151,16 @@ package body Refactoring.Services is
                   return;
                end if;
 
-            when others =>
+            when others                    =>
                null;
          end case;
 
          if Token.Tok_Type /= Tok_Blank then
             Start_Index := Integer (Token.Token_First);
             Skip_Private := Token.Tok_Type = Tok_With;
-            --  skip "private with" as part of with_clause and
-            --  private type/extension with aspect.
+         --  skip "private with" as part of with_clause and
+         --  private type/extension with aspect.
+
          end if;
       end Backwards_Callback;
 
@@ -186,28 +188,25 @@ package body Refactoring.Services is
          begin
             if Entity in Identifier_Entity then
                if Self.Sloc_First_Id = Null_Universal_Location then
-                  Self.Sloc_First_Id := To_Location
-                    (Get_File (Loc'Access),
-                     String_Index_Type (Sloc_Start.Index));
+                  Self.Sloc_First_Id :=
+                    To_Location
+                      (Get_File (Loc'Access),
+                       String_Index_Type (Sloc_Start.Index));
                end if;
 
                Self.Tokens.Append
                  (Token_Record'
                     (Tok_Type    => Tok_Identifier,
-                     Token_First =>
-                       String_Index_Type (Sloc_Start.Index),
-                     Token_Last  =>
-                       String_Index_Type (Sloc_End.Index)));
+                     Token_First => String_Index_Type (Sloc_Start.Index),
+                     Token_Last  => String_Index_Type (Sloc_End.Index)));
 
                Self.Number_Of_Elements := Self.Number_Of_Elements + 1;
             elsif Name = "," then
                Self.Tokens.Append
                  (Token_Record'
                     (Tok_Type    => Tok_Comma,
-                     Token_First =>
-                       String_Index_Type (Sloc_Start.Index),
-                     Token_Last  =>
-                       String_Index_Type (Sloc_End.Index)));
+                     Token_First => String_Index_Type (Sloc_Start.Index),
+                     Token_Last  => String_Index_Type (Sloc_End.Index)));
             end if;
          end Add_To_List;
 
@@ -246,12 +245,12 @@ package body Refactoring.Services is
                 (Get_File (Loc'Access), String_Index_Type (Sloc_Start.Index));
          else
             case Self.Kind is
-               when Pragma_Kind | Type_Kind =>
+               when Pragma_Kind | Type_Kind                  =>
                   if Paren_Depth = 1 then
                      Add_To_List;
                   end if;
 
-               when Clause_Kind =>
+               when Clause_Kind                              =>
                   Add_To_List;
 
                when Unknown_Kind | Variable_Kind | When_Kind =>
@@ -284,10 +283,10 @@ package body Refactoring.Services is
         (Buffer   => Buffer.all (Start_Index .. Buffer.all'Last),
          Callback => Forwards_Callback'Unrestricted_Access);
 
-      Self.Sloc_Start := To_Location
-        (Get_File (Loc'Access), String_Index_Type (Start_Index));
-      Self.Sloc_End := To_Location
-        (Get_File (Loc'Access), String_Index_Type (End_Index));
+      Self.Sloc_Start :=
+        To_Location (Get_File (Loc'Access), String_Index_Type (Start_Index));
+      Self.Sloc_End :=
+        To_Location (Get_File (Loc'Access), String_Index_Type (End_Index));
       Self.Context := Context;
    end Initialize;
 
@@ -318,13 +317,13 @@ package body Refactoring.Services is
 
       declare
          Line           : constant String :=
-                            Get_Line (Self.Context, Stop_To_Remove'Access, 1);
+           Get_Line (Self.Context, Stop_To_Remove'Access, 1);
          Last_To_Remove : String_Index_Type;
       begin
          Last_To_Remove := Get_Index_In_Line (Stop_To_Remove'Access);
 
-         for J in Integer (Get_Index_In_Line (Stop_To_Remove'Access)) + 1
-           .. Line'Last
+         for J in
+           Integer (Get_Index_In_Line (Stop_To_Remove'Access)) + 1 .. Line'Last
          loop
             exit when Line (J) /= ASCII.HT and then Line (J) /= ' ';
 
@@ -376,14 +375,14 @@ package body Refactoring.Services is
    ----------------------
 
    function Contains_Element
-     (Self : Ada_Statement;
-      Name : Language.Tree.Normalized_Symbol) return Boolean
+     (Self : Ada_Statement; Name : Language.Tree.Normalized_Symbol)
+      return Boolean
    is
       use Tokens_List;
 
       Loc_Copy : aliased Universal_Location := Self.Sloc_Start;
       Buffer   : constant GNAT.Strings.String_Access :=
-                   Get_Buffer (Get_File (Loc_Copy'Access));
+        Get_Buffer (Get_File (Loc_Copy'Access));
       Cur      : Tokens_List.Cursor;
    begin
       Cur := First (Self.Tokens);
@@ -391,14 +390,14 @@ package body Refactoring.Services is
       while Cur /= Tokens_List.No_Element loop
          declare
             Token        : constant Token_Record := Element (Cur);
-            Name_In_List : constant String := Buffer
-              (Integer (Token.Token_First)
-               .. Integer (Token.Token_Last));
+            Name_In_List : constant String :=
+              Buffer
+                (Integer (Token.Token_First) .. Integer (Token.Token_Last));
          begin
             if Token.Tok_Type = Tok_Identifier then
-               if Name = Find_Normalized
-                 (Symbols => Self.Context.Db.Symbols,
-                  Name    => Name_In_List)
+               if Name
+                 = Find_Normalized
+                     (Symbols => Self.Context.Db.Symbols, Name => Name_In_List)
                then
                   return True;
                end if;
@@ -416,9 +415,9 @@ package body Refactoring.Services is
    --------------------
 
    procedure Remove_Element
-     (Self  : in out Ada_Statement;
-      Mode  : Remove_Code_Mode;
-      Name  : Language.Tree.Normalized_Symbol)
+     (Self : in out Ada_Statement;
+      Mode : Remove_Code_Mode;
+      Name : Language.Tree.Normalized_Symbol)
    is
       Str : Unbounded_String;
 
@@ -440,10 +439,10 @@ package body Refactoring.Services is
 
       Cur    : Tokens_List.Cursor;
       Buffer : constant GNAT.Strings.String_Access :=
-                 Get_Buffer (Get_File (Self.Sloc_Start'Access));
+        Get_Buffer (Get_File (Self.Sloc_Start'Access));
 
       First_To_Delete, Last_To_Delete : String_Index_Type := 0;
-      Token_Deleted : Token_Record;
+      Token_Deleted                   : Token_Record;
 
       Last_Comma : Token_Record := Null_Token;
    begin
@@ -452,14 +451,14 @@ package body Refactoring.Services is
       while Cur /= Tokens_List.No_Element loop
          declare
             Token        : constant Token_Record := Element (Cur);
-            Name_In_List : constant String := Buffer
-              (Integer (Token.Token_First)
-               .. Integer (Token.Token_Last));
+            Name_In_List : constant String :=
+              Buffer
+                (Integer (Token.Token_First) .. Integer (Token.Token_Last));
          begin
             if Token.Tok_Type = Tok_Identifier then
-               if Name = Find_Normalized
-                 (Symbols => Self.Context.Db.Symbols,
-                  Name    => Name_In_List)
+               if Name
+                 = Find_Normalized
+                     (Symbols => Self.Context.Db.Symbols, Name => Name_In_List)
                then
                   First_To_Delete := Token.Token_First;
                   Last_To_Delete := Token.Token_Last;
@@ -503,8 +502,9 @@ package body Refactoring.Services is
                     Self.Sloc_End'Access));
 
             case Mode is
-               when Erase =>
+               when Erase   =>
                   Remove (Self);
+
                when Comment =>
                   Comment (Self);
             end case;
@@ -515,22 +515,26 @@ package body Refactoring.Services is
                End_Mark     : constant GPS.Editors.Editor_Mark'Class :=
                  End_Location.Create_Mark;
 
-               First, Last : aliased Universal_Location;
+               First, Last             : aliased Universal_Location;
                Token_First, Token_Last : aliased Universal_Location;
             begin
-               First := To_Location
-                 (Get_File (Self.Sloc_Start'Access), First_To_Delete);
+               First :=
+                 To_Location
+                   (Get_File (Self.Sloc_Start'Access), First_To_Delete);
                Trace (Me, "LAST TO DELETE = " & Last_To_Delete'Img);
-               Last := To_Location
-                 (Get_File (Self.Sloc_Start'Access), Last_To_Delete);
+               Last :=
+                 To_Location
+                   (Get_File (Self.Sloc_Start'Access), Last_To_Delete);
                Trace (Me, "LAST COL = " & Get_Column (Last'Access)'Img);
 
-               Token_First := To_Location
-                 (Get_File
-                    (Self.Sloc_Start'Access), Token_Deleted.Token_First);
-               Token_Last := To_Location
-                 (Get_File
-                    (Self.Sloc_Start'Access), Token_Deleted.Token_Last);
+               Token_First :=
+                 To_Location
+                   (Get_File (Self.Sloc_Start'Access),
+                    Token_Deleted.Token_First);
+               Token_Last :=
+                 To_Location
+                   (Get_File (Self.Sloc_Start'Access),
+                    Token_Deleted.Token_Last);
 
                if Self.Sloc_Column = Null_Universal_Location then
                   Extracted :=
@@ -544,22 +548,21 @@ package body Refactoring.Services is
                   Extracted :=
                     To_Unbounded_String
                       (Get
-                         (Self.Context,
-                          Token_First'Access,
-                          Token_Last'Access)
+                         (Self.Context, Token_First'Access, Token_Last'Access)
                        & " "
                        & Get
-                         (Self.Context,
-                          Self.Sloc_Column'Access,
-                          Self.Sloc_End'Access));
+                           (Self.Context,
+                            Self.Sloc_Column'Access,
+                            Self.Sloc_End'Access));
                end if;
 
                case Mode is
-                  when Erase =>
+                  when Erase   =>
                      Remove_Code
                        (Context => Self.Context,
                         Start   => First'Access,
                         Stop    => Last'Access);
+
                   when Comment =>
                      Comment_Code
                        (Context => Self.Context,
@@ -608,7 +611,7 @@ package body Refactoring.Services is
            Get_Buffer (Get_File (EA));
          Last   : constant Integer := Get_Construct (EA).Sloc_End.Index;
          First  : constant Integer := Get_Construct (EA).Sloc_Entity.Index;
-         Index : Natural := First;
+         Index  : Natural := First;
          Shared : Boolean := False;
          Iter   : Construct_Tree_Iterator;
          Tree   : Construct_Tree;
@@ -623,20 +626,22 @@ package body Refactoring.Services is
 
          Tree := Get_Tree (Get_File (EA));
          Iter := To_Construct_Tree_Iterator (EA);
-         Shared := Get_Construct (Prev (Tree, Iter)).Sloc_End.Index = Last
+         Shared :=
+           Get_Construct (Prev (Tree, Iter)).Sloc_End.Index = Last
            or else Get_Construct (Next (Tree, Iter)).Sloc_End.Index = Last;
 
          H.Replace_Element (Entity);
-         return (File      => Get_File (EA),
-                 Db        => Context.Db,
-                 Entity    => H,
-                 First     => <>,
-                 Last      => <>,
-                 SFirst    => Get_Construct (EA).Sloc_Entity,
-                 SLast     => Get_Construct (EA).Sloc_End,
-                 Equal_Loc => Equal,
-                 Shared    => Shared,
-                 Decl      => To_Unbounded_String (Buffer (Index .. Last)));
+         return
+           (File      => Get_File (EA),
+            Db        => Context.Db,
+            Entity    => H,
+            First     => <>,
+            Last      => <>,
+            SFirst    => Get_Construct (EA).Sloc_Entity,
+            SLast     => Get_Construct (EA).Sloc_End,
+            Equal_Loc => Equal,
+            Shared    => Shared,
+            Decl      => To_Unbounded_String (Buffer (Index .. Last)));
       end;
    end Get_Declaration;
 
@@ -645,8 +650,7 @@ package body Refactoring.Services is
    ------------------
 
    procedure Create_Marks
-     (Self   : in out Entity_Declaration;
-      Buffer : Editor_Buffer'Class)
+     (Self : in out Entity_Declaration; Buffer : Editor_Buffer'Class)
    is
       First_Line, Last_Line     : Integer;
       First_Column, Last_Column : Visible_Column_Type;
@@ -668,16 +672,14 @@ package body Refactoring.Services is
             Last_Column);
 
          declare
-            Start : constant Editor_Location'Class := Buffer.New_Location
-              (Line   => First_Line,
-               Column => First_Column);
+            Start : constant Editor_Location'Class :=
+              Buffer.New_Location (Line => First_Line, Column => First_Column);
 
          begin
             Self.First.Replace_Element (Start.Create_Mark);
             Self.Last.Replace_Element
-              (Buffer.New_Location
-                 (Line   => Last_Line,
-                  Column => Last_Column).Create_Mark);
+              (Buffer.New_Location (Line => Last_Line, Column => Last_Column)
+                 .Create_Mark);
          end;
       end if;
    end Create_Marks;
@@ -712,9 +714,7 @@ package body Refactoring.Services is
                Skip_Blanks (Text, Index);
                return Text (Index .. Text'Last - 1);
 
-            elsif Text (Index) = ';'
-              or else Text (Index) = ')'
-            then
+            elsif Text (Index) = ';' or else Text (Index) = ')' then
                exit;
             end if;
 
@@ -729,8 +729,8 @@ package body Refactoring.Services is
    -- Skip_Keyword --
    ------------------
 
-   procedure Skip_Keyword
-     (Str : String; Index : in out Integer; Word : String) is
+   procedure Skip_Keyword (Str : String; Index : in out Integer; Word : String)
+   is
    begin
       if Index + Word'Length <= Str'Last
         and then Looking_At (Str, Index, Word)
@@ -758,13 +758,16 @@ package body Refactoring.Services is
       Append (Result, String'(Get_Name (Self.Entity.Element) & " : "));
 
       case PType is
-         when Out_Parameter =>
+         when Out_Parameter    =>
             Append (Result, "out ");
+
          when In_Out_Parameter =>
             Append (Result, "in out ");
+
          when Access_Parameter =>
             Append (Result, "access ");
-         when In_Parameter =>
+
+         when In_Parameter     =>
             if Context.Add_In_Keyword then
                Append (Result, "in ");
             end if;
@@ -801,8 +804,7 @@ package body Refactoring.Services is
    -- Display_As_Variable --
    -------------------------
 
-   function Display_As_Variable
-     (Self  : Entity_Declaration) return String is
+   function Display_As_Variable (Self : Entity_Declaration) return String is
    begin
       return Get_Name (Self.Entity.Element) & " " & To_String (Self.Decl);
    end Display_As_Variable;
@@ -820,22 +822,23 @@ package body Refactoring.Services is
       Struct : Structured_File_Access;
    begin
       if Entity /= No_Root_Entity then
-         EDecl  := Get_Declaration (Entity);
+         EDecl := Get_Declaration (Entity);
 
-         Struct := Get_Or_Create
-           (Db   => Context.Db.Constructs,
-            File => EDecl.Loc.File);
+         Struct :=
+           Get_Or_Create (Db => Context.Db.Constructs, File => EDecl.Loc.File);
          Update_Contents (Struct);
 
          if Struct /= null then
-            return Find_Declaration
-              (Get_Tree_Language (Struct),
-               Struct,
-               Line   => EDecl.Loc.Line,
-               Column => To_Line_String_Index
-                 (File   => Struct,
-                  Line   => EDecl.Loc.Line,
-                  Column => EDecl.Loc.Column));
+            return
+              Find_Declaration
+                (Get_Tree_Language (Struct),
+                 Struct,
+                 Line   => EDecl.Loc.Line,
+                 Column =>
+                   To_Line_String_Index
+                     (File   => Struct,
+                      Line   => EDecl.Loc.Line,
+                      Column => EDecl.Loc.Column));
          end if;
       end if;
 
@@ -855,11 +858,10 @@ package body Refactoring.Services is
          case From.Get_Char is
             when ' '
                | VSS.Characters.Latin.Character_Tabulation
-               | VSS.Characters.Latin.Line_Feed
-            =>
+               | VSS.Characters.Latin.Line_Feed =>
                From.Buffer.Delete (From, From);
 
-            when others =>
+            when others                         =>
                exit;
          end case;
 
@@ -900,7 +902,8 @@ package body Refactoring.Services is
                --  leading comma
 
                From.Buffer.Delete
-                 (From, From.Forward_Char
+                 (From,
+                  From.Forward_Char
                     (Get_Name (Self.Entity.Element)'Length - 1));
                Remove_Blanks (From);
 
@@ -945,8 +948,8 @@ package body Refactoring.Services is
                --  From points to the character that was just after the initial
                --  decl, ie the newline. We'll need to move backward
 
-               if Trim (From.Buffer.Get_Chars_U (Bol, From), Both) =
-                 "" & ASCII.LF
+               if Trim (From.Buffer.Get_Chars_U (Bol, From), Both)
+                 = "" & ASCII.LF
                then
                   From.Buffer.Delete (Bol, From);
                end if;
@@ -1005,7 +1008,7 @@ package body Refactoring.Services is
       PType        : out Parameter_Kind)
    is
       pragma Unreferenced (Db);
-      Sub   : constant Root_Entity'Class := Is_Parameter_Of (Entity);
+      Sub : constant Root_Entity'Class := Is_Parameter_Of (Entity);
    begin
       if Sub /= No_Root_Entity then
          declare
@@ -1014,7 +1017,7 @@ package body Refactoring.Services is
             for P in Params'Range loop
                if Params (P).Parameter.all = Entity then
                   Is_Parameter := True;
-                  PType        := Params (P).Kind;
+                  PType := Params (P).Kind;
                   Free (Params);
                   return;
                end if;
@@ -1037,12 +1040,13 @@ package body Refactoring.Services is
       From_Line    : Integer;
       To_Line      : Integer) return Range_Of_Code is
    begin
-      return Range_Of_Code'
-        (Context      => Factory_Context (Context),
-         File         => File,
-         Project_View => Project_View,
-         From_Line    => From_Line,
-         To_Line      => To_Line);
+      return
+        Range_Of_Code'
+          (Context      => Factory_Context (Context),
+           File         => File,
+           Project_View => Project_View,
+           From_Line    => From_Line,
+           To_Line      => To_Line);
    end Create_Range;
 
    -------------------------------
@@ -1050,34 +1054,35 @@ package body Refactoring.Services is
    -------------------------------
 
    procedure For_All_Variable_In_Range
-     (Self        : in out Range_Of_Code;
-      Db          : access Xref.General_Xref_Database_Record'Class;
-      Callback    : not null access procedure
-        (Entity : Root_Entity'Class;
-         Flags  : Entity_References_Flags);
+     (Self               : in out Range_Of_Code;
+      Db                 : access Xref.General_Xref_Database_Record'Class;
+      Callback           :
+        not null access procedure
+          (Entity : Root_Entity'Class; Flags : Entity_References_Flags);
       Success            : out Boolean;
       Omit_Library_Level : Boolean := False)
    is
-      Iter                     : Entities_In_File_Cursor;
-      Caller                   : Root_Entity_Access;
-      Decl                     : General_Entity_Declaration;
-      Location, Body_Loc       : General_Location := No_Location;
-      Entity                   : Root_Entity_Access;
-      Flags                    : Entity_References_Flags;
-      Is_Global                : Boolean;
-      Is_Param                 : Boolean;
-      PType                    : Parameter_Kind;
-      Struct                   : Structured_File_Access;
-      ERef                     : Entity_Reference_Details;
+      Iter               : Entities_In_File_Cursor;
+      Caller             : Root_Entity_Access;
+      Decl               : General_Entity_Declaration;
+      Location, Body_Loc : General_Location := No_Location;
+      Entity             : Root_Entity_Access;
+      Flags              : Entity_References_Flags;
+      Is_Global          : Boolean;
+      Is_Param           : Boolean;
+      PType              : Parameter_Kind;
+      Struct             : Structured_File_Access;
+      ERef               : Entity_Reference_Details;
 
-      Parent                   : Root_Entity_Access;
+      Parent : Root_Entity_Access;
       --  The entity that contains the code to extract. This is set lazily.
 
    begin
       if not Db.Is_Up_To_Date (Self.File) then
          Self.Context.Report_Error
-           ("File " & GNATCOLL.VFS."+" (Self.File.Full_Name) &
-              " does not have up-to-date xref, recompile the file");
+           ("File "
+            & GNATCOLL.VFS."+" (Self.File.Full_Name)
+            & " does not have up-to-date xref, recompile the file");
          Success := False;
          return;
       end if;
@@ -1098,7 +1103,7 @@ package body Refactoring.Services is
       while not At_End (Iter) loop
          Unchecked_Free (Entity);
          Entity := new Root_Entity'Class'(Get (Iter));
-         Flags  := (others => False);
+         Flags := (others => False);
 
          Decl := Get_Declaration (Entity.all);
          Body_Loc := Get_Body (Entity.all);
@@ -1109,26 +1114,26 @@ package body Refactoring.Services is
          --  declared in the '.ads' but we are working in the '.adb' (for
          --  instance the parameter to a subprogram).
 
-         Is_Global := Omit_Library_Level
+         Is_Global :=
+           Omit_Library_Level
            and then  --  Get_LI (Decl.File) /= Get_LI (Self.Source) or else
              not Is_Subprogram (Caller_At_Declaration (Entity.all));
 
          if not Is_Global then
             declare
-               Ref_Iter : Root_Reference_Iterator'Class := Find_All_References
-                 (Entity  => Entity.all,
-                  In_File => Self.File);
+               Ref_Iter : Root_Reference_Iterator'Class :=
+                 Find_All_References
+                   (Entity => Entity.all, In_File => Self.File);
             begin
 
-               For_Each_Ref :
-               while not At_End (Ref_Iter) loop
+               For_Each_Ref : while not At_End (Ref_Iter) loop
                   declare
                      Ref : constant Root_Entity_Reference'Class :=
                        Get (Ref_Iter);
                   begin
                      Location := Get_Location (Ref);
                      Unchecked_Free (Caller);
-                     Caller   := new Root_Entity'Class'(Get_Caller (Ref));
+                     Caller := new Root_Entity'Class'(Get_Caller (Ref));
 
                      if Parent.all /= No_Root_Entity
                        and then Parent.all /= Caller.all
@@ -1181,21 +1186,22 @@ package body Refactoring.Services is
                                 (Db, Entity.all, Is_Param, PType);
                               if Is_Param then
                                  case PType is
-                                 when Out_Parameter =>
-                                    --  the entity is needed outside of the
-                                    --  extracted code (both to read its value
-                                    --  and set it for the caller)
-                                    Flags (Flag_Modified_After) := True;
-                                    Flags (Flag_Read_After) := True;
+                                    when Out_Parameter =>
+                                       --  the entity is needed outside of the
+                                       --  extracted code (both to read its
+                                       --  value and set it for the caller)
+                                       Flags (Flag_Modified_After) := True;
+                                       Flags (Flag_Read_After) := True;
 
-                                 when others =>
-                                    --  An initial value might be passed
-                                    --  through the parameter
-                                    Flags (Flag_Modified_Before) := True;
+                                    when others        =>
+                                       --  An initial value might be passed
+                                       --  through the parameter
+                                       Flags (Flag_Modified_Before) := True;
                                  end case;
 
-                              elsif Get_Declaration
-                                (Self.Context, Entity.all).Initial_Value /= ""
+                              elsif Get_Declaration (Self.Context, Entity.all)
+                                      .Initial_Value
+                                /= ""
                               then
                                  Flags (Flag_Modified_Before) := True;
                               end if;
@@ -1223,11 +1229,12 @@ package body Refactoring.Services is
                            --  parameter in a subprogram call, as in
                            --  "Foo (Title => ...)"
 
-                           ERef := Find_Reference_Details
-                             (Get_Tree_Language (Struct),
-                              Struct,
-                              To_String_Index
-                                (Struct, Location.Line, Location.Column));
+                           ERef :=
+                             Find_Reference_Details
+                               (Get_Tree_Language (Struct),
+                                Struct,
+                                To_String_Index
+                                  (Struct, Location.Line, Location.Column));
 
                            if not ERef.Is_Named_Parameter then
                               --  If we are calling a subprogram nested within
@@ -1240,8 +1247,9 @@ package body Refactoring.Services is
 
                               if Is_Subprogram (Entity.all) then
                                  Unchecked_Free (Caller);
-                                 Caller := new Root_Entity'Class'
-                                   (Caller_At_Declaration (Entity.all));
+                                 Caller :=
+                                   new Root_Entity'Class'
+                                     (Caller_At_Declaration (Entity.all));
 
                                  --  ??? We should test if it is nested within
                                  --  Context.Parent, when that is set
@@ -1327,8 +1335,8 @@ package body Refactoring.Services is
    -------------------
 
    function Skip_Comments
-     (From      : Editor_Location'Class;
-      Direction : Integer := 1) return Editor_Location'Class
+     (From : Editor_Location'Class; Direction : Integer := 1)
+      return Editor_Location'Class
    is
       pragma Unreferenced (Direction);
       Loc          : Editor_Location'Class := From;
@@ -1340,7 +1348,7 @@ package body Refactoring.Services is
          declare
             Loc2  : constant Editor_Location'Class := Loc.Forward_Line (-1);
             C     : constant String :=
-                      Loc.Buffer.Get_Chars_S (Loc2, Loc2.End_Of_Line);
+              Loc.Buffer.Get_Chars_S (Loc2, Loc2.End_Of_Line);
             Index : Natural := C'First;
          begin
             exit when Loc2 = Loc;  --  Beginning of buffer
@@ -1350,9 +1358,7 @@ package body Refactoring.Services is
             if Index > C'Last then
                null;   --  blank line
 
-            elsif Index < C'Last
-              and then C (Index .. Index + 1) = "--"
-            then
+            elsif Index < C'Last and then C (Index .. Index + 1) = "--" then
                Seen_Comment := True;  --  comment line
 
             else
@@ -1365,6 +1371,7 @@ package body Refactoring.Services is
 
       if Seen_Comment then
          return Loc;  --  return the next line
+
       else
          return From;
       end if;
@@ -1386,13 +1393,12 @@ package body Refactoring.Services is
       Replaced_Length           : Integer := 0;
       Only_If_Replacing         : String := "") return Boolean
    is
-      Editor    : constant Editor_Buffer'Class :=
+      Editor : constant Editor_Buffer'Class :=
         Context.Buffer_Factory.Get (In_File, Open_View => False);
 
-      Loc_Start : Editor_Location'Class :=
-        Editor.New_Location (Line, Column);
+      Loc_Start : Editor_Location'Class := Editor.New_Location (Line, Column);
 
-      Loc_End   : constant Editor_Location'Class :=
+      Loc_End : constant Editor_Location'Class :=
         Loc_Start.Forward_Char (Replaced_Length - 1);
 
    begin
@@ -1431,8 +1437,7 @@ package body Refactoring.Services is
          if Surround_With_Blank_Lines
            and then
              (Text'Length < 2
-                or else Text (Text'Last - 1 .. Text'Last) /=
-                      ASCII.LF & ASCII.LF)
+              or else Text (Text'Last - 1 .. Text'Last) /= ASCII.LF & ASCII.LF)
          then
             declare
                L : constant Editor_Location'Class :=
@@ -1448,8 +1453,7 @@ package body Refactoring.Services is
 
          --  Insert the leading space if needed
 
-         if Surround_With_Blank_Lines
-           and then Text (Text'First) /= ASCII.LF
+         if Surround_With_Blank_Lines and then Text (Text'First) /= ASCII.LF
          then
             declare
                L : constant Editor_Location'Class :=
@@ -1466,7 +1470,7 @@ package body Refactoring.Services is
               (Loc_Start,
                Editor.New_Location_At_Line
                  (Editable_Line_Type (Line + Lines_Count (Text) - 1))
-               .End_Of_Line);
+                 .End_Of_Line);
          end if;
       end;
 
@@ -1491,7 +1495,7 @@ package body Refactoring.Services is
       To_Column   : Visible_Column_Type;
       Text        : String) return Boolean
    is
-      Holder : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Holder    : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Context.Buffer_Factory.Get_Holder (In_File);
       Loc_Start : constant Editor_Location'Class :=
         Holder.Editor.New_Location (From_Line, From_Column);
@@ -1519,9 +1523,7 @@ package body Refactoring.Services is
       declare
          G : Group_Block := Holder.Editor.New_Undo_Group;
       begin
-         if From_Line /= To_Line
-           or else To_Column - From_Column > 0
-         then
+         if From_Line /= To_Line or else To_Column - From_Column > 0 then
             Holder.Editor.Delete (Loc_Start, Loc_End);
          end if;
 
@@ -1556,13 +1558,13 @@ package body Refactoring.Services is
       Rev_To_Column : out Basic_Types.Visible_Column_Type;
       Rev_Text      : out Unbounded_String) return Boolean
    is
-      Holder     : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
+      Holder    : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
         Context.Buffer_Factory.Get_Holder (In_File);
-      Loc_Start  : constant Editor_Location'Class :=
+      Loc_Start : constant Editor_Location'Class :=
         Holder.Editor.New_Location (From_Line, From_Column);
-      Loc_End    : Editor_Location'Class :=
+      Loc_End   : Editor_Location'Class :=
         Holder.Editor.New_Location (To_Line, To_Column);
-      End_Mark   : Editor_Mark'Class :=
+      End_Mark  : Editor_Mark'Class :=
         Loc_Start.Create_Mark (Left_Gravity => False);
    begin
       --  Unfold the blocks at the given range first
@@ -1585,11 +1587,10 @@ package body Refactoring.Services is
       declare
          G : Group_Block := Holder.Editor.New_Undo_Group;
       begin
-         if From_Line /= To_Line
-           or else To_Column - From_Column > 0
-         then
-            Rev_Text := To_Unbounded_String
-              (Holder.Editor.Get_Chars_S (Loc_Start, Loc_End));
+         if From_Line /= To_Line or else To_Column - From_Column > 0 then
+            Rev_Text :=
+              To_Unbounded_String
+                (Holder.Editor.Get_Chars_S (Loc_Start, Loc_End));
             Holder.Editor.Delete (Loc_Start, Loc_End);
          end if;
 
@@ -1673,14 +1674,21 @@ package body Refactoring.Services is
       end if;
 
       Inserted :=
-        Insert_Text (Context, In_File, Line, 1, Decl,
-                     Indent                    => True,
-                     Surround_With_Blank_Lines => True,
-                     Skip_Comments_Backward    => True);
+        Insert_Text
+          (Context,
+           In_File,
+           Line,
+           1,
+           Decl,
+           Indent                    => True,
+           Surround_With_Blank_Lines => True,
+           Skip_Comments_Backward    => True);
       if not Inserted then
          Context.Report_Error
            ("Could not insert the subprogram declaration at "
-            & In_File.Display_Full_Name & ":" & Image (Line, 1));
+            & In_File.Display_Full_Name
+            & ":"
+            & Image (Line, 1));
       end if;
 
       if not Category.Is_Empty then
@@ -1745,14 +1753,21 @@ package body Refactoring.Services is
       Append (Result, Code);
 
       Inserted :=
-        Insert_Text (Context, In_File, Line, 1, To_String (Result),
-                     Indent                    => True,
-                     Surround_With_Blank_Lines => True,
-                     Skip_Comments_Backward    => True);
+        Insert_Text
+          (Context,
+           In_File,
+           Line,
+           1,
+           To_String (Result),
+           Indent                    => True,
+           Surround_With_Blank_Lines => True,
+           Skip_Comments_Backward    => True);
       if not Inserted then
          Context.Report_Error
            ("Could not insert the subprogram body at "
-            & In_File.Display_Full_Name & ":" & Image (Line, 1));
+            & In_File.Display_Full_Name
+            & ":"
+            & Image (Line, 1));
       end if;
 
       if not Category.Is_Empty then

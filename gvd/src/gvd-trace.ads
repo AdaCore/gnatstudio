@@ -15,14 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel; use GPS.Kernel;
-with GVD.Process;  use GVD.Process;
+with GPS.Kernel;  use GPS.Kernel;
+with GVD.Process; use GVD.Process;
 
 package GVD.Trace is
 
    procedure Output_Error
-     (Kernel : access Kernel_Handle_Record'Class;
-      Str    : String);
+     (Kernel : access Kernel_Handle_Record'Class; Str : String);
    --  Output an error through GPS.Kernel.Console
 
    procedure Set_Input_Output_Filter

@@ -15,35 +15,35 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Bubble_Sort_G;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Strings;
 with GNATCOLL.Projects;
 
-with Case_Handling;             use Case_Handling;
-with GPS.Properties;            use GPS.Properties;
-with Language;                  use Language;
-with Language.Tree.Database;    use Language.Tree.Database;
-with Language.Unknown;          use Language.Unknown;
-with Projects;                  use Projects;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with Case_Handling;          use Case_Handling;
+with GPS.Properties;         use GPS.Properties;
+with Language;               use Language;
+with Language.Tree.Database; use Language.Tree.Database;
+with Language.Unknown;       use Language.Unknown;
+with Projects;               use Projects;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
 package body Language_Handlers is
 
    Me : constant Trace_Handle := Create ("GPS.KERNEL.LANGUAGE_HANDLERS");
 
    function Get_Index_From_Language
-     (Handler       : access Language_Handler_Record'Class;
-      Language_Name : String) return Natural;
+     (Handler : access Language_Handler_Record'Class; Language_Name : String)
+      return Natural;
    --  Return the index of Language in Handler.Languages, or 0 if no such
    --  language is known.
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Language_Info_Array, Language_Info_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Language_Info_Array, Language_Info_Access);
 
    --------------------
    -- Create_Handler --
@@ -74,8 +74,8 @@ package body Language_Handlers is
    -----------------------------
 
    function Get_Index_From_Language
-     (Handler       : access Language_Handler_Record'Class;
-      Language_Name : String) return Natural
+     (Handler : access Language_Handler_Record'Class; Language_Name : String)
+      return Natural
    is
       Lang : constant String := To_Lower (Language_Name);
    begin
@@ -109,16 +109,19 @@ package body Language_Handlers is
    -- Get_Language_From_File --
    ----------------------------
 
-   overriding function Get_Language_From_File
+   overriding
+   function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language.Language_Access
    is
       Index : Natural;
    begin
-      Index := Get_Index_From_Language
-        (Handler,
-         Get_Language_From_File (Handler, Source_Filename, From_Project_Only));
+      Index :=
+        Get_Index_From_Language
+          (Handler,
+           Get_Language_From_File
+             (Handler, Source_Filename, From_Project_Only));
       if Index /= 0 then
          return Handler.Languages (Index).Lang;
       end if;
@@ -130,7 +133,8 @@ package body Language_Handlers is
    -- Get_Tree_Language_From_File --
    ---------------------------------
 
-   overriding function Get_Tree_Language_From_File
+   overriding
+   function Get_Tree_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)
@@ -138,9 +142,11 @@ package body Language_Handlers is
    is
       Index : Natural;
    begin
-      Index := Get_Index_From_Language
-        (Handler,
-         Get_Language_From_File (Handler, Source_Filename, From_Project_Only));
+      Index :=
+        Get_Index_From_Language
+          (Handler,
+           Get_Language_From_File
+             (Handler, Source_Filename, From_Project_Only));
 
       if Index /= 0 and then Handler.Languages (Index).Tree_Lang /= null then
          return Handler.Languages (Index).Tree_Lang;
@@ -202,8 +208,8 @@ package body Language_Handlers is
    --------------------------
 
    function Get_Language_By_Name
-     (Handler : access Language_Handler_Record;
-      Name    : String) return Language.Language_Access
+     (Handler : access Language_Handler_Record; Name : String)
+      return Language.Language_Access
    is
       Index : constant Natural := Get_Index_From_Language (Handler, Name);
    begin
@@ -230,8 +236,9 @@ package body Language_Handlers is
       if Handler.Languages /= null then
          Index := Get_Index_From_Language (Handler, N);
          if Index = 0 then
-            Tmp := new Language_Info_Array
-              (Handler.Languages'First .. Handler.Languages'Last + 1);
+            Tmp :=
+              new Language_Info_Array
+                    (Handler.Languages'First .. Handler.Languages'Last + 1);
             Tmp (Handler.Languages'Range) := Handler.Languages.all;
             Unchecked_Free (Handler.Languages);
             Handler.Languages := Tmp;
@@ -254,8 +261,8 @@ package body Language_Handlers is
    ---------------------
 
    function Known_Languages
-     (Handler : access Language_Handler_Record;
-      Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List is
+     (Handler : access Language_Handler_Record; Sorted : Boolean := False)
+      return GNAT.OS_Lib.Argument_List is
    begin
       if Handler.Languages /= null then
          declare
@@ -292,9 +299,13 @@ package body Language_Handlers is
 
          begin
             for Index in Result'Range loop
-               Result (Index) := new String'
-                 (Mixed_Case (Get_Name (Handler.Languages
-                  (Index - 1 + Handler.Languages'First).Lang)));
+               Result (Index) :=
+                 new String'
+                   (Mixed_Case
+                      (Get_Name
+                         (Handler.Languages
+                            (Index - 1 + Handler.Languages'First)
+                            .Lang)));
             end loop;
 
             if Sorted then
@@ -332,16 +343,15 @@ package body Language_Handlers is
    ----------------------
 
    function Get_Nth_Language
-     (Handler : access Language_Handler_Record;
-      Num     : Positive) return String is
+     (Handler : access Language_Handler_Record; Num : Positive) return String
+   is
    begin
-      if Handler.Languages = null
-        or else Num > Handler.Languages'Length
-      then
+      if Handler.Languages = null or else Num > Handler.Languages'Length then
          return "";
       else
-         return Get_Name (Handler.Languages
-           (Handler.Languages'First + Num - 1).Lang);
+         return
+           Get_Name
+             (Handler.Languages (Handler.Languages'First + Num - 1).Lang);
       end if;
    end Get_Nth_Language;
 
@@ -350,8 +360,10 @@ package body Language_Handlers is
    -------------
 
    procedure Destroy (Handler : in out Language_Handler) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Language_Handler_Record'Class, Language_Handler);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Language_Handler_Record'Class,
+           Language_Handler);
    begin
       if Handler.Languages /= null then
          for L in Handler.Languages'Range loop

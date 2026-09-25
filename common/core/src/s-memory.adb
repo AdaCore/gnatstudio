@@ -34,13 +34,10 @@ package body System.Memory is
       return M.Alloc (M.size_t (Size));
    end Alloc;
 
-   procedure Free (Ptr : System.Address)
-      renames M.Free;
+   procedure Free (Ptr : System.Address) renames M.Free;
 
-   function Realloc
-     (Ptr  : System.Address;
-      Size : size_t)
-      return System.Address is
+   function Realloc (Ptr : System.Address; Size : size_t) return System.Address
+   is
    begin
       return M.Realloc (Ptr, M.size_t (Size));
    end Realloc;

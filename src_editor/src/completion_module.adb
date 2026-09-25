@@ -17,28 +17,30 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;
-with Ada.Strings.Wide_Wide_Maps;   use Ada.Strings.Wide_Wide_Maps;
+with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;                 use GNAT.Strings;
+with GNAT.Strings;               use GNAT.Strings;
 
 with VSS.Characters.Latin;
 
-with Ada_Semantic_Tree;            use Ada_Semantic_Tree;
-with Basic_Types;                  use Basic_Types;
-with Commands.Editor;              use Commands.Editor;
-with Commands.Interactive;         use Commands, Commands.Interactive;
+with Ada_Semantic_Tree;                   use Ada_Semantic_Tree;
+with Basic_Types;                         use Basic_Types;
+with Commands.Editor;                     use Commands.Editor;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
 
-with Completion.Ada;               use Completion.Ada;
-with Completion.C;                 use Completion.C;
-with Completion.History;           use Completion.History;
-with Completion.Keywords;          use Completion.Keywords;
-with Completion.Python;            use Completion.Python;
-with Completion_Window;            use Completion_Window;
-with Completion.Aliases;           use Completion.Aliases;
+with Completion.Ada;      use Completion.Ada;
+with Completion.C;        use Completion.C;
+with Completion.History;  use Completion.History;
+with Completion.Keywords; use Completion.Keywords;
+with Completion.Python;   use Completion.Python;
+with Completion_Window;   use Completion_Window;
+with Completion.Aliases;  use Completion.Aliases;
 
-with Default_Preferences.Enums;    use Default_Preferences;
+with Default_Preferences.Enums;
+use Default_Preferences;
 with GNATCOLL.Projects;            use GNATCOLL.Projects;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
@@ -83,8 +85,8 @@ package body Completion_Module is
 
    Me : constant Trace_Handle := Create ("GPS.COMPLETION.MODULE");
 
-   Me_Adv : constant Trace_Handle := Create
-     ("GPS.COMPLETION.MODULE_ADVANCED", Off);
+   Me_Adv : constant Trace_Handle :=
+     Create ("GPS.COMPLETION.MODULE_ADVANCED", Off);
 
    Db_Loading_Queue : constant String := "constructs_db_loading";
 
@@ -98,7 +100,7 @@ package body Completion_Module is
    package Completion_Mode_Preferences is new
      Default_Preferences.Enums.Generics (Completion_Filter_Mode_Type);
 
-   Completion_Mode  : Completion_Mode_Preferences.Preference;
+   Completion_Mode : Completion_Mode_Preferences.Preference;
 
    package Completion_Insert_Mode_Preferences is new
      Default_Preferences.Enums.Generics (Completion_Insert_Mode_Type);
@@ -108,34 +110,35 @@ package body Completion_Module is
    use String_List_Utils.String_List;
 
    type Update_Lock_Access is access all Update_Lock;
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Update_Lock, Update_Lock_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Update_Lock, Update_Lock_Access);
 
-   package Python_Resolver_List is new Ada.Containers.Doubly_Linked_Lists
-     (Completion_Python_Access);
+   package Python_Resolver_List is new
+     Ada.Containers.Doubly_Linked_Lists (Completion_Python_Access);
 
    type Smart_Completion_Data is record
-      Manager             : Completion_Manager_Access;
-      Result              : Completion_List;
-      Start_Mark          : Gtk_Text_Mark := null;
-      End_Mark            : Gtk_Text_Mark := null;
-      Buffer              : Source_Buffer;
-      The_Text            : GNAT.Strings.String_Access;
+      Manager    : Completion_Manager_Access;
+      Result     : Completion_List;
+      Start_Mark : Gtk_Text_Mark := null;
+      End_Mark   : Gtk_Text_Mark := null;
+      Buffer     : Source_Buffer;
+      The_Text   : GNAT.Strings.String_Access;
 
       --  We need to lock the update of the file during the completion process
       --  in order to keep valid information in the trees.
-      Lock                : Update_Lock_Access;
+      Lock : Update_Lock_Access;
 
-      Python_Resolvers    : Python_Resolver_List.List;
+      Python_Resolvers : Python_Resolver_List.List;
    end record;
 
    type On_Character_Added is new Character_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_Character_Added;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File;
-       Char   : Glib.Gunichar;
-       Interactive : Boolean);
+   overriding
+   procedure Execute
+     (Self        : On_Character_Added;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Char        : Glib.Gunichar;
+      Interactive : Boolean);
    --  Hook callback on a character added
 
    type Completion_Module_Record is new Module_ID_Record with record
@@ -191,14 +194,14 @@ package body Completion_Module is
       Smart_Completion_Launched : Boolean := False;
       --  Whether the smart completion has been launched once
 
-      Previous_Smart_Completion_State         : Smart_Completion_Type
-        := Disabled;
-      Previous_Smart_Completion_Trigger_State : Smart_Completion_Type
-        := Disabled;
+      Previous_Smart_Completion_State         : Smart_Completion_Type :=
+        Disabled;
+      Previous_Smart_Completion_Trigger_State : Smart_Completion_Type :=
+        Disabled;
       --  Stores the state of the Smart Completion preference, to add/remove
       --  the corresponding hook.
 
-      Has_Smart_Completion            : Boolean := False;
+      Has_Smart_Completion : Boolean := False;
       --   Whereas we are currently doing a Smart Completion
 
       Smart_Completion : Completion_Window_Access := null;
@@ -215,10 +218,10 @@ package body Completion_Module is
       --  completion window, no more gtk+ signals are propagated, and this
       --  data is never properly finalized as it must.
 
-      On_Char_Added              : Character_Hooks_Function_Access;
+      On_Char_Added : Character_Hooks_Function_Access;
       --  The hook callback corresponding to character triggers
 
-      Trigger_Timeout       : Glib.Main.G_Source_Id;
+      Trigger_Timeout : Glib.Main.G_Source_Id;
       --  The timeout associated to character triggers
 
       Has_Trigger_Timeout : Boolean := False;
@@ -243,7 +246,8 @@ package body Completion_Module is
 
    Completion_Module : Completion_Module_Access;
 
-   overriding procedure Destroy (Module : in out Completion_Module_Record);
+   overriding
+   procedure Destroy (Module : in out Completion_Module_Record);
    --  See inherited documentation
 
    procedure Extend_Completions_List;
@@ -268,37 +272,39 @@ package body Completion_Module is
    --  Move to the start of the next or previous word. This correctly takes
    --  into account '_' as part of a word.
 
-   procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class);
+   procedure On_Completion_Destroy (Win : access Gtk_Widget_Record'Class);
    --  Called when the completion widget is destroyed
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Called when the preferences have changed
 
    type On_File_Saved is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file is changed
 
    type Has_Completion_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Completion_Filter;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Completion_Filter; Context : Selection_Context)
+      return Boolean;
    --  This filter tests for the presence of the completion window
 
-   function Has_Completion return Boolean is
-      (not (Completion_Module = null
-              or else Completion_Module.Has_Smart_Completion = False
-              or else Completion_Module.Smart_Completion = null));
+   function Has_Completion return Boolean
+   is (not (Completion_Module = null
+            or else Completion_Module.Has_Smart_Completion = False
+            or else Completion_Module.Smart_Completion = null));
    --  Utility function, returns whether a completion is in progress
 
-   procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences are changed
 
    procedure Register_Commands
@@ -310,9 +316,10 @@ package body Completion_Module is
    --  Command handler for the Completion class
 
    type On_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
-      (Self   : On_View_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class);
+   overriding
+   procedure Execute
+     (Self   : On_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view is changed
 
    procedure Update_Construct_Database
@@ -323,8 +330,8 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Load the constructs from one file
 
-   package Trigger_Timeout_Callbacks is
-     new Glib.Main.Generic_Sources (Completion_Trigger_Kind);
+   package Trigger_Timeout_Callbacks is new
+     Glib.Main.Generic_Sources (Completion_Trigger_Kind);
 
    function Trigger_Timeout_Callback
      (Trigger_Kind : Completion_Trigger_Kind) return Boolean;
@@ -343,8 +350,8 @@ package body Completion_Module is
      (Kernel : access Kernel_Handle_Record'Class) return Source_Buffer;
 
    function Triggers_Auto_Completion
-     (Editor : Editor_Buffer'Class;
-      C      : VSS.Characters.Virtual_Character) return Boolean;
+     (Editor : Editor_Buffer'Class; C : VSS.Characters.Virtual_Character)
+      return Boolean;
    --  Return true if C enables opening an auto-completion window; false
    --  otherwise.
 
@@ -355,8 +362,8 @@ package body Completion_Module is
    --  The default completion manager factory.
 
    function Get_Completion_UTF8_Prefix
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      File    : Virtual_File) return String;
+     (Kernel : not null access Kernel_Handle_Record'Class; File : Virtual_File)
+      return String;
    --  Return the completion prefix (i.e: the string that should be completed)
    --  in UTF8 format.
    --  This is done by getting the word surrounding the cursor of the file's
@@ -367,18 +374,17 @@ package body Completion_Module is
    --------------------------------
 
    function Get_Completion_UTF8_Prefix
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      File    : Virtual_File) return String
+     (Kernel : not null access Kernel_Handle_Record'Class; File : Virtual_File)
+      return String
    is
       use Ada.Strings.Unbounded;
 
-      Loc  : Editor_Location'Class :=
-               Get_Current_Location (Kernel, File);
+      Loc : Editor_Location'Class := Get_Current_Location (Kernel, File);
 
       function Unichar_To_UTF8 (Char : Glib.Gunichar) return String;
       function Unichar_To_UTF8 (Char : Glib.Gunichar) return String is
-         The_Char   : String (1 .. 6);
-         Last       : Natural;
+         The_Char : String (1 .. 6);
+         Last     : Natural;
       begin
          Unichar_To_UTF8 (Char, The_Char, Last);
          return The_Char (1 .. Last);
@@ -388,8 +394,8 @@ package body Completion_Module is
       --  Find the prefix of the word
 
       declare
-         Unichar    : Glib.Gunichar;
-         Prefix     : Unbounded_String;
+         Unichar : Glib.Gunichar;
+         Prefix  : Unbounded_String;
       begin
          loop
             Loc := Loc.Forward_Char (-1);
@@ -398,8 +404,8 @@ package body Completion_Module is
             --  Exit when we are out of an identifier, eg. the current char is
             --  neither an alphanumeric character, neither an underscore
 
-            exit when not
-              (Is_Alnum (Unichar) or else Unichar = Character'Pos ('_'));
+            exit when
+              not (Is_Alnum (Unichar) or else Unichar = Character'Pos ('_'));
 
             Insert (Prefix, 1, Unichar_To_UTF8 (Unichar));
 
@@ -421,33 +427,32 @@ package body Completion_Module is
    is
       Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
 
-      View   : constant Source_View
-        := (if Widget /= null
-            and then Widget.all in Source_View_Record'Class
-            then Source_View (Widget)
-            else null);
+      View : constant Source_View :=
+        (if Widget /= null and then Widget.all in Source_View_Record'Class
+         then Source_View (Widget)
+         else null);
    begin
-      return (if View /= null
-              then Source_Buffer (Get_Buffer (View))
-              else null);
+      return
+        (if View /= null then Source_Buffer (Get_Buffer (View)) else null);
    end Get_Focused_Buffer;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
       pragma Unreferenced (Self, Pref);
       Smart_Completion_Pref : constant Smart_Completion_Type :=
-                                Smart_Completion.Get_Pref;
+        Smart_Completion.Get_Pref;
 
       function Is_Character_Added
-         (F : not null access Hook_Function'Class) return Boolean
-         is (F.all in On_Character_Added'Class);
+        (F : not null access Hook_Function'Class) return Boolean
+      is (F.all in On_Character_Added'Class);
       --  Whether a specific hook function is our own callback
    begin
       Completion_Module.Smart_Completion_Launched :=
@@ -479,7 +484,7 @@ package body Completion_Module is
          elsif Completion_Module.On_Char_Added /= null then
             Character_Added_Hook.Remove (Is_Character_Added'Access);
             Completion_Module.On_Char_Added := null;
-            --  function was freed as part of Remove
+         --  function was freed as part of Remove
          end if;
       end if;
 
@@ -491,13 +496,14 @@ package body Completion_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Saved;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
       pragma Unreferenced (Self);
-      F      : Structured_File_Access;
+      F                     : Structured_File_Access;
       Smart_Completion_Pref : constant Smart_Completion_Type :=
         Smart_Completion.Get_Pref;
    begin
@@ -517,7 +523,7 @@ package body Completion_Module is
    -- On_Completion_Destroy --
    ---------------------------
 
-   procedure On_Completion_Destroy (Win  : access Gtk_Widget_Record'Class) is
+   procedure On_Completion_Destroy (Win : access Gtk_Widget_Record'Class) is
       D           : Smart_Completion_Data renames Completion_Module.Data;
       First, Last : Gtk_Text_Iter;
       Dummy       : Boolean;
@@ -564,15 +570,18 @@ package body Completion_Module is
    ------------------------
 
    type Completion_Command (Smart_Completion : Boolean) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Complete the word under the cursor based on the
    --  contents of the buffer.
 
    type Cancel_Completion_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Cancel_Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Complete the word under the cursor based on the
@@ -582,7 +591,8 @@ package body Completion_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Completion_Module_Record) is
+   overriding
+   procedure Destroy (Module : in out Completion_Module_Record) is
    begin
       On_Completion_Destroy (Win => null);
 
@@ -599,9 +609,10 @@ package body Completion_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Has_Completion_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Has_Completion_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter, Context);
    begin
@@ -649,8 +660,9 @@ package body Completion_Module is
    is
    begin
       if In_Smart_Completion then
-         return Completion_Display_Interface_Access
-           (Completion_Module.Smart_Completion);
+         return
+           Completion_Display_Interface_Access
+             (Completion_Module.Smart_Completion);
       else
          return null;
       end if;
@@ -671,10 +683,10 @@ package body Completion_Module is
       Completion_Module.List.Clear;
       Completion_Module.Node := String_List_Utils.String_List.No_Element;
 
-      Completion_Module.Top_Reached    := False;
+      Completion_Module.Top_Reached := False;
       Completion_Module.Bottom_Reached := False;
-      Completion_Module.Complete       := False;
-      Completion_Module.Backwards      := False;
+      Completion_Module.Complete := False;
+      Completion_Module.Backwards := False;
 
       if Completion_Module.Mark /= null
         and then Completion_Module.Insert_Buffer /= null
@@ -696,7 +708,7 @@ package body Completion_Module is
       end if;
 
       Completion_Module.Insert_Buffer := null;
-      Completion_Module.Buffer        := null;
+      Completion_Module.Buffer := null;
    end Reset_Completion_Data;
 
    ---------------------------------
@@ -813,7 +825,7 @@ package body Completion_Module is
 
       --  Loop until a new word with the right prefix is found
 
-      Get_Iter_At_Mark (M.Buffer, Iter_Back,    M.Previous_Mark);
+      Get_Iter_At_Mark (M.Buffer, Iter_Back, M.Previous_Mark);
       Get_Iter_At_Mark (M.Buffer, Iter_Forward, M.Next_Mark);
 
       while not Found loop
@@ -848,10 +860,11 @@ package body Completion_Module is
                --  strings are UTF-8.
 
                if S'Length >= M.Prefix'Length
-                 and then Equal
-                   (S (S'First .. S'First - 1 + M.Prefix'Length),
-                    M.Prefix.all,
-                    Case_Sensitive => M.Case_Sensitive)
+                 and then
+                   Equal
+                     (S (S'First .. S'First - 1 + M.Prefix'Length),
+                      M.Prefix.all,
+                      Case_Sensitive => M.Case_Sensitive)
                  and then S /= M.Prefix.all   -- only if case differs
                  and then not M.List.Contains (S (S'First .. S'Last))
                then
@@ -871,7 +884,7 @@ package body Completion_Module is
             end;
          else
             if M.Backwards then
-               M.Top_Reached    := True;
+               M.Top_Reached := True;
             else
                M.Bottom_Reached := True;
             end if;
@@ -889,7 +902,7 @@ package body Completion_Module is
 
                   return;
                else
-                  Get_Iter_At_Mark (M.Buffer, Iter_Back,    M.Previous_Mark);
+                  Get_Iter_At_Mark (M.Buffer, Iter_Back, M.Previous_Mark);
                   Get_Iter_At_Mark (M.Buffer, Iter_Forward, M.Next_Mark);
                end if;
             end if;
@@ -932,8 +945,10 @@ package body Completion_Module is
 
       if Get (M.Child) /= null then
          M.Buffer := Get_Buffer (Get_Source_Box_From_MDI (Get (M.Child)));
-         Trace (Me, "Testing new editor : "
-                & Display_Full_Name (Get_Filename (M.Buffer)));
+         Trace
+           (Me,
+            "Testing new editor : "
+            & Display_Full_Name (Get_Filename (M.Buffer)));
          --  We do not care about untitled editor. Get_File_Identifier should
          --  be called instead if we did.
 
@@ -950,11 +965,11 @@ package body Completion_Module is
             Get_Iter_At_Mark (M.Insert_Buffer, Iter, M.Mark);
          end if;
 
-         M.Previous_Mark  := Create_Mark (M.Buffer, "", Iter);
-         M.Next_Mark      := Create_Mark (M.Buffer, "", Iter);
-         M.Top_Reached    := False;
+         M.Previous_Mark := Create_Mark (M.Buffer, "", Iter);
+         M.Next_Mark := Create_Mark (M.Buffer, "", Iter);
+         M.Top_Reached := False;
          M.Bottom_Reached := False;
-         M.Backwards      := True;
+         M.Backwards := True;
       else
          M.Buffer := null;
       end if;
@@ -969,15 +984,12 @@ package body Completion_Module is
       Volatile     : Boolean;
       Trigger_Kind : Completion_Trigger_Kind) return Command_Return_Type
    is
-      Widget : constant Gtk_Widget :=
-        Get_Current_Focus_Widget (Kernel);
+      Widget : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       View   : Source_View;
       Buffer : Source_Buffer;
    begin
-      if Widget /= null
-        and then Widget.all in Source_View_Record'Class
-      then
-         View   := Source_View (Widget);
+      if Widget /= null and then Widget.all in Source_View_Record'Class then
+         View := Source_View (Widget);
          Buffer := Source_Buffer (Get_Buffer (View));
       end if;
 
@@ -993,18 +1005,16 @@ package body Completion_Module is
       then
          declare
             Smart_Completion_Pref : constant Smart_Completion_Type :=
-                                               Smart_Completion.Get_Pref;
+              Smart_Completion.Get_Pref;
             Lang                  : constant Language_Access :=
-                                      Get_Language (Buffer);
+              Get_Language (Buffer);
             File                  : constant Virtual_File :=
-                                      Get_Filename (Buffer);
+              Get_Filename (Buffer);
             Prefix                : constant String :=
-                                      Get_Completion_UTF8_Prefix
-                                        (Kernel => Kernel,
-                                         File   => File);
+              Get_Completion_UTF8_Prefix (Kernel => Kernel, File => File);
             Win                   : Completion_Window_Access;
             Data                  : Smart_Completion_Data renames
-                                               Completion_Module.Data;
+              Completion_Module.Data;
             Cursor_Iter           : Gtk_Text_Iter;
             Prefix_Iter           : Gtk_Text_Iter;
             Previous_Char_Iter    : Gtk_Text_Iter;
@@ -1019,19 +1029,21 @@ package body Completion_Module is
             --  Otherwise or if the factory returned null, use the default one.
 
             if Completion_Module.Factory /= null then
-               Data.Manager := Completion_Module.Factory
-                 (Kernel => Kernel,
-                  File   => Get_Filename (Buffer),
-                  Lang   => Lang);
+               Data.Manager :=
+                 Completion_Module.Factory
+                   (Kernel => Kernel,
+                    File   => Get_Filename (Buffer),
+                    Lang   => Lang);
             end if;
 
             --  Use the default completion manager if we did not set any
             --  factory.
             if Data.Manager = null then
-               Data.Manager := Default_Completion_Manager_Factory
-                 (Kernel => Kernel,
-                  File   => Get_Filename (Buffer),
-                  Lang   => Lang);
+               Data.Manager :=
+                 Default_Completion_Manager_Factory
+                   (Kernel => Kernel,
+                    File   => Get_Filename (Buffer),
+                    Lang   => Lang);
             else
                --  Register the Aliases completion provider in the completion
                --  manager returned from the factory.
@@ -1063,8 +1075,7 @@ package body Completion_Module is
             --  manager does not accept completion in those.
 
             if (In_Comment and then not Data.Manager.Accept_Comments)
-              or else
-                (In_String and then not Data.Manager.Accept_Strings)
+              or else (In_String and then not Data.Manager.Accept_Strings)
             then
                Free (Data.Manager);
                return Commands.Failure;
@@ -1077,21 +1088,22 @@ package body Completion_Module is
             Completion_Module.Has_Smart_Completion := True;
 
             Data.Lock :=
-              new Update_Lock'(Lock_Updates
-                               (Get_Or_Create
-                                  (Get_Construct_Database (Kernel),
-                                       Get_Filename (Buffer))));
+              new Update_Lock'
+                (Lock_Updates
+                   (Get_Or_Create
+                      (Get_Construct_Database (Kernel),
+                       Get_Filename (Buffer))));
             Data.Buffer := Buffer;
 
-            Data.Start_Mark := Create_Mark
-              (Buffer       => Buffer,
-               Mark_Name    => "",
-               Where        => Cursor_Iter);
-            Data.End_Mark := Create_Mark
-              (Buffer       => Buffer,
-               Mark_Name    => "",
-               Where        => Cursor_Iter,
-               Left_Gravity => False);
+            Data.Start_Mark :=
+              Create_Mark
+                (Buffer => Buffer, Mark_Name => "", Where => Cursor_Iter);
+            Data.End_Mark :=
+              Create_Mark
+                (Buffer       => Buffer,
+                 Mark_Name    => "",
+                 Where        => Cursor_Iter,
+                 Left_Gravity => False);
 
             --  The function Query_Completion_List requires the
             --  offset of the cursor *in bytes* from the beginning of
@@ -1106,9 +1118,11 @@ package body Completion_Module is
             Gtk_New (Win, Kernel);
 
             Widget_Callback.Object_Connect
-              (Win, Signal_Destroy,
+              (Win,
+               Signal_Destroy,
                Widget_Callback.To_Marshaller (On_Completion_Destroy'Access),
-               View, After => True);
+               View,
+               After => True);
 
             Completion_Module.Smart_Completion := Win;
 
@@ -1116,18 +1130,19 @@ package body Completion_Module is
 
             Start_Completion (View);
 
-            Context := Create_Context
-              (Manager      => Data.Manager,
-               File         => Get_Filename (Buffer),
-               Buffer       => Data.The_Text,
-               Lang         => Lang,
-               Start_Offset => String_Index_Type
-                 (Get_Byte_Index (Prefix_Iter)),
-               End_Offset   => String_Index_Type
-                 (Get_Byte_Index (Cursor_Iter)),
-               Trigger_Kind => Trigger_Kind,
-               In_Comment   => In_Comment,
-               In_String    => In_String);
+            Context :=
+              Create_Context
+                (Manager      => Data.Manager,
+                 File         => Get_Filename (Buffer),
+                 Buffer       => Data.The_Text,
+                 Lang         => Lang,
+                 Start_Offset =>
+                   String_Index_Type (Get_Byte_Index (Prefix_Iter)),
+                 End_Offset   =>
+                   String_Index_Type (Get_Byte_Index (Cursor_Iter)),
+                 Trigger_Kind => Trigger_Kind,
+                 In_Comment   => In_Comment,
+                 In_String    => In_String);
 
             Start_Completion
               (Window      => Win,
@@ -1163,8 +1178,8 @@ package body Completion_Module is
                --  itself.
                if Is_Async then
                   Query_Completion_List
-                    (Manager      => Asynchronous_Completion_Manager_Access
-                       (Data.Manager),
+                    (Manager      =>
+                       Asynchronous_Completion_Manager_Access (Data.Manager),
                      Context      => Context,
                      Initial_List => Initial_List);
                end if;
@@ -1185,7 +1200,8 @@ package body Completion_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1211,17 +1227,16 @@ package body Completion_Module is
          Lang : constant Language_Access := Get_Language (Buffer);
 
       begin
-         if (Lang = Ada_Lang
-               or else Lang = C_Lang
-               or else Lang = Cpp_Lang)
+         if (Lang = Ada_Lang or else Lang = C_Lang or else Lang = Cpp_Lang)
            and then Command.Smart_Completion
          then
             if Completion_Module.Has_Smart_Completion then
                Select_Next (Completion_Module.Smart_Completion);
                return Commands.Success;
             else
-               return Smart_Complete
-                 (Kernel, Volatile => False, Trigger_Kind => Invoked);
+               return
+                 Smart_Complete
+                   (Kernel, Volatile => False, Trigger_Kind => Invoked);
             end if;
          end if;
       end;
@@ -1291,8 +1306,7 @@ package body Completion_Module is
       end if;
 
       Get_Iter_At_Mark (M.Insert_Buffer, Prev, M.Word_Start_Mark);
-      Get_Iter_At_Mark
-        (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
+      Get_Iter_At_Mark (M.Insert_Buffer, Iter, Get_Insert (M.Insert_Buffer));
       Create
         (Shell_Command,
          M.Insert_Buffer,
@@ -1315,7 +1329,8 @@ package body Completion_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Cancel_Completion_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1330,9 +1345,10 @@ package body Completion_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_View_Changed;
-       Kernel : not null access Kernel_Handle_Record'Class)
+   overriding
+   procedure Execute
+     (Self   : On_View_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
    begin
@@ -1352,7 +1368,7 @@ package body Completion_Module is
          declare
             Project_Files : File_Array_Access :=
               Get_Registry (Kernel).Tree.Root_Project.Source_Files (True);
-            All_Files : constant File_Array :=
+            All_Files     : constant File_Array :=
               Get_Registry (Kernel).Environment.Predefined_Source_Files
               & Project_Files.all;
 
@@ -1365,8 +1381,8 @@ package body Completion_Module is
                Added_Files   => Added_Files);
 
             for J in Removed_Files'Range loop
-               File := Get_File
-                 (Get_Construct_Database (Kernel), Removed_Files (J));
+               File :=
+                 Get_File (Get_Construct_Database (Kernel), Removed_Files (J));
 
                if File /= null then
                   Set_Project (File, No_Project);
@@ -1380,8 +1396,8 @@ package body Completion_Module is
 
             for J in All_Files'Range loop
                declare
-                  S_File : constant Structured_File_Access := Get_File
-                    (Get_Construct_Database (Kernel), All_Files (J));
+                  S_File : constant Structured_File_Access :=
+                    Get_File (Get_Construct_Database (Kernel), All_Files (J));
                begin
                   if S_File /= null then
                      Set_Project (S_File, Get_Project (Kernel));
@@ -1415,11 +1431,11 @@ package body Completion_Module is
          Trace (Me_Adv, "loading " & File.Display_Base_Name);
       end if;
 
-      S_File := Get_Or_Create
-        (Get_Construct_Database (Kernel), File, Get_Project (Kernel));
+      S_File :=
+        Get_Or_Create
+          (Get_Construct_Database (Kernel), File, Get_Project (Kernel));
 
-      if S_File /= null
-        and then Get_Project (S_File) /= Get_Project (Kernel)
+      if S_File /= null and then Get_Project (S_File) /= Get_Project (Kernel)
       then
          --  Checks if the project has been properly updated. If not, this file
          --  may have been open on No_Project before the recomputation, so
@@ -1437,7 +1453,7 @@ package body Completion_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Src_Action_Context : constant Action_Filter :=
-                             Lookup_Filter (Kernel, "Source editor");
+        Lookup_Filter (Kernel, "Source editor");
    begin
       Completion_Module := new Completion_Module_Record;
       Register_Module
@@ -1453,21 +1469,24 @@ package body Completion_Module is
              and then Create ("GPS.LSP.SEARCH_ENTITIES_SUPPORT").Is_Active);
 
       Register_Action
-        (Kernel, "Complete identifier",
+        (Kernel,
+         "Complete identifier",
          new Completion_Command (Smart_Completion => False),
          -("Complete current identifier based on the contents of the editor"),
-         Category   => "Editor",
-         Filter     => Src_Action_Context);
+         Category => "Editor",
+         Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "Complete identifier (advanced)",
+        (Kernel,
+         "Complete identifier (advanced)",
          new Completion_Command (Smart_Completion => True),
          -("Complete current identifier based on advanced entities database"),
          Category => "Editor",
          Filter   => Src_Action_Context);
 
       Register_Action
-        (Kernel, "Cancel completion",
+        (Kernel,
+         "Cancel completion",
          new Cancel_Completion_Command,
          -("Remove the completion window, if it exists"),
          Category => "Editor",
@@ -1505,11 +1524,11 @@ package body Completion_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Completion_Data : Smart_Completion_Data renames Completion_Module.Data;
-      Resolver : Completion_Python_Access;
+      Resolver        : Completion_Python_Access;
    begin
       if Command = "register" then
-         Resolver := Completion.Python.Create (Nth_Arg (Data, 1),
-                                               Nth_Arg (Data, 2));
+         Resolver :=
+           Completion.Python.Create (Nth_Arg (Data, 1), Nth_Arg (Data, 2));
          Completion_Data.Python_Resolvers.Append (Resolver);
       end if;
    end Command_Handler;
@@ -1521,12 +1540,17 @@ package body Completion_Module is
    procedure Register_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Completion_Class : constant Class_Type := New_Class
-        (Kernel, "Completion");
+      Completion_Class : constant Class_Type :=
+        New_Class (Kernel, "Completion");
    begin
       Register_Command
-        (Kernel, "register", 2, 2,
-         Command_Handler'Access, Completion_Class, Static_Method => True);
+        (Kernel,
+         "register",
+         2,
+         2,
+         Command_Handler'Access,
+         Completion_Class,
+         Static_Method => True);
 
       --  ??? Need to implement the destructor
    end Register_Commands;
@@ -1547,10 +1571,11 @@ package body Completion_Module is
 
       --  Do not complete when slave cursors active
       if not Has_Slave_Cursors (Buffer) then
-         Ignore := Smart_Complete
-           (Get_Kernel (Completion_Module.all),
-            Volatile     => True,
-            Trigger_Kind => Trigger_Kind);
+         Ignore :=
+           Smart_Complete
+             (Get_Kernel (Completion_Module.all),
+              Volatile     => True,
+              Trigger_Kind => Trigger_Kind);
       end if;
 
       Completion_Module.Has_Trigger_Timeout := False;
@@ -1567,14 +1592,13 @@ package body Completion_Module is
    ------------------------------
 
    function Triggers_Auto_Completion
-     (Editor : Editor_Buffer'Class;
-      C      : VSS.Characters.Virtual_Character) return Boolean
+     (Editor : Editor_Buffer'Class; C : VSS.Characters.Virtual_Character)
+      return Boolean
    is
       use type VSS.Characters.Virtual_Character;
 
-      Lang   : constant Language.Language_Access
-        := (if Editor /= Nil_Editor_Buffer then Editor.Get_Language
-            else null);
+      Lang : constant Language.Language_Access :=
+        (if Editor /= Nil_Editor_Buffer then Editor.Get_Language else null);
 
       --  Return true if the cursor is at a location where an Ada keyword
       --  should open an auto-completion, false otherwise
@@ -1600,18 +1624,26 @@ package body Completion_Module is
                The_Text        : String_Access;
                Ret             : Boolean;
             begin
-               The_Text := new String'(Editor.Get_Chars_S
-                 (From                 => Insert_Mark_Loc,
-                  To                   => Insert_Mark_Loc.Beginning_Of_Line,
-                  Include_Hidden_Chars => False));
+               The_Text :=
+                 new String'
+                   (Editor.Get_Chars_S
+                      (From                 => Insert_Mark_Loc,
+                       To                   =>
+                         Insert_Mark_Loc.Beginning_Of_Line,
+                       Include_Hidden_Chars => False));
 
                Exp := Parse_Expression_Backward (The_Text);
 
-               Ret := Exp.Tokens.Length = 1
+               Ret :=
+                 Exp.Tokens.Length = 1
                  and then
-                   Exp.Tokens.First_Element.Tok_Type in
-                     Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
-                       | Tok_Raise | Tok_Aspect;
+                   Exp.Tokens.First_Element.Tok_Type
+                   in Tok_With
+                    | Tok_Use
+                    | Tok_Pragma
+                    | Tok_Accept
+                    | Tok_Raise
+                    | Tok_Aspect;
 
                Free (Exp);
 
@@ -1643,14 +1675,13 @@ package body Completion_Module is
       if Lang = Ada_Lang then
          Manager := new Ada_Completion_Manager;
 
-         Constructs_Resolver := New_Construct_Completion_Resolver
-           (Construct_Db   => Get_Construct_Database (Kernel),
-            Current_File   => File,
-            Current_Buffer => Completion_Module.Data.The_Text);
+         Constructs_Resolver :=
+           New_Construct_Completion_Resolver
+             (Construct_Db   => Get_Construct_Database (Kernel),
+              Current_File   => File,
+              Current_Buffer => Completion_Module.Data.The_Text);
 
-      elsif Lang = C_Lang
-        or else Lang = Cpp_Lang
-      then
+      elsif Lang = C_Lang or else Lang = Cpp_Lang then
          Manager := new C_Completion_Manager;
 
       else
@@ -1662,12 +1693,9 @@ package body Completion_Module is
       end loop;
 
       if Lang = Ada_Lang then
-         Register_Resolver
-           (Manager, Completion_Module.Completion_History);
-         Register_Resolver
-           (Manager, Completion_Module.Completion_Keywords);
-         Register_Resolver
-           (Manager, Completion_Module.Completion_Aliases);
+         Register_Resolver (Manager, Completion_Module.Completion_History);
+         Register_Resolver (Manager, Completion_Module.Completion_Keywords);
+         Register_Resolver (Manager, Completion_Module.Completion_Aliases);
       end if;
 
       if Constructs_Resolver /= null then
@@ -1681,12 +1709,13 @@ package body Completion_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self   : On_Character_Added;
-       Kernel : not null access Kernel_Handle_Record'Class;
-       File   : Virtual_File;
-       Char   : Glib.Gunichar;
-       Interactive : Boolean)
+   overriding
+   procedure Execute
+     (Self        : On_Character_Added;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Char        : Glib.Gunichar;
+      Interactive : Boolean)
    is
       pragma Unreferenced (Self, File, Interactive);
 
@@ -1698,11 +1727,11 @@ package body Completion_Module is
       --  the buffer's language.
       --  Used to know when we should trigger auto-completion in Dynamic mode.
 
-      Buffer         : constant Source_Buffer := Get_Focused_Buffer (Kernel);
-      Lang           : Language_Access;
-      Is_Dynamic     : Boolean;
-      Cursor_Iter    : Gtk_Text_Iter;
-      Success        : Boolean;
+      Buffer      : constant Source_Buffer := Get_Focused_Buffer (Kernel);
+      Lang        : Language_Access;
+      Is_Dynamic  : Boolean;
+      Cursor_Iter : Gtk_Text_Iter;
+      Success     : Boolean;
 
       -----------------------------------
       -- Char_Triggers_Auto_Completion --
@@ -1732,9 +1761,7 @@ package body Completion_Module is
       --  ??? Do we have a way to check whether the character is coming from
       --  user interaction or script ? That would be a better solution.
 
-      if Buffer = null
-        or else Buffer.Context_Is_Frozen
-      then
+      if Buffer = null or else Buffer.Context_Is_Frozen then
          return;
       end if;
 
@@ -1769,7 +1796,7 @@ package body Completion_Module is
 
       if Is_Dynamic then
          declare
-            Dummy  : Boolean;
+            Dummy : Boolean;
             pragma Unreferenced (Dummy);
          begin
             if not Buffer.Is_Inserting_Internally then
@@ -1790,12 +1817,14 @@ package body Completion_Module is
 
                   Remove_Completion;
 
-                  Dummy := Trigger_Timeout_Callback
-                    (Trigger_Kind => TriggerCharacter);
+                  Dummy :=
+                    Trigger_Timeout_Callback
+                      (Trigger_Kind => TriggerCharacter);
 
                elsif Completion_Module.Smart_Completion /= null
-                    and then Has_Incomplete_Completion
-                      (Completion_Module.Smart_Completion)
+                 and then
+                   Has_Incomplete_Completion
+                     (Completion_Module.Smart_Completion)
                then
                   --  If the completion window is already shown with an
                   --  incomplete list, reset its contents and retrigger
@@ -1803,14 +1832,14 @@ package body Completion_Module is
                   Completion_Module.Smart_Completion.Display_Proposals
                     (Null_Completion_List);
 
-                  Dummy := Trigger_Timeout_Callback
-                    (Trigger_Kind => TriggerForIncompleteCompletions);
+                  Dummy :=
+                    Trigger_Timeout_Callback
+                      (Trigger_Kind => TriggerForIncompleteCompletions);
 
                elsif Is_Identifier_Char then
                   --  Trigger completion if we have typed an identifier
                   --  character in dynamic mode.
-                  Dummy := Trigger_Timeout_Callback
-                    (Trigger_Kind => Invoked);
+                  Dummy := Trigger_Timeout_Callback (Trigger_Kind => Invoked);
                end if;
             end if;
          end;
@@ -1839,57 +1868,63 @@ package body Completion_Module is
    -- Register_Preferences --
    --------------------------
 
-   procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class)
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class)
    is
       Manager : constant Preferences_Manager := Kernel.Get_Preferences;
       Page    : Preferences_Page;
       Group   : Preferences_Group;
    begin
-      Completion_Insert_Mode := Completion_Insert_Mode_Preferences.Create
-        (Manager  => Manager,
-         Path     => "Editor:Completion Insert Mode",
-         Name     => "Completion-Insert-Mode",
-         Label    => "Completion insert mode",
-         Doc      => "Controls whether words are overwritten when accepting "
-         & "completions.",
-         Default  => Replace);
+      Completion_Insert_Mode :=
+        Completion_Insert_Mode_Preferences.Create
+          (Manager => Manager,
+           Path    => "Editor:Completion Insert Mode",
+           Name    => "Completion-Insert-Mode",
+           Label   => "Completion insert mode",
+           Doc     =>
+             "Controls whether words are overwritten when accepting "
+             & "completions.",
+           Default => Replace);
 
-      Smart_Completion := Smart_Completion_Preferences.Create
-        (Manager,
-         Name  => "Smart-Completion-Mode",
-         Label => -"Smart completion",
-         Path  => -"Editor:Smart Completion",
-         Doc   =>
-           -("Control the display of smart completion: "
-             & "'Disabled' means the feature is entirely disabled. "
-             & "'Manual' means only when the user triggers it. "
-             & "'Normal' is 'Manual' + language specific characters. "
-             & "'Dynamic' is on every character."),
-         Default => Dynamic);
+      Smart_Completion :=
+        Smart_Completion_Preferences.Create
+          (Manager,
+           Name    => "Smart-Completion-Mode",
+           Label   => -"Smart completion",
+           Path    => -"Editor:Smart Completion",
+           Doc     =>
+             -("Control the display of smart completion: "
+               & "'Disabled' means the feature is entirely disabled. "
+               & "'Manual' means only when the user triggers it. "
+               & "'Normal' is 'Manual' + language specific characters. "
+               & "'Dynamic' is on every character."),
+           Default => Dynamic);
 
-      Completion_Mode := Completion_Mode_Preferences.Create
-        (Manager,
-         Name    => "Completion-Filter-Mode",
-         Label   => -"Completion filter mode",
-         Path    => -"Editor:Completion Search Mode",
-         Doc     =>
-           -("Control the completion filtering policy. " & ASCII.LF
-           & "Setting it to 'Fuzzy' will allow the completion window to "
-           & "be more permissive when matching results (e.g: missing letters "
-           & "will be allowed)."),
-         Default => Fuzzy);
+      Completion_Mode :=
+        Completion_Mode_Preferences.Create
+          (Manager,
+           Name    => "Completion-Filter-Mode",
+           Label   => -"Completion filter mode",
+           Path    => -"Editor:Completion Search Mode",
+           Doc     =>
+             -("Control the completion filtering policy. "
+               & ASCII.LF
+               & "Setting it to 'Fuzzy' will allow the completion window to "
+               & "be more permissive when matching results (e.g: missing "
+               & "letters will be allowed)."),
+           Default => Fuzzy);
 
-      Smart_Completion_Trigger_Timeout := Create
-        (Manager,
-         Name    => "Smart-Completion-Trigger-Timeout",
-         Minimum => 0,
-         Maximum => 9999,
-         Path    => -"Editor:Smart Completion",
-         Doc     => -("Timeout (in milliseconds) for "
-           & "character-triggered smart completion in 'Normal' mode"),
-         Label   => -"Smart completion timeout",
-         Default => 200);
+      Smart_Completion_Trigger_Timeout :=
+        Create
+          (Manager,
+           Name    => "Smart-Completion-Trigger-Timeout",
+           Minimum => 0,
+           Maximum => 9999,
+           Path    => -"Editor:Smart Completion",
+           Doc     =>
+             -("Timeout (in milliseconds) for "
+               & "character-triggered smart completion in 'Normal' mode"),
+           Label   => -"Smart completion timeout",
+           Default => 200);
 
       Completion_Module.Previous_Smart_Completion_State :=
         Smart_Completion.Get_Pref;
@@ -1897,19 +1932,16 @@ package body Completion_Module is
       --  Register these preferences in the 'General' page of the preferences
       --  assistant too.
 
-      Page := Manager.Get_Registered_Page
-        (Name             => "Preferences Assistant General",
-         Create_If_Needed => False);
+      Page :=
+        Manager.Get_Registered_Page
+          (Name => "Preferences Assistant General", Create_If_Needed => False);
 
       Group := new Preferences_Group_Record;
       Page.Register_Group
-        (Name     => "Completion",
-         Group    => Group,
-         Priority => -1);
+        (Name => "Completion", Group => Group, Priority => -1);
 
       Group.Add_Pref
-        (Manager => Manager,
-         Pref    => Preference (Smart_Completion));
+        (Manager => Manager, Pref => Preference (Smart_Completion));
    end Register_Preferences;
 
    -------------------------

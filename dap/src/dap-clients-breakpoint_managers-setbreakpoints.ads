@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings;
-with DAP.Requests;                use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.SetBreakpoints;
 
 private package DAP.Clients.Breakpoint_Managers.SetBreakpoints is
@@ -24,10 +24,10 @@ private package DAP.Clients.Breakpoint_Managers.SetBreakpoints is
    type Source_Line_Request is
      new DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request
    with record
-      Manager     : Breakpoint_Manager_Access;
+      Manager : Breakpoint_Manager_Access;
       --  The breakpoints' manager that created the request.
 
-      File        : GNATCOLL.VFS.Virtual_File;
+      File : GNATCOLL.VFS.Virtual_File;
       --  The file for which we are setting breakpoints.
 
       Breakpoints : Breakpoint_Index_Lists.List;
@@ -38,17 +38,20 @@ private package DAP.Clients.Breakpoint_Managers.SetBreakpoints is
 
    type Source_Line_Request_Access is access all Source_Line_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Source_Line_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetBreakpointsResponse;
       New_Request : in out DAP_Request_Access);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Source_Line_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Source_Line_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);

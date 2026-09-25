@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with VSS.Strings.Conversions;
 
 with DAP.Tools.Inputs;
@@ -29,7 +29,8 @@ package body DAP.Requests.StackTrace is
    -- Write --
    -----------
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : StackTrace_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class) is
    begin
@@ -40,7 +41,8 @@ package body DAP.Requests.StackTrace is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out StackTrace_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -52,8 +54,8 @@ package body DAP.Requests.StackTrace is
       DAP.Tools.Inputs.Input_StackTraceResponse (Stream, Response, Success);
 
       if Success then
-         StackTrace_DAP_Request'Class
-           (Self).On_Result_Message (Client, Response, New_Request);
+         StackTrace_DAP_Request'Class (Self).On_Result_Message
+           (Client, Response, New_Request);
       end if;
    end On_Result_Message;
 
@@ -61,9 +63,10 @@ package body DAP.Requests.StackTrace is
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out StackTrace_DAP_Request;
-      Client      : not null access DAP.Clients.DAP_Client'Class) is
+      Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       Trace (Me, "Rejected");
    end On_Rejected;
@@ -72,7 +75,8 @@ package body DAP.Requests.StackTrace is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out StackTrace_DAP_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
@@ -84,9 +88,8 @@ package body DAP.Requests.StackTrace is
    -- Set_Seq --
    -------------
 
-   overriding procedure Set_Seq
-     (Self : in out StackTrace_DAP_Request;
-      Id   : Integer) is
+   overriding
+   procedure Set_Seq (Self : in out StackTrace_DAP_Request; Id : Integer) is
    begin
       Self.Parameters.seq := Id;
    end Set_Seq;

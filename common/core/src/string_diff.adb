@@ -99,35 +99,33 @@ package body String_Diff is
       return I.I >= I.S'Last;
    end At_End;
 
-   package String_Access_Diff is new Diffing
-     (Object      => Character,
-      Container   => String_Access,
-      Iterator    => Iter,
-      Null_Object => Null_Object,
-      "="         => "=",
-      Length      => Length,
-      Last        => Last,
-      First       => First,
-      Get         => Get,
-      Next        => Next,
-      Prev        => Prev,
-      At_End      => At_End);
+   package String_Access_Diff is new
+     Diffing
+       (Object      => Character,
+        Container   => String_Access,
+        Iterator    => Iter,
+        Null_Object => Null_Object,
+        "="         => "=",
+        Length      => Length,
+        Last        => Last,
+        First       => First,
+        Get         => Get,
+        Next        => Next,
+        Prev        => Prev,
+        At_End      => At_End);
 
    ----------
    -- Diff --
    ----------
 
    procedure Diff
-     (Old_String : String;
-      New_String : String;
-      Callback   : Diff_Callback)
+     (Old_String : String; New_String : String; Callback : Diff_Callback)
    is
       Ol : String_Access := new String'(Old_String);
       Ne : String_Access := new String'(New_String);
 
       procedure Wrapper
-        (Old_Obj, New_Obj : Character;
-         State : String_Access_Diff.Diff_State);
+        (Old_Obj, New_Obj : Character; State : String_Access_Diff.Diff_State);
       --  Callback passed to the diff function
 
       -------------
@@ -135,11 +133,13 @@ package body String_Diff is
       -------------
 
       procedure Wrapper
-        (Old_Obj, New_Obj : Character;
-         State : String_Access_Diff.Diff_State) is
+        (Old_Obj, New_Obj : Character; State : String_Access_Diff.Diff_State)
+      is
       begin
-         Callback (Old_Obj, New_Obj,
-                   Diff_State'Val (String_Access_Diff.Diff_State'Pos (State)));
+         Callback
+           (Old_Obj,
+            New_Obj,
+            Diff_State'Val (String_Access_Diff.Diff_State'Pos (State)));
       end Wrapper;
 
    begin

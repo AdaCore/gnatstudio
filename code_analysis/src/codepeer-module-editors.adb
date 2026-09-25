@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtkada.MDI;
 
@@ -30,23 +30,26 @@ with Src_Editor_Module;
 package body CodePeer.Module.Editors is
 
    type On_File_Closed is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Closed;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been closed
 
    type On_File_Edited is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been opened
 
    type On_MDI_Child_Selected
-     (Module : not null access Module_Id_Record'Class) is
-     new Mdi_Child_Hooks_Function with null record;
-   overriding procedure Execute
+     (Module : not null access Module_Id_Record'Class)
+   is new Mdi_Child_Hooks_Function with null record;
+   overriding
+   procedure Execute
      (Self   : On_MDI_Child_Selected;
       Kernel : not null access Kernel_Handle_Record'Class;
       Child  : Gtkada.MDI.MDI_Child);
@@ -62,8 +65,7 @@ package body CodePeer.Module.Editors is
    ----------------------
 
    procedure Hide_Annotations
-     (Self : in out Module_Id_Record'Class;
-      File : Code_Analysis.File_Access)
+     (Self : in out Module_Id_Record'Class; File : Code_Analysis.File_Access)
    is
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor);
 
@@ -77,10 +79,10 @@ package body CodePeer.Module.Editors is
 
       procedure Process (Position : Code_Analysis.Subprogram_Maps.Cursor) is
          Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                             Code_Analysis.Subprogram_Maps.Element (Position);
-         Data            : CodePeer.Subprogram_Data'Class
-         renames CodePeer.Subprogram_Data'Class
-           (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
+           Code_Analysis.Subprogram_Maps.Element (Position);
+         Data            : CodePeer.Subprogram_Data'Class renames
+           CodePeer.Subprogram_Data'Class
+             (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
 
       begin
          if not Data.Mark.Is_Empty then
@@ -110,7 +112,8 @@ package body CodePeer.Module.Editors is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Closed;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -132,9 +135,7 @@ package body CodePeer.Module.Editors is
              (Kernel, F_Info.Project);
       end;
 
-      if Module.Tree /= null
-        and then Module.Tree.Contains (Project_View)
-      then
+      if Module.Tree /= null and then Module.Tree.Contains (Project_View) then
          Project_Node := Module.Tree.Element (Project_View);
 
          if Project_Node.Files.Contains (File) then
@@ -147,7 +148,8 @@ package body CodePeer.Module.Editors is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
@@ -169,9 +171,7 @@ package body CodePeer.Module.Editors is
              (Kernel, F_Info.Project);
       end;
 
-      if Module.Tree /= null
-        and then Module.Tree.Contains (Project_View)
-      then
+      if Module.Tree /= null and then Module.Tree.Contains (Project_View) then
          Project_Node := Module.Tree.Element (Project_View);
 
          if Project_Node.Files.Contains (File) then
@@ -184,7 +184,8 @@ package body CodePeer.Module.Editors is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_MDI_Child_Selected;
       Kernel : not null access Kernel_Handle_Record'Class;
       Child  : Gtkada.MDI.MDI_Child)
@@ -218,8 +219,8 @@ package body CodePeer.Module.Editors is
         Projects.Views.Create_Project_View_Reference
           (Kernel,
            GNATCOLL.Projects.File_Info'Class
-             (Get_Registry (Kernel).Tree.Info_Set
-              (File_Name).First_Element).Project);
+             (Get_Registry (Kernel).Tree.Info_Set (File_Name).First_Element)
+             .Project);
       Project_Node := Code_Analysis.Get (Self.Module.Tree, Project);
 
       if Project_Node = null then
@@ -237,8 +238,8 @@ package body CodePeer.Module.Editors is
       end if;
 
       declare
-         File_Data : CodePeer.File_Data'Class
-           renames CodePeer.File_Data'Class
+         File_Data : CodePeer.File_Data'Class renames
+           CodePeer.File_Data'Class
              (File_Node.Analysis_Data.CodePeer_Data.all);
 
       begin
@@ -269,8 +270,7 @@ package body CodePeer.Module.Editors is
    -- Register_Editor_Integration --
    ---------------------------------
 
-   procedure Register_Editor_Integration
-     (Module : not null CodePeer_Module_Id)
+   procedure Register_Editor_Integration (Module : not null CodePeer_Module_Id)
    is
    begin
       File_Closed_Hook.Add (new On_File_Closed);
@@ -306,13 +306,12 @@ package body CodePeer.Module.Editors is
            (Position : CodePeer.Annotation_Maps.Cursor);
 
          Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                             Code_Analysis.Subprogram_Maps.Element (Position);
-         Data            : CodePeer.Subprogram_Data'Class
-           renames CodePeer.Subprogram_Data'Class
-           (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
+           Code_Analysis.Subprogram_Maps.Element (Position);
+         Data            : CodePeer.Subprogram_Data'Class renames
+           CodePeer.Subprogram_Data'Class
+             (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
          Indent          : constant String :=
-                             Ada.Strings.Fixed."*"
-                               (Subprogram_Node.Column - 1, ' ');
+           Ada.Strings.Fixed."*" (Subprogram_Node.Column - 1, ' ');
 
          ------------------------
          -- Process_Annotation --
@@ -322,7 +321,7 @@ package body CodePeer.Module.Editors is
            (Position : CodePeer.Annotation_Vectors.Cursor)
          is
             Annotation : constant CodePeer.Annotation_Access :=
-                           CodePeer.Annotation_Vectors.Element (Position);
+              CodePeer.Annotation_Vectors.Element (Position);
 
          begin
             if Annotation.Lifeage in Added .. Unchanged then
@@ -343,9 +342,9 @@ package body CodePeer.Module.Editors is
            (Position : CodePeer.Annotation_Maps.Cursor)
          is
             Key     : constant CodePeer.Annotation_Category_Access :=
-                        CodePeer.Annotation_Maps.Key (Position);
+              CodePeer.Annotation_Maps.Key (Position);
             Element : constant CodePeer.Annotation_Vector_Access :=
-                        CodePeer.Annotation_Maps.Element (Position);
+              CodePeer.Annotation_Maps.Element (Position);
 
          begin
             Buffer.Add_Special_Line
@@ -374,8 +373,8 @@ package body CodePeer.Module.Editors is
 
             Buffer.Add_Special_Line
               (Start_Line => Subprogram_Node.Line,
-               Text       => Indent & "--  Subprogram: "
-               & Subprogram_Node.Name.all,
+               Text       =>
+                 Indent & "--  Subprogram: " & Subprogram_Node.Name.all,
                Style      => Module.Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 
@@ -389,14 +388,13 @@ package body CodePeer.Module.Editors is
          end if;
       end Process_Subprogram;
 
-      Data : CodePeer.File_Data'Class renames CodePeer.File_Data'Class
-        (File.Analysis_Data.CodePeer_Data.all);
+      Data : CodePeer.File_Data'Class renames
+        CodePeer.File_Data'Class (File.Analysis_Data.CodePeer_Data.all);
 
    begin
       --  Load annotations data.
 
-      if Data.Annotations_File /= No_File
-        and then not Data.Annotations_Loaded
+      if Data.Annotations_File /= No_File and then not Data.Annotations_Loaded
       then
          Module.Load_Annotations (File.all);
       end if;
@@ -409,11 +407,10 @@ package body CodePeer.Module.Editors is
    ----------------------
 
    procedure Show_Annotations
-     (Module : in out Module_Id_Record'Class;
-      File   : Code_Analysis.File_Access)
+     (Module : in out Module_Id_Record'Class; File : Code_Analysis.File_Access)
    is
       Buffer : constant GPS.Editors.Editor_Buffer'Class :=
-                 Module.Get_Kernel.Get_Buffer_Factory.Get (File.Name);
+        Module.Get_Kernel.Get_Buffer_Factory.Get (File.Name);
 
    begin
       if Buffer /= GPS.Editors.Nil_Editor_Buffer

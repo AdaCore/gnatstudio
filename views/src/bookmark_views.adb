@@ -15,64 +15,65 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers;                 use Ada.Containers;
+with Ada.Containers;        use Ada.Containers;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;                   use GNAT.Strings;
-with System;                         use System;
+with GNAT.Strings;          use GNAT.Strings;
+with System;                use System;
 with System.Address_Image;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.JSON;                  use GNATCOLL.JSON;
-with GNATCOLL.Projects;              use GNATCOLL.Projects;
-with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
-with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.JSON;     use GNATCOLL.JSON;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Glib;                           use Glib;
-with Glib.Main;                      use Glib.Main;
-with Glib.Object;                    use Glib.Object;
-with Glib.Properties;                use Glib.Properties;
-with Glib_Values_Utils;              use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Main;         use Glib.Main;
+with Glib.Object;       use Glib.Object;
+with Glib.Properties;   use Glib.Properties;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Drag_Contexts;              use Gdk.Drag_Contexts;
-with Gdk.Event;                      use Gdk.Event;
-with Gdk.Rectangle;                  use Gdk.Rectangle;
-with Gdk.Property;                   use Gdk.Property;
-with Gdk.Types;                      use Gdk.Types;
+with Gdk.Drag_Contexts; use Gdk.Drag_Contexts;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Rectangle;     use Gdk.Rectangle;
+with Gdk.Property;      use Gdk.Property;
+with Gdk.Types;         use Gdk.Types;
 
-with Gtk.Box;                        use Gtk.Box;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Text;         use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;       use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Dialog;                     use Gtk.Dialog;
-with Gtk.Dnd;                        use Gtk.Dnd;
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.Gesture_Long_Press;         use Gtk.Gesture_Long_Press;
-with Gtk.Gesture_Multi_Press;        use Gtk.Gesture_Multi_Press;
-with Gtk.Label;                      use Gtk.Label;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Dnd;                  use Gtk.Dnd;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Gesture_Long_Press;   use Gtk.Gesture_Long_Press;
+with Gtk.Gesture_Multi_Press;  use Gtk.Gesture_Multi_Press;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Menu;
-with Gtk.Scrolled_Window;            use Gtk.Scrolled_Window;
-with Gtk.Selection_Data;             use Gtk.Selection_Data;
-with Gtk.Target_List;                use Gtk.Target_List;
-with Gtk.Text_Buffer;                use Gtk.Text_Buffer;
-with Gtk.Text_Iter;                  use Gtk.Text_Iter;
-with Gtk.Text_View;                  use Gtk.Text_View;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Selection_Data;       use Gtk.Selection_Data;
+with Gtk.Target_List;          use Gtk.Target_List;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Toolbar;
 with Gtk.Tree_Drag_Source;
-with Gtk.Tree_Model;                 use Gtk.Tree_Model;
-with Gtk.Tree_Selection;             use Gtk.Tree_Selection;
-with Gtk.Tree_Store;                 use Gtk.Tree_Store;
-with Gtk.Tree_View;                  use Gtk.Tree_View;
-with Gtk.Tree_View_Column;           use Gtk.Tree_View_Column;
-with Gtk.Widget;                     use Gtk.Widget;
-with Gtkada.MDI;                     use Gtkada.MDI;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.MDI;               use Gtkada.MDI;
 
 with Basic_Types;                    use Basic_Types;
-with Commands.Interactive;           use Commands, Commands.Interactive;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 with Default_Preferences;            use Default_Preferences;
 with Generic_Views;                  use Generic_Views;
 with GPS.Default_Styles;             use GPS.Default_Styles;
@@ -115,18 +116,16 @@ package body Bookmark_Views is
 
    Bookmark_Class_Name : constant String := "Bookmark";
 
-   Icon_For_Bookmarks  : constant String := "gps-goto-symbolic";
-   Icon_For_Groups     : constant String := "gps-emblem-directory-open";
-   Icon_For_Tag        : constant String := "gps-tag-symbolic";
+   Icon_For_Bookmarks : constant String := "gps-goto-symbolic";
+   Icon_For_Groups    : constant String := "gps-emblem-directory-open";
+   Icon_For_Tag       : constant String := "gps-tag-symbolic";
 
    Line_Text_Attribute : constant String := "line_text";
 
    Messages_Category_For_Bookmarks : constant VSS.Strings.Virtual_String :=
      "bookmarks";
    Message_Flags_For_Bookmarks     : constant Message_Flags :=
-     (Editor_Side => True,
-      Locations   => False,
-      Editor_Line => False);
+     (Editor_Side => True, Locations => False, Editor_Line => False);
 
    Icon_Name_Column : constant := 0;
    Name_Column      : constant := 1;
@@ -139,7 +138,7 @@ package body Bookmark_Views is
       Data_Column      => GType_Pointer,
       Has_Note_Column  => GType_Boolean);
 
-   Editor_Link  : Boolean_Preference;
+   Editor_Link : Boolean_Preference;
    --  Whether we should automatically select the bookmark corresponding to
    --  the current location in the editor.
 
@@ -150,14 +149,17 @@ package body Bookmark_Views is
    --  Move bookmarks dynamically due to external file modifications.
 
    type Bookmark_Proxy is new Script_Proxy with null record;
-   overriding function Class_Name (Self : Bookmark_Proxy) return String
-      is (Bookmark_Class_Name) with Inline;
+   overriding
+   function Class_Name (Self : Bookmark_Proxy) return String
+   is (Bookmark_Class_Name)
+   with Inline;
    --  Interface with python
 
    type Line_Text_Type (Is_Empty : Boolean := True) is record
       case Is_Empty is
          when True =>
             null;
+
          when False =>
             Text : VSS.Strings.Virtual_String;
       end case;
@@ -170,11 +172,11 @@ package body Bookmark_Views is
    type Bookmark_Data;
    type Bookmark_Data_Access is access all Bookmark_Data;
    type Bookmark_Data (Typ : Bookmark_Type) is record
-      Name      : Unbounded_String;
+      Name : Unbounded_String;
       --  Name of bookmark or group.
       --  Set to null for the toplevel group.
 
-      Note      : Unbounded_String;
+      Note : Unbounded_String;
       --  Extra information associated with the bookmark
 
       Previous_Same_Level : Bookmark_Data_Access;
@@ -186,8 +188,10 @@ package body Bookmark_Views is
          when Group =>
             Contains    : Group_Content_Type := Unknown;
             First_Child : Bookmark_Data_Access;
+
          when Unattached =>
             null;
+
          when Standard =>
             Marker     : Location_Marker;
             Instances  : Bookmark_Proxy;
@@ -217,7 +221,7 @@ package body Bookmark_Views is
      (Data     : Bookmark_Data_Access;
       After    : Bookmark_Data_Access;
       In_Group : Bookmark_Data_Access)
-     with Pre => After = null or else After.Parent = In_Group;
+   with Pre => After = null or else After.Parent = In_Group;
    --  Insert Data (which must have been removed first) in the list
 
    function New_Bookmark
@@ -225,8 +229,7 @@ package body Bookmark_Views is
       Mark          : Location_Marker;
       Name          : String := "";
       On_Project    : Boolean;
-      Preserve_Name : Boolean := False)
-      return Bookmark_Data_Access;
+      Preserve_Name : Boolean := False) return Bookmark_Data_Access;
    --  Allocate a new bookmark data and return it.
    --  Preserve Name indicates that new bookmark should have Name without
    --   any changes (when we restore project bookmark which
@@ -239,47 +242,50 @@ package body Bookmark_Views is
    --  Makes a copy of the Data for storing in project properties,
    --  result should be freed by caller
 
-   package Bookmark_Proxies is new Script_Proxies
-      (Bookmark_Data_Access, Bookmark_Proxy);
+   package Bookmark_Proxies is new
+     Script_Proxies (Bookmark_Data_Access, Bookmark_Proxy);
 
    type Bookmark_Views_Module_Record is new Module_ID_Record with record
       Loaded : Boolean := False;  --  whether bookmarks were loaded
       Root   : Bookmark_Data_Access;
    end record;
-   type Bookmark_Views_Module_Access
-     is access all Bookmark_Views_Module_Record'Class;
-   overriding procedure Destroy (Module : in out Bookmark_Views_Module_Record);
+   type Bookmark_Views_Module_Access is
+     access all Bookmark_Views_Module_Record'Class;
+   overriding
+   procedure Destroy (Module : in out Bookmark_Views_Module_Record);
 
    Bookmark_Views_Module : Bookmark_Views_Module_Access;
 
    subtype Bookmark_Iter is Bookmark_Data_Access;
    function Bookmark_Iter_First return Bookmark_Iter
-      is (Bookmark_Iter (Bookmark_Views_Module.Root));
+   is (Bookmark_Iter (Bookmark_Views_Module.Root));
    function Next_Recursive (Iter : Bookmark_Iter) return Bookmark_Iter;
    --  Iter the whole tree recursively.
 
    type Bookmark_View_Record is tagged;
 
-   type Bookmark_Tree_Record is new Gtkada.Tree_View.Tree_View_Record with
-      record
-         View        : access Bookmark_View_Record'Class;
-         Text        : Gtk_Cell_Renderer_Text;
-         Note_Pixbuf : Gtk_Cell_Renderer_Pixbuf;
-         Pattern     : Search_Pattern_Access;
-      end record;
+   type Bookmark_Tree_Record is new Gtkada.Tree_View.Tree_View_Record
+   with record
+      View        : access Bookmark_View_Record'Class;
+      Text        : Gtk_Cell_Renderer_Text;
+      Note_Pixbuf : Gtk_Cell_Renderer_Pixbuf;
+      Pattern     : Search_Pattern_Access;
+   end record;
    type Bookmark_Tree is access all Bookmark_Tree_Record'Class;
-   overriding function Is_Visible
-     (Self       : not null access Bookmark_Tree_Record;
-      Store_Iter : Gtk_Tree_Iter) return Boolean;
-   overriding procedure On_Edited
+   overriding
+   function Is_Visible
+     (Self : not null access Bookmark_Tree_Record; Store_Iter : Gtk_Tree_Iter)
+      return Boolean;
+   overriding
+   procedure On_Edited
      (Self        : not null access Bookmark_Tree_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
       Text        : String);
 
    type Bookmark_View_Record is new Generic_Views.View_Record with record
-      Tree      : Bookmark_Tree;
-      Deleting  : Boolean := False;
+      Tree     : Bookmark_Tree;
+      Deleting : Boolean := False;
       --  Whether we are deleting multiple bookmarks
 
       Multipress : Gtk_Gesture_Multi_Press;
@@ -290,59 +296,64 @@ package body Bookmark_Views is
       --  Whether we just completed a drag-and-drop operation. This is used to
       --  perform the actual work in On_Drag_Data_Received
    end record;
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (Self    : not null access Bookmark_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Create_Menu
-     (View    : not null access Bookmark_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Create_Menu
+     (View : not null access Bookmark_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Bookmark_View_Record;
       Pattern : in out Search_Pattern_Access);
 
    function Initialize
-     (View   : access Bookmark_View_Record'Class) return Gtk_Widget;
+     (View : access Bookmark_View_Record'Class) return Gtk_Widget;
    --  Create a new Bookmark view
 
    type Bookmark_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Bookmark_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
 
-   package Generic_View is new Generic_Views.Simple_Views
-     (Module_Name        => "Bookmark_View",
-      View_Name          => "Bookmarks",
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Formal_MDI_Child   => Bookmark_Child_Record,
-      Formal_View_Record => Bookmark_View_Record);
+   package Generic_View is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Bookmark_View",
+        View_Name          => "Bookmarks",
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Formal_MDI_Child   => Bookmark_Child_Record,
+        Formal_View_Record => Bookmark_View_Record);
    use Generic_View;
    subtype Bookmark_View_Access is Generic_View.View_Access;
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Bookmark_Data_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (Bookmark_Data_Access, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Bookmark_Data_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (Bookmark_Data_Access, System.Address);
 
    function Get_Data
      (Self       : not null access Bookmark_Tree_Record'Class;
       Store_Iter : Gtk_Tree_Iter) return Bookmark_Data_Access
-     is (Convert (Self.Model.Get_Address (Store_Iter, Data_Column)));
+   is (Convert (Self.Model.Get_Address (Store_Iter, Data_Column)));
    --  Retrieve the bookmark data stored in each row of the tree
 
    function Hash (B : Bookmark_Data_Access) return Ada.Containers.Hash_Type
-     is (Ada.Strings.Hash (System.Address_Image (B.all'Address)));
+   is (Ada.Strings.Hash (System.Address_Image (B.all'Address)));
    --  Return a hash for the bookmark.
    --  Since names are not unique, we use the pointer itself
 
-   package Tree_Expansion is new Gtkada.Tree_View.Expansion_Support
-     (Tree_Record => Bookmark_Tree_Record,
-      Id          => Bookmark_Data_Access,
-      Get_Id      => Get_Data,
-      Hash        => Hash);
+   package Tree_Expansion is new
+     Gtkada.Tree_View.Expansion_Support
+       (Tree_Record => Bookmark_Tree_Record,
+        Id          => Bookmark_Data_Access,
+        Get_Id      => Get_Data,
+        Hash        => Hash);
 
    procedure Refresh
      (View     : access Bookmark_View_Record'Class;
@@ -367,8 +378,8 @@ package body Bookmark_Views is
      (Kernel           : access Kernel_Handle_Record'Class;
       Context          : GPS.Kernel.Selection_Context;
       Mode             : Bookmark_Type := Standard;
-      Ignore_Selection : Boolean       := False;
-      On_Project       : Boolean       := False);
+      Ignore_Selection : Boolean := False;
+      On_Project       : Boolean := False);
    --  Create a bookmark for the current context.
    --  Mode and On_Project defined the type of bookmark.
    --  Ignore_Selection will create a bookmark unrelated to the selected
@@ -381,13 +392,11 @@ package body Bookmark_Views is
 
    function Create_Mark_For_Context
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : GPS.Kernel.Selection_Context)
-      return Location_Marker;
+      Context : GPS.Kernel.Selection_Context) return Location_Marker;
    --  Create a new marker for the current context
 
    function Bookmark_From_Mark
-     (Mark     : Location_Marker;
-      Multiple : out Boolean)
+     (Mark : Location_Marker; Multiple : out Boolean)
       return Bookmark_Data_Access;
    --  Return the first bookmark at mark. Multiple will be true if multiple
    --  bookmarks matched mark.
@@ -397,14 +406,16 @@ package body Bookmark_Views is
    --  null is returned if not found
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
 
    type On_Project_Changing is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File);
@@ -412,14 +423,16 @@ package body Bookmark_Views is
    --  project bookmarks
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project changes. This is a good time to load the
    --  persistent bookmarks
 
    type On_Loc_Changed is new File_Location_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Loc_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -428,19 +441,21 @@ package body Bookmark_Views is
    --  Called when the current editor reaches a new location
 
    type On_Lines_Deleted is new File_Lines_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self         : On_Lines_Deleted;
-      Kernel       : not null access Kernel_Handle_Record'Class;
-      File         : Virtual_File;
-      Line, Count  : Integer);
+   overriding
+   procedure Execute
+     (Self        : On_Lines_Deleted;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Line, Count : Integer);
    --  Called when lines are deleted from a buffer
 
-   type Bookmark_View_Tooltip_Handler is
-     new Tooltips.Tooltip_Handler with null record;
-   overriding function Create_Contents
-     (Tooltip         : not null access Bookmark_View_Tooltip_Handler;
-      Widget          : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y            : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   type Bookmark_View_Tooltip_Handler is new Tooltips.Tooltip_Handler
+   with null record;
+   overriding
+   function Create_Contents
+     (Tooltip : not null access Bookmark_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  Support for tooltips: set the contents of the tooltips
 
    procedure On_Multipress
@@ -450,8 +465,7 @@ package body Bookmark_Views is
    --  Called every time a row is clicked
 
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble);
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble);
    --  Called when the user presses for a while on a row.
 
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
@@ -492,7 +506,8 @@ package body Bookmark_Views is
    --  Handles setters shell commands for this module
 
    type Refresh_Hook is new String_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : Refresh_Hook;
       Kernel : not null access Kernel_Handle_Record'Class;
       Name   : String);
@@ -500,43 +515,49 @@ package body Bookmark_Views is
    --  properly refresh the view.
 
    type Delete_Bookmark_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Delete_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Delete the selected bookmark
 
    type Create_Bookmark_Command is new Interactive_Command with record
       Mode             : Bookmark_Type := Standard;
-      Ignore_Selection : Boolean       := False;
-      On_Project       : Boolean       := False;
+      Ignore_Selection : Boolean := False;
+      On_Project       : Boolean := False;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Create_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create a new bookmark
 
    type Toggle_Bookmark_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Toggle_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create or delete bookmark in the current context
 
    type Rename_Bookmark_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Rename the selected bookmark
 
    type Edit_Note_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Edit_Note_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Edit note for selected bookmark
 
-   type Next_Bookmark_Command (Backward : Boolean) is
-     new Interactive_Command with null record;
+   type Next_Bookmark_Command (Backward : Boolean) is new Interactive_Command
+   with null record;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Next_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Go to next bookmark in current file
@@ -545,9 +566,7 @@ package body Bookmark_Views is
    --  Called before bookmarks saving to set group content types so we will
    --   know which groups should be saved in project properties and which not.
 
-   procedure Set
-     (To   : in out Group_Content_Type;
-      From : Group_Content_Type);
+   procedure Set (To : in out Group_Content_Type; From : Group_Content_Type);
    --  Encapsulates rules for setting value based on current value in To
 
    function Get_Name (Bookmark : Bookmark_Data_Access) return String;
@@ -563,42 +582,46 @@ package body Bookmark_Views is
    -- Search --
    ------------
 
-   type Bookmarks_Search_Provider is new Kernel_Search_Provider
-   with record
+   type Bookmarks_Search_Provider is new Kernel_Search_Provider with record
       Pattern : GPS.Search.Search_Pattern_Access;
       Pos     : Bookmark_Iter;
    end record;
-   overriding function Documentation
-     (Self    : not null access Bookmarks_Search_Provider) return String
-     is ("Search amongst all bookmarks");
-   overriding procedure Set_Pattern
+   overriding
+   function Documentation
+     (Self : not null access Bookmarks_Search_Provider) return String
+   is ("Search amongst all bookmarks");
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Bookmarks_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Bookmarks_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
-   overriding function Display_Name
-     (Self     : not null access Bookmarks_Search_Provider) return String
-     is (Provider_Bookmarks);
-   overriding function Complete_Suffix
-     (Self      : not null access Bookmarks_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String;
+   overriding
+   function Display_Name
+     (Self : not null access Bookmarks_Search_Provider) return String
+   is (Provider_Bookmarks);
+   overriding
+   function Complete_Suffix
+     (Self    : not null access Bookmarks_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class) return String;
 
    type Bookmarks_Search_Result is new Kernel_Search_Result with record
       Bookmark : Bookmark_Data_Access;
    end record;
-   overriding procedure Execute
-     (Self       : not null access Bookmarks_Search_Result;
-      Give_Focus : Boolean);
-   overriding function Full
-     (Self       : not null access Bookmarks_Search_Result)
-     return Gtk.Widget.Gtk_Widget;
+   overriding
+   procedure Execute
+     (Self : not null access Bookmarks_Search_Result; Give_Focus : Boolean);
+   overriding
+   function Full
+     (Self : not null access Bookmarks_Search_Result)
+      return Gtk.Widget.Gtk_Widget;
 
    procedure Dump (Me : Trace_Handle; First : Bookmark_Data_Access)
-     with Warnings => Off;
+   with Warnings => Off;
    --  Debug procedure
 
    ----------------
@@ -611,13 +634,16 @@ package body Bookmark_Views is
    end record;
    type Bookmarks_Property is access all Bookmarks_Property_Record;
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Bookmarks_Property_Record;
       Value    : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
+   overriding
+   procedure Load
      (Property : in out Bookmarks_Property_Record;
       Value    : GNATCOLL.JSON.JSON_Value);
-   overriding procedure Destroy (Property : in out Bookmarks_Property_Record);
+   overriding
+   procedure Destroy (Property : in out Bookmarks_Property_Record);
 
    ----------
    -- Dump --
@@ -628,19 +654,23 @@ package body Bookmark_Views is
    begin
       Increase_Indent (Me, "");
       while Tmp /= null loop
-         Trace (Me, To_String (Tmp.Name)
-                & " prev="
-                & (if Tmp.Previous_Same_Level = null then ""
-                  else To_String (Tmp.Previous_Same_Level.Name))
-                & " next="
-                & (if Tmp.Next_Same_Level = null then ""
-                  else To_String (Tmp.Next_Same_Level.Name))
-                & " parent="
-                & (if Tmp.Parent = null then ""
-                  else To_String (Tmp.Parent.Name)));
+         Trace
+           (Me,
+            To_String (Tmp.Name)
+            & " prev="
+            & (if Tmp.Previous_Same_Level = null
+               then ""
+               else To_String (Tmp.Previous_Same_Level.Name))
+            & " next="
+            & (if Tmp.Next_Same_Level = null
+               then ""
+               else To_String (Tmp.Next_Same_Level.Name))
+            & " parent="
+            & (if Tmp.Parent = null then "" else To_String (Tmp.Parent.Name)));
          case Tmp.Typ is
-            when Group =>
+            when Group                 =>
                Dump (Me, Tmp.First_Child);
+
             when Unattached | Standard =>
                null;
          end case;
@@ -653,7 +683,8 @@ package body Bookmark_Views is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Bookmarks_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -661,26 +692,27 @@ package body Bookmark_Views is
       pragma Unreferenced (Limit);
    begin
       Self.Pattern := Search_Pattern_Access (Pattern);
-      Self.Pos     := Bookmark_Iter_First;
+      Self.Pos := Bookmark_Iter_First;
    end Set_Pattern;
 
    ----------
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Bookmarks_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      C        : Search_Context;
+      C : Search_Context;
    begin
       if Self.Pos = null then
          Has_Next := False;
          Result := null;
       else
          case Self.Pos.Typ is
-            when Group =>
+            when Group                 =>
                Has_Next := True;
                Result := null;
 
@@ -695,34 +727,38 @@ package body Bookmark_Views is
                begin
                   C := Self.Pattern.Start (Get_Name (Self.Pos));
                   if C /= GPS.Search.No_Match then
-                     Result := new Bookmarks_Search_Result'
-                       (Kernel   => Self.Kernel,
-                        Provider => Self,
-                        Score    => C.Score,
-                        Short    => new String'
-                          (Self.Pattern.Highlight_Match
-                               (Get_Name (Self.Pos), C)),
-                        Long     => new String'(Loc),
-                        Id       =>
-                          VSS.Strings.Conversions.To_Virtual_String
-                            (Get_Name (Self.Pos)),
-                        Bookmark => Bookmark_Data_Access (Self.Pos));
+                     Result :=
+                       new Bookmarks_Search_Result'
+                         (Kernel   => Self.Kernel,
+                          Provider => Self,
+                          Score    => C.Score,
+                          Short    =>
+                            new String'
+                              (Self.Pattern.Highlight_Match
+                                 (Get_Name (Self.Pos), C)),
+                          Long     => new String'(Loc),
+                          Id       =>
+                            VSS.Strings.Conversions.To_Virtual_String
+                              (Get_Name (Self.Pos)),
+                          Bookmark => Bookmark_Data_Access (Self.Pos));
                      Self.Adjust_Score (Result);
 
                   else
                      C := Self.Pattern.Start (Loc);
                      if C /= GPS.Search.No_Match then
-                        Result := new Bookmarks_Search_Result'
-                          (Kernel   => Self.Kernel,
-                           Provider => Self,
-                           Score    => C.Score,
-                           Short    => new String'(Get_Name (Self.Pos)),
-                           Long     => new String'
-                             (Self.Pattern.Highlight_Match (Loc, C)),
-                           Id       =>
-                             VSS.Strings.Conversions.To_Virtual_String
-                               (Get_Name (Self.Pos)),
-                           Bookmark => Bookmark_Data_Access (Self.Pos));
+                        Result :=
+                          new Bookmarks_Search_Result'
+                            (Kernel   => Self.Kernel,
+                             Provider => Self,
+                             Score    => C.Score,
+                             Short    => new String'(Get_Name (Self.Pos)),
+                             Long     =>
+                               new String'
+                                 (Self.Pattern.Highlight_Match (Loc, C)),
+                             Id       =>
+                               VSS.Strings.Conversions.To_Virtual_String
+                                 (Get_Name (Self.Pos)),
+                             Bookmark => Bookmark_Data_Access (Self.Pos));
                         Self.Adjust_Score (Result);
                      end if;
                   end if;
@@ -737,10 +773,10 @@ package body Bookmark_Views is
    -- Complete_Suffix --
    ---------------------
 
-   overriding function Complete_Suffix
-     (Self      : not null access Bookmarks_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String
+   overriding
+   function Complete_Suffix
+     (Self    : not null access Bookmarks_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class) return String
    is
       use Ada.Strings.Unbounded;
       Suffix      : Unbounded_String;
@@ -767,9 +803,9 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self       : not null access Bookmarks_Search_Result;
-      Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Bookmarks_Search_Result; Give_Focus : Boolean)
    is
       Ignore : Boolean;
       pragma Unreferenced (Ignore, Give_Focus);
@@ -784,16 +820,20 @@ package body Bookmark_Views is
    -- Full --
    ----------
 
-   overriding function Full
-     (Self       : not null access Bookmarks_Search_Result)
+   overriding
+   function Full
+     (Self : not null access Bookmarks_Search_Result)
       return Gtk.Widget.Gtk_Widget
    is
       Label : Gtk_Label;
    begin
       Gtk_New
         (Label,
-         "<b>Name:</b> " & Get_Name (Self.Bookmark) & ASCII.LF &
-         "<b>Location:</b> " & To_String (Self.Bookmark.Marker));
+         "<b>Name:</b> "
+         & Get_Name (Self.Bookmark)
+         & ASCII.LF
+         & "<b>Location:</b> "
+         & To_String (Self.Bookmark.Marker));
       Label.Set_Use_Markup (True);
       return Gtk_Widget (Label);
    end Full;
@@ -802,8 +842,8 @@ package body Bookmark_Views is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
-     (Module : in out Bookmark_Views_Module_Record) is
+   overriding
+   procedure Destroy (Module : in out Bookmark_Views_Module_Record) is
    begin
       --  Even though we are saving after every explicit modification, we
       --  should still save on exit to memorize the new location where a
@@ -838,13 +878,14 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Delete_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View  : constant Bookmark_View_Access :=
-                Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
+      View   : constant Bookmark_View_Access :=
+        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       List   : Gtk_Tree_Path_List.Glist;
       G_Iter : Gtk_Tree_Path_List.Glist;
       Path   : Gtk_Tree_Path;
@@ -858,17 +899,17 @@ package body Bookmark_Views is
          View.Deleting := True;
          Get_Selected_Rows (View.Tree.Get_Selection, Model, List);
 
-         if Model /= Null_Gtk_Tree_Model
-           and then List /= Null_List
-         then
+         if Model /= Null_Gtk_Tree_Model and then List /= Null_List then
             --  The children must be modified before there fathers
             G_Iter := Gtk_Tree_Path_List.Last (List);
 
             while G_Iter /= Gtk_Tree_Path_List.Null_List loop
                Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
-               Data := View.Tree.Get_Data
-                 (Store_Iter =>
-                    View.Tree.Convert_To_Store_Iter (Get_Iter (Model, Path)));
+               Data :=
+                 View.Tree.Get_Data
+                   (Store_Iter =>
+                      View.Tree.Convert_To_Store_Iter
+                        (Get_Iter (Model, Path)));
 
                if Data /= null then
                   Delete_Bookmark (Get_Kernel (Context.Context), Data);
@@ -897,26 +938,28 @@ package body Bookmark_Views is
       Msg    : Simple_Message_Access;
       Action : GPS.Editors.Line_Information.Line_Information_Access;
    begin
-      Msg := Create_Simple_Message
-        (Get_Messages_Container (Kernel),
-         Category                 => Messages_Category_For_Bookmarks,
-         File                     => Get_File (Mark),
-         Line                     => Integer (Get_Line (Mark)),
-         Column                   => Get_Column (Mark),
-         Text                     =>
-           VSS.Strings.Conversions.To_Virtual_String (To_String (Mark)),
-         Importance               => Unspecified,
-         Flags                    => Message_Flags_For_Bookmarks,
-         Allow_Auto_Jump_To_First => False);
+      Msg :=
+        Create_Simple_Message
+          (Get_Messages_Container (Kernel),
+           Category                 => Messages_Category_For_Bookmarks,
+           File                     => Get_File (Mark),
+           Line                     => Integer (Get_Line (Mark)),
+           Column                   => Get_Column (Mark),
+           Text                     =>
+             VSS.Strings.Conversions.To_Virtual_String (To_String (Mark)),
+           Importance               => Unspecified,
+           Flags                    => Message_Flags_For_Bookmarks,
+           Allow_Auto_Jump_To_First => False);
 
       Msg.Set_Highlighting
         (Bookmark_Default_Style, Length => Highlight_Whole_Line);
 
-      Action := new Line_Information_Record'
-        (Text         => Null_Unbounded_String,
-         Tooltip_Text => To_Unbounded_String ("Bookmark"),
-         Image        => To_Unbounded_String (Icon_For_Bookmarks),
-         others       => <>);
+      Action :=
+        new Line_Information_Record'
+          (Text         => Null_Unbounded_String,
+           Tooltip_Text => To_Unbounded_String ("Bookmark"),
+           Image        => To_Unbounded_String (Icon_For_Bookmarks),
+           others       => <>);
       Msg.Set_Action (Action);
 
       return Msg;
@@ -926,7 +969,8 @@ package body Bookmark_Views is
    -- Create_Toolbar --
    --------------------
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (Self    : not null access Bookmark_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
@@ -943,9 +987,10 @@ package body Bookmark_Views is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Bookmark_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access Bookmark_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Editor_Link);
       Append_Menu (Menu, View.Kernel, Append_At_Bottom);
@@ -956,9 +1001,10 @@ package body Bookmark_Views is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
-     (Self       : not null access Bookmark_Tree_Record;
-      Store_Iter : Gtk_Tree_Iter) return Boolean
+   overriding
+   function Is_Visible
+     (Self : not null access Bookmark_Tree_Record; Store_Iter : Gtk_Tree_Iter)
+      return Boolean
    is
       B : Bookmark_Data_Access;
    begin
@@ -973,19 +1019,20 @@ package body Bookmark_Views is
       end if;
 
       B := Get_Data (Self, Store_Iter => Store_Iter);
-      return B.Typ = Standard
-        and then Self.Pattern.Start
-          (To_String (B.Marker)) /= GPS.Search.No_Match;
+      return
+        B.Typ = Standard
+        and then
+          Self.Pattern.Start (To_String (B.Marker)) /= GPS.Search.No_Match;
    end Is_Visible;
 
    --------------------
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Bookmark_View_Record;
-      Pattern : in out Search_Pattern_Access)
-   is
+      Pattern : in out Search_Pattern_Access) is
    begin
       GPS.Search.Free (Self.Tree.Pattern);
       Self.Tree.Pattern := Pattern;
@@ -996,13 +1043,14 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View  : constant Bookmark_View_Access :=
-                Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
+      View : constant Bookmark_View_Access :=
+        Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
    begin
       if View /= null then
          View.Tree.Start_Editing (Render => View.Tree.Text);
@@ -1018,12 +1066,12 @@ package body Bookmark_Views is
      (View : not null access Bookmark_View_Record'Class;
       Data : not null Bookmark_Data_Access)
    is
-      Dialog      : GPS_Dialog;
-      Editor      : Gtk_Text_View;
-      Buffer      : Gtk_Text_Buffer;
-      From, To    : Gtk_Text_Iter;
-      Scrolled    : Gtk_Scrolled_Window;
-      W           : Gtk_Widget;
+      Dialog   : GPS_Dialog;
+      Editor   : Gtk_Text_View;
+      Buffer   : Gtk_Text_Buffer;
+      From, To : Gtk_Text_Iter;
+      Scrolled : Gtk_Scrolled_Window;
+      W        : Gtk_Widget;
    begin
       Gtk_New
         (Self   => Dialog,
@@ -1064,13 +1112,14 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Edit_Note_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : constant Bookmark_View_Access :=
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View        : constant Bookmark_View_Access :=
         Generic_View.Get_Or_Create_View (Kernel);
       Filter_Iter : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
@@ -1080,8 +1129,9 @@ package body Bookmark_Views is
          View.Tree.Get_First_Selected (Model, Filter_Iter);
 
          if Filter_Iter /= Null_Iter then
-            Data := View.Tree.Get_Data
-              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+            Data :=
+              View.Tree.Get_Data
+                (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
             Edit_Note (View, Data);
          end if;
       end if;
@@ -1092,7 +1142,8 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Next_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1166,8 +1217,8 @@ package body Bookmark_Views is
    ----------
 
    procedure Free (Data : in out Bookmark_Data_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Bookmark_Data, Bookmark_Data_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Bookmark_Data, Bookmark_Data_Access);
       Tmp : Bookmark_Data_Access;
    begin
       if Data /= null then
@@ -1176,7 +1227,7 @@ package body Bookmark_Views is
          --  Free node specific data
 
          case Data.Typ is
-            when Group =>
+            when Group      =>
                while Data.First_Child /= null loop
                   --  Can't pass Data.First_Child directly, or it will be set
                   --  to null directly (otherwise it is only set to null when
@@ -1188,7 +1239,7 @@ package body Bookmark_Views is
             when Unattached =>
                null;
 
-            when Standard =>
+            when Standard   =>
                Data.Instances.Free;
                if not Data.Message.Is_Empty then
                   Data.Message.Message.Remove;
@@ -1203,8 +1254,7 @@ package body Bookmark_Views is
    -- Clone --
    -----------
 
-   function Clone (Data : Bookmark_Data_Access) return Bookmark_Data_Access
-   is
+   function Clone (Data : Bookmark_Data_Access) return Bookmark_Data_Access is
       Result : constant Bookmark_Data_Access := new Bookmark_Data (Data.Typ);
    begin
       Result.Name := Data.Name;
@@ -1217,10 +1267,10 @@ package body Bookmark_Views is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Bookmark_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       Context : constant Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
@@ -1244,15 +1294,16 @@ package body Bookmark_Views is
 
    function New_Group (Name : String) return Bookmark_Data_Access is
    begin
-      return new Bookmark_Data'
-        (Typ                 => Group,
-         Contains            => Unknown,
-         First_Child         => null,
-         Next_Same_Level     => null,
-         Previous_Same_Level => null,
-         Parent              => null,
-         Note                => Null_Unbounded_String,
-         Name                => To_Unbounded_String (Name));
+      return
+        new Bookmark_Data'
+          (Typ                 => Group,
+           Contains            => Unknown,
+           First_Child         => null,
+           Next_Same_Level     => null,
+           Previous_Same_Level => null,
+           Parent              => null,
+           Note                => Null_Unbounded_String,
+           Name                => To_Unbounded_String (Name));
    end New_Group;
 
    ------------------
@@ -1264,8 +1315,7 @@ package body Bookmark_Views is
       Mark          : Location_Marker;
       Name          : String := "";
       On_Project    : Boolean;
-      Preserve_Name : Boolean := False)
-      return Bookmark_Data_Access
+      Preserve_Name : Boolean := False) return Bookmark_Data_Access
    is
       Msg : Simple_Message_Access;
       N   : Unbounded_String := To_Unbounded_String (Name);
@@ -1276,20 +1326,24 @@ package body Bookmark_Views is
       end if;
 
       if Mark = No_Marker then
-         return new Bookmark_Data'
-           (Typ                 => Unattached,
-            Previous_Same_Level => null,
-            Next_Same_Level     => null,
-            Parent              => null,
-            Note                => Null_Unbounded_String,
-            Name                => To_Unbounded_String
-              ((if Name = "" then To_String (Mark) else Name)));
+         return
+           new Bookmark_Data'
+             (Typ                 => Unattached,
+              Previous_Same_Level => null,
+              Next_Same_Level     => null,
+              Parent              => null,
+              Note                => Null_Unbounded_String,
+              Name                =>
+                To_Unbounded_String
+                  ((if Name = "" then To_String (Mark) else Name)));
       else
          if not Preserve_Name then
             if On_Project then
-               N := To_Unbounded_String
-                 (Get_Project (Kernel).Name & ":" &
-                  (if Name /= "" then Name else "%M"));
+               N :=
+                 To_Unbounded_String
+                   (Get_Project (Kernel).Name
+                    & ":"
+                    & (if Name /= "" then Name else "%M"));
 
             else
                if Name = "" then
@@ -1298,19 +1352,20 @@ package body Bookmark_Views is
             end if;
          end if;
 
-         return new Bookmark_Data'
-           (Typ                 => Standard,
-            Marker              => Mark,
-            Message             => Create (Message_Access (Msg)),
-            Previous_Same_Level => null,
-            Next_Same_Level     => null,
-            Parent              => null,
-            Note                => Null_Unbounded_String,
-            Name                => N,
-            Instances           => <>,
-            On_Project          => On_Project,
-            Line_Text           => (Is_Empty => True),
-            Marker_Data         => JSON_Null);
+         return
+           new Bookmark_Data'
+             (Typ                 => Standard,
+              Marker              => Mark,
+              Message             => Create (Message_Access (Msg)),
+              Previous_Same_Level => null,
+              Next_Same_Level     => null,
+              Parent              => null,
+              Note                => Null_Unbounded_String,
+              Name                => N,
+              Instances           => <>,
+              On_Project          => On_Project,
+              Line_Text           => (Is_Empty => True),
+              Marker_Data         => JSON_Null);
       end if;
    end New_Bookmark;
 
@@ -1372,11 +1427,11 @@ package body Bookmark_Views is
             After.Next_Same_Level.Previous_Same_Level := Data;
          end if;
 
-         After.Next_Same_Level    := Data;
+         After.Next_Same_Level := Data;
          Data.Previous_Same_Level := After;
 
          Data.Parent := In_Group;
-         --   In_Group.First_Child cannot be Data, since After is before
+      --   In_Group.First_Child cannot be Data, since After is before
       end if;
    end Insert;
 
@@ -1386,10 +1441,9 @@ package body Bookmark_Views is
 
    function Create_Mark_For_Context
      (Kernel  : access Kernel_Handle_Record'Class;
-      Context : GPS.Kernel.Selection_Context)
-      return Location_Marker
+      Context : GPS.Kernel.Selection_Context) return Location_Marker
    is
-      Mark   : Location_Marker;
+      Mark : Location_Marker;
    begin
       --  If the current module doesn't support creating bookmarks, we fall
       --  back to the last editor that had focus, since that's what users
@@ -1399,7 +1453,8 @@ package body Bookmark_Views is
 
       if Mark.Is_Null then
          Trace
-           (Me, "Current module cannot create bookmark, try last from "
+           (Me,
+            "Current module cannot create bookmark, try last from "
             & "the current context of the last focused editor");
 
          --  Check if we have line/column info in the current context.
@@ -1408,8 +1463,7 @@ package body Bookmark_Views is
            and then Has_Column_Information (Context)
          then
             declare
-               File   : constant Virtual_File :=
-                 File_Information (Context);
+               File   : constant Virtual_File := File_Information (Context);
                Line   : constant Natural :=
                  (if Has_File_Line_Information (Context)
                   then File_Line_Information (Context)
@@ -1417,11 +1471,12 @@ package body Bookmark_Views is
                Column : constant Visible_Column_Type :=
                  Column_Information (Context);
             begin
-               Mark := Get_Buffer_Factory (Kernel).Create_Marker
-                 (File    => File,
-                  Project => No_Project,
-                  Line    => Editable_Line_Type (Line),
-                  Column  => Column);
+               Mark :=
+                 Get_Buffer_Factory (Kernel).Create_Marker
+                   (File    => File,
+                    Project => No_Project,
+                    Line    => Editable_Line_Type (Line),
+                    Column  => Column);
             end;
          else
             declare
@@ -1429,15 +1484,16 @@ package body Bookmark_Views is
                --  to create the bookmark
                Buffer : constant Editor_Buffer'Class :=
                  Get_Buffer_Factory (Kernel).Get
-                 (Open_Buffer => False, Open_View => False, Focus => False);
+                   (Open_Buffer => False, Open_View => False, Focus => False);
                Cursor : constant Editor_Location'Class :=
                  Buffer.Current_View.Cursor;
             begin
-               Mark := Get_Buffer_Factory (Kernel).Create_Marker
-                 (File    => Buffer.File,
-                  Project => No_Project,
-                  Line    => Editable_Line_Type (Cursor.Line),
-                  Column  => Cursor.Column);
+               Mark :=
+                 Get_Buffer_Factory (Kernel).Create_Marker
+                   (File    => Buffer.File,
+                    Project => No_Project,
+                    Line    => Editable_Line_Type (Cursor.Line),
+                    Column  => Cursor.Column);
             end;
          end if;
       end if;
@@ -1452,8 +1508,8 @@ package body Bookmark_Views is
      (Kernel           : access Kernel_Handle_Record'Class;
       Context          : GPS.Kernel.Selection_Context;
       Mode             : Bookmark_Type := Standard;
-      Ignore_Selection : Boolean       := False;
-      On_Project       : Boolean       := False)
+      Ignore_Selection : Boolean := False;
+      On_Project       : Boolean := False)
    is
       View         : Bookmark_View_Access;
       Gr, Bookmark : Bookmark_Data_Access;
@@ -1467,7 +1523,7 @@ package body Bookmark_Views is
 
       function Get_Last
         (Group : Bookmark_Data_Access) return Bookmark_Data_Access
-        with Pre => Group = null or else Group.Typ = Bookmark_Views.Group;
+      with Pre => Group = null or else Group.Typ = Bookmark_Views.Group;
       --  Return last item in the group if any.
 
       --------------
@@ -1505,14 +1561,15 @@ package body Bookmark_Views is
          return Boolean
       is
          pragma Unreferenced (Model, Path);
-         Dummy  : G_Source_Id;
-         B      : constant Bookmark_Data_Access :=
+         Dummy : G_Source_Id;
+         B     : constant Bookmark_Data_Access :=
            View.Tree.Get_Data (Store_Iter => Iter);
       begin
          if B = Bookmark then
             View.Tree.Start_Editing
               (Render => View.Tree.Text, Store_Iter => Iter);
             return True;  --  stop iteration
+
          else
             return False; --  continue iteration
          end if;
@@ -1529,8 +1586,9 @@ package body Bookmark_Views is
       else
          View.Tree.Get_First_Selected (Model, Filter_Iter);
          if Filter_Iter /= Null_Iter then
-            Gr := View.Tree.Get_Data
-              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+            Gr :=
+              View.Tree.Get_Data
+                (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
             if Gr.Typ /= Group then
                Gr := Gr.Parent;
             end if;
@@ -1540,30 +1598,30 @@ package body Bookmark_Views is
       --  Create the bookmark
 
       case Mode is
-         when Group =>
+         when Group      =>
             Bookmark := New_Group ("group");
 
-         when Standard =>
+         when Standard   =>
             declare
                Mark : constant Location_Marker :=
                  Create_Mark_For_Context (Kernel, Context);
             begin
                if Mark.Is_Null then
                   return;  --  Return Failures???
+
                else
-                  Bookmark := New_Bookmark
-                    (Kernel,
-                     Mark,
-                     On_Project => On_Project);
+                  Bookmark :=
+                    New_Bookmark (Kernel, Mark, On_Project => On_Project);
                end if;
             end;
 
          when Unattached =>
-            Bookmark := New_Bookmark
-              (Kernel,
-               No_Marker,
-               Name       => "unnamed",
-               On_Project => On_Project);
+            Bookmark :=
+              New_Bookmark
+                (Kernel,
+                 No_Marker,
+                 Name       => "unnamed",
+                 On_Project => On_Project);
       end case;
 
       if Append_At_Bottom.Get_Pref then
@@ -1583,7 +1641,8 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Create_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1602,7 +1661,8 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Toggle_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1624,14 +1684,10 @@ package body Bookmark_Views is
             null;
          elsif Bookmark = null then
             --  No bookmark, create one
-            Create_Bookmark
-              (Kernel  => Kernel,
-               Context => Context.Context);
+            Create_Bookmark (Kernel => Kernel, Context => Context.Context);
          else
             --  Only one bookmark, delete it
-            Delete_Bookmark
-              (Kernel   => Kernel,
-               Bookmark => Bookmark);
+            Delete_Bookmark (Kernel => Kernel, Bookmark => Bookmark);
          end if;
       end;
       return Success;
@@ -1667,15 +1723,16 @@ package body Bookmark_Views is
          while Tmp /= null loop
             View.Tree.Model.Append (Store_Iter, Store_Parent);
             Set_And_Clear
-              (View.Tree.Model, Store_Iter,
-               (Icon_Name_Column, Name_Column, Data_Column,
-                Has_Note_Column),
-               (1 => As_String
+              (View.Tree.Model,
+               Store_Iter,
+               (Icon_Name_Column, Name_Column, Data_Column, Has_Note_Column),
+               (1 =>
+                  As_String
                     (case Tmp.Typ is
-                        when Group      => Icon_For_Groups,
-                        when Unattached => "",
-                        when Standard   => Icon_For_Bookmarks),
-                2 => As_String  (Get_Name (Tmp)),
+                       when Group      => Icon_For_Groups,
+                       when Unattached => "",
+                       when Standard   => Icon_For_Bookmarks),
+                2 => As_String (Get_Name (Tmp)),
                 3 => As_Pointer (Convert (Tmp)),
                 4 => As_Boolean (Tmp.Note /= Null_Unbounded_String)));
 
@@ -1684,21 +1741,21 @@ package body Bookmark_Views is
             end if;
 
             if Expand = Tmp then
-               Expand_Path := View.Tree.Get_Filter_Path_For_Store_Iter
-                 (Store_Iter);
+               Expand_Path :=
+                 View.Tree.Get_Filter_Path_For_Store_Iter (Store_Iter);
             end if;
 
             if Selected = Tmp then
-               Select_Path := View.Tree.Get_Filter_Path_For_Store_Iter
-                 (Store_Iter);
+               Select_Path :=
+                 View.Tree.Get_Filter_Path_For_Store_Iter (Store_Iter);
             end if;
 
             Tmp := Tmp.Next_Same_Level;
          end loop;
       end Add_Level;
 
-      Expansion   : Tree_Expansion.Expansion_Status;
-      Dummy       : Boolean;
+      Expansion : Tree_Expansion.Expansion_Status;
+      Dummy     : Boolean;
    begin
       if not View.Deleting then
          Tree_Expansion.Get_Expansion_Status (View.Tree, Expansion);
@@ -1724,14 +1781,15 @@ package body Bookmark_Views is
    -- On_Edited --
    ---------------
 
-   overriding procedure On_Edited
+   overriding
+   procedure On_Edited
      (Self        : not null access Bookmark_Tree_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
       Text        : String)
    is
       pragma Unreferenced (View_Column);
-      Mark  : Bookmark_Data_Access;
+      Mark : Bookmark_Data_Access;
    begin
       Mark := Self.Get_Data (Store_Iter => Store_Iter);
       if Get_Name (Mark) /= Text then
@@ -1745,7 +1803,8 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference)
@@ -1763,7 +1822,8 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self         : On_Loc_Changed;
       Kernel       : not null access Kernel_Handle_Record'Class;
       File         : Virtual_File;
@@ -1795,6 +1855,7 @@ package body Bookmark_Views is
             View.Tree.Get_Selection.Select_Iter
               (View.Tree.Convert_To_Filter_Iter (Iter));
             return True;  --  Stop iteration
+
          end if;
          return False;  --  Continue iteration
       end On_Row;
@@ -1809,11 +1870,12 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self         : On_Lines_Deleted;
-      Kernel       : not null access Kernel_Handle_Record'Class;
-      File         : Virtual_File;
-      Line, Count  : Integer)
+   overriding
+   procedure Execute
+     (Self        : On_Lines_Deleted;
+      Kernel      : not null access Kernel_Handle_Record'Class;
+      File        : Virtual_File;
+      Line, Count : Integer)
    is
       pragma Unreferenced (Self);
 
@@ -1830,12 +1892,12 @@ package body Bookmark_Views is
             Next := D.Next_Same_Level;
 
             case D.Typ is
-               when Group =>
+               when Group      =>
                   Process (D.First_Child);
 
-               when Standard =>
-                  if D.Marker.Get.Element.all in
-                      Abstract_File_Marker_Data'Class
+               when Standard   =>
+                  if D.Marker.Get.Element.all
+                     in Abstract_File_Marker_Data'Class
                   then
                      declare
                         M : Abstract_File_Marker_Data'Class renames
@@ -1902,13 +1964,14 @@ package body Bookmark_Views is
       Time    : Guint)
    is
       pragma Unreferenced (Context, Info, Time);
-      View   : constant Bookmark_View_Access := Bookmark_View_Access (Self);
-      Model  : Gtk_Tree_Model;
-      Iter   : Gtk_Tree_Iter;
-      Source, Target, Gr  : Bookmark_Data_Access;
-      Path    : aliased Gtk_Tree_Path;
-      Pos     : aliased Gtk_Tree_View_Drop_Position;
-      Success : Boolean;
+      View               : constant Bookmark_View_Access :=
+        Bookmark_View_Access (Self);
+      Model              : Gtk_Tree_Model;
+      Iter               : Gtk_Tree_Iter;
+      Source, Target, Gr : Bookmark_Data_Access;
+      Path               : aliased Gtk_Tree_Path;
+      Pos                : aliased Gtk_Tree_View_Drop_Position;
+      Success            : Boolean;
    begin
       if not View.Data_Dropped then
          return;
@@ -1919,14 +1982,18 @@ package body Bookmark_Views is
       --  Get target row
 
       if not View.Tree.Get_Dest_Row_At_Pos
-        (Drag_X => X, Drag_Y => Y, Path => Path'Access, Pos => Pos'Access)
+               (Drag_X => X,
+                Drag_Y => Y,
+                Path   => Path'Access,
+                Pos    => Pos'Access)
       then
          return;
       end if;
 
       Iter := View.Tree.Filter.Get_Iter (Path);
-      Target := View.Tree.Get_Data
-        (Store_Iter => View.Tree.Convert_To_Store_Iter (Iter));
+      Target :=
+        View.Tree.Get_Data
+          (Store_Iter => View.Tree.Convert_To_Store_Iter (Iter));
       Path_Free (Path);
 
       --  Dropping some text (possibly from the editor, or an external
@@ -1957,36 +2024,41 @@ package body Bookmark_Views is
 
       --  Move the items
 
-      Trace (Me, "Drag-and-drop bookmark, Pos=" & Pos'Img
-             & " source=" & Get_Name (Source)
-             & " target=" & Get_Name (Target));
+      Trace
+        (Me,
+         "Drag-and-drop bookmark, Pos="
+         & Pos'Img
+         & " source="
+         & Get_Name (Source)
+         & " target="
+         & Get_Name (Target));
 
       Remove_But_Not_Free (Source);
 
       case Pos is
-         when Tree_View_Drop_Before =>
-            Insert (Source,
-                    After    => Target.Previous_Same_Level,
-                    In_Group => Target.Parent);
+         when Tree_View_Drop_Before                                        =>
+            Insert
+              (Source,
+               After    => Target.Previous_Same_Level,
+               In_Group => Target.Parent);
             View.Refresh (Selected => Source);
 
-         when Tree_View_Drop_After =>
+         when Tree_View_Drop_After                                         =>
             Insert (Source, After => Target, In_Group => Target.Parent);
             View.Refresh (Selected => Source);
 
-         when Tree_View_Drop_Into_Or_Before
-            | Tree_View_Drop_Into_Or_After =>
+         when Tree_View_Drop_Into_Or_Before | Tree_View_Drop_Into_Or_After =>
 
             case Target.Typ is
-               when Group =>
+               when Group                 =>
                   Insert (Source, After => null, In_Group => Target);
                   View.Refresh;
+
                when Unattached | Standard =>
-                  Gr := New_Group (Name => "group for " &
-                                     Get_Name (Source));
-                  Insert (Gr,  After => Target, In_Group => Target.Parent);
+                  Gr := New_Group (Name => "group for " & Get_Name (Source));
+                  Insert (Gr, After => Target, In_Group => Target.Parent);
                   Remove_But_Not_Free (Target);
-                  Insert (Source, After => null,   In_Group => Gr);
+                  Insert (Source, After => null, In_Group => Gr);
                   Insert (Target, After => Source, In_Group => Gr);
                   View.Refresh (Expand => Gr, Selected => Gr);
             end case;
@@ -2005,14 +2077,14 @@ package body Bookmark_Views is
       X, Y    : Gint;
       Time    : Guint) return Boolean
    is
-      View   : constant Bookmark_View_Access := Bookmark_View_Access (Self);
-      Path   : aliased Gtk_Tree_Path;
-      Pos    : aliased Gtk_Tree_View_Drop_Position;
-      Target : Gdk_Atom;
+      View    : constant Bookmark_View_Access := Bookmark_View_Access (Self);
+      Path    : aliased Gtk_Tree_Path;
+      Pos     : aliased Gtk_Tree_View_Drop_Position;
+      Target  : Gdk_Atom;
       Success : Boolean := False;
    begin
       if View.Tree.Get_Dest_Row_At_Pos
-        (Drag_X => X, Drag_Y => Y, Path => Path'Access, Pos => Pos'Access)
+           (Drag_X => X, Drag_Y => Y, Path => Path'Access, Pos => Pos'Access)
       then
          Success := True;
 
@@ -2020,8 +2092,9 @@ package body Bookmark_Views is
          --  drag-data-received signal, and will perform the actual change of
          --  the model.
          View.Data_Dropped := True;
-         Target := Gtk.Dnd.Dest_Find_Target
-           (View.Tree, Drag_Context (Context), Null_Gtk_Target_List);
+         Target :=
+           Gtk.Dnd.Dest_Find_Target
+             (View.Tree, Drag_Context (Context), Null_Gtk_Target_List);
          Gtk.Dnd.Get_Data
            (View.Tree, Drag_Context (Context), Target, Guint32 (Time));
       end if;
@@ -2044,11 +2117,12 @@ package body Bookmark_Views is
       N_Press : Gint;
       X, Y    : Gdouble)
    is
-      View   : constant Bookmark_View_Access := Bookmark_View_Access (Self);
-      Column : Gtk_Tree_View_Column;
-      Filter_Path : Gtk_Tree_Path;
-      B           : Bookmark_Data_Access;
-      Dummy       : Boolean;
+      View            : constant Bookmark_View_Access :=
+        Bookmark_View_Access (Self);
+      Column          : Gtk_Tree_View_Column;
+      Filter_Path     : Gtk_Tree_Path;
+      B               : Bookmark_Data_Access;
+      Dummy           : Boolean;
       Cell_X, Cell_Y  : Gint;
       Success         : Boolean;
       Area, Cell_Area : Gdk_Rectangle;
@@ -2057,14 +2131,14 @@ package body Bookmark_Views is
       if N_Press = 2 then
 
          View.Tree.Get_Path_At_Pos
-           (Gint (X), Gint (Y), Filter_Path,
-            Column, Cell_X, Cell_Y, Success);
+           (Gint (X), Gint (Y), Filter_Path, Column, Cell_X, Cell_Y, Success);
          if Success then
             --  Select the row that was clicked
             View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
-            B := View.Tree.Get_Data
-              (Store_Iter =>
-                 View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
+            B :=
+              View.Tree.Get_Data
+                (Store_Iter =>
+                   View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
 
             if B /= null then
                if B.Note /= Null_Unbounded_String then
@@ -2113,10 +2187,10 @@ package body Bookmark_Views is
    ------------------
 
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble)
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble)
    is
-      View  : constant Bookmark_View_Access := Bookmark_View_Access (Self);
+      View        : constant Bookmark_View_Access :=
+        Bookmark_View_Access (Self);
       Filter_Iter : Gtk_Tree_Iter;
       Col         : Gtk_Tree_View_Column;
    begin
@@ -2133,10 +2207,11 @@ package body Bookmark_Views is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
-     (Tooltip         : not null access Bookmark_View_Tooltip_Handler;
-      Widget          : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y            : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   overriding
+   function Create_Contents
+     (Tooltip : not null access Bookmark_View_Tooltip_Handler;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       Tree        : constant Bookmark_Tree := Bookmark_Tree (Widget);
       Filter_Path : Gtk_Tree_Path;
@@ -2150,30 +2225,44 @@ package body Bookmark_Views is
       Tooltip.Set_Tip_Area (Area);
 
       if Filter_Iter /= Null_Iter then
-         Data := Tree.Get_Data
-           (Store_Iter => Tree.Convert_To_Store_Iter (Filter_Iter));
+         Data :=
+           Tree.Get_Data
+             (Store_Iter => Tree.Convert_To_Store_Iter (Filter_Iter));
          case Data.Typ is
             when Group | Unattached =>
-               Text := To_Unbounded_String
-                 ("<b>Name:</b> " & Protect (Get_Name (Data)));
-            when Standard =>
+               Text :=
+                 To_Unbounded_String
+                   ("<b>Name:</b> " & Protect (Get_Name (Data)));
+
+            when Standard           =>
                declare
                   Location : constant String := To_String (Data.Marker);
                begin
                   if Location = Get_Name (Data) then
-                     Text := To_Unbounded_String
-                       ("<b>Location:</b> " & Protect (Location));
+                     Text :=
+                       To_Unbounded_String
+                         ("<b>Location:</b> " & Protect (Location));
                   else
-                     Text := To_Unbounded_String
-                       ("<b>Name:</b> " & Protect (Get_Name (Data)) &
-                          ASCII.LF & "<b>Location:</b> " & Protect (Location));
+                     Text :=
+                       To_Unbounded_String
+                         ("<b>Name:</b> "
+                          & Protect (Get_Name (Data))
+                          & ASCII.LF
+                          & "<b>Location:</b> "
+                          & Protect (Location));
                   end if;
                end;
          end case;
 
          if Data.Note /= Null_Unbounded_String then
-            Append (Text, ASCII.LF & "<b>Note:</b>" & ASCII.LF
-                    & "<tt>" & Protect (To_String (Data.Note)) & "</tt>");
+            Append
+              (Text,
+               ASCII.LF
+               & "<b>Note:</b>"
+               & ASCII.LF
+               & "<tt>"
+               & Protect (To_String (Data.Note))
+               & "</tt>");
          end if;
 
          Gtk_New (Label, To_String (Text));
@@ -2194,9 +2283,7 @@ package body Bookmark_Views is
    begin
       --  Replace "%M" by actual marker location, which can be moved
       --  due to file modifications externally.
-      if Bookmark.Typ = Standard
-        and then Bookmark.Marker /= No_Marker
-      then
+      if Bookmark.Typ = Standard and then Bookmark.Marker /= No_Marker then
          loop
             Idx := Index (S, "%M");
             exit when Idx = 0;
@@ -2213,13 +2300,14 @@ package body Bookmark_Views is
    ----------------
 
    function Initialize
-     (View   : access Bookmark_View_Record'Class) return Gtk_Widget
+     (View : access Bookmark_View_Record'Class) return Gtk_Widget
    is
-      Col       : Gtk_Tree_View_Column;
-      Num       : Gint with Unreferenced;
-      Scrolled  : Gtk_Scrolled_Window;
-      Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
-      Tooltip   : Tooltips.Tooltip_Handler_Access;
+      Col      : Gtk_Tree_View_Column;
+      Num      : Gint
+      with Unreferenced;
+      Scrolled : Gtk_Scrolled_Window;
+      Pixbuf   : Gtk_Cell_Renderer_Pixbuf;
+      Tooltip  : Tooltips.Tooltip_Handler_Access;
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -2230,9 +2318,9 @@ package body Bookmark_Views is
       View.Tree := new Bookmark_Tree_Record;
       View.Tree.View := View;
       View.Tree.Initialize
-           (Column_Types     => Column_Types,
-            Capability_Type  => Filtered,
-            Set_Visible_Func => True);
+        (Column_Types     => Column_Types,
+         Capability_Type  => Filtered,
+         Set_Visible_Func => True);
       View.Tree.Set_Name ("Bookmark TreeView"); --  For the testsuite
       View.Tree.Set_Search_Column (Name_Column);
       View.Tree.Get_Selection.Set_Mode (Selection_Multiple);
@@ -2244,7 +2332,7 @@ package body Bookmark_Views is
 
       Gtk_New (Pixbuf);
       Col.Pack_Start (Pixbuf, Expand => False);
-      Col.Add_Attribute (Pixbuf, "icon_name",  Icon_Name_Column);
+      Col.Add_Attribute (Pixbuf, "icon_name", Icon_Name_Column);
 
       Gtk_New (View.Tree.Note_Pixbuf);
       Col.Pack_Start (View.Tree.Note_Pixbuf, Expand => False);
@@ -2256,7 +2344,8 @@ package body Bookmark_Views is
       Set_Property
         (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
       Set_Property
-        (View.Tree.Text, Gtk.Cell_Renderer_Text.Cancel_On_Focus_Out_Property,
+        (View.Tree.Text,
+         Gtk.Cell_Renderer_Text.Cancel_On_Focus_Out_Property,
          False);
 
       Col.Pack_Start (View.Tree.Text, Expand => False);
@@ -2271,8 +2360,7 @@ package body Bookmark_Views is
       View.Longpress.Watch (View);
 
       Setup_Contextual_Menu
-        (Kernel          => View.Kernel,
-         Event_On_Widget => View.Tree);
+        (Kernel => View.Kernel, Event_On_Widget => View.Tree);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
       Refresh (View);
@@ -2297,14 +2385,15 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : Refresh_Hook;
       Kernel : not null access Kernel_Handle_Record'Class;
       Name   : String)
    is
       pragma Unreferenced (Self, Name);
       View : constant Bookmark_View_Access :=
-          Generic_View.Retrieve_View (Kernel);
+        Generic_View.Retrieve_View (Kernel);
    begin
       if View /= null then
          Refresh (View);
@@ -2315,7 +2404,8 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File)
@@ -2336,24 +2426,22 @@ package body Bookmark_Views is
       begin
          while Tmp /= null loop
             case Tmp.Typ is
-            when Group =>
-               if Tmp.Contains = Project
-                 or else Tmp.Contains = Both
-               then
-                  Remove_Project_Bookmarks (Tmp.First_Child);
+               when Group    =>
+                  if Tmp.Contains = Project or else Tmp.Contains = Both then
+                     Remove_Project_Bookmarks (Tmp.First_Child);
 
-                  if Tmp.Contains = Project then
+                     if Tmp.Contains = Project then
+                        R := Tmp;
+                     end if;
+                  end if;
+
+               when Standard =>
+                  if Tmp.On_Project = True then
                      R := Tmp;
                   end if;
-               end if;
 
-            when Standard =>
-               if Tmp.On_Project = True then
-                  R := Tmp;
-               end if;
-
-            when others =>
-               null;
+               when others   =>
+                  null;
             end case;
 
             Tmp := Tmp.Next_Same_Level;
@@ -2376,16 +2464,17 @@ package body Bookmark_Views is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      Filename    : constant Virtual_File :=
+      Filename : constant Virtual_File :=
         Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
-      File        : Node_Ptr;
-      Err         : GNAT.Strings.String_Access;
-      Marker      : Location_Marker;
+      File     : Node_Ptr;
+      Err      : GNAT.Strings.String_Access;
+      Marker   : Location_Marker;
 
       procedure Load_Same_Level
         (Parent : Bookmark_Data_Access; First : Node_Ptr);
@@ -2397,8 +2486,7 @@ package body Bookmark_Views is
       procedure Load_Project_Bookmarks;
 
       procedure Adjust_Marker
-        (Marker : in out Location_Marker;
-         Text   : VSS.Strings.Virtual_String);
+        (Marker : in out Location_Marker; Text : VSS.Strings.Virtual_String);
       --  Check whether the Marker line was moved and find it if so.
       --  Return Null marker if the line is not found.
 
@@ -2407,8 +2495,7 @@ package body Bookmark_Views is
       -------------------
 
       procedure Adjust_Marker
-        (Marker : in out Location_Marker;
-         Text   : VSS.Strings.Virtual_String)
+        (Marker : in out Location_Marker; Text : VSS.Strings.Virtual_String)
       is
          use type VSS.Strings.Virtual_String;
 
@@ -2419,8 +2506,7 @@ package body Bookmark_Views is
          Max     : Editable_Line_Type := Current;
          Forward : Boolean := True;
       begin
-         if Text = "no-line-text"
-           or else Holder.Editor = Nil_Editor_Buffer
+         if Text = "no-line-text" or else Holder.Editor = Nil_Editor_Buffer
          then
             return;
          end if;
@@ -2441,12 +2527,12 @@ package body Bookmark_Views is
             if Min > 1 and then Max < Holder.Editor.Lines_Count then
                --  Moving either to the begin or to the end of the buffer
                if Forward then
-                  Max     := Max + 1;
+                  Max := Max + 1;
                   Current := Max;
                   Forward := False;
 
                else
-                  Min     := Min - 1;
+                  Min := Min - 1;
                   Current := Min;
                   Forward := True;
                end if;
@@ -2469,13 +2555,13 @@ package body Bookmark_Views is
                Line : constant Editor_Location'Class :=
                  Holder.Editor.New_Location_At_Line (Current);
             begin
-               if Holder.Editor.Get_Text (Line, Line.End_Of_Line) = Text
-               then
+               if Holder.Editor.Get_Text (Line, Line.End_Of_Line) = Text then
                   --  The line is found
-                  Marker := Kernel.Get_Buffer_Factory.Create_Marker
-                    (File   => Get_File (Marker),
-                     Line   => Current,
-                     Column => Get_Column (Marker));
+                  Marker :=
+                    Kernel.Get_Buffer_Factory.Create_Marker
+                      (File   => Get_File (Marker),
+                       Line   => Current,
+                       Column => Get_Column (Marker));
                   return;
                end if;
             end;
@@ -2492,8 +2578,8 @@ package body Bookmark_Views is
         (Parent : Bookmark_Data_Access; First : Node_Ptr)
       is
          Child, Tmp : Node_Ptr := First;
-         B     : Bookmark_Data_Access;
-         Last  : Bookmark_Data_Access := null;
+         B          : Bookmark_Data_Access;
+         Last       : Bookmark_Data_Access := null;
       begin
          while Child /= null loop
             B := null;
@@ -2503,11 +2589,14 @@ package body Bookmark_Views is
                Load_Same_Level (Parent => B, First => Child.Child);
 
             elsif Child.Tag.all = "unattached" then
-               B := New_Bookmark
-                 (Kernel, No_Marker,
-                  Name       => Encoded_ASCII_To_String
-                    (Get_Attribute_S (Child, "bookmark_name", "")),
-                  On_Project => False);
+               B :=
+                 New_Bookmark
+                   (Kernel,
+                    No_Marker,
+                    Name       =>
+                      Encoded_ASCII_To_String
+                        (Get_Attribute_S (Child, "bookmark_name", "")),
+                    On_Project => False);
 
             else
                Marker := Create_Marker (Kernel, Child);
@@ -2518,19 +2607,20 @@ package body Bookmark_Views is
                        (Marker,
                         VSS.Strings.Conversions.To_Virtual_String
                           (Encoded_ASCII_To_String
-                               (Get_Attribute_S
-                                    (Child,
-                                     Line_Text_Attribute,
-                                     "no-line-text"))));
+                             (Get_Attribute_S
+                                (Child,
+                                 Line_Text_Attribute,
+                                 "no-line-text"))));
                   end if;
 
                   if not Marker.Is_Null then
-                     B := New_Bookmark
-                       (Kernel,
-                        Marker,
-                        Name =>
-                          Get_Attribute_S (Child, "bookmark_name", ""),
-                        On_Project => False);
+                     B :=
+                       New_Bookmark
+                         (Kernel,
+                          Marker,
+                          Name       =>
+                            Get_Attribute_S (Child, "bookmark_name", ""),
+                          On_Project => False);
                   end if;
                end if;
             end if;
@@ -2559,8 +2649,7 @@ package body Bookmark_Views is
       -- Load_Project_Bookmarks --
       ----------------------------
 
-      procedure Load_Project_Bookmarks
-      is
+      procedure Load_Project_Bookmarks is
          Prop  : Bookmarks_Property_Record;
          Found : Boolean;
 
@@ -2577,11 +2666,11 @@ package body Bookmark_Views is
 
          begin
             while Tmp /= null loop
-               B        := null;
+               B := null;
                Updating := False;
 
                case Tmp.Typ is
-                  when Group =>
+                  when Group      =>
                      --  Check wether we already have this group!
                      if Parent = null then
                         B := Bookmark_Iter_First;
@@ -2602,17 +2691,20 @@ package body Bookmark_Views is
 
                      Restore (B, Tmp.First_Child);
 
-                  when Standard =>
+                  when Standard   =>
                      if Tmp.Marker_Data /= JSON_Null then
                         declare
                            Marker : Location_Marker :=
                              Kernel.Get_Buffer_Factory.Create_Marker
-                               (File   => JSON_Utils.Load
-                                  (Get (Tmp.Marker_Data, "file")),
-                                Line   => Editable_Line_Type'Value
-                                  (Get (Tmp.Marker_Data, "line")),
-                                Column => Visible_Column_Type'Value
-                                  (Get (Tmp.Marker_Data, "column")));
+                               (File   =>
+                                  JSON_Utils.Load
+                                    (Get (Tmp.Marker_Data, "file")),
+                                Line   =>
+                                  Editable_Line_Type'Value
+                                    (Get (Tmp.Marker_Data, "line")),
+                                Column =>
+                                  Visible_Column_Type'Value
+                                    (Get (Tmp.Marker_Data, "column")));
                         begin
                            if Marker /= No_Marker then
                               if Dynamically_Moving.Get_Pref
@@ -2622,12 +2714,13 @@ package body Bookmark_Views is
                               end if;
 
                               if not Marker.Is_Null then
-                                 B := New_Bookmark
-                                   (Kernel,
-                                    Marker,
-                                    Name          => To_String (Tmp.Name),
-                                    On_Project    => True,
-                                    Preserve_Name => True);
+                                 B :=
+                                   New_Bookmark
+                                     (Kernel,
+                                      Marker,
+                                      Name          => To_String (Tmp.Name),
+                                      On_Project    => True,
+                                      Preserve_Name => True);
                               end if;
                            end if;
                         end;
@@ -2637,9 +2730,7 @@ package body Bookmark_Views is
                      null;
                end case;
 
-               if B /= null
-                 and then not Updating
-               then
+               if B /= null and then not Updating then
                   --  If B is just created
                   --  Insert in the same order we read them, so append
                   Insert (B, After => Last, In_Group => Parent);
@@ -2656,12 +2747,8 @@ package body Bookmark_Views is
          Get_Property
            (Prop, Get_Project (Kernel), Name => "bookmarks", Found => Found);
 
-         if Found
-           and then Prop.Root /= null
-         then
-            Restore
-              (Parent => null,
-               First  => Prop.Root.First_Child);
+         if Found and then Prop.Root /= null then
+            Restore (Parent => null, First => Prop.Root.First_Child);
          end if;
 
          Trace (Me, "Project bookmarks are loaded");
@@ -2676,17 +2763,18 @@ package body Bookmark_Views is
       begin
          while Current /= null loop
             case Current.Typ is
-               when Group =>
+               when Group      =>
                   Create_Messages (Current.First_Child);
 
-               when Standard =>
+               when Standard   =>
                   if not Current.On_Project
                     and then Current.Marker /= No_Marker
                     and then Current.Message.Is_Empty
                   then
-                     Current.Message := Create
-                       (Message_Access
-                          (Create_Message (Kernel, Current.Marker)));
+                     Current.Message :=
+                       Create
+                         (Message_Access
+                            (Create_Message (Kernel, Current.Marker)));
                   end if;
 
                when Unattached =>
@@ -2711,9 +2799,7 @@ package body Bookmark_Views is
 
       Bookmark_Views_Module.Loaded := True;
 
-      if Filename.Is_Regular_File
-        and then Filename.Is_Readable
-      then
+      if Filename.Is_Regular_File and then Filename.Is_Readable then
          Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
 
@@ -2731,7 +2817,8 @@ package body Bookmark_Views is
       else
          Trace
            (Me,
-            "Could not load " & Filename.Display_Full_Name
+            "Could not load "
+            & Filename.Display_Full_Name
             & ": the file is not readable or does no exist on disk");
       end if;
    end Execute;
@@ -2740,9 +2827,7 @@ package body Bookmark_Views is
    -- Set --
    ---------
 
-   procedure Set
-     (To   : in out Group_Content_Type;
-      From : Group_Content_Type) is
+   procedure Set (To : in out Group_Content_Type; From : Group_Content_Type) is
    begin
       if From = Unknown then
          return;
@@ -2765,8 +2850,7 @@ package body Bookmark_Views is
       --  Set Groups.Contains to Unknown which is used as an initial value
 
       function Set_Contains
-        (Data : Bookmark_Data_Access)
-         return Group_Content_Type;
+        (Data : Bookmark_Data_Access) return Group_Content_Type;
       --  Set Groups.Contains to real value based on content of group itself
       --   and all its nested elements.
 
@@ -2779,7 +2863,7 @@ package body Bookmark_Views is
       begin
          while Tmp /= null loop
             case Tmp.Typ is
-               when Group =>
+               when Group  =>
                   Tmp.Contains := Unknown;
                   Clear_Groups_Contains (Tmp.First_Child);
 
@@ -2796,19 +2880,18 @@ package body Bookmark_Views is
       ------------------
 
       function Set_Contains
-        (Data : Bookmark_Data_Access)
-         return Group_Content_Type
+        (Data : Bookmark_Data_Access) return Group_Content_Type
       is
          Tmp    : Bookmark_Data_Access := Data;
          Result : Group_Content_Type := Unknown;
       begin
          while Tmp /= null loop
             case Tmp.Typ is
-               when Group =>
+               when Group      =>
                   Set (Result, Set_Contains (Tmp.First_Child));
                   Set (Tmp.Contains, Result);
 
-               when Standard =>
+               when Standard   =>
                   if Tmp.On_Project = True then
                      Set (Result, Project);
                   else
@@ -2836,9 +2919,9 @@ package body Bookmark_Views is
    --------------------
 
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class) is
-      Filename    : constant Virtual_File :=
+      Filename : constant Virtual_File :=
         Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
-      File        : Node_Ptr;
+      File     : Node_Ptr;
 
       procedure Save_Same_Level
         (Parent : Node_Ptr; First : Bookmark_Data_Access);
@@ -2851,14 +2934,14 @@ package body Bookmark_Views is
       procedure Save_Same_Level
         (Parent : Node_Ptr; First : Bookmark_Data_Access)
       is
-         Tmp   : Bookmark_Data_Access := First;
+         Tmp         : Bookmark_Data_Access := First;
          Child, Note : Node_Ptr;
       begin
          while Tmp /= null loop
             Child := null;
 
             case Tmp.Typ is
-               when Group =>
+               when Group      =>
                   Child := new Node;
                   Child.Tag := new String'("group");
                   Save_Same_Level (Child, Tmp.First_Child);
@@ -2867,16 +2950,15 @@ package body Bookmark_Views is
                   Child := new Node;
                   Child.Tag := new String'("unattached");
 
-               when Standard =>
+               when Standard   =>
                   if Tmp.On_Project /= True then
                      Child := Save (Tmp.Marker);
 
                      if Dynamically_Moving.Get_Pref then
                         declare
-                           Holder : constant
-                             Controlled_Editor_Buffer_Holder :=
-                               Kernel.Get_Buffer_Factory.Get_Holder
-                                 (Get_File (Tmp.Marker));
+                           Holder : constant Controlled_Editor_Buffer_Holder :=
+                             Kernel.Get_Buffer_Factory.Get_Holder
+                               (Get_File (Tmp.Marker));
                         begin
                            if Holder.Editor /= Nil_Editor_Buffer then
                               declare
@@ -2889,8 +2971,8 @@ package body Bookmark_Views is
                                     Line_Text_Attribute,
                                     String_To_Encoded_ASCII
                                       (VSS.Strings.Conversions.To_UTF_8_String
-                                           (Holder.Editor.Get_Text
-                                                (Line, Line.End_Of_Line))));
+                                         (Holder.Editor.Get_Text
+                                            (Line, Line.End_Of_Line))));
                               end;
                            end if;
                         end;
@@ -2900,16 +2982,18 @@ package body Bookmark_Views is
 
             if Child /= null then
                Set_Attribute_S
-                 (Child, "bookmark_name",
+                 (Child,
+                  "bookmark_name",
                   String_To_Encoded_ASCII (To_String (Tmp.Name)));
 
                Add_Child (Parent, Child, Append => True);
 
                if Tmp.Note /= Null_Unbounded_String then
-                  Note       := new Node;
-                  Note.Tag   := new String'("note");
-                  Note.Value := new String'
-                    (String_To_Encoded_ASCII (To_String (Tmp.Note)));
+                  Note := new Node;
+                  Note.Tag := new String'("note");
+                  Note.Value :=
+                    new String'
+                      (String_To_Encoded_ASCII (To_String (Tmp.Note)));
                   Add_Child (Child, Note, Append => True);
                end if;
             end if;
@@ -2964,8 +3048,7 @@ package body Bookmark_Views is
       -- Clone_Same_Level --
       ----------------------
 
-      procedure Clone_Same_Level (Parent, First : Bookmark_Data_Access)
-      is
+      procedure Clone_Same_Level (Parent, First : Bookmark_Data_Access) is
          Tmp  : Bookmark_Data_Access := First;
          Last : Bookmark_Data_Access := null;
       begin
@@ -2974,18 +3057,15 @@ package body Bookmark_Views is
                B : Bookmark_Data_Access := null;
             begin
                case Tmp.Typ is
-                  when Group =>
-                     if Tmp.Contains = Project
-                       or else Tmp.Contains = Both
-                     then
+                  when Group      =>
+                     if Tmp.Contains = Project or else Tmp.Contains = Both then
                         B := Clone (Tmp);
                         Clone_Same_Level
                           (Parent => B, First => Tmp.First_Child);
                      end if;
 
-                  when Standard =>
-                     if Tmp.On_Project = True
-                       and then Tmp.Marker /= No_Marker
+                  when Standard   =>
+                     if Tmp.On_Project = True and then Tmp.Marker /= No_Marker
                      then
                         B := Clone (Tmp);
 
@@ -2993,16 +3073,17 @@ package body Bookmark_Views is
                         B.Marker_Data.Set_Field
                           ("file", JSON_Utils.Save (Get_File (Tmp.Marker)));
                         B.Marker_Data.Set_Field
-                          ("line", Editable_Line_Type'Image
-                             (Get_Line (Tmp.Marker)));
+                          ("line",
+                           Editable_Line_Type'Image (Get_Line (Tmp.Marker)));
                         B.Marker_Data.Set_Field
-                          ("column", Visible_Column_Type'Image
+                          ("column",
+                           Visible_Column_Type'Image
                              (Get_Column (Tmp.Marker)));
 
                         if Dynamically_Moving.Get_Pref then
                            declare
-                              Holder : constant
-                                Controlled_Editor_Buffer_Holder :=
+                              Holder :
+                                constant Controlled_Editor_Buffer_Holder :=
                                   Kernel.Get_Buffer_Factory.Get_Holder
                                     (Get_File (Tmp.Marker));
                            begin
@@ -3056,8 +3137,7 @@ package body Bookmark_Views is
    ------------------------
 
    function Bookmark_From_Mark
-     (Mark     : Location_Marker;
-      Multiple : out Boolean)
+     (Mark : Location_Marker; Multiple : out Boolean)
       return Bookmark_Data_Access
    is
       B   : Bookmark_Data_Access := Bookmark_Iter_First;
@@ -3066,9 +3146,7 @@ package body Bookmark_Views is
       Multiple := False;
 
       while B /= null loop
-         if B.Typ = Standard
-           and then Similar (B.Marker, Mark)
-         then
+         if B.Typ = Standard and then Similar (B.Marker, Mark) then
             if Res = null then
                Res := B;
             else
@@ -3105,7 +3183,7 @@ package body Bookmark_Views is
    is
       Kernel         : constant Kernel_Handle := Get_Kernel (Data);
       Bookmark_Class : constant Class_Type :=
-         Kernel.Scripts.New_Class (Bookmark_Class_Name);
+        Kernel.Scripts.New_Class (Bookmark_Class_Name);
       Name_Cst       : aliased constant String := "name";
       After_Cst      : aliased constant String := "after";
       Inst           : Class_Instance;
@@ -3117,7 +3195,8 @@ package body Bookmark_Views is
    begin
       if Command = Constructor_Method then
          Set_Error_Msg
-           (Data, "Cannot create instances of GPS.Bookmark."
+           (Data,
+            "Cannot create instances of GPS.Bookmark."
             & " Use GPS.Bookmark.get() instead");
 
       elsif Command = "get" then
@@ -3127,10 +3206,10 @@ package body Bookmark_Views is
             Set_Error_Msg (Data, "No such bookmark");
          else
             Data.Set_Return_Value
-               (Bookmark_Proxies.Get_Or_Create_Instance
-                  (Self   => Bookmark.Instances,
-                   Obj    => Bookmark,
-                   Script => Data.Get_Script));
+              (Bookmark_Proxies.Get_Or_Create_Instance
+                 (Self   => Bookmark.Instances,
+                  Obj    => Bookmark,
+                  Script => Data.Get_Script));
          end if;
 
       elsif Command = "create" then
@@ -3139,16 +3218,20 @@ package body Bookmark_Views is
          if Marker.Is_Null then
             Set_Error_Msg (Data, "Can't create bookmark for this context");
          else
-            Bookmark := New_Bookmark
-              (Kernel, Marker, Name => Data.Nth_Arg (1), On_Project => False);
+            Bookmark :=
+              New_Bookmark
+                (Kernel,
+                 Marker,
+                 Name       => Data.Nth_Arg (1),
+                 On_Project => False);
             Insert (Bookmark, After => null, In_Group => null);
             Save_Bookmarks (Kernel);
             Bookmark_Added_Hook.Run (Kernel, Get_Name (Bookmark));
             Data.Set_Return_Value
-               (Bookmark_Proxies.Get_Or_Create_Instance
-                  (Self   => Bookmark.Instances,
-                   Obj    => Bookmark,
-                   Script => Data.Get_Script));
+              (Bookmark_Proxies.Get_Or_Create_Instance
+                 (Self   => Bookmark.Instances,
+                  Obj    => Bookmark,
+                  Script => Data.Get_Script));
          end if;
 
       elsif Command = "create_group" then
@@ -3161,12 +3244,12 @@ package body Bookmark_Views is
       elsif Command = "name" then
          Inst := Data.Nth_Arg (1, Bookmark_Class);
          Data.Set_Return_Value
-            (Get_Name (Bookmark_Proxies.From_Instance (Inst)));
+           (Get_Name (Bookmark_Proxies.From_Instance (Inst)));
 
       elsif Command = "note" then
          Inst := Data.Nth_Arg (1, Bookmark_Class);
          Data.Set_Return_Value
-            (To_String (Bookmark_Proxies.From_Instance (Inst).Note));
+           (To_String (Bookmark_Proxies.From_Instance (Inst).Note));
 
       elsif Command = "delete" then
          Inst := Data.Nth_Arg (1, Bookmark_Class);
@@ -3193,9 +3276,7 @@ package body Bookmark_Views is
       elsif Command = "goto" then
          Inst := Data.Nth_Arg (1, Bookmark_Class);
          B := Bookmark_Proxies.From_Instance (Inst);
-         if B /= null
-           and then Go_To (B.Marker)
-         then
+         if B /= null and then Go_To (B.Marker) then
             Push_Marker_In_History (Kernel, B.Marker);
          else
             Data.Set_Error_Msg ("Invalid bookmark");
@@ -3223,10 +3304,7 @@ package body Bookmark_Views is
             begin
                Remove_But_Not_Free (B);
 
-               Insert
-                 (B,
-                  After    => Bookmark,
-                  In_Group => Parent);
+               Insert (B, After => Bookmark, In_Group => Parent);
 
                View.Refresh (Selected => B);
                Save_Bookmarks (Kernel);
@@ -3258,15 +3336,14 @@ package body Bookmark_Views is
    is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Class    : constant Class_Type :=
-         Kernel.Scripts.New_Class (Bookmark_Class_Name);
+        Kernel.Scripts.New_Class (Bookmark_Class_Name);
       Inst     : constant Class_Instance := Data.Nth_Arg (1, Class);
       Note     : constant String := Data.Nth_Arg (2);
       Bookmark : constant Bookmark_Data_Access :=
-           Bookmark_Proxies.From_Instance (Inst);
+        Bookmark_Proxies.From_Instance (Inst);
    begin
       if Command = "note" then
-         Bookmark.Note :=
-           To_Unbounded_String (Note);
+         Bookmark.Note := To_Unbounded_String (Note);
          Bookmark_Added_Hook.Run (Kernel, Get_Name (Bookmark));
          Save_Bookmarks (Kernel);
       end if;
@@ -3276,13 +3353,13 @@ package body Bookmark_Views is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Bookmarks_Property_Record;
       Value    : in out GNATCOLL.JSON.JSON_Value)
    is
       procedure Save_Same_Level
-        (Values : in out JSON_Array;
-         First  : Bookmark_Data_Access);
+        (Values : in out JSON_Array; First : Bookmark_Data_Access);
       --  Save all sibling bookmarks, recursively
 
       ---------------------
@@ -3290,8 +3367,7 @@ package body Bookmark_Views is
       ---------------------
 
       procedure Save_Same_Level
-        (Values : in out JSON_Array;
-         First  : Bookmark_Data_Access)
+        (Values : in out JSON_Array; First : Bookmark_Data_Access)
       is
          Tmp : Bookmark_Data_Access := First;
 
@@ -3302,7 +3378,7 @@ package body Bookmark_Views is
 
             begin
                case Tmp.Typ is
-                  when Group =>
+                  when Group      =>
                      declare
                         Children : JSON_Array;
                      begin
@@ -3316,7 +3392,7 @@ package body Bookmark_Views is
                         end if;
                      end;
 
-                  when Standard =>
+                  when Standard   =>
                      if Tmp.Marker_Data /= JSON_Null then
                         Value := Create_Object;
                         Value.Set_Field ("marker", Tmp.Marker_Data);
@@ -3367,7 +3443,8 @@ package body Bookmark_Views is
    -- Load --
    ----------
 
-   overriding procedure Load
+   overriding
+   procedure Load
      (Property : in out Bookmarks_Property_Record;
       Value    : GNATCOLL.JSON.JSON_Value)
    is
@@ -3386,17 +3463,14 @@ package body Bookmark_Views is
          Parent : Bookmark_Data_Access;
          Last   : in out Bookmark_Data_Access)
       is
-         T      : constant Bookmark_Type :=
-           Bookmark_Type'Value (Item.Get ("type"));
-         N      : constant String :=
-           (if Item.Has_Field ("name")
-            then Item.Get ("name")
-            else "");
+         T : constant Bookmark_Type := Bookmark_Type'Value (Item.Get ("type"));
+         N : constant String :=
+           (if Item.Has_Field ("name") then Item.Get ("name") else "");
 
-         B      : Bookmark_Data_Access;
+         B : Bookmark_Data_Access;
       begin
          case T is
-            when Group =>
+            when Group      =>
                declare
                   Values : JSON_Array;
                   L      : Bookmark_Data_Access := null;
@@ -3411,12 +3485,12 @@ package body Bookmark_Views is
                   end if;
                end;
 
-            when Standard =>
+            when Standard   =>
                if Item.Has_Field ("marker") then
                   B := new Bookmark_Data (Standard);
 
-                  B.Name        := To_Unbounded_String (N);
-                  B.On_Project  := True;
+                  B.Name := To_Unbounded_String (N);
+                  B.On_Project := True;
                   B.Marker_Data := Item.Get ("marker");
 
                   if Dynamically_Moving.Get_Pref
@@ -3467,9 +3541,8 @@ package body Bookmark_Views is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
-     (Property : in out Bookmarks_Property_Record)
-   is
+   overriding
+   procedure Destroy (Property : in out Bookmarks_Property_Record) is
       procedure Remove (Data : Bookmark_Data_Access);
       procedure Remove (Data : Bookmark_Data_Access) is
          Tmp : Bookmark_Data_Access := Data;
@@ -3481,7 +3554,7 @@ package body Bookmark_Views is
                Remove (Tmp.First_Child);
             end if;
 
-            R   := Tmp;
+            R := Tmp;
             Tmp := Tmp.Next_Same_Level;
             Free (R);
          end loop;
@@ -3501,39 +3574,48 @@ package body Bookmark_Views is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Bookmark_Class     : constant Class_Type :=
+      Bookmark_Class : constant Class_Type :=
         Kernel.Scripts.New_Class (Bookmark_Class_Name);
 
       Src_Action_Context : constant Action_Filter :=
         Lookup_Filter (Kernel, "Source editor");
 
-      P                  : Kernel_Search_Provider_Access;
+      P : Kernel_Search_Provider_Access;
 
    begin
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module (Kernel, Module_ID (Bookmark_Views_Module));
 
       Register_Action
-        (Kernel, "bookmark rename", new Rename_Bookmark_Command,
+        (Kernel,
+         "bookmark rename",
+         new Rename_Bookmark_Command,
          -("Interactively rename the bookmark currently selected in the"
-           & " bookmarks view"), Category => -"Bookmarks",
+           & " bookmarks view"),
+         Category  => -"Bookmarks",
          Icon_Name => "gps-rename-symbolic");
 
       Register_Action
-        (Kernel, "bookmark remove selected", new Delete_Bookmark_Command,
+        (Kernel,
+         "bookmark remove selected",
+         new Delete_Bookmark_Command,
          -"Delete the selected bookmarks in the bookmarks view",
          Icon_Name => "gps-remove-symbolic",
-         Category => -"Bookmarks");
+         Category  => -"Bookmarks");
 
       Register_Action
-        (Kernel, "bookmark create", new Create_Bookmark_Command,
+        (Kernel,
+         "bookmark create",
+         new Create_Bookmark_Command,
          -("Create a bookmark at the current location in the editor"),
          Icon_Name    => "gps-add-symbolic",
          Category     => -"Bookmarks",
          For_Learning => True);
 
       Register_Action
-        (Kernel, "bookmark toggle", new Toggle_Bookmark_Command,
+        (Kernel,
+         "bookmark toggle",
+         new Toggle_Bookmark_Command,
          -("Create or delete a bookmark at the current location in"
            & " the editor"),
          Icon_Name    => "gps-add-symbolic",
@@ -3541,60 +3623,67 @@ package body Bookmark_Views is
          For_Learning => False);
 
       Kernel.Set_Default_Line_Number_Click
-        (Action => "bookmark toggle",
-         Click_Type   => GPS.Kernel.Hyper_Mode_Click);
+        (Action     => "bookmark toggle",
+         Click_Type => GPS.Kernel.Hyper_Mode_Click);
 
       Register_Action
-        (Kernel, "project bookmark create",
+        (Kernel,
+         "project bookmark create",
          new Create_Bookmark_Command'
-           (Interactive_Command with
-                Mode             => Standard,
-                Ignore_Selection => False,
-                On_Project       => True),
+           (Interactive_Command
+            with
+              Mode             => Standard,
+              Ignore_Selection => False,
+              On_Project       => True),
          -("Create a project bookmark at the current location in the editor"),
          Icon_Name    => "gps-add-symbolic",
          Category     => -"Bookmarks",
          For_Learning => True);
 
       Register_Action
-        (Kernel, "bookmark create unattached",
+        (Kernel,
+         "bookmark create unattached",
          new Create_Bookmark_Command'
-           (Interactive_Command with
-                Mode             => Unattached,
-                Ignore_Selection => False,
-                On_Project       => False),
+           (Interactive_Command
+            with
+              Mode             => Unattached,
+              Ignore_Selection => False,
+              On_Project       => False),
          -("Create a bookmark at no specific location. This is mostly useful"
            & " as a way to have TODO items into the Bookmarks view"),
          Icon_Name => "gps-add-symbolic",
          Category  => -"Bookmarks");
 
       Register_Action
-        (Kernel, "bookmark create group",
+        (Kernel,
+         "bookmark create group",
          new Create_Bookmark_Command'
-           (Interactive_Command with
-                Mode             => Group,
-                Ignore_Selection => False,
-                On_Project       => False),
+           (Interactive_Command
+            with
+              Mode             => Group,
+              Ignore_Selection => False,
+              On_Project       => False),
          -("Create an empty bookmark group using the selection"),
          Icon_Name => "gps-emblem-directory-symbolic",
          Category  => -"Bookmarks");
 
       Register_Action
-        (Kernel, "bookmark create root group",
+        (Kernel,
+         "bookmark create root group",
          new Create_Bookmark_Command'
-           (Interactive_Command with
-                Mode             => Group,
-                Ignore_Selection => True,
-                On_Project       => False),
+           (Interactive_Command
+            with Mode => Group, Ignore_Selection => True, On_Project => False),
          -("Create an empty root bookmark group"),
          Icon_Name => "gps-emblem-directory-root-symbolic",
          Category  => -"Bookmarks");
 
       Register_Action
-        (Kernel, "bookmark edit note", new Edit_Note_Command,
+        (Kernel,
+         "bookmark edit note",
+         new Edit_Note_Command,
          -("Edit the note associated with the selected bookmark"),
-         Icon_Name   => Icon_For_Tag,
-         Category    => -"Bookmarks");
+         Icon_Name => Icon_For_Tag,
+         Category  => -"Bookmarks");
 
       Register_Action
         (Kernel       => Kernel,
@@ -3615,19 +3704,43 @@ package body Bookmark_Views is
          For_Learning => True);
 
       Register_Command
-        (Kernel, Constructor_Method, 0, 0, Command_Handler'Access,
+        (Kernel,
+         Constructor_Method,
+         0,
+         0,
+         Command_Handler'Access,
          Bookmark_Class);
       Register_Command
-        (Kernel, "get", 1, 1, Command_Handler'Access, Bookmark_Class,
+        (Kernel,
+         "get",
+         1,
+         1,
+         Command_Handler'Access,
+         Bookmark_Class,
          Static_Method => True);
       Register_Command
-        (Kernel, "create", 1, 1, Command_Handler'Access, Bookmark_Class,
+        (Kernel,
+         "create",
+         1,
+         1,
+         Command_Handler'Access,
+         Bookmark_Class,
          Static_Method => True);
       Register_Command
-        (Kernel, "create_group", 1, 1, Command_Handler'Access, Bookmark_Class,
+        (Kernel,
+         "create_group",
+         1,
+         1,
+         Command_Handler'Access,
+         Bookmark_Class,
          Static_Method => True);
       Register_Command
-        (Kernel, "list", 0, 0, Command_Handler'Access, Bookmark_Class,
+        (Kernel,
+         "list",
+         0,
+         0,
+         Command_Handler'Access,
+         Bookmark_Class,
          Static_Method => True);
       Register_Command
         (Kernel, "name", 0, 0, Command_Handler'Access, Bookmark_Class);
@@ -3649,21 +3762,25 @@ package body Bookmark_Views is
       P := new Bookmarks_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
 
-      Editor_Link := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("bookmark-editor-link", True, Label => -"Dynamic link with editor");
+      Editor_Link :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("bookmark-editor-link", True, Label => -"Dynamic link with editor");
 
-      Append_At_Bottom := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("bookmark-editor-add-to-end",
-         False,
-         Label => -"Place new bookmark at the bottom");
+      Append_At_Bottom :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("bookmark-editor-add-to-end",
+           False,
+           Label => -"Place new bookmark at the bottom");
 
-      Dynamically_Moving := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("bookmark-editor-dynamic",
-         False,
-         Label => -"Move dynamically",
-         Doc => -"When enabled, GNAT Studio will try to move the bookmarks" &
-           " dynamically if the location of the pointed code changes (i.e:" &
-           " due to a Version Control system checkout).");
+      Dynamically_Moving :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("bookmark-editor-dynamic",
+           False,
+           Label => -"Move dynamically",
+           Doc   =>
+             -"When enabled, GNAT Studio will try to move the bookmarks"
+             & " dynamically if the location of the pointed code changes (i.e:"
+             & " due to a Version Control system checkout).");
 
       Project_Changed_Hook.Add (new On_Project_Changed);
       Project_Changing_Hook.Add (new On_Project_Changing);

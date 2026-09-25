@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with GNATCOLL.Projects;   use GNATCOLL.Projects;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.Kernel.Project;
 with GPS.Intl;            use GPS.Intl;
@@ -57,7 +57,7 @@ package body CodePeer.Module.Bridge is
       Messages : CodePeer.Message_Vectors.Vector)
    is
       Project           : constant Project_Type :=
-                            GPS.Kernel.Project.Get_Project (Module.Kernel);
+        GPS.Kernel.Project.Get_Project (Module.Kernel);
       Object_Directory  : Virtual_File;
       Command_File_Name : Virtual_File;
       Success           : Boolean;
@@ -67,7 +67,7 @@ package body CodePeer.Module.Bridge is
    begin
       --  Compute name of object directory and request file
 
-      Object_Directory  := CodePeer_Object_Directory (Project);
+      Object_Directory := CodePeer_Object_Directory (Project);
       Command_File_Name :=
         Create_From_Dir (Object_Directory, Add_Audit_File_Name);
 
@@ -97,9 +97,7 @@ package body CodePeer.Module.Bridge is
 
       Module.Action := None;
       Run_GPS_Codepeer_Bridge
-        (Module,
-         Command_File_Name,
-         Preserve_Output => False);
+        (Module, Command_File_Name, Preserve_Output => False);
    end Add_Audit_Record;
 
    ----------------
@@ -114,34 +112,35 @@ package body CodePeer.Module.Bridge is
       Ensure_Build_Mode : CodePeer_Build_Mode (Module.Kernel);
       pragma Unreferenced (Ensure_Build_Mode);
 
-      Project               : constant Project_Type :=
+      Project           : constant Project_Type :=
         GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory      : constant Virtual_File :=
+      Object_Directory  : constant Virtual_File :=
         CodePeer_Object_Directory (Project);
-      Command_File_Name     : constant Virtual_File :=
+      Command_File_Name : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Inspection_Request_File_Name);
-      Reply_File_Name       : constant Virtual_File :=
+      Reply_File_Name   : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Inspection_Reply_File_Name);
-      Status_File_Name      : constant Virtual_File :=
+      Status_File_Name  : constant Virtual_File :=
         Create_From_Dir (Object_Directory, Review_Status_File_Name);
-      Output_Directory      : constant Virtual_File :=
+      Output_Directory  : constant Virtual_File :=
         Inspector_Output_Directory (Module.Kernel);
-      SAM_Directory         : constant Virtual_File :=
+      SAM_Directory     : constant Virtual_File :=
         Codepeer_SAM_Directory (Module.Kernel);
-      Bts_Directory         : constant Virtual_File :=
+      Bts_Directory     : constant Virtual_File :=
         Output_Directory.Create_From_Dir ("bts");
-      Success               : Boolean;
+      Success           : Boolean;
       pragma Warnings (Off, Success);
 
       use type Default_Preferences.Boolean_Preference;
    begin
       if not Is_GNATSAS
-        and then (not Is_Directory (Output_Directory)
-        and Codepeer_Server_URL (Project) = "")
+        and then
+          (not Is_Directory (Output_Directory)
+           and Codepeer_Server_URL (Project) = "")
       then
          Module.Kernel.Insert
-           (-"cannot find CodePeer output directory: " &
-            Output_Directory.Display_Full_Name,
+           (-"cannot find CodePeer output directory: "
+            & Output_Directory.Display_Full_Name,
             Mode => GPS.Kernel.Error);
          return;
       end if;
@@ -184,12 +183,12 @@ package body CodePeer.Module.Bridge is
      (Module   : CodePeer.Module.CodePeer_Module_Id;
       Messages : CodePeer.Message_Vectors.Vector)
    is
-      Project            : constant Project_Type :=
-                             GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory   : Virtual_File;
-      Command_File_Name  : Virtual_File;
-      Reply_File_Name    : Virtual_File;
-      Success            : Boolean;
+      Project           : constant Project_Type :=
+        GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Object_Directory  : Virtual_File;
+      Command_File_Name : Virtual_File;
+      Reply_File_Name   : Virtual_File;
+      Success           : Boolean;
       pragma Warnings (Off, Success);
 
       Ensure_Build_Mode : CodePeer_Build_Mode (Module.Kernel);
@@ -230,24 +229,22 @@ package body CodePeer.Module.Bridge is
    ----------------------------------
 
    procedure Remove_Inspection_Cache_File
-      (Module : not null access CodePeer.Module.Module_Id_Record'Class)
+     (Module : not null access CodePeer.Module.Module_Id_Record'Class)
    is
-      Project           : constant Project_Type :=
-                            GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File :=
-                            CodePeer_Object_Directory (Project);
-      Reply_File_Name   : constant Virtual_File :=
-                            Create_From_Dir
-                              (Object_Directory, Inspection_Reply_File_Name);
-      Success           : Boolean;
+      Project          : constant Project_Type :=
+        GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Object_Directory : constant Virtual_File :=
+        CodePeer_Object_Directory (Project);
+      Reply_File_Name  : constant Virtual_File :=
+        Create_From_Dir (Object_Directory, Inspection_Reply_File_Name);
+      Success          : Boolean;
 
    begin
       if Reply_File_Name.Is_Regular_File then
          Delete (Reply_File_Name, Success);
 
          if not Success then
-            Module.Kernel.Insert
-              (-"Unable to remove code review file");
+            Module.Kernel.Insert (-"Unable to remove code review file");
          end if;
       end if;
    end Remove_Inspection_Cache_File;
@@ -261,12 +258,12 @@ package body CodePeer.Module.Bridge is
       Command_File    : GNATCOLL.VFS.Virtual_File;
       Preserve_Output : Boolean)
    is
-      Builder    : constant Builder_Context := Builder_Context
-        (Module.Kernel.Module (Builder_Context_Record'Tag));
+      Builder    : constant Builder_Context :=
+        Builder_Context (Module.Kernel.Module (Builder_Context_Record'Tag));
       Extra_Args : Argument_List_Access;
 
       Target_Name : constant String :=
-         (if Is_GNATSAS then "GNATSAS Review" else "CodePeer Bridge");
+        (if Is_GNATSAS then "GNATSAS Review" else "CodePeer Bridge");
    begin
       Extra_Args := new Argument_List (1 .. 1);
       Extra_Args (1) := new String'(+Command_File.Full_Name.all);

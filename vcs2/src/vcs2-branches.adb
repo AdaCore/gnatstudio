@@ -15,51 +15,51 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;            use Ada.Characters.Handling;
+with Ada.Characters.Handling;        use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
-with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
-with Commands, Commands.Interactive;     use Commands, Commands.Interactive;
-with Default_Preferences;                use Default_Preferences;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Commands, Commands.Interactive; use Commands, Commands.Interactive;
+with Default_Preferences;            use Default_Preferences;
 with Gdk.Event;
-with Gdk.Rectangle;                      use Gdk.Rectangle;
-with Gdk.RGBA;                           use Gdk.RGBA;
-with Generic_Views;                      use Generic_Views;
-with Glib;                               use Glib;
-with Glib.Convert;                       use Glib.Convert;
-with Glib.Object;                        use Glib.Object;
-with Glib.Values;                        use Glib.Values;
-with Glib_Values_Utils;                  use Glib_Values_Utils;
+with Gdk.Rectangle;                  use Gdk.Rectangle;
+with Gdk.RGBA;                       use Gdk.RGBA;
+with Generic_Views;                  use Generic_Views;
+with Glib;                           use Glib;
+with Glib.Convert;                   use Glib.Convert;
+with Glib.Object;                    use Glib.Object;
+with Glib.Values;                    use Glib.Values;
+with Glib_Values_Utils;              use Glib_Values_Utils;
 
-with GPS.Kernel.Actions;                 use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;                use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;                   use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                     use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;                 use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;              use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;             use GPS.Kernel.Preferences;
-with GPS.Intl;                           use GPS.Intl;
-with GPS.Search;                         use GPS.Search;
-with Gtkada.MDI;                         use Gtkada.MDI;
-with Gtkada.Tree_View;                   use Gtkada.Tree_View;
-with Gtk.Box;                            use Gtk.Box;
-with Gtk.Cell_Renderer;                  use Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Pixbuf;           use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;             use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                          use Gtk.Enums;
-with Gtk.Gesture_Long_Press;             use Gtk.Gesture_Long_Press;
-with Gtk.Gesture_Multi_Press;            use Gtk.Gesture_Multi_Press;
-with Gtk.Label;                          use Gtk.Label;
-with Gtk.Menu;                           use Gtk.Menu;
-with Gtk.Scrolled_Window;                use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;                     use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;               use Gtk.Tree_View_Column;
-with Gtk.Widget;                         use Gtk.Widget;
-with GUI_Utils;                          use GUI_Utils;
-with String_Utils;                       use String_Utils;
-with Tooltips;                           use Tooltips;
-with VCS2.Engines;                       use VCS2.Engines;
-with VCS2.Views;                         use VCS2.Views;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Search;               use GPS.Search;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Tree_View;         use Gtkada.Tree_View;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Gesture_Long_Press;   use Gtk.Gesture_Long_Press;
+with Gtk.Gesture_Multi_Press;  use Gtk.Gesture_Multi_Press;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with GUI_Utils;                use GUI_Utils;
+with String_Utils;             use String_Utils;
+with Tooltips;                 use Tooltips;
+with VCS2.Engines;             use VCS2.Engines;
+with VCS2.Views;               use VCS2.Views;
 
 package body VCS2.Branches is
 
@@ -77,11 +77,12 @@ package body VCS2.Branches is
    Tags_Name     : constant String := "Tags";
    Stashes_Name  : constant String := "Stashes";
 
-   package Path_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Gtk_Tree_Path,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
+   package Path_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Gtk_Tree_Path,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
 
    type Branches_Config is record
       Initialized : Boolean := False;
@@ -95,10 +96,12 @@ package body VCS2.Branches is
       User_Filter : GPS.Search.Search_Pattern_Access;
    end record;
    type Branches_Tree is access all Branches_Tree_Record'Class;
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Branches_Tree_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
-   overriding procedure On_Edited
+   overriding
+   procedure On_Edited
      (Self        : not null access Branches_Tree_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
@@ -112,31 +115,36 @@ package body VCS2.Branches is
    --  Special prefix added to the name of categories to make a special id used
    --  to restore expansion
 
-   package Branches_Expansion is new Expansion_Support
-     (Tree_Record   => Branches_Tree_Record,
-      Id            => String,
-      Get_Id        => Expansion_Id_From_Node,
-      Hash          => Ada.Strings.Hash);
+   package Branches_Expansion is new
+     Expansion_Support
+       (Tree_Record => Branches_Tree_Record,
+        Id          => String,
+        Get_Id      => Expansion_Id_From_Node,
+        Hash        => Ada.Strings.Hash);
 
    type Branches_View_Record is new Base_VCS_View_Record with record
-      Emblem      : Gtk_Cell_Renderer_Text;
-      Multipress  : Gtk_Gesture_Multi_Press;
-      Longpress   : Gtk_Gesture_Long_Press;
+      Emblem     : Gtk_Cell_Renderer_Text;
+      Multipress : Gtk_Gesture_Multi_Press;
+      Longpress  : Gtk_Gesture_Long_Press;
 
       Selected_Category : Unbounded_String;
       Selected_Id       : Unbounded_String;
    end record;
-   overriding procedure Refresh (Self : not null access Branches_View_Record);
-   overriding procedure On_Preferences_Changed
-     (Self    : not null access Branches_View_Record;
-      Pref    : Preference);
-   overriding procedure On_Create
-     (Self    : not null access Branches_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
-   overriding procedure Create_Menu
-     (View    : not null access Branches_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Filter_Changed
+   overriding
+   procedure Refresh (Self : not null access Branches_View_Record);
+   overriding
+   procedure On_Preferences_Changed
+     (Self : not null access Branches_View_Record; Pref : Preference);
+   overriding
+   procedure On_Create
+     (Self  : not null access Branches_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
+   overriding
+   procedure Create_Menu
+     (View : not null access Branches_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Branches_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
 
@@ -145,29 +153,30 @@ package body VCS2.Branches is
    --  Create a new view
 
    type Branches_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Branches_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
    --  See inherited documentation
 
-   package Branches_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Branches",
-      View_Name          => "Branches",
-      Formal_View_Record => Branches_View_Record,
-      Formal_MDI_Child   => Branches_Child_Record,
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Both,
-      Position           => Position_Left,
-      Initialize         => Initialize);
+   package Branches_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Branches",
+        View_Name          => "Branches",
+        Formal_View_Record => Branches_View_Record,
+        Formal_MDI_Child   => Branches_Child_Record,
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Both,
+        Position           => Position_Left,
+        Initialize         => Initialize);
    use Branches_Views;
    subtype Branches_View is Branches_Views.View_Access;
 
    function Create_Category
-     (Self  : not null access Branches_View_Record'Class;
-      Name  : String) return Gtk_Tree_Iter;
+     (Self : not null access Branches_View_Record'Class; Name : String)
+      return Gtk_Tree_Iter;
    --  Create a new top-level category node if none exists already for this
    --  category.
 
@@ -196,7 +205,8 @@ package body VCS2.Branches is
       Kernel    : Kernel_Handle;
       Expansion : Branches_Expansion.Expansion_Status;
    end record;
-   overriding procedure On_Branches
+   overriding
+   procedure On_Branches
      (Self       : not null access Branches_Visitor;
       Category   : String;
       Iconname   : String;
@@ -205,77 +215,89 @@ package body VCS2.Branches is
    --  Gather the results of the branches list for the current VCS
 
    type Tooltips_Visitor is new Task_Visitor with record
-      Label    : Gtk_Label;
+      Label : Gtk_Label;
    end record;
-   overriding procedure On_Tooltip
-     (Self     : not null access Tooltips_Visitor;
-      Text     : String);
-   overriding procedure Free (Self : in out Tooltips_Visitor);
+   overriding
+   procedure On_Tooltip
+     (Self : not null access Tooltips_Visitor; Text : String);
+   overriding
+   procedure Free (Self : in out Tooltips_Visitor);
 
    type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
    type On_VCS_Refresh is new Vcs_Refresh_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self          : On_VCS_Refresh;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Is_File_Saved : Boolean);
 
-   type Has_Selected_Branch_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Has_Selected_Branch_Filter;
-      Context : Selection_Context) return Boolean;
+   type Has_Selected_Branch_Filter is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Has_Selected_Branch_Filter; Context : Selection_Context)
+      return Boolean;
 
    type Select_Branch is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Select_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Select_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Unstage the file described in the context.
 
    type Add_Branch is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Add_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Add_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Delete_Branch is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Delete_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Delete_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type;
 
    type Rename_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Rename_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Rename_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Rename the selected branch
 
    type Stash_Branch is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Stash_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Stash_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Stash the branch by the context id.
 
    type Commit_Branch is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Commit_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Commit_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Commit branch's changes
 
    type Merge_Branch is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Merge_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Merge_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Commit branch's changes
 
    type Branches_Tooltip_Handler is new Tooltips.Tooltip_Handler with record
-      View   : access Branches_View_Record'Class;
+      View : access Branches_View_Record'Class;
    end record;
-   overriding function Create_Contents
-     (Self     : not null access Branches_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   overriding
+   function Create_Contents
+     (Self   : not null access Branches_Tooltip_Handler;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    function Category_From_Node
      (Self       : not null access Branches_Tree_Record'Class;
@@ -289,8 +311,7 @@ package body VCS2.Branches is
    --  Called every time a row is clicked
 
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble);
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble);
    --  Called to rename current entry
 
    procedure Clear (Self : not null access Branches_View_Record'Class);
@@ -307,37 +328,41 @@ package body VCS2.Branches is
    --  Perform an action on the select lines
 
    type Is_Branch_Context is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Branch_Context;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Branch_Context; Context : Selection_Context)
+      return Boolean;
    --  Whether the context has branch id information is set.
 
    type Is_Tag_Context is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Tag_Context;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Tag_Context; Context : Selection_Context)
+      return Boolean;
    --  Whether the context has tag id information is set.
 
    type Is_Stash_Context is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Stash_Context;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Stash_Context; Context : Selection_Context)
+      return Boolean;
    --  Whether the context has stash id information is set.
 
    type Is_Selected_Node is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Selected_Node;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Selected_Node; Context : Selection_Context)
+      return Boolean;
    --  Whether the context id equal current branch/tag.
 
    -------------------
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Branches_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
       View    : constant Branches_View :=
         Branches_View (GPS_MDI_Child (Self).Get_Actual_Widget);
@@ -353,8 +378,8 @@ package body VCS2.Branches is
 
             Set_VCS_Information
               (Context  => Context,
-               Category => Category_From_Node
-                 (Branches_Tree (View.Tree), Iter),
+               Category =>
+                 Category_From_Node (Branches_Tree (View.Tree), Iter),
                Id       => View.Tree.Model.Get_String (Iter, Column_Id));
             return Context;
          end if;
@@ -373,8 +398,10 @@ package body VCS2.Branches is
    is
       Id : constant String := Self.Model.Get_String (Store_Iter, Column_Id);
    begin
-      if Id = "" then   --  a category
-         return Category_Id_Prefix
+      if Id = "" then
+         --  a category
+         return
+           Category_Id_Prefix
            & Self.Model.Get_String (Store_Iter, Column_Name);
       else
          return Id;
@@ -385,13 +412,14 @@ package body VCS2.Branches is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Has_Selected_Branch_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Has_Selected_Branch_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Self);
-      View : Branches_View;
-      Tree : Branches_Tree;
+      View        : Branches_View;
+      Tree        : Branches_Tree;
       Filter_Iter : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
    begin
@@ -413,48 +441,55 @@ package body VCS2.Branches is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Branch_Context;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Branch_Context; Context : Selection_Context)
+      return Boolean is
    begin
-      return Module_ID (Get_Creator (Context)) = Branches_Views.Get_Module
+      return
+        Module_ID (Get_Creator (Context)) = Branches_Views.Get_Module
         and then Branches_Views.Retrieve_View (Get_Kernel (Context)) /= null
-          and then Get_VCS_Category (Context) = Branches_Name;
+        and then Get_VCS_Category (Context) = Branches_Name;
    end Filter_Matches_Primitive;
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Tag_Context;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Tag_Context; Context : Selection_Context) return Boolean
+   is
    begin
-      return Module_ID (Get_Creator (Context)) = Branches_Views.Get_Module
+      return
+        Module_ID (Get_Creator (Context)) = Branches_Views.Get_Module
         and then Branches_Views.Retrieve_View (Get_Kernel (Context)) /= null
-          and then Get_VCS_Category (Context) = Tags_Name;
+        and then Get_VCS_Category (Context) = Tags_Name;
    end Filter_Matches_Primitive;
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Stash_Context;
-      Context : Selection_Context) return Boolean is
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Stash_Context; Context : Selection_Context)
+      return Boolean is
    begin
-      return Module_ID (Get_Creator (Context)) = Branches_Views.Get_Module
+      return
+        Module_ID (Get_Creator (Context)) = Branches_Views.Get_Module
         and then Branches_Views.Retrieve_View (Get_Kernel (Context)) /= null
-          and then Get_VCS_Category (Context) = Stashes_Name;
+        and then Get_VCS_Category (Context) = Stashes_Name;
    end Filter_Matches_Primitive;
 
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Self    : access Is_Selected_Node;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Self : access Is_Selected_Node; Context : Selection_Context)
+      return Boolean
    is
       View : constant Branches_View :=
         Branches_Views.Retrieve_View (Get_Kernel (Context));
@@ -462,7 +497,8 @@ package body VCS2.Branches is
       if View = null then
          return False;
       else
-         return Get_VCS_Category (Context) = View.Selected_Category
+         return
+           Get_VCS_Category (Context) = View.Selected_Category
            and then Get_VCS_Id (Context) = View.Selected_Id;
       end if;
    end Filter_Matches_Primitive;
@@ -471,9 +507,10 @@ package body VCS2.Branches is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Branches_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access Branches_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Show_Ellipsis);
    end Create_Menu;
@@ -483,27 +520,25 @@ package body VCS2.Branches is
    ---------------------
 
    function Create_Category
-     (Self  : not null access Branches_View_Record'Class;
-      Name  : String) return Gtk_Tree_Iter
+     (Self : not null access Branches_View_Record'Class; Name : String)
+      return Gtk_Tree_Iter
    is
       Tree : constant Branches_Tree := Branches_Tree (Self.Tree);
-      C    : constant Path_Maps.Cursor := Tree.Categories.Find
-        (To_Lower (Name));
+      C    : constant Path_Maps.Cursor :=
+        Tree.Categories.Find (To_Lower (Name));
       Iter : Gtk_Tree_Iter;
       Path : Gtk_Tree_Path;
       V    : Glib.Values.GValue_Array (All_Columns);
    begin
       if Path_Maps.Has_Element (C) then
-         Path   := Path_Maps.Element (C);
+         Path := Path_Maps.Element (C);
          return Tree.Model.Get_Iter (Path);
       end if;
 
       Self.Tree.Model.Append (Iter, Parent => Null_Iter);
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value
-        (V (Column_Foreground),
-         Self.Get_Section_Title_Color);
+      Gdk.RGBA.Set_Value (V (Column_Foreground), Self.Get_Section_Title_Color);
 
       Init_Set_String (V (Column_Name), Format_Title (Name));
       Init_Set_String (V (Column_Emblem), "");
@@ -529,8 +564,8 @@ package body VCS2.Branches is
       Name      : String;
       Parent    : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
-      Iter    : Gtk_Tree_Iter;
-      V       : Glib.Values.GValue_Array (All_Columns);
+      Iter : Gtk_Tree_Iter;
+      V    : Glib.Values.GValue_Array (All_Columns);
    begin
       Iter := Self.Tree.Model.Children (Parent);
       while Iter /= Null_Iter loop
@@ -543,8 +578,7 @@ package body VCS2.Branches is
       Self.Tree.Model.Append (Iter, Parent => Parent);
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value
-        (V (Column_Foreground), Default_Style.Get_Pref_Fg);
+      Gdk.RGBA.Set_Value (V (Column_Foreground), Default_Style.Get_Pref_Fg);
 
       Init_Set_String (V (Column_Name), Name);
       Init_Set_String (V (Column_Emblem), "");
@@ -569,24 +603,23 @@ package body VCS2.Branches is
       Info       : Branch_Info;
       Can_Rename : Boolean)
    is
-      Parent  : Gtk_Tree_Iter := Category;
-      Iter    : Gtk_Tree_Iter;
-      V       : Glib.Values.GValue_Array (All_Columns);
+      Parent      : Gtk_Tree_Iter := Category;
+      Iter        : Gtk_Tree_Iter;
+      V           : Glib.Values.GValue_Array (All_Columns);
       First, Last : Natural := Info.Name'First;
 
    begin
-      if Info.Name (First) = '"'
-        and then Info.Name (Info.Name'Last) = '"'
-      then
+      if Info.Name (First) = '"' and then Info.Name (Info.Name'Last) = '"' then
          First := Info.Name'First + 1;
-         Last  := Info.Name'Last;
+         Last := Info.Name'Last;
 
       else
          while Last <= Info.Name'Last loop
             exit when Info.Name (Last) = '(';
             if Info.Name (Last) = '/' then
-               Parent := Create_Group
-                 (Self, Icon_Name, Info.Name (First .. Last - 1), Parent);
+               Parent :=
+                 Create_Group
+                   (Self, Icon_Name, Info.Name (First .. Last - 1), Parent);
                First := Last + 1;
             end if;
             Last := Last + 1;
@@ -598,12 +631,13 @@ package body VCS2.Branches is
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
       Init_Set_String
-         (V (Column_Name), Escape_Text (Info.Name (First .. Last - 1)));
+        (V (Column_Name), Escape_Text (Info.Name (First .. Last - 1)));
 
       if Info.Is_Current then
          Gdk.RGBA.Set_Value (V (Column_Foreground), Emblem_Color);
-         Self.Selected_Category := To_Unbounded_String
-           (Category_From_Node (Branches_Tree (Self.Tree), Parent));
+         Self.Selected_Category :=
+           To_Unbounded_String
+             (Category_From_Node (Branches_Tree (Self.Tree), Parent));
          Self.Selected_Id := To_Unbounded_String (Info.Id.all);
 
       else
@@ -624,14 +658,15 @@ package body VCS2.Branches is
    -- On_Branches --
    -----------------
 
-   overriding procedure On_Branches
+   overriding
+   procedure On_Branches
      (Self       : not null access Branches_Visitor;
       Category   : String;
       Iconname   : String;
       Can_Rename : Boolean;
       Branches   : Branches_Array)
    is
-      View : constant Branches_View :=
+      View  : constant Branches_View :=
         Branches_Views.Retrieve_View (Self.Kernel);
       Cat   : Gtk_Tree_Iter;
       Dummy : Boolean;
@@ -647,8 +682,9 @@ package body VCS2.Branches is
          --  have their original expansion. Do not force a collapse though,
          --  in case the user has already started manipulating the view.
          Branches_Expansion.Set_Expansion_Status
-            (Branches_Tree (View.Tree), Self.Expansion,
-             Collapse_All_First => False);
+           (Branches_Tree (View.Tree),
+            Self.Expansion,
+            Collapse_All_First => False);
       end if;
    end On_Branches;
 
@@ -679,7 +715,8 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self          : On_VCS_Refresh;
       Kernel        : not null access Kernel_Handle_Record'Class;
       Is_File_Saved : Boolean)
@@ -696,12 +733,13 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      V    : constant Branches_View := Branches_Views.Retrieve_View (Kernel);
+      V : constant Branches_View := Branches_Views.Retrieve_View (Kernel);
    begin
       if V /= null then
          Refresh (V);
@@ -712,32 +750,31 @@ package body VCS2.Branches is
    -- Refresh --
    -------------
 
-   overriding procedure Refresh
-     (Self : not null access Branches_View_Record)
-   is
+   overriding
+   procedure Refresh (Self : not null access Branches_View_Record) is
       VCS     : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
       Visitor : Task_Visitor_Access;
 
    begin
       if VCS /= null then
-         Visitor := new Branches_Visitor'
-           (Task_Visitor with
-            Kernel      => Self.Kernel,
-            Expansion   => <>);
+         Visitor :=
+           new Branches_Visitor'
+             (Task_Visitor with Kernel => Self.Kernel, Expansion => <>);
 
          --  Save expansion, but do not detach from view, so that the view is
          --  filled as information is discovered (querying data from Gerrit,
          --  for instance, might take a while).
          Branches_Expansion.Get_Expansion_Status
-            (Branches_Tree (Self.Tree),
-             Branches_Visitor'Class (Visitor.all).Expansion,
-             Save_Scrolling => False);
+           (Branches_Tree (Self.Tree),
+            Branches_Visitor'Class (Visitor.all).Expansion,
+            Save_Scrolling => False);
 
          --  By default, Branches is expanded
          if Self.Tree.Model.N_Children (Null_Iter) = 0 then
             Branches_Expansion.Set_Expanded
               (Branches_Visitor'Class (Visitor.all).Expansion,
-               Category_Id_Prefix & "Branches", True);
+               Category_Id_Prefix & "Branches",
+               True);
          end if;
 
          Clear (Self);
@@ -751,9 +788,9 @@ package body VCS2.Branches is
    -- On_Preferences_Changed --
    ----------------------------
 
-   overriding procedure On_Preferences_Changed
-     (Self    : not null access Branches_View_Record;
-      Pref    : Preference)
+   overriding
+   procedure On_Preferences_Changed
+     (Self : not null access Branches_View_Record; Pref : Preference)
    is
       Tree   : constant Branches_Tree := Branches_Tree (Self.Tree);
       Config : Branches_Config;
@@ -761,8 +798,7 @@ package body VCS2.Branches is
       Base_VCS_View_Record (Self.all).On_Preferences_Changed (Pref);
       Set_Font_And_Colors (Self.Tree, Fixed_Font => False, Pref => Pref);
 
-      Config :=
-        (Initialized      => True);
+      Config := (Initialized => True);
 
       if Config /= Tree.Config or else Pref = Preference (Default_Style) then
          Tree.Config := Config;
@@ -812,8 +848,7 @@ package body VCS2.Branches is
    begin
       if N_Press = 2 then
          Tree.Get_Path_At_Pos
-           (Gint (X), Gint (Y), Filter_Path,
-            Column, Cell_X, Cell_Y, Success);
+           (Gint (X), Gint (Y), Filter_Path, Column, Cell_X, Cell_Y, Success);
          if Success then
             --  Select the row that was clicked
             Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
@@ -821,11 +856,12 @@ package body VCS2.Branches is
             declare
                Iter : constant Gtk_Tree_Iter :=
                  Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
-               Id : constant String := Tree.Model.Get_String (Iter, Column_Id);
+               Id   : constant String :=
+                 Tree.Model.Get_String (Iter, Column_Id);
             begin
                if Id /= "" then
                   Active_VCS (View.Kernel).Queue_Action_On_Branch
-                    (Visitor => Refresh_On_Terminate (View.Kernel),
+                    (Visitor  => Refresh_On_Terminate (View.Kernel),
                      Action   => Action_Double_Click,
                      Category => Category_From_Node (Tree, Iter),
                      Id       => Id);
@@ -843,8 +879,7 @@ package body VCS2.Branches is
    ------------------
 
    procedure On_Longpress
-     (Self    : access Glib.Object.GObject_Record'Class;
-      X, Y    : Gdouble)
+     (Self : access Glib.Object.GObject_Record'Class; X, Y : Gdouble)
    is
       View        : constant Branches_View := Branches_View (Self);
       Filter_Iter : Gtk_Tree_Iter;
@@ -873,17 +908,17 @@ package body VCS2.Branches is
       Model      : Gtk_Tree_Model;
    begin
       Category := Ada.Strings.Unbounded.Null_Unbounded_String;
-      Id       := Ada.Strings.Unbounded.Null_Unbounded_String;
+      Id := Ada.Strings.Unbounded.Null_Unbounded_String;
 
-      Tree.Get_Selection.Get_Selected
-        (Model => Model, Iter => Store_Iter);
+      Tree.Get_Selection.Get_Selected (Model => Model, Iter => Store_Iter);
       if Store_Iter /= Null_Iter then
          Store_Iter := Tree.Convert_To_Store_Iter (Store_Iter);
          if Store_Iter /= Null_Iter then
-            Category := To_Unbounded_String
-              (Category_From_Node (Tree, Store_Iter));
-            Id := To_Unbounded_String
-              (Tree.Model.Get_String (Store_Iter, Column_Id));
+            Category :=
+              To_Unbounded_String (Category_From_Node (Tree, Store_Iter));
+            Id :=
+              To_Unbounded_String
+                (Tree.Model.Get_String (Store_Iter, Column_Id));
          end if;
       end if;
    end Get_Selected;
@@ -906,17 +941,13 @@ package body VCS2.Branches is
       Local_Category : Unbounded_String := To_Unbounded_String (Category);
       Local_Id       : Unbounded_String := To_Unbounded_String (Id);
    begin
-      if Local_Category = ""
-        or else Local_Id = ""
-      then
+      if Local_Category = "" or else Local_Id = "" then
          if View /= null then
             View.Get_Selected (Local_Category, Local_Id);
          end if;
       end if;
 
-      if Local_Category /= ""
-        and then Local_Id /= ""
-      then
+      if Local_Category /= "" and then Local_Id /= "" then
          Active_VCS (Kernel).Queue_Action_On_Branch
            (Visitor  => Refresh_On_Terminate (Kernel),
             Action   => Action,
@@ -929,9 +960,10 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Select_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Select_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -947,9 +979,10 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Stash_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Stash_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -965,9 +998,10 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Commit_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Commit_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -983,9 +1017,10 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Merge_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Merge_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -1001,9 +1036,10 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Add_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Add_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -1015,9 +1051,10 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Delete_Branch;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Delete_Branch; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
    begin
@@ -1029,7 +1066,8 @@ package body VCS2.Branches is
    -- On_Edited --
    ---------------
 
-   overriding procedure On_Edited
+   overriding
+   procedure On_Edited
      (Self        : not null access Branches_Tree_Record;
       Store_Iter  : Gtk_Tree_Iter;
       View_Column : Edited_Column_Id;
@@ -1049,16 +1087,18 @@ package body VCS2.Branches is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Rename_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Rename_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View   : constant Branches_View := Branches_Views.Retrieve_View (Kernel);
-      Tree   : Branches_Tree;
-      Store_Iter  : Gtk_Tree_Iter;
-      Model       : Gtk_Tree_Model;
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View       : constant Branches_View :=
+        Branches_Views.Retrieve_View (Kernel);
+      Tree       : Branches_Tree;
+      Store_Iter : Gtk_Tree_Iter;
+      Model      : Gtk_Tree_Model;
    begin
       if View /= null then
          Tree := Branches_Tree (View.Tree);
@@ -1068,8 +1108,7 @@ package body VCS2.Branches is
            and then Tree.Model.Get_Boolean (Store_Iter, Column_Can_Rename)
          then
             Tree.Start_Editing
-              (Render     => Tree.Name_Render,
-               Store_Iter => Store_Iter);
+              (Render => Tree.Name_Render, Store_Iter => Store_Iter);
          end if;
       end if;
       return Success;
@@ -1079,9 +1118,9 @@ package body VCS2.Branches is
    -- On_Tooltip --
    ----------------
 
-   overriding procedure On_Tooltip
-     (Self     : not null access Tooltips_Visitor;
-      Text     : String) is
+   overriding
+   procedure On_Tooltip
+     (Self : not null access Tooltips_Visitor; Text : String) is
    begin
       if not Self.Label.In_Destruction then
          Self.Label.Set_Text (Self.Label.Get_Text & ASCII.LF & Text);
@@ -1092,7 +1131,8 @@ package body VCS2.Branches is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Tooltips_Visitor) is
+   overriding
+   procedure Free (Self : in out Tooltips_Visitor) is
    begin
       Unref (Self.Label);
    end Free;
@@ -1101,10 +1141,11 @@ package body VCS2.Branches is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
-     (Self     : not null access Branches_Tooltip_Handler;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   overriding
+   function Create_Contents
+     (Self   : not null access Branches_Tooltip_Handler;
+      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
       Tree        : constant Branches_Tree := Branches_Tree (Self.View.Tree);
@@ -1122,7 +1163,8 @@ package body VCS2.Branches is
          Ref (Label);  --  owned by the visitor
 
          Active_VCS (Self.View.Kernel).Queue_Action_On_Branch
-           (Visitor => new Tooltips_Visitor'(Task_Visitor with Label => Label),
+           (Visitor  =>
+              new Tooltips_Visitor'(Task_Visitor with Label => Label),
             Action   => Action_Tooltip,
             Category => Category_From_Node (Tree, Iter),
             Id       => Tree.Model.Get_String (Iter, Column_Id));
@@ -1134,10 +1176,10 @@ package body VCS2.Branches is
    -- Filter_Changed --
    --------------------
 
-   overriding procedure Filter_Changed
+   overriding
+   procedure Filter_Changed
      (Self    : not null access Branches_View_Record;
-      Pattern : in out GPS.Search.Search_Pattern_Access)
-   is
+      Pattern : in out GPS.Search.Search_Pattern_Access) is
    begin
       GPS.Search.Free (Branches_Tree (Self.Tree).User_Filter);
       Branches_Tree (Self.Tree).User_Filter := Pattern;
@@ -1148,7 +1190,8 @@ package body VCS2.Branches is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self : not null access Branches_Tree_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
@@ -1158,7 +1201,8 @@ package body VCS2.Branches is
       if Self.User_Filter = null then
          return True;
       else
-         return Self.User_Filter.Start (N) /= GPS.Search.No_Match
+         return
+           Self.User_Filter.Start (N) /= GPS.Search.No_Match
            or else Self.User_Filter.Start (D) /= GPS.Search.No_Match;
       end if;
    end Is_Visible;
@@ -1215,15 +1259,16 @@ package body VCS2.Branches is
       Col.Pack_Start (Self.Text_Render, True);
       Col.Add_Attribute (Self.Text_Render, "markup", Column_Name);
       Col.Add_Attribute
-         (Self.Text_Render, "foreground-rgba", Column_Foreground);
+        (Self.Text_Render, "foreground-rgba", Column_Foreground);
 
       Branches_Tree (Self.Tree).Name_Render := Self.Text_Render;
       Branches_Tree (Self.Tree).Kernel := Self.Kernel;
 
       Self.Tree.Model.Set_Sort_Column_Id (Column_Name, Sort_Ascending);
 
-      Tooltip := new Branches_Tooltip_Handler'
-        (Tooltips.Tooltip_Handler with View => Self);
+      Tooltip :=
+        new Branches_Tooltip_Handler'
+          (Tooltips.Tooltip_Handler with View => Self);
       Tooltip.Associate_To_Widget (Self.Tree);
 
       Gtk_New (Col);
@@ -1253,10 +1298,10 @@ package body VCS2.Branches is
    -- On_Create --
    ---------------
 
-   overriding procedure On_Create
-     (Self    : not null access Branches_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class)
-   is
+   overriding
+   procedure On_Create
+     (Self  : not null access Branches_View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class) is
    begin
       Base_VCS_View_Record (Self.all).On_Create (Child);  --  inherited
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
@@ -1272,24 +1317,23 @@ package body VCS2.Branches is
    is
       Has_Selected_Branch : constant Action_Filter :=
         new Has_Selected_Branch_Filter;
-      Is_Branch_Filter    : constant Action_Filter :=
-        new Is_Branch_Context;
-      Is_Tag_Filter       : constant Action_Filter :=
-        new Is_Tag_Context;
-      Is_Selected_Filter  : constant Action_Filter :=
-        new Is_Selected_Node;
-      Is_Stash_Filter     : constant Action_Filter :=
-        new Is_Stash_Context;
+      Is_Branch_Filter    : constant Action_Filter := new Is_Branch_Context;
+      Is_Tag_Filter       : constant Action_Filter := new Is_Tag_Context;
+      Is_Selected_Filter  : constant Action_Filter := new Is_Selected_Node;
+      Is_Stash_Filter     : constant Action_Filter := new Is_Stash_Context;
    begin
       Branches_Views.Register_Module (Kernel);
 
       Register_Action
-        (Kernel, "vcs checkout branch",
+        (Kernel,
+         "vcs checkout branch",
          Description =>
-           -("Perform an action on the selected line." & ASCII.LF
+           -("Perform an action on the selected line."
+             & ASCII.LF
              & "The exact behavior depends on the specific type of entry"
              & " that was selected, for instance selecting a branch or a tag,"
-             & " or applying stashed git changes." & ASCII.LF
+             & " or applying stashed git changes."
+             & ASCII.LF
              & "This is the same as double-clicking on a line, see tooltips"
              & " for a more detailed description of each action."),
          Command     => new Select_Branch,
@@ -1298,9 +1342,11 @@ package body VCS2.Branches is
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs add branch",
+        (Kernel,
+         "vcs add branch",
          Description =>
-           -("Create a new branch, tag,..." & ASCII.LF
+           -("Create a new branch, tag,..."
+             & ASCII.LF
              & "The exact behavior depends on the specific type of entry"
              & " that was selected. See tooltips for a more detailed"
              & " description of what will happen."),
@@ -1310,51 +1356,55 @@ package body VCS2.Branches is
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs delete branch",
+        (Kernel,
+         "vcs delete branch",
          Description =>
-           -("Delete a branch, tag,..." & ASCII.LF
-           & "The exact behavior depends on the specific type of entry"
-           & " that was selected. See tooltips for a more detailed"
-           & " description of what will happen."),
+           -("Delete a branch, tag,..."
+             & ASCII.LF
+             & "The exact behavior depends on the specific type of entry"
+             & " that was selected. See tooltips for a more detailed"
+             & " description of what will happen."),
          Command     => new Delete_Branch,
          Icon_Name   => "gps-remove-symbolic",
          Filter      => Has_Selected_Branch,
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs rename branch",
+        (Kernel,
+         "vcs rename branch",
          Description =>
-           -("Rename a branch, tag,..." & ASCII.LF
-           & "The exact behavior depends on the specific type of entry"
-           & " that was selected. See tooltips for a more detailed"
-           & " description of what will happen."),
+           -("Rename a branch, tag,..."
+             & ASCII.LF
+             & "The exact behavior depends on the specific type of entry"
+             & " that was selected. See tooltips for a more detailed"
+             & " description of what will happen."),
          Command     => new Rename_Command,
          Icon_Name   => "gps-rename-symbolic",
          Filter      => Has_Selected_Branch,
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs stash branch",
-         Description =>
-           -("Stash changes in the selected branch"),
+        (Kernel,
+         "vcs stash branch",
+         Description => -("Stash changes in the selected branch"),
          Command     => new Stash_Branch,
          Icon_Name   => "vcs-branch-symbolic",
          Filter      => Is_Branch_Filter,
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs commit branch",
-         Description =>
-           -("Stash changes in the selected branch"),
+        (Kernel,
+         "vcs commit branch",
+         Description => -("Stash changes in the selected branch"),
          Command     => new Commit_Branch,
          Icon_Name   => "vcs-branch-symbolic",
          Filter      => Is_Branch_Filter,
          Category    => "VCS2");
 
       Register_Action
-        (Kernel, "vcs merge branch",
-         Description =>
-           -("Stash changes in the selected branch"),
+        (Kernel,
+         "vcs merge branch",
+         Description => -("Stash changes in the selected branch"),
          Command     => new Merge_Branch,
          Icon_Name   => "vcs-branch-symbolic",
          Filter      => Is_Branch_Filter,

@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Mmap;
-with GNATCOLL.VFS;  use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Unicode;
 with Unicode.CES;
 
@@ -27,22 +27,25 @@ package Input_Sources.Mmap is
    --  A special implementation of a reader, that reads from a file.
 
    procedure Open (Filename : Filesystem_String; Input : out Mmap_Input);
-   overriding procedure Close (Input : in out Mmap_Input);
-   overriding procedure Next_Char
+   overriding
+   procedure Close (Input : in out Mmap_Input);
+   overriding
+   procedure Next_Char
      (From : in out Mmap_Input; C : out Unicode.Unicode_Char);
-   overriding function Eof (From : Mmap_Input) return Boolean;
+   overriding
+   function Eof (From : Mmap_Input) return Boolean;
 
-   overriding procedure Set_System_Id
+   overriding
+   procedure Set_System_Id
      (Input : in out Mmap_Input; Id : Unicode.CES.Byte_Sequence);
    --  Override Input_Sources.Set_System_Id, and ensure we use an absolute
    --  file name. This is needed in lots of cases, for instance to resolve
    --  relative URIs, to ensure we do not parse a grammar twice,...
 
 private
-   type Mmap_Input is new Input_Source with
-      record
-         File   : GNATCOLL.Mmap.Mapped_File;
-         Buffer : GNATCOLL.Mmap.Str_Access;
-         Index  : Natural;
-      end record;
+   type Mmap_Input is new Input_Source with record
+      File   : GNATCOLL.Mmap.Mapped_File;
+      Buffer : GNATCOLL.Mmap.Str_Access;
+      Index  : Natural;
+   end record;
 end Input_Sources.Mmap;

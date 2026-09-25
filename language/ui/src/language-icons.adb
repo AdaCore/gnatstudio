@@ -39,46 +39,74 @@ package body Language.Icons is
       -- Get_Name --
       --------------
 
-      function Get_Name (Suffix : String) return String is
-        ( --  Do not use -symbolic icons, since we want to preserve the colors
-         case Category is
-            when Cat_Unknown | Cat_With
-               | Cat_Use   | Cat_Include
-               | Construct_Category | Cat_Exception_Handler
-               | Cat_Pragma | Cat_Aspect =>
-                     "gps-emblem-entity-generic" & Suffix & Theme,
+      function Get_Name (Suffix : String) return String
+      is ( --  Do not use -symbolic icons, since we want to preserve the colors
+          case Category is
+            when Cat_Unknown
+               | Cat_With
+               | Cat_Use
+               | Cat_Include
+               | Construct_Category
+               | Cat_Exception_Handler
+               | Cat_Pragma
+               | Cat_Aspect                               =>
+              "gps-emblem-entity-generic" & Suffix & Theme,
             when Cat_Package | Cat_Namespace | Cat_Custom =>
-               "gps-emblem-entity-package" & Suffix & Theme,
-            when Cat_Task | Cat_Procedure   | Cat_Function
-               | Cat_Method    | Cat_Constructor | Cat_Destructor
-               | Cat_Protected | Cat_Entry =>
-                   "gps-emblem-entity-subprogram" & Suffix & Theme,
-            when Cat_Class | Cat_Structure | Cat_Union
-               | Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
-               "gps-emblem-entity-type" & Suffix & Theme,
-            when Cat_Variable    | Cat_Local_Variable
-               | Cat_Parameter | Cat_Discriminant | Cat_Field
-               | Cat_Literal   | Cat_Representation_Clause =>
-                   "gps-emblem-entity-variable" & Suffix & Theme,
-            when Cat_Constant =>
-               "gps-emblem-entity-constant" &
-               Suffix & (if Gtk_Theme.Get_Pref.Dark then "-dark" else ""),
-            when Cat_Snippet =>
-               "gps-emblem-alias");
+              "gps-emblem-entity-package" & Suffix & Theme,
+            when Cat_Task
+               | Cat_Procedure
+               | Cat_Function
+               | Cat_Method
+               | Cat_Constructor
+               | Cat_Destructor
+               | Cat_Protected
+               | Cat_Entry                                =>
+              "gps-emblem-entity-subprogram" & Suffix & Theme,
+            when Cat_Class
+               | Cat_Structure
+               | Cat_Union
+               | Cat_Type
+               | Cat_Subtype
+               | Cat_Case_Inside_Record                   =>
+              "gps-emblem-entity-type" & Suffix & Theme,
+            when Cat_Variable
+               | Cat_Local_Variable
+               | Cat_Parameter
+               | Cat_Discriminant
+               | Cat_Field
+               | Cat_Literal
+               | Cat_Representation_Clause                =>
+              "gps-emblem-entity-variable" & Suffix & Theme,
+            when Cat_Constant                             =>
+              "gps-emblem-entity-constant"
+              & Suffix
+              & (if Gtk_Theme.Get_Pref.Dark then "-dark" else ""),
+            when Cat_Snippet                              =>
+              "gps-emblem-alias");
    begin
 
       if Is_Declaration then
          case Visibility is
-            when Visibility_Public    => return Get_Name ("-spec");
-            when Visibility_Protected => return Get_Name ("-protected-spec");
-            when Visibility_Private   => return Get_Name ("-private-spec");
+            when Visibility_Public    =>
+               return Get_Name ("-spec");
+
+            when Visibility_Protected =>
+               return Get_Name ("-protected-spec");
+
+            when Visibility_Private   =>
+               return Get_Name ("-private-spec");
          end case;
 
       else
          case Visibility is
-            when Visibility_Public    => return Get_Name ("");
-            when Visibility_Protected => return Get_Name ("-protected");
-            when Visibility_Private   => return Get_Name ("-private");
+            when Visibility_Public    =>
+               return Get_Name ("");
+
+            when Visibility_Protected =>
+               return Get_Name ("-protected");
+
+            when Visibility_Private   =>
+               return Get_Name ("-private");
          end case;
       end if;
    end Stock_From_Category;

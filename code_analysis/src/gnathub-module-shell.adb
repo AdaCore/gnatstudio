@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel;                use GPS.Kernel;
@@ -45,9 +45,7 @@ package body GNAThub.Module.Shell is
    type Tool_Property_Access is access all Tool_Property_Record'Class;
    --  Used to map tools with their associated Python instances
 
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Tool     : Tool_Access);
+   procedure Set_Data (Instance : Class_Instance; Tool : Tool_Access);
 
    function Get_Tool (Instance : Class_Instance) return Tool_Access;
 
@@ -61,9 +59,7 @@ package body GNAThub.Module.Shell is
    -- Set_Data --
    --------------
 
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Tool     : Tool_Access) is
+   procedure Set_Data (Instance : Class_Instance; Tool : Tool_Access) is
    begin
       Set_Data
         (Instance,
@@ -79,8 +75,10 @@ package body GNAThub.Module.Shell is
       Prop : Tool_Property_Access;
    begin
       if Instance /= No_Class_Instance then
-         Prop := Tool_Property_Access
-           (Instance_Property'(Get_Data (Instance, Analysis_Tool_Class_Name)));
+         Prop :=
+           Tool_Property_Access
+             (Instance_Property'
+                (Get_Data (Instance, Analysis_Tool_Class_Name)));
 
          if Prop /= null then
             return Prop.Tool;
@@ -95,14 +93,13 @@ package body GNAThub.Module.Shell is
    ------------------------------
 
    procedure Analysis_Commands_Handler
-     (Data : in out Callback_Data'Class; Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "display_report" then
          declare
-            Tool_Inst : constant Class_Instance := Data.Nth_Arg
-              (1, Allow_Null => True);
-            Tool       : constant Tool_Access := Get_Tool (Tool_Inst);
+            Tool_Inst : constant Class_Instance :=
+              Data.Nth_Arg (1, Allow_Null => True);
+            Tool      : constant Tool_Access := Get_Tool (Tool_Inst);
          begin
             GNAThub.Module.Module.Display_Data;
 
@@ -137,8 +134,8 @@ package body GNAThub.Module.Shell is
       if Command = Constructor_Method then
          declare
             Name : constant Unbounded_String := Data.Nth_Arg (2);
-            Tool : constant Tool_Access := GNAThub_Module.Get_Or_Create_Tool
-              (Name);
+            Tool : constant Tool_Access :=
+              GNAThub_Module.Get_Or_Create_Tool (Name);
          begin
             Set_Data (Tool_Inst, Tool);
          end;
@@ -148,47 +145,53 @@ package body GNAThub.Module.Shell is
             Tool       : constant Tool_Access := Get_Tool (Tool_Inst);
             Name       : constant Unbounded_String := Data.Nth_Arg (2);
             Identifier : constant Unbounded_String := Data.Nth_Arg (3);
-            Rule       : Rule_Access with Unreferenced;
+            Rule       : Rule_Access
+            with Unreferenced;
          begin
 
-            Rule := GNAThub_Module.Get_Or_Create_Rule
-              (Tool       => Tool,
-               Name       => Name,
-               Identifier => Identifier);
+            Rule :=
+              GNAThub_Module.Get_Or_Create_Rule
+                (Tool => Tool, Name => Name, Identifier => Identifier);
          end;
 
       elsif Command = "create_message" then
          declare
-            Tool       : constant Tool_Access := Get_Tool (Tool_Inst);
-            Container  : constant Messages_Container_Access :=
+            Tool               : constant Tool_Access := Get_Tool (Tool_Inst);
+            Container          : constant Messages_Container_Access :=
               GNAThub_Module.Kernel.Get_Messages_Container;
-            Category   : constant VSS.Strings.Virtual_String :=
+            Category           : constant VSS.Strings.Virtual_String :=
               VSS.Strings.Conversions.To_Virtual_String
                 (String'(Nth_Arg (Data, 2)));
-            File       : constant Virtual_File :=
-              Get_Data (Nth_Arg
-                        (Data, 3, Get_File_Class (Kernel),
-                         Default => No_Class_Instance, Allow_Null => False));
-            Line       : constant Natural := Nth_Arg (Data, 4);
-            Column     : constant Natural := Nth_Arg (Data, 5);
-            Text       : constant Unbounded_String := Nth_Arg (Data, 6);
-            Importance : constant Natural := Nth_Arg (Data, 7);
-            Rule_ID    : constant Unbounded_String := Data.Nth_Arg (8);
-            Rule       : constant Rule_Access :=
+            File               : constant Virtual_File :=
+              Get_Data
+                (Nth_Arg
+                   (Data,
+                    3,
+                    Get_File_Class (Kernel),
+                    Default    => No_Class_Instance,
+                    Allow_Null => False));
+            Line               : constant Natural := Nth_Arg (Data, 4);
+            Column             : constant Natural := Nth_Arg (Data, 5);
+            Text               : constant Unbounded_String :=
+              Nth_Arg (Data, 6);
+            Importance         : constant Natural := Nth_Arg (Data, 7);
+            Rule_ID            : constant Unbounded_String := Data.Nth_Arg (8);
+            Rule               : constant Rule_Access :=
               GNAThub_Module.Get_Or_Create_Rule
                 (Tool       => Tool,
                  Name       => To_Unbounded_String ("unknown"),
                  Identifier => Rule_ID);
             Look_For_Secondary : constant Boolean := Data.Nth_Arg (9, True);
-            Message    : constant GNAThub_Message_Access :=
+            Message            : constant GNAThub_Message_Access :=
               new GNAThub_Message;
          begin
 
             GNAThub.Messages.Initialize
               (Self                     => Message,
                Container                => Container,
-               Severity                 => GNAThub_Module.Get_Severity
-                 (Message_Importance_Type'Val (Importance)),
+               Severity                 =>
+                 GNAThub_Module.Get_Severity
+                   (Message_Importance_Type'Val (Importance)),
                Rule                     => Rule,
                Text                     => Text,
                File                     => File,
@@ -214,8 +217,8 @@ package body GNAThub.Module.Shell is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Analysis_Class := Kernel.Scripts.New_Class (Analysis_Class_Name);
-      Analysis_Tool_Class := Kernel.Scripts.New_Class
-        (Analysis_Tool_Class_Name);
+      Analysis_Tool_Class :=
+        Kernel.Scripts.New_Class (Analysis_Tool_Class_Name);
 
       Kernel.Scripts.Register_Command
         (Command       => "display_report",
@@ -231,31 +234,30 @@ package body GNAThub.Module.Shell is
          Static_Method => True);
 
       Kernel.Scripts.Register_Command
-        (Command       => Constructor_Method,
-         Handler       => Analysis_Tool_Commands_Handler'Access,
-         Class         => Analysis_Tool_Class,
-         Params        => (1 => Param ("name")));
+        (Command => Constructor_Method,
+         Handler => Analysis_Tool_Commands_Handler'Access,
+         Class   => Analysis_Tool_Class,
+         Params  => (1 => Param ("name")));
 
       Kernel.Scripts.Register_Command
-        (Command       => "add_rule",
-         Handler       => Analysis_Tool_Commands_Handler'Access,
-         Class         => Analysis_Tool_Class,
-         Params        => (1 => Param ("name"),
-                           2 => Param ("id")));
+        (Command => "add_rule",
+         Handler => Analysis_Tool_Commands_Handler'Access,
+         Class   => Analysis_Tool_Class,
+         Params  => (1 => Param ("name"), 2 => Param ("id")));
 
       Kernel.Scripts.Register_Command
-        (Command       => "create_message",
-         Handler       => Analysis_Tool_Commands_Handler'Access,
-         Class         => Analysis_Tool_Class,
-         Params        => (1 => Param ("category"),
-                           2 => Param ("file"),
-                           3 => Param ("line"),
-                           4 => Param ("column"),
-                           5 => Param ("text"),
-                           6 => Param ("importance"),
-                           7 => Param ("rule_id"),
-                           8 =>
-                             Param ("look_for_secondary", Optional => True)));
+        (Command => "create_message",
+         Handler => Analysis_Tool_Commands_Handler'Access,
+         Class   => Analysis_Tool_Class,
+         Params  =>
+           (1 => Param ("category"),
+            2 => Param ("file"),
+            3 => Param ("line"),
+            4 => Param ("column"),
+            5 => Param ("text"),
+            6 => Param ("importance"),
+            7 => Param ("rule_id"),
+            8 => Param ("look_for_secondary", Optional => True)));
    end Register_Commands;
 
 end GNAThub.Module.Shell;

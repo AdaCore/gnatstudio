@@ -22,22 +22,23 @@ with Commands.Interactive; use Commands.Interactive;
 with Diff_Utils2;          use Diff_Utils2;
 with GPS.Kernel;           use GPS.Kernel;
 with Vdiff2_Command;       use Vdiff2_Command;
-with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
 package Vdiff2_Command_Line is
 
-   type Handler_Action_Line is access procedure
-     (Kernel : Kernel_Handle;
-      Diff   : Diff_Head_Access;
-      Line   : Natural := 0;
-      File   : Virtual_File := GNATCOLL.VFS.No_File);
-      --  Is an access for the action executed by an Diff_Command
+   type Handler_Action_Line is
+     access procedure
+       (Kernel : Kernel_Handle;
+        Diff   : Diff_Head_Access;
+        Line   : Natural := 0;
+        File   : Virtual_File := GNATCOLL.VFS.No_File);
+   --  Is an access for the action executed by an Diff_Command
 
    type Diff_Command_Line is new Diff_Command with record
-      Action    : Handler_Action_Line;
-      File      : Virtual_File;
-      Line      : Natural;
-      Head      : Diff_Head_List.Std_Vectors.Cursor;
+      Action : Handler_Action_Line;
+      File   : Virtual_File;
+      Line   : Natural;
+      Head   : Diff_Head_List.Std_Vectors.Cursor;
    end record;
 
    type Diff_Command_Line_Access is access all Diff_Command_Line;
@@ -50,23 +51,23 @@ package Vdiff2_Command_Line is
       Line      : Natural;
       Action    : Vdiff2_Command_Line.Handler_Action_Line);
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Line;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Execute the command Command
    --  Search in the global List of Diff the current diff end apply Action on
    --  this
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type;
    --  Execute the command Command
    --  Search in the global List of Diff the current diff end apply Action on
    --  this
 
    function Is_In_Diff_Chunk_List
-     (Selected_File : Virtual_File;
-      Item          : Diff_Head;
-      Line          : Natural)
+     (Selected_File : Virtual_File; Item : Diff_Head; Line : Natural)
       return Diff_Chunk_List.Std_Vectors.Cursor;
    --  Search in diff list the node corresponding to Item
 

@@ -27,7 +27,7 @@ with Gtk.Handlers;
 with Gtk.Tree_View_Column;
 with Gtkada.Abstract_Tree_Model;
 with Gtkada.Types;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 
 package body GNAThub.Generic_Criteria_Editors is
 
@@ -37,8 +37,8 @@ package body GNAThub.Generic_Criteria_Editors is
    --  Converts external tag to Glib compatible form.
 
    procedure On_Toggle_Category_Visibility
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Gtkada.Types.Chars_Ptr;
       Self   : Criteria_Editor);
    --  Called on click on the list's item
@@ -57,29 +57,31 @@ package body GNAThub.Generic_Criteria_Editors is
      (Self : not null access Criteria_Editor_Record'Class);
    --  Updates state of 'select/unselect all' toggle
 
-   package Cell_Renderer_Toggle_Callbacks is
-     new Gtk.Handlers.User_Callback
-           (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
-            Criteria_Editor);
+   package Cell_Renderer_Toggle_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record,
+        Criteria_Editor);
 
-   package Cell_Renderer_Toggle_Callbacks_Marshallers is
-     new Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
-           (Gtkada.Types.Chars_Ptr, Glib.Values.Get_Chars);
+   package Cell_Renderer_Toggle_Callbacks_Marshallers is new
+     Cell_Renderer_Toggle_Callbacks.Marshallers.Generic_Marshaller
+       (Gtkada.Types.Chars_Ptr,
+        Glib.Values.Get_Chars);
 
-   package Tree_View_Column_Callbacks is
-     new Gtk.Handlers.User_Callback
-           (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record,
-            Criteria_Editor);
+   package Tree_View_Column_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Gtk.Tree_View_Column.Gtk_Tree_View_Column_Record,
+        Criteria_Editor);
 
-   package Message_Categories_Criteria_Editor_Callbacks is
-     new Gtk.Handlers.Callback (Criteria_Editor_Record);
+   package Message_Categories_Criteria_Editor_Callbacks is new
+     Gtk.Handlers.Callback (Criteria_Editor_Record);
 
-   package Message_Categories_Criteria_Model_Callbacks is
-     new Gtk.Handlers.User_Callback
-           (Criteria_Models.Criteria_Model_Record, Criteria_Editor);
+   package Message_Categories_Criteria_Model_Callbacks is new
+     Gtk.Handlers.User_Callback
+       (Criteria_Models.Criteria_Model_Record,
+        Criteria_Editor);
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
+     Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => New_String (String (Signal_Criteria_Changed)));
@@ -91,8 +93,7 @@ package body GNAThub.Generic_Criteria_Editors is
    ------------
 
    procedure Choose
-     (Self : access Criteria_Editor_Record'Class;
-      Item : Item_Access) is
+     (Self : access Criteria_Editor_Record'Class; Item : Item_Access) is
    begin
       Self.Model.Show (Item);
    end Choose;
@@ -104,14 +105,15 @@ package body GNAThub.Generic_Criteria_Editors is
    function Filter_Visible_Func
      (Model : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      View  : Gtk.Widget.Gtk_Widget)
-      return Boolean is
+      View  : Gtk.Widget.Gtk_Widget) return Boolean is
    begin
       if Is_Visible /= null then
-         return Is_Visible
-           (Criteria_Models.Criteria_Model
-              (Gtkada.Abstract_Tree_Model."-" (Model)).Item_At (Iter),
-            View);
+         return
+           Is_Visible
+             (Criteria_Models.Criteria_Model
+                (Gtkada.Abstract_Tree_Model."-" (Model))
+                .Item_At (Iter),
+              View);
       else
          return True;
       end if;
@@ -179,8 +181,7 @@ package body GNAThub.Generic_Criteria_Editors is
    ---------------
 
    procedure Highlight
-     (Self : access Criteria_Editor_Record'Class;
-      Item : Item_Access)
+     (Self : access Criteria_Editor_Record'Class; Item : Item_Access)
    is
       Path : Gtk.Tree_Model.Gtk_Tree_Path := Self.Model.Get_Path (Item);
    begin
@@ -215,11 +216,11 @@ package body GNAThub.Generic_Criteria_Editors is
       Self.Parent := View;
 
       Glib.Object.Initialize_Class_Record
-        (Ancestor      => Gtk.Scrolled_Window.Get_Type,
-         Signals       => Signals,
-         Class_Record  => Class_Record,
-         Type_Name     => Glib_Class_Name (Criteria_Editor_Record'Tag),
-         Parameters    => Signal_Parameters);
+        (Ancestor     => Gtk.Scrolled_Window.Get_Type,
+         Signals      => Signals,
+         Class_Record => Class_Record,
+         Type_Name    => Glib_Class_Name (Criteria_Editor_Record'Tag),
+         Parameters   => Signal_Parameters);
       Glib.Object.G_New (Self, Class_Record);
 
       Self.Set_Policy (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
@@ -293,10 +294,11 @@ package body GNAThub.Generic_Criteria_Editors is
                   Column.Add_Attribute (Renderer, "text", Gint (Index));
                end;
 
-            when others =>
-               raise Constraint_Error with
-                 "Unsupported column type for " &
-                 "GNATHub.Generic_Criteria_Editors";
+            when others                    =>
+               raise Constraint_Error
+                 with
+                   "Unsupported column type for "
+                   & "GNATHub.Generic_Criteria_Editors";
          end case;
          Dummy := Self.View.Append_Column (Column);
          Title_Idx := Title_Idx + 1;
@@ -309,8 +311,7 @@ package body GNAThub.Generic_Criteria_Editors is
 
    function Item_By_Path
      (Self : access Criteria_Editor_Record'Class;
-      Path  : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Item_Access is
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Item_Access is
    begin
       if Path /= Null_Gtk_Tree_Path then
          return Self.Model.Item_At (Self.Model.Get_Iter (Path));
@@ -324,8 +325,7 @@ package body GNAThub.Generic_Criteria_Editors is
    ------------------
 
    function Path_By_Item
-     (Self : access Criteria_Editor_Record'Class;
-      Item : Item_Access)
+     (Self : access Criteria_Editor_Record'Class; Item : Item_Access)
       return Gtk.Tree_Model.Gtk_Tree_Path is
    begin
       return Self.Model.Get_Path (Item);
@@ -383,8 +383,8 @@ package body GNAThub.Generic_Criteria_Editors is
    -----------------------------------
 
    procedure On_Toggle_Category_Visibility
-     (Object : access
-        Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
+     (Object :
+        access Gtk.Cell_Renderer_Toggle.Gtk_Cell_Renderer_Toggle_Record'Class;
       Path   : Gtkada.Types.Chars_Ptr;
       Self   : Criteria_Editor)
    is
@@ -394,17 +394,19 @@ package body GNAThub.Generic_Criteria_Editors is
    begin
       if Is_Visible /= null then
          Self.Filter.Convert_Iter_To_Child_Iter
-           (Iter, Self.Filter.Get_Iter_From_String
-              (Gtkada.Types.Value (Path)));
+           (Iter,
+            Self.Filter.Get_Iter_From_String (Gtkada.Types.Value (Path)));
 
       else
-         Iter := Gtk.Tree_Model.Get_Iter_From_String
-          (Gtk.Tree_Model.To_Interface (Self.Model),
-           Gtkada.Types.Value (Path));
+         Iter :=
+           Gtk.Tree_Model.Get_Iter_From_String
+             (Gtk.Tree_Model.To_Interface (Self.Model),
+              Gtkada.Types.Value (Path));
       end if;
 
-      P := Gtk.Tree_Model.Get_Path
-        (Gtk.Tree_Model.To_Interface (Self.Model), Iter);
+      P :=
+        Gtk.Tree_Model.Get_Path
+          (Gtk.Tree_Model.To_Interface (Self.Model), Iter);
 
       if Object.Get_Active then
          Self.Model.Hide (Self.Model.Item_At (Iter));
@@ -422,9 +424,8 @@ package body GNAThub.Generic_Criteria_Editors is
    -----------------------
 
    function Signal_Parameters return Glib.Object.Signal_Parameter_Types is
-      Result  : constant Glib.Object.Signal_Parameter_Types :=
-        (1 => (1 => Gtk.Tree_Model.Path_Get_Type,
-               2 => Glib.GType_None));
+      Result : constant Glib.Object.Signal_Parameter_Types :=
+        (1 => (1 => Gtk.Tree_Model.Path_Get_Type, 2 => Glib.GType_None));
    begin
       return Result;
    end Signal_Parameters;
@@ -434,8 +435,7 @@ package body GNAThub.Generic_Criteria_Editors is
    --------------
 
    procedure Unselect
-     (Self : access Criteria_Editor_Record'Class;
-      Item : Item_Access) is
+     (Self : access Criteria_Editor_Record'Class; Item : Item_Access) is
    begin
       Self.Model.Hide (Item);
    end Unselect;

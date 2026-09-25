@@ -16,18 +16,18 @@
 ------------------------------------------------------------------------------
 --  Main entry point for GNAThub module
 
-with Default_Preferences;        use Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 with GPS.Kernel.Modules;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with GNAThub.Filters;
 limited with GNAThub.Loader.Databases;
 limited with GNAThub.Loader.External;
 
 package GNAThub.Module is
 
-   Hide_Others_Node           : Boolean_Preference;
-   Always_Display_The_Rules   : Boolean_Preference;
-   Auto_Location_Filtering    : Boolean_Preference;
+   Hide_Others_Node         : Boolean_Preference;
+   Always_Display_The_Rules : Boolean_Preference;
+   Auto_Location_Filtering  : Boolean_Preference;
 
    type Database_Loader_Access is
      access all GNAThub.Loader.Databases.Database_Loader_Type'Class;
@@ -40,7 +40,7 @@ package GNAThub.Module is
    type GNAThub_Child is access all GNAThub_Child_Record'Class;
 
    type GNAThub_Module_Id_Record is new GPS.Kernel.Modules.Module_ID_Record
-     with record
+   with record
       Kernel           : GPS.Kernel.Kernel_Handle;
       Tools            : Tools_Ordered_Sets.Set;
       Severities       : Severities_Ordered_Sets.Set;
@@ -59,21 +59,17 @@ package GNAThub.Module is
    --  Loads and displays analysis data. Doesn't run GNAThub, reports error
    --  when database is not exists.
 
-   procedure Clean
-     (Self  : in out GNAThub_Module_Id_Record'Class);
+   procedure Clean (Self : in out GNAThub_Module_Id_Record'Class);
    --  Deallocate all loaded data
 
-   procedure Clean_External
-     (Self  : in out GNAThub_Module_Id_Record'Class);
+   procedure Clean_External (Self : in out GNAThub_Module_Id_Record'Class);
    --  Clean external provider messages
 
-   procedure Remove_Database
-     (Self : in out GNAThub_Module_Id_Record'Class);
+   procedure Remove_Database (Self : in out GNAThub_Module_Id_Record'Class);
    --  Remove the external loader's database and its associated messages.
 
    function Get_Severity
-     (Self    : GNAThub_Module_Id_Record'Class;
-      Ranking : Message_Importance_Type)
+     (Self : GNAThub_Module_Id_Record'Class; Ranking : Message_Importance_Type)
       return Severity_Access;
    --  Return the severity object corresponding to the given ranking or null
    --  when not found.
@@ -87,16 +83,14 @@ package GNAThub.Module is
      (Self       : in out GNAThub_Module_Id_Record'Class;
       Tool       : not null Tool_Access;
       Name       : Ada.Strings.Unbounded.Unbounded_String;
-      Identifier : Ada.Strings.Unbounded.Unbounded_String)
-      return Rule_Access;
+      Identifier : Ada.Strings.Unbounded.Unbounded_String) return Rule_Access;
    --  Creates new rule object for tool
 
    function Get_Or_Create_Metric
      (Self       : in out GNAThub_Module_Id_Record'Class;
       Tool       : not null Tool_Access;
       Name       : Ada.Strings.Unbounded.Unbounded_String;
-      Identifier : Ada.Strings.Unbounded.Unbounded_String)
-      return Rule_Access;
+      Identifier : Ada.Strings.Unbounded.Unbounded_String) return Rule_Access;
    --  Create a new metric rule object for tool
 
    procedure Register_Module

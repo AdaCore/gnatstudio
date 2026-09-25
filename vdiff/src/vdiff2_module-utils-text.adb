@@ -133,16 +133,15 @@ package body Vdiff2_Module.Utils.Text is
       Source_Range : in out Diff_Range;
       Dest_Range   : in out Diff_Range)
    is
-      Offset_Dest       : constant Natural :=
-        Dest_Range.Last - Dest_Range.First;
-      Offset_Source     : constant Natural :=
+      Offset_Dest   : constant Natural := Dest_Range.Last - Dest_Range.First;
+      Offset_Source : constant Natural :=
         Source_Range.Last - Source_Range.First;
-      Offset_Min        : Natural := Offset_Source;
+      Offset_Min    : Natural := Offset_Source;
 
-      First_Dest        : Natural;
-      First_Source      : Natural;
+      First_Dest   : Natural;
+      First_Source : Natural;
 
-      Current_Line      : String_Access;
+      Current_Line : String_Access;
 
    begin
       Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark.Element);
@@ -160,11 +159,12 @@ package body Vdiff2_Module.Utils.Text is
 
       if Offset_Source > 0 and Offset_Dest > 0 then
          for J in 1 .. Offset_Min loop
-            Current_Line := new String'
-              (Get_Line (Kernel, Source_File, (First_Source + J - 1)));
+            Current_Line :=
+              new String'
+                (Get_Line (Kernel, Source_File, (First_Source + J - 1)));
 
-            Replace_Line (Kernel, Dest_File, (First_Dest + J - 1),
-                          Current_Line.all);
+            Replace_Line
+              (Kernel, Dest_File, (First_Dest + J - 1), Current_Line.all);
          end loop;
 
          if Offset_Source /= Offset_Min then
@@ -177,28 +177,21 @@ package body Vdiff2_Module.Utils.Text is
          if Offset_Dest /= Offset_Min then
 
             for J in Offset_Min .. Offset_Source loop
-               Current_Line := new String'
-                 (Get_Line
-                    (Kernel, Source_File,
-                     First_Source + J));
+               Current_Line :=
+                 new String'(Get_Line (Kernel, Source_File, First_Source + J));
                Insert_Line
-                 (Kernel, Dest_File,
-                  First_Dest + J,
-                  Current_Line.all);
+                 (Kernel, Dest_File, First_Dest + J, Current_Line.all);
             end loop;
          end if;
 
       elsif Offset_Dest <= 0 then
 
          for J in 1 .. Offset_Source loop
-            Current_Line := new String'
-              (Get_Line
-                 (Kernel, Source_File,
-                  First_Source + J - 1));
+            Current_Line :=
+              new String'
+                (Get_Line (Kernel, Source_File, First_Source + J - 1));
             Insert
-              (Kernel, Dest_File,
-               First_Dest + J - 1, 1,
-               Current_Line.all);
+              (Kernel, Dest_File, First_Dest + J - 1, 1, Current_Line.all);
          end loop;
       end if;
    end Move_Block;
@@ -213,9 +206,8 @@ package body Vdiff2_Module.Utils.Text is
       Source_Range : in out Diff_Range;
       Dest_Range   : in out Diff_Range)
    is
-      Offset_Dest       : constant Natural :=
-        Dest_Range.Last - Dest_Range.First;
-      First_Dest        : Natural;
+      Offset_Dest : constant Natural := Dest_Range.Last - Dest_Range.First;
+      First_Dest  : Natural;
 
    begin
       Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark.Element);

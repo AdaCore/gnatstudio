@@ -23,9 +23,7 @@ package Src_Editor_Buffer.Hooks is
    --  Emit the hook Cursor_Stopped_Hook
 
    procedure Word_Added
-     (Buffer      : Source_Buffer;
-      Character   : Gunichar;
-      Interactive : Boolean);
+     (Buffer : Source_Buffer; Character : Gunichar; Interactive : Boolean);
    --  Emit the hook Word_Added_Hook.
    --  Character is the last character added creating the new word and
    --  it should be 8 (control-H) when a character was removed from the buffer.
@@ -33,9 +31,7 @@ package Src_Editor_Buffer.Hooks is
    --  a user interaction.
 
    procedure Character_Added
-     (Buffer      : Source_Buffer;
-      Character   : Gunichar;
-      Interactive : Boolean);
+     (Buffer : Source_Buffer; Character : Gunichar; Interactive : Boolean);
    --  Emit the Character_Added_Hook. Character should be 8 (control-H) when a
    --  character was removed from the buffer.
    --  Interactive indicates whether the character is a result of user

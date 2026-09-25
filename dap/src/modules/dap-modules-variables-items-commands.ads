@@ -22,29 +22,30 @@ package DAP.Modules.Variables.Items.Commands is
       Split_Lines : Boolean;
    end record;
 
-   overriding function Get_Name
-     (Self : Command_Item_Info) return Virtual_String;
+   overriding
+   function Get_Name (Self : Command_Item_Info) return Virtual_String;
 
-   overriding function Get_Full_Name
-     (Self : Command_Item_Info) return Virtual_String;
+   overriding
+   function Get_Full_Name (Self : Command_Item_Info) return Virtual_String;
 
-   overriding function Is_Command (Info : Command_Item_Info) return Boolean;
+   overriding
+   function Is_Command (Info : Command_Item_Info) return Boolean;
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : Command_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean);
 
-   overriding procedure Store
-     (Info  : Command_Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Store
+     (Info : Command_Item_Info; Value : in out GNATCOLL.JSON.JSON_Value);
 
    function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class;
 
    function Create
      (Command     : VSS.Strings.Virtual_String;
       Split_Lines : Boolean;
-      Format      : DAP.Tools.ValueFormat)
-      return Item_Info'Class;
+      Format      : DAP.Tools.ValueFormat) return Item_Info'Class;
 
 end DAP.Modules.Variables.Items.Commands;

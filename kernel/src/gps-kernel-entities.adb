@@ -24,45 +24,46 @@ with VSS.Strings.Formatters.Strings;
 with VSS.Strings.Templates;
 
 with Basic_Types;
-with Commands.Generic_Asynchronous; use Commands;
+with Commands.Generic_Asynchronous;
+use Commands;
 with Glib.Convert;
-with Gtk.Box;                       use Gtk.Box;
-with Gtk.Button;                    use Gtk.Button;
-with Gtk.Check_Button;              use Gtk.Check_Button;
-with Gtk.Dialog;                    use Gtk.Dialog;
-with Gtk.Enums;                     use Gtk.Enums;
-with Gtk.Frame;                     use Gtk.Frame;
-with Gtk.Radio_Button;              use Gtk.Radio_Button;
-with Gtk.Vbutton_Box;               use Gtk.Vbutton_Box;
-with Gtk.Widget;                    use Gtk.Widget;
-with Gtkada.Handlers;               use Gtkada.Handlers;
-with Gtkada.Stock_Labels;           use Gtkada.Stock_Labels;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Check_Button;    use Gtk.Check_Button;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Frame;           use Gtk.Frame;
+with Gtk.Radio_Button;    use Gtk.Radio_Button;
+with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.Stock_Labels; use Gtkada.Stock_Labels;
 
-with GNAT.Strings;                  use GNAT.Strings;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
-with GNATCOLL.Projects;             use GNATCOLL.Projects;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
+with GNAT.Strings;      use GNAT.Strings;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS.VSS_Utils.Formatters;
-with GNATCOLL.Xref;                 use GNATCOLL.Xref;
+with GNATCOLL.Xref;     use GNATCOLL.Xref;
 
-with GPS.Default_Styles;            use GPS.Default_Styles;
-with GPS.Scripts.Commands;          use GPS.Scripts.Commands;
-with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
-with GPS.Kernel.Messages;           use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Markup;    use GPS.Kernel.Messages.Markup;
-with GPS.Kernel.Messages.Simple;    use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Project;            use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Xref;               use GPS.Kernel.Xref;
+with GPS.Default_Styles;         use GPS.Default_Styles;
+with GPS.Scripts.Commands;       use GPS.Scripts.Commands;
+with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
+with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Xref;            use GPS.Kernel.Xref;
 with GPS.Location_View;
-with GPS.Intl;                      use GPS.Intl;
-with Histories;                     use Histories;
-with Language;                      use Language;
-with Language.Ada;                  use Language.Ada;
+with GPS.Intl;                   use GPS.Intl;
+with Histories;                  use Histories;
+with Language;                   use Language;
+with Language.Ada;               use Language.Ada;
 with UTF8_Utils;
-with Xref;                          use Xref;
+with Xref;                       use Xref;
 
 package body GPS.Kernel.Entities is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.ENTITIES");
@@ -72,9 +73,7 @@ package body GPS.Kernel.Entities is
    --  each idle processing.
 
    Call_Graph_Message_Flags : constant Message_Flags :=
-     (Editor_Side => True,
-      Editor_Line => False,
-      Locations   => True);
+     (Editor_Side => True, Editor_Line => False, Locations => True);
    --  Visibility of call graph's messages in the system at whole
 
    package Entity_Ref_List is new
@@ -83,13 +82,13 @@ package body GPS.Kernel.Entities is
    use Entity_Ref_List;
 
    type Custom_Filter is record
-      Db        : General_Xref_Database;
+      Db : General_Xref_Database;
 
       Ref_Kinds : GNAT.Strings.String_List_Access;
       --  The reference kinds' name that should be displayed, or none for all.
       --  Any null value is ignored in this array.
 
-      Filter    : Reference_Kind_Filter;
+      Filter : Reference_Kind_Filter;
       --  One of the predefined filters
    end record;
 
@@ -121,11 +120,11 @@ package body GPS.Kernel.Entities is
    type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
       Filters : Filters_Buttons_Access;
    end record;
-   type References_Filter_Dialog is access all
-     References_Filter_Dialog_Record'Class;
+   type References_Filter_Dialog is
+     access all References_Filter_Dialog_Record'Class;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Filters_Buttons, Filters_Buttons_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Filters_Buttons, Filters_Buttons_Access);
 
    procedure Unselect_All_Filters (Dialog : access Gtk_Widget_Record'Class);
    procedure Select_All_Filters (Dialog : access Gtk_Widget_Record'Class);
@@ -151,20 +150,20 @@ package body GPS.Kernel.Entities is
    --  This procedure will free Filter.
 
    function Is_Read_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Read_Reference);
+     (Ref : Root_Entity_Reference'Class) return Boolean
+   is (Ref.Is_Read_Reference);
    function Is_Write_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Write_Reference);
+     (Ref : Root_Entity_Reference'Class) return Boolean
+   is (Ref.Is_Write_Reference);
    function Is_Read_Or_Write_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Read_Or_Write_Reference);
+     (Ref : Root_Entity_Reference'Class) return Boolean
+   is (Ref.Is_Read_Or_Write_Reference);
    function Is_Read_Or_Implicit_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Read_Or_Implicit_Reference);
+     (Ref : Root_Entity_Reference'Class) return Boolean
+   is (Ref.Is_Read_Or_Implicit_Reference);
    function Is_Read_Or_Write_Or_Implicit_Reference
-     (Ref : Root_Entity_Reference'Class) return Boolean is
-     (Ref.Is_Read_Or_Write_Or_Implicit_Reference);
+     (Ref : Root_Entity_Reference'Class) return Boolean
+   is (Ref.Is_Read_Or_Write_Or_Implicit_Reference);
 
    type Entity_Idle_Data is record
       Kernel             : Kernel_Handle;
@@ -181,8 +180,8 @@ package body GPS.Kernel.Entities is
    procedure Destroy_Idle (Data : in out Entity_Idle_Data);
    --  Called when the idle loop is destroyed
 
-   package Xref_Commands is new Commands.Generic_Asynchronous
-     (Entity_Idle_Data, Destroy_Idle);
+   package Xref_Commands is new
+     Commands.Generic_Asynchronous (Entity_Idle_Data, Destroy_Idle);
 
    procedure Find_Next_Reference
      (Data    : in out Entity_Idle_Data;
@@ -221,7 +220,8 @@ package body GPS.Kernel.Entities is
    type Add_To_List_User_Data_Access is access all Add_To_List_User_Data'Class;
    --  Add a new entity to the returned value in D.Data.
 
-   overriding function On_Entity_Found
+   overriding
+   function On_Entity_Found
      (D                   : access Add_To_List_User_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
@@ -230,8 +230,7 @@ package body GPS.Kernel.Entities is
       Is_Renaming         : Boolean) return Boolean;
    --  See inherited documentation.
 
-   type References_Command is
-     new Abstract_References_Command with record
+   type References_Command is new Abstract_References_Command with record
       Kernel        : Kernel_Handle;
       Iter          : Root_Reference_Iterator_Ref;
       Locations     : Entity_Ref_List.List;
@@ -239,11 +238,14 @@ package body GPS.Kernel.Entities is
    end record;
    type Ref_Command_Access is access all References_Command'Class;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access References_Command) return Command_Return_Type;
-   overriding procedure Primitive_Free (Command : in out References_Command);
+   overriding
+   procedure Primitive_Free (Command : in out References_Command);
 
-   overriding procedure Get_Result
+   overriding
+   procedure Get_Result
      (Self : not null access References_Command;
       Data : in out Callback_Data'Class);
 
@@ -257,7 +259,8 @@ package body GPS.Kernel.Entities is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (Command : in out References_Command) is
+   overriding
+   procedure Primitive_Free (Command : in out References_Command) is
       El : Root_Reference_Iterator'Class := Command.Iter.Element;
    begin
       Destroy (El);
@@ -267,7 +270,8 @@ package body GPS.Kernel.Entities is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access References_Command) return Command_Return_Type
    is
       Iter_Ref : constant Root_Reference_Iterator_Refs.Reference_Type :=
@@ -324,11 +328,12 @@ package body GPS.Kernel.Entities is
 
       for Ref of Command.Locations loop
          Loc := Get_Location (Ref);
-         Inst := Create_File_Location
-           (Script => Get_Script (Data),
-            File   => Loc.File,
-            Line   => Loc.Line,
-            Column => Loc.Column);
+         Inst :=
+           Create_File_Location
+             (Script => Get_Script (Data),
+              File   => Loc.File,
+              Line   => Loc.Line,
+              Column => Loc.Column);
 
          if Show_Ref_Kind then
             Set_Return_Value (Data, Get_Display_Kind (Ref));
@@ -343,7 +348,8 @@ package body GPS.Kernel.Entities is
    -- On_Entity_Found --
    ---------------------
 
-   overriding function On_Entity_Found
+   overriding
+   function On_Entity_Found
      (D                   : access Add_To_List_User_Data;
       Entity              : Root_Entity'Class;
       Parent              : Root_Entity'Class;
@@ -359,10 +365,7 @@ package body GPS.Kernel.Entities is
          Set_Return_Value
            (D.Data.all,
             Create_File_Location
-              (Get_Script (D.Data.all),
-               Loc.File,
-               Loc.Line,
-               Loc.Column));
+              (Get_Script (D.Data.all), Loc.File, Loc.Line, Loc.Column));
       else
          Set_Return_Value (D.Data.all, -"<renaming>");
       end if;
@@ -370,11 +373,13 @@ package body GPS.Kernel.Entities is
       if D.Use_Parent_For_Key then
          Set_Return_Value_Key
            (D.Data.all,
-            Create_Entity (Get_Script (D.Data.all), Parent), Append => True);
+            Create_Entity (Get_Script (D.Data.all), Parent),
+            Append => True);
       else
          Set_Return_Value_Key
            (D.Data.all,
-            Create_Entity (Get_Script (D.Data.all), Entity), Append => True);
+            Create_Entity (Get_Script (D.Data.all), Entity),
+            Append => True);
       end if;
       return True;
    end On_Entity_Found;
@@ -383,7 +388,8 @@ package body GPS.Kernel.Entities is
    -- References_Command_Handler --
    --------------------------------
 
-   overriding procedure Get_Result
+   overriding
+   procedure Get_Result
      (Self : not null access References_Command;
       Data : in out Callback_Data'Class) is
    begin
@@ -410,22 +416,27 @@ package body GPS.Kernel.Entities is
       elsif Command = "references" then
          --  obsolete: use GPS.EditorBuffer.references
          declare
-            Implicit         : constant Boolean := Nth_Arg (Data, 2, False);
-            Synchronous      : constant Boolean := Nth_Arg (Data, 3, True);
-            Show_Ref_Type    : constant Boolean := Nth_Arg (Data, 4, False);
-            Inst_In_File     : constant Class_Instance :=
-              Nth_Arg (Data, 5, Get_File_Class (Kernel),
-                       Allow_Null => True);
-            Only_If_Kind     : constant String := Nth_Arg (Data, 6, "");
-            In_File          : Virtual_File := No_File;
+            Implicit      : constant Boolean := Nth_Arg (Data, 2, False);
+            Synchronous   : constant Boolean := Nth_Arg (Data, 3, True);
+            Show_Ref_Type : constant Boolean := Nth_Arg (Data, 4, False);
+            Inst_In_File  : constant Class_Instance :=
+              Nth_Arg (Data, 5, Get_File_Class (Kernel), Allow_Null => True);
+            Only_If_Kind  : constant String := Nth_Arg (Data, 6, "");
+            In_File       : Virtual_File := No_File;
          begin
             if Inst_In_File /= No_Class_Instance then
                In_File := Get_Data (Inst_In_File);
             end if;
 
             Find_References_Handler
-              (Kernel, Entity, Implicit, Synchronous,
-               Show_Ref_Type, In_File, Only_If_Kind, Data);
+              (Kernel,
+               Entity,
+               Implicit,
+               Synchronous,
+               Show_Ref_Type,
+               In_File,
+               Only_If_Kind,
+               Data);
          end;
 
       elsif Command = "calls" then
@@ -450,11 +461,11 @@ package body GPS.Kernel.Entities is
          User_Data := new Add_To_List_User_Data;
          User_Data.Data := Data'Unchecked_Access;
          Examine_Ancestors_Call_Graph
-           (Kernel          => Kernel,
-            User_Data       => User_Data,
-            Entity          => Entity,
+           (Kernel            => Kernel,
+            User_Data         => User_Data,
+            Entity            => Entity,
             Dispatching_Calls => Nth_Arg (Data, 2, False),
-            Background_Mode => False);
+            Background_Mode   => False);
       end if;
    end Entity_Command_Handler;
 
@@ -480,11 +491,11 @@ package body GPS.Kernel.Entities is
 
       Ref_Command.Iter.Replace_Element
         (Find_All_References
-           (Entity                => Entity,
-            In_File               => In_File,
-            Include_Implicit      => Implicit,
-            Include_All           => False,
-            Kind                  => Only_If_Kind));
+           (Entity           => Entity,
+            In_File          => In_File,
+            Include_Implicit => Implicit,
+            Include_All      => False,
+            Kind             => Only_If_Kind));
 
       if Synchronous then
          --  Synchronous, return directly the result
@@ -496,11 +507,12 @@ package body GPS.Kernel.Entities is
       else
          --  Not synchronous, return a command
 
-         Launched_Command := Launch_Background_Command
-           (Kernel   => Kernel,
-            Command  => Ref_Command,
-            Active   => False,
-            Show_Bar => False);
+         Launched_Command :=
+           Launch_Background_Command
+             (Kernel   => Kernel,
+              Command  => Ref_Command,
+              Active   => False,
+              Show_Bar => False);
 
          Set_Progress
            (Ref_Command,
@@ -510,7 +522,8 @@ package body GPS.Kernel.Entities is
 
          Data.Set_Return_Value
            (Get_Instance
-              (Launched_Command, Data.Get_Script,
+              (Launched_Command,
+               Data.Get_Script,
                Class_To_Create => References_Command_Class_Name));
       end if;
    end Find_References_Handler;
@@ -520,31 +533,32 @@ package body GPS.Kernel.Entities is
    -------------------
 
    procedure Find_All_Refs
-     (Kernel   : Kernel_Handle;
-      Entity   : Root_Entity'Class;
-      Implicit : Boolean)
+     (Kernel : Kernel_Handle; Entity : Root_Entity'Class; Implicit : Boolean)
    is
       Filter : Custom_Filter;
    begin
-      Filter := Custom_Filter'
-        (Db        => Kernel.Databases,
-         Ref_Kinds => null,
-         Filter    => Is_Read_Or_Implicit_Reference'Access);
+      Filter :=
+        Custom_Filter'
+          (Db        => Kernel.Databases,
+           Ref_Kinds => null,
+           Filter    => Is_Read_Or_Implicit_Reference'Access);
 
       if Implicit then
          Filter.Filter := Is_Read_Or_Write_Or_Implicit_Reference'Access;
       end if;
 
       Find_All_References_Internal
-        (Kernel, Entity,
-         Category_Title   => All_Refs_Category
-           (Entity             => Entity,
-            Kernel             => Kernel,
-            Local_Only         => False,
-            Local_File         => GNATCOLL.VFS.No_File,
-            All_From_Same_File => False),
-         Show_Caller      => False,
-         Filter           => Filter);
+        (Kernel,
+         Entity,
+         Category_Title =>
+           All_Refs_Category
+             (Entity             => Entity,
+              Kernel             => Kernel,
+              Local_Only         => False,
+              Local_File         => GNATCOLL.VFS.No_File,
+              All_From_Same_File => False),
+         Show_Caller    => False,
+         Filter         => Filter);
    end Find_All_Refs;
 
    ----------
@@ -564,9 +578,7 @@ package body GPS.Kernel.Entities is
      (Self : Custom_Filter; Ref : Root_Entity_Reference'Class) return Boolean
    is
    begin
-      if Self.Filter /= null
-        and then not Self.Filter (Ref)
-      then
+      if Self.Filter /= null and then not Self.Filter (Ref) then
          return False;
       end if;
 
@@ -616,7 +628,7 @@ package body GPS.Kernel.Entities is
 
       Loc     : constant General_Location := Get_Location (Ref);
       Col     : Basic_Types.Visible_Column_Type := Loc.Column;
-      Line    : constant Integer      := Loc.Line;
+      Line    : constant Integer := Loc.Line;
       File    : constant Virtual_File := Loc.File;
       Message : Markup_Message_Access;
 
@@ -633,8 +645,11 @@ package body GPS.Kernel.Entities is
               File,
               Line,
               Col,
-              "<b>" & Name & "</b> ["
-              & Get_Display_Kind (Ref) & "] in: "
+              "<b>"
+              & Name
+              & "</b> ["
+              & Get_Display_Kind (Ref)
+              & "] in: "
               & Glib.Convert.Escape_Text (Qualified_Name (Get_Caller (Ref))),
               Unspecified,
               Call_Graph_Message_Flags);
@@ -810,15 +825,16 @@ package body GPS.Kernel.Entities is
             Get_Messages_Container (Kernel).Remove_Category
               (Category_Title, Call_Graph_Message_Flags);
             H.Replace_Element (Info);
-            Data := (Kernel             => Kernel_Handle (Kernel),
-                     Iter               => <>,
-                     Filter             => Filter,
-                     Category           => Category_Title,
-                     Iter_Started       => False,
-                     Show_Caller        => Show_Caller,
-                     Include_Overriding => Include_Overriding,
-                     Count              => 0,
-                     Entity             => H);
+            Data :=
+              (Kernel             => Kernel_Handle (Kernel),
+               Iter               => <>,
+               Filter             => Filter,
+               Category           => Category_Title,
+               Iter_Started       => False,
+               Show_Caller        => Show_Caller,
+               Include_Overriding => Include_Overriding,
+               Count              => 0,
+               Entity             => H);
 
             Xref_Commands.Create  --  Will destroy Data when done
               (C, -"Find all refs", Data, Find_Next_Reference'Access);
@@ -843,12 +859,13 @@ package body GPS.Kernel.Entities is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_All_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Filter  : Custom_Filter;
+      Filter : Custom_Filter;
    begin
       if Context.Context /= No_Context then
          declare
@@ -857,10 +874,9 @@ package body GPS.Kernel.Entities is
             File   : Virtual_File;
          begin
             if Entity /= No_Root_Entity then
-               Filter                  := Custom_Filter'
-                 (Db                 => Kernel.Databases,
-                  Ref_Kinds          => null,
-                  Filter             => null);
+               Filter :=
+                 Custom_Filter'
+                   (Db => Kernel.Databases, Ref_Kinds => null, Filter => null);
 
                if Command.Reads_Only then
                   Filter.Filter := Is_Read_Reference'Access;
@@ -882,8 +898,9 @@ package body GPS.Kernel.Entities is
 
                   --  Only show caller for Ada xrefs: it is too slow to do
                   --  this in C/C++
-                  Show_Caller        => Get_Language_Handler (Kernel).
-                      Get_Language_From_File (File) = Ada_Lang,
+                  Show_Caller        =>
+                    Get_Language_Handler (Kernel).Get_Language_From_File (File)
+                    = Ada_Lang,
 
                   Include_Overriding => True);
             end if;
@@ -891,8 +908,7 @@ package body GPS.Kernel.Entities is
          end;
       else
          Kernel.Insert
-           (-"Cannot find references: no entity selected",
-            Mode => Error);
+           (-"Cannot find references: no entity selected", Mode => Error);
          return Commands.Failure;
       end if;
    end Execute;
@@ -901,29 +917,29 @@ package body GPS.Kernel.Entities is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Find_Specific_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel             : constant Kernel_Handle :=
+      Kernel                           : constant Kernel_Handle :=
         Get_Kernel (Context.Context);
-      Dialog             : References_Filter_Dialog;
-      Box                : Gtk_Box;
-      Col                : array (1 .. 2) of Gtk_Box;
-      Filter_Box         : Gtk_Vbutton_Box;
-      Index              : Integer := Col'First;
-      Project_And_Recursive,
-      File_Only          : Gtk_Radio_Button;
-      Show_Caller        : Gtk_Check_Button;
-      From_Same_File     : Gtk_Radio_Button;
-      Include_Overriding : Gtk_Check_Button;
-      Frame              : Gtk_Frame;
-      Ignore             : Gtk_Widget;
-      Entity             : constant Root_Entity'Class :=
+      Dialog                           : References_Filter_Dialog;
+      Box                              : Gtk_Box;
+      Col                              : array (1 .. 2) of Gtk_Box;
+      Filter_Box                       : Gtk_Vbutton_Box;
+      Index                            : Integer := Col'First;
+      Project_And_Recursive, File_Only : Gtk_Radio_Button;
+      Show_Caller                      : Gtk_Check_Button;
+      From_Same_File                   : Gtk_Radio_Button;
+      Include_Overriding               : Gtk_Check_Button;
+      Frame                            : Gtk_Frame;
+      Ignore                           : Gtk_Widget;
+      Entity                           : constant Root_Entity'Class :=
         Get_Entity (Context.Context);
-      Current_File       : constant Virtual_File :=
+      Current_File                     : constant Virtual_File :=
         File_Information (Context.Context);
-      Button             : Gtk_Button;
+      Button                           : Gtk_Button;
       pragma Unreferenced (Command, Ignore);
 
       All_Refs : GNAT.Strings.String_List :=
@@ -933,11 +949,12 @@ package body GPS.Kernel.Entities is
       Dialog := new References_Filter_Dialog_Record;
       Dialog.Filters := new Filters_Buttons (All_Refs'Range);
 
-      Initialize (Dialog,
-                  Title  => -"Find References Options",
-                  Parent => Get_Main_Window (Kernel),
-                  Flags  => Modal
-                  or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
+      Initialize
+        (Dialog,
+         Title  => -"Find References Options",
+         Parent => Get_Main_Window (Kernel),
+         Flags  =>
+           Modal or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
 
       --  Context choice
 
@@ -946,29 +963,34 @@ package body GPS.Kernel.Entities is
       Gtk_New_Vbox (Box, Homogeneous => True);
       Add (Frame, Box);
 
-      Gtk_New (Project_And_Recursive, Widget_SList.Null_List,
-               -"In all projects");
+      Gtk_New
+        (Project_And_Recursive, Widget_SList.Null_List, -"In all projects");
       Pack_Start (Box, Project_And_Recursive);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "Find_Prefs_Project_Recursive", True);
-      Associate (Get_History (Kernel).all, "Find_Prefs_Project_Recursive",
-                 Project_And_Recursive);
+      Associate
+        (Get_History (Kernel).all,
+         "Find_Prefs_Project_Recursive",
+         Project_And_Recursive);
 
-      Gtk_New (File_Only, Get_Group (Project_And_Recursive),
-               -"In current file");
+      Gtk_New
+        (File_Only, Get_Group (Project_And_Recursive), -"In current file");
       Pack_Start (Box, File_Only);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "Find_Prefs_File_Only", False);
       Associate (Get_History (Kernel).all, "Find_Prefs_File_Only", File_Only);
 
       Gtk_New
-        (From_Same_File, Get_Group (Project_And_Recursive),
+        (From_Same_File,
+         Get_Group (Project_And_Recursive),
          -"All entities imported from same file");
       Pack_Start (Box, From_Same_File);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "Find_Prefs_From_Same_File", False);
-      Associate (Get_History (Kernel).all, "Find_Prefs_From_Same_File",
-                 From_Same_File);
+      Associate
+        (Get_History (Kernel).all,
+         "Find_Prefs_From_Same_File",
+         From_Same_File);
 
       --  Filter choice
 
@@ -987,10 +1009,12 @@ package body GPS.Kernel.Entities is
          Pack_Start (Col (Index), Dialog.Filters (F));
          Create_New_Boolean_Key_If_Necessary
            (Get_History (Kernel).all,
-            History_Key ("Find_Prefs_Filter_" & F'Img), True);
-         Associate (Get_History (Kernel).all,
-                    History_Key ("Find_Prefs_Filter_" & F'Img),
-                    Dialog.Filters (F));
+            History_Key ("Find_Prefs_Filter_" & F'Img),
+            True);
+         Associate
+           (Get_History (Kernel).all,
+            History_Key ("Find_Prefs_Filter_" & F'Img),
+            Dialog.Filters (F));
          Index := Index + 1;
          if Index > Col'Last then
             Index := Col'First;
@@ -1022,16 +1046,18 @@ package body GPS.Kernel.Entities is
       Pack_Start (Box, Show_Caller);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "Find_Prefs_Show_Caller", False);
-      Associate (Get_History (Kernel).all, "Find_Prefs_Show_Caller",
-                 Show_Caller);
+      Associate
+        (Get_History (Kernel).all, "Find_Prefs_Show_Caller", Show_Caller);
 
       Gtk_New
         (Include_Overriding, -"Include overriding and overridden operations");
       Pack_Start (Box, Include_Overriding);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "Find_Prefs_Include_Overriding", False);
-      Associate (Get_History (Kernel).all, "Find_Prefs_Include_Overriding",
-                 Include_Overriding);
+      Associate
+        (Get_History (Kernel).all,
+         "Find_Prefs_Include_Overriding",
+         Include_Overriding);
 
       Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -1114,21 +1140,22 @@ package body GPS.Kernel.Entities is
       Filter             : in out Custom_Filter;
       Include_Overriding : Boolean := False)
    is
-      Title       : constant VSS.Strings.Virtual_String :=
+      Title           : constant VSS.Strings.Virtual_String :=
         All_Refs_Category
           (Entity             => Entity,
            Kernel             => Kernel,
            Local_Only         => Locals_Only,
            Local_File         => Local_File,
            All_From_Same_File => All_From_Same_File);
-      Decl        : constant General_Location := Get_Declaration (Entity).Loc;
-      Decl2       : General_Location;
-      Entity_Decl : constant Virtual_File := Decl.File;
-      Iter2       : Entities_In_File_Cursor;
-      Message     : Simple_Message_Access;
-      Project     : Project_Type := No_Project;
-      Set         : File_Info_Set;
-      Imports     : Boolean;
+      Decl            : constant General_Location :=
+        Get_Declaration (Entity).Loc;
+      Decl2           : General_Location;
+      Entity_Decl     : constant Virtual_File := Decl.File;
+      Iter2           : Entities_In_File_Cursor;
+      Message         : Simple_Message_Access;
+      Project         : Project_Type := No_Project;
+      Set             : File_Info_Set;
+      Imports         : Boolean;
       Is_Limited_With : Boolean;
 
    begin
@@ -1158,7 +1185,7 @@ package body GPS.Kernel.Entities is
          Iter2 := Kernel.Databases.Entities_In_File (Local_File, Project);
          while not At_End (Iter2) loop
             declare
-               Entity2        : constant Root_Entity'Class := Get (Iter2);
+               Entity2 : constant Root_Entity'Class := Get (Iter2);
             begin
                Decl2 := Get_Declaration (Entity2).Loc;
 
@@ -1184,12 +1211,13 @@ package body GPS.Kernel.Entities is
                                 and then Loc.File = Local_File
                                 and then Is_Valid (Filter, Ref => Get (Iter))
                               then
-                                 Print_Ref (Kernel,
-                                            Get (Iter),
-                                            Name2,
-                                            Title,
-                                            Show_Caller => Show_Caller,
-                                            Sort_In_File => True);
+                                 Print_Ref
+                                   (Kernel,
+                                    Get (Iter),
+                                    Name2,
+                                    Title,
+                                    Show_Caller  => Show_Caller,
+                                    Sort_In_File => True);
                               end if;
                               Next (Iter);
                            end loop;
@@ -1236,8 +1264,8 @@ package body GPS.Kernel.Entities is
          declare
             Iter : Root_Reference_Iterator'Class :=
               Find_All_References
-                (Entity        => Entity,
-                 In_File       => Local_File,
+                (Entity             => Entity,
+                 In_File            => Local_File,
                  Include_Overridden => Include_Overriding,
                  Include_Overriding => Include_Overriding);
          begin
@@ -1248,12 +1276,13 @@ package body GPS.Kernel.Entities is
                   if Get (Iter) /= No_Root_Entity_Reference
                     and then Is_Valid (Filter, Get (Iter))
                   then
-                     Print_Ref (Kernel,
-                                Get (Iter),
-                                Name,
-                                Title,
-                                Show_Caller => Show_Caller,
-                                Sort_In_File => True);
+                     Print_Ref
+                       (Kernel,
+                        Get (Iter),
+                        Name,
+                        Title,
+                        Show_Caller  => Show_Caller,
+                        Sort_In_File => True);
                   end if;
                   Next (Iter);
                end loop;
@@ -1285,28 +1314,29 @@ package body GPS.Kernel.Entities is
    begin
       Kernel.Scripts.Register_Command
         ("find_all_refs",
-         Class        => C,
-         Params       => (1 => Param ("include_implicit", Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  => (1 => Param ("include_implicit", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("references",
-         Class        => C,
-         Params       => (Param ("include_implicit", Optional => True),
-                          Param ("synchronous",      Optional => True),
-                          Param ("show_kind",        Optional => True),
-                          Param ("in_file",          Optional => True),
-                          Param ("kind_in",          Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  =>
+           (Param ("include_implicit", Optional => True),
+            Param ("synchronous", Optional => True),
+            Param ("show_kind", Optional => True),
+            Param ("in_file", Optional => True),
+            Param ("kind_in", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("calls",
-         Class        => C,
-         Params       => (1 => Param ("dispatching_calls", Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  => (1 => Param ("dispatching_calls", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("called_by",
-         Class        => C,
-         Params       => (1 => Param ("dispatching_calls", Optional => True)),
-         Handler      => Entity_Command_Handler'Access);
+         Class   => C,
+         Params  => (1 => Param ("dispatching_calls", Optional => True)),
+         Handler => Entity_Command_Handler'Access);
    end Register_Module;
 
 end GPS.Kernel.Entities;

@@ -31,38 +31,39 @@ with GNATCOLL.Scripts.Python;        use GNATCOLL.Scripts.Python;
 with GNATCOLL.Scripts.Python.Gtkada; use GNATCOLL.Scripts.Python.Gtkada;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
 with Basic_Types;
 
-with Glib.Object;                use Glib.Object;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Glib.Object; use Glib.Object;
+with Gtk.Enums;   use Gtk.Enums;
+with Gtk.Widget;  use Gtk.Widget;
+with Gtkada.MDI;  use Gtkada.MDI;
 
 with Generic_Views;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
-with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Custom;      use GPS.Kernel.Custom;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
 with GPS.Python_Core;
-with GPS.Main_Window;            use GPS.Main_Window;
-with Commands.Interactive;       use Commands.Interactive;
-with Histories;                  use Histories;
-with Interactive_Consoles;       use Interactive_Consoles;
-with String_Utils;               use String_Utils;
+with GPS.Main_Window;        use GPS.Main_Window;
+with Commands.Interactive;   use Commands.Interactive;
+with Histories;              use Histories;
+with Interactive_Consoles;   use Interactive_Consoles;
+with String_Utils;           use String_Utils;
 with System;
-with XML_Utils;                  use XML_Utils;
-with Xref;                       use Xref;
+with XML_Utils;              use XML_Utils;
+with Xref;                   use Xref;
 
 package body Python_Module is
    use type GNATCOLL.Xref.Visible_Column;
 
-   Me  : constant Trace_Handle := Create ("GPS.OTHERS.Python_Module");
+   Me                 : constant Trace_Handle :=
+     Create ("GPS.OTHERS.Python_Module");
    GS_PYTHON_COVERAGE : constant String := "GNATSTUDIO_PYTHON_COV";
 
    type Shutdown_Phase_Kind is
@@ -86,7 +87,8 @@ package body Python_Module is
    function Hash is new String_Utils.Hash (Hash_Index);
 
    type Python_Module_Record is new Module_ID_Record with null record;
-   overriding procedure Destroy (Module : in out Python_Module_Record);
+   overriding
+   procedure Destroy (Module : in out Python_Module_Record);
 
    procedure Load_Dir
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -101,7 +103,7 @@ package body Python_Module is
    --  user-configurable plugins.
 
    type Python_Console_Record is new Interactive_Console_Record
-     with null record;
+   with null record;
 
    function Initialize
      (Console : access Python_Console_Record'Class) return Gtk_Widget;
@@ -110,17 +112,18 @@ package body Python_Module is
    procedure Clear_Console (Self : access Python_Console_Record'Class);
    --  Clear console
 
-   package Python_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "Python_Console",
-      View_Name          => -"Python",
-      Formal_View_Record => Python_Console_Record,
-      Formal_MDI_Child   => GPS_Console_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Initialize         => Initialize,
-      Local_Toolbar      => False,
-      Local_Config       => False,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Group              => Group_Consoles);
+   package Python_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Python_Console",
+        View_Name          => -"Python",
+        Formal_View_Record => Python_Console_Record,
+        Formal_MDI_Child   => GPS_Console_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Local_Toolbar      => False,
+        Local_Config       => False,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Group              => Group_Consoles);
    subtype Console_View is Python_Views.View_Access;
 
    procedure Python_File_Command_Handler
@@ -136,9 +139,8 @@ package body Python_Module is
    --  Handler for the commands related to the various classes
 
    function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child;
+     (MDI : MDI_Window; Node : Node_Ptr; User : Kernel_Handle)
+      return MDI_Child;
    --  Support functions for the MDI
 
    function Command_Handler
@@ -147,9 +149,10 @@ package body Python_Module is
       User_Data : System.Address) return String;
    --  Python console command handler
 
-   type Clear_Python_Console_Command is
-     new Interactive_Command with null record;
-   overriding function Execute
+   type Clear_Python_Console_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Self    : access Clear_Python_Console_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
@@ -177,7 +180,8 @@ package body Python_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Clear_Python_Console_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
@@ -211,10 +215,11 @@ package body Python_Module is
    function Initialize
      (Console : access Python_Console_Record'Class) return Gtk_Widget
    is
-      Lock    : GNATCOLL.Python.State.Ada_GIL_Lock with Unreferenced;
+      Lock    : GNATCOLL.Python.State.Ada_GIL_Lock
+      with Unreferenced;
       Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
-         Console.Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
+        Console.Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
       Errors  : aliased Boolean;
       Result  : PyObject;
 
@@ -223,15 +228,15 @@ package body Python_Module is
       Interactive_Consoles.Initialize
         (Console,
          Console.Kernel,
-         Prompt          => "",
-         Handler         => Command_Handler'Access,
-         User_Data       => System.Null_Address,
-         History_List    => Get_History (Console.Kernel),
-         Wrap_Mode       => Wrap_Char,
-         Key             => Hist,
-         Toolbar_Name    => "Python");
+         Prompt       => "",
+         Handler      => Command_Handler'Access,
+         User_Data    => System.Null_Address,
+         History_List => Get_History (Console.Kernel),
+         Wrap_Mode    => Wrap_Char,
+         Key          => Hist,
+         Toolbar_Name => "Python");
       Set_Font_And_Colors (Console.Get_View, Fixed_Font => True);
-      Set_Max_Length   (Get_History (Console.Kernel).all, 100, Hist);
+      Set_Max_Length (Get_History (Console.Kernel).all, 100, Hist);
       Allow_Duplicates (Get_History (Console.Kernel).all, Hist, True, True);
 
       Backend := Get_Or_Create_Virtual_Console (Console);
@@ -241,15 +246,16 @@ package body Python_Module is
       --  the plugin GS_help, to override the default help function
 
       Console.Enable_Prompt_Display (False);
-      Result := Run_Command
-        (Python_Scripting (Script),
-         "import GS_help ; help = GS_help.help",
-         Need_Output     => False,
-         Console         => Backend,
-         Show_Command    => False,
-         Hide_Output     => True,
-         Hide_Exceptions => True,
-         Errors          => Errors'Unchecked_Access);
+      Result :=
+        Run_Command
+          (Python_Scripting (Script),
+           "import GS_help ; help = GS_help.help",
+           Need_Output     => False,
+           Console         => Backend,
+           Show_Command    => False,
+           Hide_Output     => True,
+           Hide_Exceptions => True,
+           Errors          => Errors'Unchecked_Access);
       Py_XDECREF (Result);
       Console.Enable_Prompt_Display (True);
       Console.Display_Prompt;
@@ -265,7 +271,8 @@ package body Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Ignored : Integer;
-      Tmp     : Boolean with Unreferenced;
+      Tmp     : Boolean
+      with Unreferenced;
       Script  : Scripting_Language;
       MDI     : Class_Type;
 
@@ -282,27 +289,25 @@ package body Python_Module is
 
       Set_Default_Console (Script, Kernel.Get_Messages_Window);
 
-      Python_Views.Register_Module
-        (Kernel, new Python_Module_Record);
+      Python_Views.Register_Module (Kernel, new Python_Module_Record);
 
       Register_Desktop_Functions (null, Load_Desktop'Access);
 
       MDI := Kernel.Scripts.New_Class ("MDI");
 
-      Add_PyWidget_Method
-        (Kernel.Scripts, Class => Get_GUI_Class (Kernel));
+      Add_PyWidget_Method (Kernel.Scripts, Class => Get_GUI_Class (Kernel));
       Kernel.Scripts.Register_Command
         (Command       => "add",
          Handler       => Python_GUI_Command_Handler'Access,
          Class         => MDI,
          Params        =>
-            (Param ("widget"),
-             Param ("title", Optional => True),
-             Param ("short", Optional => True),
-             Param ("group", Optional => True),
-             Param ("position", Optional => True),
-             Param ("save_desktop", Optional => True),
-             Param ("flags", Optional => True)),
+           (Param ("widget"),
+            Param ("title", Optional => True),
+            Param ("short", Optional => True),
+            Param ("group", Optional => True),
+            Param ("position", Optional => True),
+            Param ("save_desktop", Optional => True),
+            Param ("flags", Optional => True)),
          Static_Method => True,
          Language      => Python_Name);
 
@@ -312,20 +317,20 @@ package body Python_Module is
       --  Also make sure these can be used as keys in dictionaries.
 
       Kernel.Scripts.Register_Command
-        (Command      => "__str__",
-         Handler      => Python_File_Command_Handler'Access,
-         Class        => Get_File_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__str__",
+         Handler  => Python_File_Command_Handler'Access,
+         Class    => Get_File_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__repr__",
-         Handler      => Python_File_Command_Handler'Access,
-         Class        => Get_File_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__repr__",
+         Handler  => Python_File_Command_Handler'Access,
+         Class    => Get_File_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__hash__",
-         Handler      => Python_File_Command_Handler'Access,
-         Class        => Get_File_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__hash__",
+         Handler  => Python_File_Command_Handler'Access,
+         Class    => Get_File_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__cmp__",
          Minimum_Args => 1,
@@ -376,20 +381,20 @@ package body Python_Module is
          Class        => Get_File_Class (Kernel),
          Language     => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__str__",
-         Handler      => Python_Project_Command_Handler'Access,
-         Class        => Get_Project_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__str__",
+         Handler  => Python_Project_Command_Handler'Access,
+         Class    => Get_Project_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__repr__",
-         Handler      => Python_Project_Command_Handler'Access,
-         Class        => Get_Project_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__repr__",
+         Handler  => Python_Project_Command_Handler'Access,
+         Class    => Get_Project_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__hash__",
-         Handler      => Python_Project_Command_Handler'Access,
-         Class        => Get_Project_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__hash__",
+         Handler  => Python_Project_Command_Handler'Access,
+         Class    => Get_Project_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__cmp__",
          Minimum_Args => 1,
@@ -440,20 +445,20 @@ package body Python_Module is
          Class        => Get_Project_Class (Kernel),
          Language     => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__str__",
-         Handler      => Python_Entity_Command_Handler'Access,
-         Class        => Get_Entity_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__str__",
+         Handler  => Python_Entity_Command_Handler'Access,
+         Class    => Get_Entity_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__repr__",
-         Handler      => Python_Entity_Command_Handler'Access,
-         Class        => Get_Entity_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__repr__",
+         Handler  => Python_Entity_Command_Handler'Access,
+         Class    => Get_Entity_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__hash__",
-         Handler      => Python_Entity_Command_Handler'Access,
-         Class        => Get_Entity_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__hash__",
+         Handler  => Python_Entity_Command_Handler'Access,
+         Class    => Get_Entity_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__cmp__",
          Minimum_Args => 1,
@@ -504,20 +509,20 @@ package body Python_Module is
          Class        => Get_Entity_Class (Kernel),
          Language     => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__str__",
-         Handler      => Python_Location_Command_Handler'Access,
-         Class        => Get_File_Location_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__str__",
+         Handler  => Python_Location_Command_Handler'Access,
+         Class    => Get_File_Location_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__repr__",
-         Handler      => Python_Location_Command_Handler'Access,
-         Class        => Get_File_Location_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__repr__",
+         Handler  => Python_Location_Command_Handler'Access,
+         Class    => Get_File_Location_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
-        (Command      => "__hash__",
-         Handler      => Python_Location_Command_Handler'Access,
-         Class        => Get_File_Location_Class (Kernel),
-         Language     => Python_Name);
+        (Command  => "__hash__",
+         Handler  => Python_Location_Command_Handler'Access,
+         Class    => Get_File_Location_Class (Kernel),
+         Language => Python_Name);
       Kernel.Scripts.Register_Command
         (Command      => "__cmp__",
          Minimum_Args => 1,
@@ -569,11 +574,12 @@ package body Python_Module is
          Language     => Python_Name);
 
       Register_Action
-        (Kernel, "python clear",
+        (Kernel,
+         "python clear",
          new Clear_Python_Console_Command,
          -"Clear console",
          Icon_Name => "gps-clear-symbolic",
-         Category => -"Python");
+         Category  => -"Python");
    end Register_Module;
 
    --------------
@@ -595,10 +601,13 @@ package body Python_Module is
 
       function To_Load (File : Virtual_File) return Boolean is
       begin
-         return (Ignore_User_Config and then Default_Autoload)
+         return
+           (Ignore_User_Config and then Default_Autoload)
            or else
-             (not Ignore_User_Config and then Load_File_At_Startup
-             (Kernel, File, Default => Default_Autoload));
+             (not Ignore_User_Config
+              and then
+                Load_File_At_Startup
+                  (Kernel, File, Default => Default_Autoload));
       end To_Load;
 
       Script : constant Scripting_Language :=
@@ -623,48 +632,66 @@ package body Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Env_Path : constant File_Array := Get_Custom_Path;
-      Script : constant Scripting_Language :=
+      Script   : constant Scripting_Language :=
         Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
-      Errors : Boolean;
+      Errors   : Boolean;
 
    begin
       --  Register GPS as GS to use both in transition period
       Script.Execute_Command
-        (CL           => Create ("import GPS as GS"),
-         Hide_Output  => True,
-         Errors       => Errors);
+        (CL          => Create ("import GPS as GS"),
+         Hide_Output => True,
+         Errors      => Errors);
       pragma Assert (not Errors);
 
-      Load_Dir (Kernel, Support_Core_Dir (Kernel), Default_Autoload => True,
-                Ignore_User_Config => True);
-      Load_Dir (Kernel, Support_UI_Dir (Kernel), Default_Autoload => True,
-                Ignore_User_Config                                => True);
-      Load_Dir (Kernel, Support_Languages_Dir (Kernel),
-                Default_Autoload   => True,
-                Ignore_User_Config => True);
+      Load_Dir
+        (Kernel,
+         Support_Core_Dir (Kernel),
+         Default_Autoload   => True,
+         Ignore_User_Config => True);
+      Load_Dir
+        (Kernel,
+         Support_UI_Dir (Kernel),
+         Default_Autoload   => True,
+         Ignore_User_Config => True);
+      Load_Dir
+        (Kernel,
+         Support_Languages_Dir (Kernel),
+         Default_Autoload   => True,
+         Ignore_User_Config => True);
 
       --  We want to keep gps_utils for compatibility with clients plugins
       --  The trick is to create a new module named gps_utils which is a
       --  copy of gs_utils
       Script.Execute_Command
-        (CL           => Create ("sys.modules['gps_utils'] = gs_utils"),
-         Hide_Output  => True,
-         Errors       => Errors);
+        (CL          => Create ("sys.modules['gps_utils'] = gs_utils"),
+         Hide_Output => True,
+         Errors      => Errors);
       pragma Assert (not Errors);
 
-      Load_Dir (Kernel, Support_No_Autoload_Dir (Kernel),
-                Default_Autoload => False, Ignore_User_Config => True);
       Load_Dir
-        (Kernel, Autoload_System_Dir (Kernel), Default_Autoload => True,
+        (Kernel,
+         Support_No_Autoload_Dir (Kernel),
+         Default_Autoload   => False,
+         Ignore_User_Config => True);
+      Load_Dir
+        (Kernel,
+         Autoload_System_Dir (Kernel),
+         Default_Autoload   => True,
          Ignore_User_Config => False);
       Load_Dir
-        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False,
+        (Kernel,
+         No_Autoload_System_Dir (Kernel),
+         Default_Autoload   => False,
          Ignore_User_Config => False);
 
       for J in Env_Path'Range loop
          if Env_Path (J).Is_Directory then
-            Load_Dir (Kernel, Env_Path (J), Default_Autoload => True,
-                      Ignore_User_Config => False);
+            Load_Dir
+              (Kernel,
+               Env_Path (J),
+               Default_Autoload   => True,
+               Ignore_User_Config => False);
          end if;
       end loop;
 
@@ -674,31 +701,31 @@ package body Python_Module is
       begin
          --  Now we are ready to import lal_utils (and libadalang)
          Script.Execute_Command
-           (CL           => Create ("import lal_utils"),
-            Hide_Output  => True,
-            Errors       => Errors);
+           (CL          => Create ("import lal_utils"),
+            Hide_Output => True,
+            Errors      => Errors);
          pragma Assert (not Errors);
 
          if Cov_Name.all /= "" then
             Script.Execute_Command
-              (CL           => Create ("import coverage"),
-               Hide_Output  => True,
-               Errors       => Errors);
+              (CL          => Create ("import coverage"),
+               Hide_Output => True,
+               Errors      => Errors);
             --  A named has been given for the coverage report,
             --  set it at the initialization of the coverage session
             Script.Execute_Command
-              (CL           =>
-                 Create (
-                   "gs_cov = coverage.Coverage(data_file="""
-                   & Cov_Name.all
-                   & """)"),
-               Hide_Output  => True,
-               Errors       => Errors);
+              (CL          =>
+                 Create
+                   ("gs_cov = coverage.Coverage(data_file="""
+                    & Cov_Name.all
+                    & """)"),
+               Hide_Output => True,
+               Errors      => Errors);
             --  Start the coverage session
             Script.Execute_Command
-              (CL           => Create ("gs_cov.start()"),
-               Hide_Output  => True,
-               Errors       => Errors);
+              (CL          => Create ("gs_cov.start()"),
+               Hide_Output => True,
+               Errors      => Errors);
          end if;
          GNAT.OS_Lib.Free (Cov_Name);
       end;
@@ -711,8 +738,11 @@ package body Python_Module is
    procedure Load_User_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Load_Dir (Kernel, Autoload_User_Dir (Kernel), Default_Autoload => True,
-                Ignore_User_Config => False);
+      Load_Dir
+        (Kernel,
+         Autoload_User_Dir (Kernel),
+         Default_Autoload   => True,
+         Ignore_User_Config => False);
    end Load_User_Python_Startup_Files;
 
    -------------------------------------
@@ -723,8 +753,10 @@ package body Python_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Load_Dir
-        (Kernel, No_Autoload_System_Dir (Kernel), Default_Autoload => False,
-         Ignore_User_Config                                        => False);
+        (Kernel,
+         No_Autoload_System_Dir (Kernel),
+         Default_Autoload   => False,
+         Ignore_User_Config => False);
    end Load_No_Autoload_Python_Plugins;
 
    ---------------------------------
@@ -734,12 +766,12 @@ package body Python_Module is
    procedure Python_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Instance : constant Class_Instance :=
-                   Nth_Arg (Data, 1, Get_File_Class (Kernel));
+        Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info     : constant Virtual_File := Get_Data (Instance);
-      function Convert is new Ada.Unchecked_Conversion
-        (Ada.Containers.Hash_Type, Integer);
+      function Convert is new
+        Ada.Unchecked_Conversion (Ada.Containers.Hash_Type, Integer);
 
       function Comparison_Handler
         (Data : in out Callback_Data'Class) return Integer;
@@ -773,26 +805,19 @@ package body Python_Module is
       elsif Command = "__hash__" then
          Set_Return_Value (Data, Convert (Full_Name_Hash (Info)));
       elsif Command = "__eq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 0);
       elsif Command = "__neq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 0);
       elsif Command = "__le__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 1);
       elsif Command = "__lt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = -1);
       elsif Command = "__ge__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= -1);
       elsif Command = "__gt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 1);
       elsif Command = "__cmp__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data));
+         Set_Return_Value (Data, Comparison_Handler (Data));
       end if;
    end Python_File_Command_Handler;
 
@@ -801,15 +826,13 @@ package body Python_Module is
    ------------------
 
    function Load_Desktop
-     (MDI  : MDI_Window;
-      Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
+     (MDI : MDI_Window; Node : Node_Ptr; User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
       Script : constant Scripting_Language :=
         User.Scripts.Lookup_Scripting_Language (Python_Name);
-      Data : Callback_Data'Class := Create (Script, 2);
-      Inst : Class_Instance;
+      Data   : Callback_Data'Class := Create (Script, 2);
+      Inst   : Class_Instance;
    begin
       if Node.Tag = null or else Node.Value = null then
          return null;
@@ -866,17 +889,23 @@ package body Python_Module is
             C := Find_MDI_Child_From_Widget (Gtk_Widget (Widget));
 
             if C = null then
-               Group := Child_Group
-                 (Nth_Arg (Data, 4, Integer (Group_Default)));
-               Position := Child_Position'Val
-                 (Nth_Arg (Data, 5, Child_Position'Pos (Position_Automatic)));
+               Group :=
+                 Child_Group (Nth_Arg (Data, 4, Integer (Group_Default)));
+               Position :=
+                 Child_Position'Val
+                   (Nth_Arg
+                      (Data, 5, Child_Position'Pos (Position_Automatic)));
 
-               Gtk_New (Child, Gtk_Widget (Widget), Get_Kernel (Data),
-                        Flags => Child_Flags
-                          (Integer'(Nth_Arg (Data, 7, Integer (All_Buttons)))),
-                        Group => Group,
-                        Module => Python_Views.Get_Module,
-                        Desktop_Independent => False);
+               Gtk_New
+                 (Child,
+                  Gtk_Widget (Widget),
+                  Get_Kernel (Data),
+                  Flags               =>
+                    Child_Flags
+                      (Integer'(Nth_Arg (Data, 7, Integer (All_Buttons)))),
+                  Group               => Group,
+                  Module              => Python_Views.Get_Module,
+                  Desktop_Independent => False);
                Child.Set_Save_Desktop_Callback
                  (Nth_Arg (Data, 6, Default => null));
 
@@ -893,9 +922,7 @@ package body Python_Module is
             end if;
 
             Set_Return_Value
-              (Data,
-               Create_MDI_Window_Instance
-                 (Get_Script (Data), C));
+              (Data, Create_MDI_Window_Instance (Get_Script (Data), C));
          end if;
       end if;
    end Python_GUI_Command_Handler;
@@ -920,10 +947,10 @@ package body Python_Module is
       function Comparison_Handler
         (Data : in out Callback_Data'Class) return Integer
       is
-         Project : constant Project_Type := Get_Data (Data, 1);
+         Project  : constant Project_Type := Get_Data (Data, 1);
          Project2 : constant Project_Type := Get_Data (Data, 2);
-         Name  : constant Virtual_File := Project_Path (Project);
-         Name2 : constant Virtual_File := Project_Path (Project2);
+         Name     : constant Virtual_File := Project_Path (Project);
+         Name2    : constant Virtual_File := Project_Path (Project2);
       begin
          if Name < Name2 then
             return -1;
@@ -948,26 +975,19 @@ package body Python_Module is
               (Full_Name_Hash (Project_Path (Project))
                mod Ada.Containers.Hash_Type (Integer'Last)));
       elsif Command = "__eq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 0);
       elsif Command = "__neq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 0);
       elsif Command = "__le__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 1);
       elsif Command = "__lt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = -1);
       elsif Command = "__ge__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= -1);
       elsif Command = "__gt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 1);
       elsif Command = "__cmp__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data));
+         Set_Return_Value (Data, Comparison_Handler (Data));
       end if;
    end Python_Project_Command_Handler;
 
@@ -978,7 +998,7 @@ package body Python_Module is
    procedure Python_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Entity  : constant Root_Entity'Class := Get_Data (Data, 1);
+      Entity : constant Root_Entity'Class := Get_Data (Data, 1);
 
       function Comparison_Handler
         (Data : in out Callback_Data'Class) return Integer;
@@ -990,17 +1010,15 @@ package body Python_Module is
       function Comparison_Handler
         (Data : in out Callback_Data'Class) return Integer
       is
-         Entity1  : constant Root_Entity'Class := Get_Data (Data, 1);
-         Entity2  : constant Root_Entity'Class := Get_Data (Data, 1);
+         Entity1 : constant Root_Entity'Class := Get_Data (Data, 1);
+         Entity2 : constant Root_Entity'Class := Get_Data (Data, 1);
       begin
          return Cmp (Entity1, Entity2);
       end Comparison_Handler;
 
-      Decl    : General_Entity_Declaration;
+      Decl : General_Entity_Declaration;
    begin
-      if Command = "__str__"
-        or else Command = "__repr__"
-      then
+      if Command = "__str__" or else Command = "__repr__" then
          if Is_Predefined_Entity (Entity) then
             Set_Return_Value (Data, Get_Name (Entity));
          else
@@ -1008,35 +1026,31 @@ package body Python_Module is
 
             Set_Return_Value
               (Data,
-               Get_Name (Entity) & ':'
-               & (+Decl.Loc.File.Base_Name) & ':'
-               & Image (Decl.Loc.Line) & ':'
+               Get_Name (Entity)
+               & ':'
+               & (+Decl.Loc.File.Base_Name)
+               & ':'
+               & Image (Decl.Loc.Line)
+               & ':'
                & Image (Integer (Decl.Loc.Column)));
          end if;
 
       elsif Command = "__hash__" then
          Set_Return_Value (Data, Hash (Entity));
       elsif Command = "__eq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 0);
       elsif Command = "__neq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 0);
       elsif Command = "__le__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 1);
       elsif Command = "__lt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = -1);
       elsif Command = "__ge__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= -1);
       elsif Command = "__gt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 1);
       elsif Command = "__cmp__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data));
+         Set_Return_Value (Data, Comparison_Handler (Data));
       end if;
    end Python_Entity_Command_Handler;
 
@@ -1061,10 +1075,10 @@ package body Python_Module is
         (Data : in out Callback_Data'Class) return Integer
       is
          use Basic_Types;
-         Info     : constant File_Location_Info := Get_Data (Data, 1);
-         Fileinfo : constant Virtual_File := Get_File (Info);
-         Info2     : constant File_Location_Info := Get_Data (Data, 2);
-         Fileinfo2 : constant Virtual_File := Get_File (Info2);
+         Info         : constant File_Location_Info := Get_Data (Data, 1);
+         Fileinfo     : constant Virtual_File := Get_File (Info);
+         Info2        : constant File_Location_Info := Get_Data (Data, 2);
+         Fileinfo2    : constant Virtual_File := Get_File (Info2);
          Line1, Line2 : Integer;
          Col1, Col2   : Visible_Column_Type;
       begin
@@ -1097,42 +1111,37 @@ package body Python_Module is
          end if;
       end Comparison_Handler;
    begin
-      if Command = "__str__"
-        or else Command = "__repr__"
-      then
+      if Command = "__str__" or else Command = "__repr__" then
          Set_Return_Value
            (Data,
-            +Base_Name (Fileinfo) & ':'
-            & Image (Get_Line (Info)) & ':'
+            +Base_Name (Fileinfo)
+            & ':'
+            & Image (Get_Line (Info))
+            & ':'
             & Image (Integer (Get_Column (Info))));
 
       elsif Command = "__hash__" then
          Set_Return_Value
-           (Data, Integer
-            (Hash (+Full_Name (Fileinfo)
-                   & Image (Get_Line (Info))
-                   & Image (Integer (Get_Column (Info))))));
+           (Data,
+            Integer
+              (Hash
+                 (+Full_Name (Fileinfo)
+                  & Image (Get_Line (Info))
+                  & Image (Integer (Get_Column (Info))))));
       elsif Command = "__eq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 0);
       elsif Command = "__neq__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 0);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 0);
       elsif Command = "__le__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= 1);
       elsif Command = "__lt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = -1);
       elsif Command = "__ge__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) /= -1);
+         Set_Return_Value (Data, Comparison_Handler (Data) /= -1);
       elsif Command = "__gt__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data) = 1);
+         Set_Return_Value (Data, Comparison_Handler (Data) = 1);
       elsif Command = "__cmp__" then
-         Set_Return_Value
-           (Data, Comparison_Handler (Data));
+         Set_Return_Value (Data, Comparison_Handler (Data));
       end if;
    end Python_Location_Command_Handler;
 
@@ -1140,7 +1149,8 @@ package body Python_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Python_Module_Record) is
+   overriding
+   procedure Destroy (Module : in out Python_Module_Record) is
       State    : GNATCOLL.Python.State.PyGILState_STATE :=
         GNATCOLL.Python.State.PyGILState_Ensure;
       pragma Unreferenced (State);
@@ -1166,9 +1176,9 @@ package body Python_Module is
       if Cov_Name.all /= "" then
          Shutdown_Phase := Saving_Coverage;
          Script.Execute_Command
-           (CL           => Create ("gs_cov.stop(); gs_cov.save()"),
-            Hide_Output  => True,
-            Errors       => Errors);
+           (CL          => Create ("gs_cov.stop(); gs_cov.save()"),
+            Hide_Output => True,
+            Errors      => Errors);
          Shutdown_Phase := Coverage_Saved;
       end if;
 
@@ -1176,14 +1186,15 @@ package body Python_Module is
       GNAT.OS_Lib.Free (Cov_Name);
 
       Shutdown_Phase := Running_Atexit_Handlers;
-      Result := Run_Command
-        (Python_Scripting (Script),
-         "import atexit ; atexit._run_exitfuncs()",
-         Need_Output     => False,
-         Show_Command    => False,
-         Hide_Output     => True,
-         Hide_Exceptions => True,
-         Errors          => Errors'Unchecked_Access);
+      Result :=
+        Run_Command
+          (Python_Scripting (Script),
+           "import atexit ; atexit._run_exitfuncs()",
+           Need_Output     => False,
+           Show_Command    => False,
+           Hide_Output     => True,
+           Hide_Exceptions => True,
+           Errors          => Errors'Unchecked_Access);
       Shutdown_Phase := Atexit_Handlers_Done;
 
       Py_XDECREF (Result);
@@ -1209,25 +1220,34 @@ package body Python_Module is
    begin
       --  Return a user-facing string ready to be appended to exception logs.
       case Shutdown_Phase is
-         when No_Shutdown_Phase =>
+         when No_Shutdown_Phase       =>
             return "";
-         when Destroy_Begin =>
+
+         when Destroy_Begin           =>
             return "python shutdown phase: destroy begin";
-         when Saving_Coverage =>
+
+         when Saving_Coverage         =>
             return "python shutdown phase: saving coverage data";
-         when Coverage_Saved =>
+
+         when Coverage_Saved          =>
             return "python shutdown phase: coverage save done";
-         when Freeing_Coverage_Env =>
+
+         when Freeing_Coverage_Env    =>
             return "python shutdown phase: freeing coverage env";
+
          when Running_Atexit_Handlers =>
             return "python shutdown phase: running atexit handlers";
-         when Atexit_Handlers_Done =>
+
+         when Atexit_Handlers_Done    =>
             return "python shutdown phase: atexit handlers done";
-         when Unregister_Begin =>
+
+         when Unregister_Begin        =>
             return "python shutdown phase: unregister begin";
-         when Unregister_Done =>
+
+         when Unregister_Done         =>
             return "python shutdown phase: unregister done";
-         when Destroy_Failed =>
+
+         when Destroy_Failed          =>
             return "python shutdown phase: destroy failed";
       end case;
    end Last_Shutdown_Phase;

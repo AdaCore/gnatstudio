@@ -29,15 +29,16 @@ generic
    with function "<" (Left : Item_Access; Right : Item_Access) return Boolean;
    with package Item_Sets is new Ada.Containers.Ordered_Sets (Item_Access);
 
-package CodePeer.Generic_Ordered_Set_Models is
+package CodePeer.Generic_Ordered_Set_Models
+is
 
    type Ordered_Set_Model_Record is abstract
-     new Gtkada.Abstract_List_Model.Gtk_Abstract_List_Model_Record with
-       private;
+     new Gtkada
+          .Abstract_List_Model
+          .Gtk_Abstract_List_Model_Record with private;
 
    procedure Initialize
-     (Self  : access Ordered_Set_Model_Record'Class;
-      Items : Item_Sets.Set);
+     (Self : access Ordered_Set_Model_Record'Class; Items : Item_Sets.Set);
 
    function Item_At
      (Self : access Ordered_Set_Model_Record'Class;
@@ -51,36 +52,39 @@ package CodePeer.Generic_Ordered_Set_Models is
    procedure Update (Self : access Ordered_Set_Model_Record'Class);
 
    procedure Row_Changed
-     (Self : access Ordered_Set_Model_Record'Class;
-      Item : Item_Access);
+     (Self : access Ordered_Set_Model_Record'Class; Item : Item_Access);
    --  Emit "row_changed" signal
 
    function Get_Path
-     (Self : access Ordered_Set_Model_Record;
-      Item : Item_Access)
+     (Self : access Ordered_Set_Model_Record; Item : Item_Access)
       return Gtk.Tree_Model.Gtk_Tree_Path;
    --  Return item's path. Path sould be released by caller.
 
    --  GtkTreeModel operations
 
-   overriding function Get_Iter
+   overriding
+   function Get_Iter
      (Self : access Ordered_Set_Model_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter;
 
-   overriding function Get_Path
+   overriding
+   function Get_Path
      (Self : access Ordered_Set_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path;
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Ordered_Set_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter);
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Ordered_Set_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
       return Glib.Gint;
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Ordered_Set_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -94,7 +98,7 @@ private
    end record;
 
    function Create_Tree_Iter
-     (Self : access Ordered_Set_Model_Record'Class;
-      Item : Item_Access) return Gtk.Tree_Model.Gtk_Tree_Iter;
+     (Self : access Ordered_Set_Model_Record'Class; Item : Item_Access)
+      return Gtk.Tree_Model.Gtk_Tree_Iter;
 
 end CodePeer.Generic_Ordered_Set_Models;

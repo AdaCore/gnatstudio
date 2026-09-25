@@ -26,23 +26,23 @@ package body Builder_Facility_Module.Output_Choppers is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
       pragma Unreferenced (Self);
    begin
-      return new Output_Chopper'
-        (Child  => Child,
-         Buffer => Null_Unbounded_String);
+      return
+        new Output_Chopper'(Child => Child, Buffer => Null_Unbounded_String);
    end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Output_Chopper;
       Item    : String;
       Command : access Root_Command'Class) is
@@ -53,10 +53,10 @@ package body Builder_Facility_Module.Output_Choppers is
 
       for Char of Item loop
          case Char is
-            when CR =>
+            when CR     =>
                null;  --  skip CR
 
-            when LF =>
+            when LF     =>
                Append (Self.Buffer, Char);
 
                Self.Child.Parse_Standard_Output
@@ -74,7 +74,8 @@ package body Builder_Facility_Module.Output_Choppers is
    -- End_Of_Stream --
    -------------------
 
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Output_Chopper;
       Status  : Integer;
       Command : access Root_Command'Class) is

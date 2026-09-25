@@ -17,8 +17,8 @@
 
 --  This package offers a few utilities for handling time.
 
-with Ada.Calendar;             use Ada.Calendar;
-with Ada.Calendar.Formatting;  use Ada.Calendar.Formatting;
+with Ada.Calendar;            use Ada.Calendar;
+with Ada.Calendar.Formatting; use Ada.Calendar.Formatting;
 
 package Time_Utils is
 
@@ -49,8 +49,8 @@ package Time_Utils is
    --  Return [timestamp] label
 
    function Elapsed
-     (Start_Time : Ada.Calendar.Time;
-      End_Time   : Ada.Calendar.Time) return String;
+     (Start_Time : Ada.Calendar.Time; End_Time : Ada.Calendar.Time)
+      return String;
    --  Return image of elapsed time
 
 end Time_Utils;

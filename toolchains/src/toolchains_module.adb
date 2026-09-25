@@ -16,21 +16,22 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.JSON;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Gtk.Dialog;                use Gtk.Dialog;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Properties;            use GPS.Properties;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Gtk.Dialog;            use Gtk.Dialog;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Properties;        use GPS.Properties;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;    use GPS.Kernel.Project;
+with GPS.Kernel.Properties; use GPS.Kernel.Properties;
 with Toolchains_Old;
-with Toolchains_Dialog;         use Toolchains_Dialog;
+with Toolchains_Dialog;     use Toolchains_Dialog;
 with Builder_Facility_Module;
 with JSON_Utils;
 
@@ -44,24 +45,26 @@ package body Toolchains_Module is
       Compiler_Path    : Virtual_File;
    end record;
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Toolchains_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value);
-   overriding procedure Load
-     (Property : in out Toolchains_Property;
-      Value    : GNATCOLL.JSON.JSON_Value);
-   overriding procedure Destroy (Property : in out Toolchains_Property);
+   overriding
+   procedure Load
+     (Property : in out Toolchains_Property; Value : GNATCOLL.JSON.JSON_Value);
+   overriding
+   procedure Destroy (Property : in out Toolchains_Property);
    --  See inherited doc.
 
    pragma Warnings (Off); --  Yes, it's not dispatching and it's expected.
    procedure Apply
-     (Property : Toolchains_Property;
-      Kernel   : GPS.Kernel.Kernel_Handle);
+     (Property : Toolchains_Property; Kernel : GPS.Kernel.Kernel_Handle);
    pragma Warnings (On);
    --  Applies the property.
 
    type Toolchains_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Toolchains_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Config menu
@@ -72,7 +75,8 @@ package body Toolchains_Module is
    --  Retrieve the global property
 
    type On_GPS_Started is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_GPS_Started;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when GNAT Studio is starting
@@ -81,7 +85,8 @@ package body Toolchains_Module is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Toolchains_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value)
    is
@@ -104,9 +109,9 @@ package body Toolchains_Module is
    -- Load --
    ----------
 
-   overriding procedure Load
-     (Property : in out Toolchains_Property;
-      Value    : GNATCOLL.JSON.JSON_Value)
+   overriding
+   procedure Load
+     (Property : in out Toolchains_Property; Value : GNATCOLL.JSON.JSON_Value)
    is
       use GNATCOLL.JSON;
 
@@ -118,10 +123,10 @@ package body Toolchains_Module is
       --  This has no impact on its actual xrefs_subdir state (Property.Active
       --  state is always checked first), but this will check the corresponding
       --  button in the dialog by default, which is a desirable thing.
-      Property.Use_Xrefs_Subdir := Value.Get ("use_xrefs_subdir")
-        or else not Property.Active;
+      Property.Use_Xrefs_Subdir :=
+        Value.Get ("use_xrefs_subdir") or else not Property.Active;
 
-      Property.Tools_Path    := JSON_Utils.Load (Value.Get ("tools_path"));
+      Property.Tools_Path := JSON_Utils.Load (Value.Get ("tools_path"));
       Property.Compiler_Path := JSON_Utils.Load (Value.Get ("compiler_path"));
    end Load;
 
@@ -129,9 +134,10 @@ package body Toolchains_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Property : in out Toolchains_Property) is
+   overriding
+   procedure Destroy (Property : in out Toolchains_Property) is
    begin
-      Property.Tools_Path    := No_File;
+      Property.Tools_Path := No_File;
       Property.Compiler_Path := No_File;
    end Destroy;
 
@@ -140,21 +146,18 @@ package body Toolchains_Module is
    -----------
 
    procedure Apply
-     (Property : Toolchains_Property;
-      Kernel   : GPS.Kernel.Kernel_Handle) is
+     (Property : Toolchains_Property; Kernel : GPS.Kernel.Kernel_Handle) is
    begin
       Toolchains_Old.Set_Toolchains_Properties
         (Active               => Property.Active,
          Tool_Search_Path     => Property.Tools_Path,
          Compiler_Search_Path => Property.Compiler_Path);
 
-      if Property.Active
-        and then Property.Use_Xrefs_Subdir
-      then
+      if Property.Active and then Property.Use_Xrefs_Subdir then
          --  ??? .xrefs and mode "xref" should not be string literals, but
          --  stored somewhere instead.
          if not Equal
-           (Get_Registry (Kernel).Environment.Xrefs_Subdir, ".xrefs")
+                  (Get_Registry (Kernel).Environment.Xrefs_Subdir, ".xrefs")
          then
             Get_Registry (Kernel).Environment.Set_Xrefs_Subdir (".xrefs");
             GPS.Kernel.Project.Recompute_View (Kernel);
@@ -178,7 +181,8 @@ package body Toolchains_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_GPS_Started;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -192,28 +196,26 @@ package body Toolchains_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Toolchains_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
       Property      : Toolchains_Property := Get_Property;
       Prop_Access   : Property_Access;
       Dialog        : Toolchains_Dialog.Dialog;
       Resp          : Gtk_Response_Type;
       Compiler      : constant Filesystem_String :=
-                        +Get_Project (Kernel).Attribute_Value
-                          (Compiler_Command_Attribute,
-                           Default => "gnatmake",
-                           Index   => "Ada");
+        +Get_Project (Kernel).Attribute_Value
+           (Compiler_Command_Attribute, Default => "gnatmake", Index => "Ada");
       Default_Path  : Virtual_File;
       Tools_Path    : Virtual_File;
       Compiler_Path : Virtual_File;
 
    begin
-      if Property.Tools_Path = No_File
-        or else Property.Compiler_Path = No_File
+      if Property.Tools_Path = No_File or else Property.Compiler_Path = No_File
       then
          declare
             Path : constant Virtual_File := Locate_On_Path (Compiler);
@@ -239,8 +241,11 @@ package body Toolchains_Module is
       end if;
 
       Gtk_New
-        (Dialog, Kernel, Property.Active,
-         Tools_Path, Property.Use_Xrefs_Subdir,
+        (Dialog,
+         Kernel,
+         Property.Active,
+         Tools_Path,
+         Property.Use_Xrefs_Subdir,
          Compiler_Path);
 
       Resp := Dialog.Run;
@@ -281,11 +286,12 @@ package body Toolchains_Module is
          Found => Success);
 
       if not Success then
-         return Toolchains_Property'
-           (Active           => False,
-            Tools_Path       => No_File,
-            Use_Xrefs_Subdir => True,
-            Compiler_Path    => No_File);
+         return
+           Toolchains_Property'
+             (Active           => False,
+              Tools_Path       => No_File,
+              Use_Xrefs_Subdir => True,
+              Compiler_Path    => No_File);
       else
          return Property;
       end if;
@@ -296,11 +302,12 @@ package body Toolchains_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Action
-        (Kernel, "open toolchains editor", new Toolchains_Command,
+        (Kernel,
+         "open toolchains editor",
+         new Toolchains_Command,
          -"Open the toolchains editor (for builds)",
          Category => -"Views");
 

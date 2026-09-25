@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Sax.Readers;          use Sax.Readers;
+with Sax.Readers;  use Sax.Readers;
 with Sax.Attributes;
 with Sax.Exceptions;
 with Sax.Locators;
 with Unicode.CES;
 with XML_Utils;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package XML_Readers is
 
@@ -39,9 +39,9 @@ package XML_Readers is
    --  is no longer accessible.
 
    procedure Parse
-       (File  : Virtual_File;
-        Tree  : out XML_Utils.Node_Ptr;
-        Error : out Unicode.CES.Byte_Sequence_Access);
+     (File  : Virtual_File;
+      Tree  : out XML_Utils.Node_Ptr;
+      Error : out Unicode.CES.Byte_Sequence_Access);
    --  Same as above, except error messages are made available to the caller.
    --  Both return value must be freed by the user.
    --  If there is an error, Tree is always set to null.
@@ -71,37 +71,43 @@ package XML_Readers is
 private
 
    type Gtk_Reader is new Reader with record
-      Tree                       : XML_Utils.Node_Ptr;
-      Start_Line                 : Natural := 1;
-      Current_Node               : XML_Utils.Node_Ptr;
-      Internal_Encoding          : Unicode.CES.Encoding_Scheme;
-      Warnings_As_Error          : Boolean := False;
+      Tree              : XML_Utils.Node_Ptr;
+      Start_Line        : Natural := 1;
+      Current_Node      : XML_Utils.Node_Ptr;
+      Internal_Encoding : Unicode.CES.Encoding_Scheme;
+      Warnings_As_Error : Boolean := False;
    end record;
 
-   overriding procedure Start_Document (Handler : in out Gtk_Reader);
-   overriding procedure Set_Document_Locator
+   overriding
+   procedure Start_Document (Handler : in out Gtk_Reader);
+   overriding
+   procedure Set_Document_Locator
      (Handler : in out Gtk_Reader; Loc : in out Sax.Locators.Locator);
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "";
       Atts          : Sax.Attributes.Attributes'Class);
-   overriding procedure End_Element
-     (Handler : in out Gtk_Reader;
+   overriding
+   procedure End_Element
+     (Handler       : in out Gtk_Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
       Qname         : Unicode.CES.Byte_Sequence := "");
-   overriding procedure Characters
-     (Handler : in out Gtk_Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
-   overriding procedure Ignorable_Whitespace
-     (Handler : in out Gtk_Reader;
-      Ch      : Unicode.CES.Byte_Sequence);
-   overriding procedure Error
+   overriding
+   procedure Characters
+     (Handler : in out Gtk_Reader; Ch : Unicode.CES.Byte_Sequence);
+   overriding
+   procedure Ignorable_Whitespace
+     (Handler : in out Gtk_Reader; Ch : Unicode.CES.Byte_Sequence);
+   overriding
+   procedure Error
      (Handler : in out Gtk_Reader;
       Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
-   overriding procedure Warning
+   overriding
+   procedure Warning
      (Handler : in out Gtk_Reader;
-      Except : Sax.Exceptions.Sax_Parse_Exception'Class);
+      Except  : Sax.Exceptions.Sax_Parse_Exception'Class);
 end XML_Readers;

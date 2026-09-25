@@ -32,13 +32,13 @@ package LAL.Unit_Providers is
 
 private
 
-   type Unit_Provider is
-     new Libadalang.Analysis.Unit_Provider_Interface with
-   record
-       Kernel : GPS.Core_Kernels.Core_Kernel;
+   type Unit_Provider is new Libadalang.Analysis.Unit_Provider_Interface
+   with record
+      Kernel : GPS.Core_Kernels.Core_Kernel;
    end record;
 
-   overriding function Get_Unit
+   overriding
+   function Get_Unit
      (Self    : Unit_Provider;
       Context : Libadalang.Analysis.Analysis_Context'Class;
       Name    : Wide_Wide_String;
@@ -47,11 +47,13 @@ private
       Reparse : Boolean := False)
       return Libadalang.Analysis.Analysis_Unit'Class;
 
-   overriding function Get_Unit_Filename
+   overriding
+   function Get_Unit_Filename
      (Self : Unit_Provider;
       Name : Wide_Wide_String;
       Kind : Libadalang.Common.Analysis_Unit_Kind) return String;
 
-   overriding procedure Release (Self : in out Unit_Provider) is null;
+   overriding
+   procedure Release (Self : in out Unit_Provider) is null;
 
 end LAL.Unit_Providers;

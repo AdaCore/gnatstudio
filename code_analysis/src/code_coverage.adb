@@ -15,15 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO;           use Ada.Text_IO;
-with Ada.Strings;           use Ada.Strings;
-with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
+with Ada.Text_IO;       use Ada.Text_IO;
+with Ada.Strings;       use Ada.Strings;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Regpat;       use GNAT.Regpat;
 with Glib;
 with Glib.Convert;
 with Glib.Values;
-with Glib_Values_Utils;     use Glib_Values_Utils;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with GPS.Intl;              use GPS.Intl;
 with String_Utils;          use String_Utils;
@@ -39,9 +39,8 @@ with Coverage_GUI;
 
 package body Code_Coverage is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.CODE_ANALYSIS.CODE_COVERAGE",
-      GNATCOLL.Traces.On);
+   Me : constant Trace_Handle :=
+     Create ("GPS.CODE_ANALYSIS.CODE_COVERAGE", GNATCOLL.Traces.On);
 
    Int_Image_Pad : constant Positive := 5;
    --  Size of padding wanted with GNATCOLL.Utils.Image
@@ -52,8 +51,7 @@ package body Code_Coverage is
    use type ASU.Unbounded_String;
 
    function Unit_Label
-     (Metric    : Coverage_Metric;
-      With_Name : Boolean) return String;
+     (Metric : Coverage_Metric; With_Name : Boolean) return String;
    --  The noun naming what Metric counts, singular when it counts exactly
    --  one: "lines" for our own line-based figure, "obligations" for a
    --  criterion reported by the coverage tool, prefixed with that criterion's
@@ -71,8 +69,7 @@ package body Code_Coverage is
    --  The number of Metric's obligations that are not covered
 
    function Coverage_Tooltip
-     (Node  : Node_Coverage'Class;
-      Shown : Coverage_Metric) return String;
+     (Node : Node_Coverage'Class; Shown : Coverage_Metric) return String;
    --  The full coverage breakdown for Node: the coverage level the tool
    --  announced, every figure it reported, our own line-based figure, and
    --  which of them Shown is. A figure that does not account for every one
@@ -96,8 +93,7 @@ package body Code_Coverage is
    ----------------
 
    function Unit_Label
-     (Metric    : Coverage_Metric;
-      With_Name : Boolean) return String
+     (Metric : Coverage_Metric; With_Name : Boolean) return String
    is
       Singular : constant Boolean := Metric.Total = 1;
    begin
@@ -157,8 +153,7 @@ package body Code_Coverage is
    ----------------------
 
    function Coverage_Tooltip
-     (Node  : Node_Coverage'Class;
-      Shown : Coverage_Metric) return String
+     (Node : Node_Coverage'Class; Shown : Coverage_Metric) return String
    is
       Max_Named_Files : constant := 5;
       --  How many of the files a partial figure omits the tooltip names
@@ -178,10 +173,18 @@ package body Code_Coverage is
          ASU.Append
            (Result,
             (if Result = ASU.Null_Unbounded_String
-             then "" else (1 => ASCII.LF))
-            & Metric_Label (Metric) & ": " & Image (Metric.Covered) & (-" of ")
-            & Image (Metric.Total) & " " & Unit_Label (Metric, False)
-            & (-" covered (") & Image (Percentage (Metric)) & " %)");
+             then ""
+             else (1 => ASCII.LF))
+            & Metric_Label (Metric)
+            & ": "
+            & Image (Metric.Covered)
+            & (-" of ")
+            & Image (Metric.Total)
+            & " "
+            & Unit_Label (Metric, False)
+            & (-" covered (")
+            & Image (Percentage (Metric))
+            & " %)");
 
          --  Warn about a figure that does not account for every file, so that
          --  a partial total is never shown silently, and name the files it
@@ -190,14 +193,16 @@ package body Code_Coverage is
          if Metric.Nb_Files < Node.Nb_Files then
             ASU.Append
               (Result,
-               (-", from") & Natural'Image (Metric.Nb_Files) & (-" of")
-               & Natural'Image (Node.Nb_Files) & (-" files"));
+               (-", from")
+               & Natural'Image (Metric.Nb_Files)
+               & (-" of")
+               & Natural'Image (Node.Nb_Files)
+               & (-" files"));
 
             if not Metric.Missing.Is_Empty then
                ASU.Append (Result, -" (not reported by ");
 
-               for J in Metric.Missing.First_Index
-                 .. Metric.Missing.Last_Index
+               for J in Metric.Missing.First_Index .. Metric.Missing.Last_Index
                loop
                   --  A project may hold a great many files: name the first
                   --  few and count the rest, so the tooltip stays readable
@@ -205,8 +210,9 @@ package body Code_Coverage is
                   if J > Max_Named_Files then
                      ASU.Append
                        (Result,
-                        (-", and") & Natural'Image
-                          (Natural (Metric.Missing.Length) - Max_Named_Files)
+                        (-", and")
+                        & Natural'Image
+                            (Natural (Metric.Missing.Length) - Max_Named_Files)
                         & (-" more"));
                      exit;
                   end if;
@@ -249,16 +255,15 @@ package body Code_Coverage is
    ---------------
 
    procedure Set_Error
-     (File_Node  : Code_Analysis.File_Access;
-      Error_Code : File_Coverage_Status)
+     (File_Node : Code_Analysis.File_Access; Error_Code : File_Coverage_Status)
    is
    begin
       if File_Node.Analysis_Data.Coverage_Data = null then
          File_Node.Analysis_Data.Coverage_Data := new File_Coverage;
       end if;
 
-      File_Coverage
-        (File_Node.Analysis_Data.Coverage_Data.all).Status := Error_Code;
+      File_Coverage (File_Node.Analysis_Data.Coverage_Data.all).Status :=
+        Error_Code;
 
       if File_Node.Lines = null then
          --  Set an empty line array in order to make File_Node a "finished"
@@ -277,17 +282,17 @@ package body Code_Coverage is
       Prj_Runs      : out Positive;
       Have_Runs     : out Boolean)
    is
-      Current       : Natural;
-      Runs_Regexp   : constant Pattern_Matcher :=
-                            Compile ("^ +-: +0:Runs:(\d+)", Multiple_Lines);
-      Runs_Matches  : Match_Array (0 .. 1);
+      Current      : Natural;
+      Runs_Regexp  : constant Pattern_Matcher :=
+        Compile ("^ +-: +0:Runs:(\d+)", Multiple_Lines);
+      Runs_Matches : Match_Array (0 .. 1);
    begin
 
       Current := File_Contents'First;
 
       for J in 1 .. 4 loop
-         Current := Index
-           (File_Contents.all, (1 => ASCII.LF), Current, Forward);
+         Current :=
+           Index (File_Contents.all, (1 => ASCII.LF), Current, Forward);
       end loop;
 
       Match (Runs_Regexp, File_Contents.all, Runs_Matches, Current);
@@ -295,12 +300,14 @@ package body Code_Coverage is
       if Runs_Matches (0) = No_Match then
          Have_Runs := False;
          return;
-         --  The .gcov have no runs count information
+      --  The .gcov have no runs count information
+
       end if;
 
       begin
-         Prj_Runs  := Positive'Value
-           (File_Contents (Runs_Matches (1).First .. Runs_Matches (1).Last));
+         Prj_Runs :=
+           Positive'Value
+             (File_Contents (Runs_Matches (1).First .. Runs_Matches (1).Last));
       exception
          when Constraint_Error =>
             Have_Runs := False;
@@ -325,8 +332,7 @@ package body Code_Coverage is
       Line_Count : Natural := 0;
 
       procedure Update_Subprogram_Info_From_Line_Info
-        (Line_Info : Code_Analysis.Line;
-         Node      : Semantic_Node'Class);
+        (Line_Info : Code_Analysis.Line; Node : Semantic_Node'Class);
       --  Update the subprogram coverage information related to the given Node
       --  from the given Line's coverage information.
 
@@ -335,32 +341,31 @@ package body Code_Coverage is
       -------------------------------------------
 
       procedure Update_Subprogram_Info_From_Line_Info
-        (Line_Info : Code_Analysis.Line;
-         Node      : Semantic_Node'Class)
+        (Line_Info : Code_Analysis.Line; Node : Semantic_Node'Class)
       is
          Line_Coverage_Data : constant Coverage_Access :=
-                                Line_Info.Analysis_Data.Coverage_Data;
+           Line_Info.Analysis_Data.Coverage_Data;
       begin
          if Line_Coverage_Data /= null then
 
             --   Create the subprogram information if not created yet
             if Subp_Cov = null then
                Subp_Name := new String'(Get (Node.Name).all);
-               Subp_Node := Get_Or_Create
-                 (File_Node,
-                  Key => Subp_Name.all
-                  & ' ' & Get (Node.Profile).all);
-               Subp_Node.Name   := Subp_Name;
-               Subp_Node.Line   := Node.Sloc_Def.Line;
+               Subp_Node :=
+                 Get_Or_Create
+                   (File_Node,
+                    Key => Subp_Name.all & ' ' & Get (Node.Profile).all);
+               Subp_Node.Name := Subp_Name;
+               Subp_Node.Line := Node.Sloc_Def.Line;
                Subp_Node.Column := Integer (Node.Sloc_Def.Column);
-               Subp_Node.Start  := Node.Sloc_Start.Line;
-               Subp_Node.Stop   := Node.Sloc_End.Line;
+               Subp_Node.Start := Node.Sloc_Start.Line;
+               Subp_Node.Stop := Node.Sloc_End.Line;
                --  A subprogram's figure stays line-based: GNATcoverage
                --  reports no per-subprogram obligation count, and none can
                --  be derived from the per-line data.
 
-               Subp_Node.Analysis_Data.Coverage_Data := new
-                 Subprogram_Coverage'
+               Subp_Node.Analysis_Data.Coverage_Data :=
+                 new Subprogram_Coverage'
                    (Coverage => 0,
                     Status   => Valid,
                     Called   => Line_Coverage_Data.Coverage,
@@ -370,8 +375,9 @@ package body Code_Coverage is
                --  executed line of the subprogram was executed
                --  exactly once by subprogram calls
                --  It fits with GCC 4.1 series
-               Subp_Cov := Subprogram_Coverage
-                 (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
+               Subp_Cov :=
+                 Subprogram_Coverage
+                   (Subp_Node.Analysis_Data.Coverage_Data.all)'Access;
             elsif not Line_Coverage_Data.Is_Exempted then
                --  Do not consider an exempted line as a child of the
                --  subprogram node.
@@ -404,12 +410,14 @@ package body Code_Coverage is
                      --  totals, or the processing of other files) is still
                      --  reported to the user.
 
-                     Trace (Me, +Full_Name (File_Node.Name) &
-                              ": invalid construct at line" & Start_Line'Img);
+                     Trace
+                       (Me,
+                        +Full_Name (File_Node.Name)
+                        & ": invalid construct at line"
+                        & Start_Line'Img);
                   else
                      Update_Subprogram_Info_From_Line_Info
-                       (Line_Info => File_Node.Lines (J),
-                        Node      => Node);
+                       (Line_Info => File_Node.Lines (J), Node => Node);
                   end if;
                end loop;
 
@@ -437,12 +445,13 @@ package body Code_Coverage is
 
       if Project_Node.Analysis_Data.Coverage_Data = null then
          return;
-         --  An Add_File_Info should have set up Runs/Called info
+      --  An Add_File_Info should have set up Runs/Called info
+
       end if;
 
       declare
-         Data : constant access Node_Coverage := Node_Coverage
-           (Project_Node.Analysis_Data.Coverage_Data.all)'Access;
+         Data : constant access Node_Coverage :=
+           Node_Coverage (Project_Node.Analysis_Data.Coverage_Data.all)'Access;
 
          Level_Seen : Boolean := False;
          Same_Level : Boolean := True;
@@ -452,8 +461,7 @@ package body Code_Coverage is
          --  criterion, creating that figure if this is the first file to
          --  report it
 
-         procedure Note_Omission
-           (Node : Node_Coverage'Class; Name : String);
+         procedure Note_Omission (Node : Node_Coverage'Class; Name : String);
          --  Record Name as a file omitted from every project figure that
          --  Node did not report
 
@@ -465,11 +473,12 @@ package body Code_Coverage is
          begin
             for Total of Data.Metrics loop
                if Total.Kind = Metric.Kind
-                 and then (Metric.Kind /= Unknown_Metric
-                           or else Total.Name = Metric.Name)
+                 and then
+                   (Metric.Kind /= Unknown_Metric
+                    or else Total.Name = Metric.Name)
                then
-                  Total.Covered  := Total.Covered + Metric.Covered;
-                  Total.Total    := Total.Total + Metric.Total;
+                  Total.Covered := Total.Covered + Metric.Covered;
+                  Total.Total := Total.Total + Metric.Total;
                   Total.Nb_Files := Total.Nb_Files + Metric.Nb_Files;
                   return;
                end if;
@@ -482,9 +491,7 @@ package body Code_Coverage is
          -- Note_Omission --
          -------------------
 
-         procedure Note_Omission
-           (Node : Node_Coverage'Class; Name : String)
-         is
+         procedure Note_Omission (Node : Node_Coverage'Class; Name : String) is
             function Reported (Total : Coverage_Metric) return Boolean;
             --  Whether Node reported the criterion Total stands for
 
@@ -496,8 +503,9 @@ package body Code_Coverage is
             begin
                for Metric of Node.Metrics loop
                   if Metric.Kind = Total.Kind
-                    and then (Total.Kind /= Unknown_Metric
-                              or else Metric.Name = Total.Name)
+                    and then
+                      (Total.Kind /= Unknown_Metric
+                       or else Metric.Name = Total.Name)
                   then
                      return True;
                   end if;
@@ -518,7 +526,7 @@ package body Code_Coverage is
          Data.Coverage := 0;
          Data.Children := 0;
          Data.Metrics.Clear;
-         Data.Level    := ASU.Null_Unbounded_String;
+         Data.Level := ASU.Null_Unbounded_String;
          Data.Nb_Files := 0;
 
          loop
@@ -530,8 +538,9 @@ package body Code_Coverage is
               and then File_Node.Analysis_Data.Coverage_Data.Is_Valid
             then
                declare
-                  File_Data : constant access Node_Coverage := Node_Coverage
-                    (File_Node.Analysis_Data.Coverage_Data.all)'Access;
+                  File_Data : constant access Node_Coverage :=
+                    Node_Coverage
+                      (File_Node.Analysis_Data.Coverage_Data.all)'Access;
                begin
                   Data.Children := Data.Children + File_Data.Children;
                   Data.Coverage := Data.Coverage + File_Data.Coverage;
@@ -576,8 +585,7 @@ package body Code_Coverage is
               and then File_Node.Analysis_Data.Coverage_Data.Is_Valid
             then
                Note_Omission
-                 (Node_Coverage
-                    (File_Node.Analysis_Data.Coverage_Data.all),
+                 (Node_Coverage (File_Node.Analysis_Data.Coverage_Data.all),
                   Display_Base_Name (File_Node.Name));
             end if;
          end loop;
@@ -598,9 +606,10 @@ package body Code_Coverage is
 
    procedure Dump_Node_Coverage (Coverage : Coverage_Access) is
    begin
-      Put (Natural'Image (Coverage.Coverage)
-           & " /"
-           & Natural'Image (Node_Coverage (Coverage.all).Children));
+      Put
+        (Natural'Image (Coverage.Coverage)
+         & " /"
+         & Natural'Image (Node_Coverage (Coverage.all).Children));
    end Dump_Node_Coverage;
 
    ------------------------
@@ -627,8 +636,9 @@ package body Code_Coverage is
       if Subprogram_Coverage (Coverage.all).Called = 0 then
          Put (" warning: subprogram never called");
       else
-         Put (Natural'Image (Subprogram_Coverage (Coverage.all).Called)
-              & " call(s)");
+         Put
+           (Natural'Image (Subprogram_Coverage (Coverage.all).Called)
+            & " call(s)");
       end if;
    end Dump_Subp_Coverage;
 
@@ -641,8 +651,8 @@ package body Code_Coverage is
       Dump_Node_Coverage (Coverage);
 
       if Project_Coverage (Coverage.all).Have_Runs then
-         Put (Natural'Image (Project_Coverage (Coverage.all).Runs)
-              & " run(s)");
+         Put
+           (Natural'Image (Project_Coverage (Coverage.all).Runs) & " run(s)");
       end if;
    end Dump_Prj_Coverage;
 
@@ -664,8 +674,13 @@ package body Code_Coverage is
 
          ASU.Append
            (Metrics,
-            ASU.To_String (Metric.Name) & "=" & Image (Metric.Covered) & ","
-            & Image (Metric.Total) & "," & Image (Metric.Nb_Files));
+            ASU.To_String (Metric.Name)
+            & "="
+            & Image (Metric.Covered)
+            & ","
+            & Image (Metric.Total)
+            & ","
+            & Image (Metric.Nb_Files));
 
          for J in Metric.Missing.First_Index .. Metric.Missing.Last_Index loop
             ASU.Append
@@ -729,8 +744,9 @@ package body Code_Coverage is
          Last := Index (Txt_Metrics, ";", First);
 
          declare
-            Item  : constant String := Txt_Metrics
-              (First .. (if Last = 0 then Txt_Metrics'Last else Last - 1));
+            Item  : constant String :=
+              Txt_Metrics
+                (First .. (if Last = 0 then Txt_Metrics'Last else Last - 1));
             Eq    : constant Natural := Index (Item, "=");
             Comma : constant Natural :=
               (if Eq = 0 then 0 else Index (Item, ",", Eq + 1));
@@ -752,24 +768,32 @@ package body Code_Coverage is
                        (Kind     => Metric_Kind_From_Name (Name),
                         Name     => ASU.To_Unbounded_String (Name),
                         Covered  => Natural'Value (Item (Eq + 1 .. Comma - 1)),
-                        Total    => Natural'Value
-                          (Item (Comma + 1
-                                 .. (if Comma_2 = 0
-                                     then Item'Last
-                                     else Comma_2 - 1))),
+                        Total    =>
+                          Natural'Value
+                            (Item
+                               (Comma
+                                + 1
+                                ..
+                                  (if Comma_2 = 0
+                                   then Item'Last
+                                   else Comma_2 - 1))),
                         Nb_Files =>
                           (if Comma_2 = 0
                            then 1
-                           else Natural'Value
-                             (Item (Comma_2 + 1
-                                    .. (if Comma_3 = 0
-                                        then Item'Last
-                                        else Comma_3 - 1)))),
+                           else
+                             Natural'Value
+                               (Item
+                                  (Comma_2
+                                   + 1
+                                   ..
+                                     (if Comma_3 = 0
+                                      then Item'Last
+                                      else Comma_3 - 1)))),
                         Missing  =>
                           (if Comma_3 = 0
                            then Name_Vectors.Empty_Vector
-                           else Split_Names
-                             (Item (Comma_3 + 1 .. Item'Last)))));
+                           else
+                             Split_Names (Item (Comma_3 + 1 .. Item'Last)))));
                end;
             end if;
          end;
@@ -792,7 +816,7 @@ package body Code_Coverage is
          --  A malformed attribute must not prevent the report from loading
 
          Node.Metrics.Clear;
-         Node.Level    := ASU.Null_Unbounded_String;
+         Node.Level := ASU.Null_Unbounded_String;
          Node.Nb_Files := 0;
    end Parse_Metrics;
 
@@ -824,8 +848,10 @@ package body Code_Coverage is
 
          elsif Coverage.all in Node_Coverage'Class then
             if Coverage.Is_Valid then
-               Set_Attribute_S (Loc, "children", Natural'Image
-                              (Node_Coverage (Coverage.all).Children));
+               Set_Attribute_S
+                 (Loc,
+                  "children",
+                  Natural'Image (Node_Coverage (Coverage.all).Children));
                Dump_Metrics (Node_Coverage (Coverage.all), Loc);
             end if;
 
@@ -837,8 +863,11 @@ package body Code_Coverage is
                     (Subprogram_Coverage (Coverage.all).Status));
 
                if Coverage.Is_Valid then
-                  Set_Attribute_S (Loc, "called", Natural'Image
-                                 (Subprogram_Coverage (Coverage.all).Called));
+                  Set_Attribute_S
+                    (Loc,
+                     "called",
+                     Natural'Image
+                       (Subprogram_Coverage (Coverage.all).Called));
                end if;
 
             elsif Coverage.all in File_Coverage'Class then
@@ -857,8 +886,10 @@ package body Code_Coverage is
 
                if Coverage.Is_Valid then
                   if Project_Coverage (Coverage.all).Have_Runs then
-                     Set_Attribute_S (Loc, "runs", Natural'Image
-                                    (Project_Coverage (Coverage.all).Runs));
+                     Set_Attribute_S
+                       (Loc,
+                        "runs",
+                        Natural'Image (Project_Coverage (Coverage.all).Runs));
                   end if;
                end if;
             end if;
@@ -871,31 +902,26 @@ package body Code_Coverage is
    ------------------------
 
    procedure XML_Parse_Coverage
-     (Coverage : in out Coverage_Access;
-      Loc      : Node_Ptr)
+     (Coverage : in out Coverage_Access; Loc : Node_Ptr)
    is
-      function Status_Value
-        (Status : String) return Coverage_Status;
+      function Status_Value (Status : String) return Coverage_Status;
       --  Return the coverage status associated with an error message
 
-      function Status_Value
-        (Status : String) return File_Coverage_Status;
+      function Status_Value (Status : String) return File_Coverage_Status;
       --  Return the coverage status associated with an error message
 
       function Status_Value
         (Status : String) return GNATcov_Line_Coverage_Status;
       --  Return the coverage status associated with an error message
 
-      function Status_Value
-        (Status : String) return Gcov_Line_Coverage_Status;
+      function Status_Value (Status : String) return Gcov_Line_Coverage_Status;
       --  Return the coverage status associated with an error message
 
       ------------------
       -- Status_Value --
       ------------------
 
-      function Status_Value
-        (Status : String) return Coverage_Status is
+      function Status_Value (Status : String) return Coverage_Status is
       begin
          return Coverage_Status'Value (Status);
 
@@ -904,8 +930,7 @@ package body Code_Coverage is
             return Undetermined;
       end Status_Value;
 
-      function Status_Value
-        (Status : String) return File_Coverage_Status is
+      function Status_Value (Status : String) return File_Coverage_Status is
       begin
          return File_Coverage_Status'Value (Status);
 
@@ -924,8 +949,8 @@ package body Code_Coverage is
             return Undetermined;
       end Status_Value;
 
-      function Status_Value
-        (Status : String) return Gcov_Line_Coverage_Status is
+      function Status_Value (Status : String) return Gcov_Line_Coverage_Status
+      is
       begin
          return Gcov_Line_Coverage_Status'Value (Status);
 
@@ -940,7 +965,7 @@ package body Code_Coverage is
       if Txt_Status /= "" then
          if Loc.Tag.all = "Line" then
             case Coverage_GUI.Current_Coverage_Tool is
-               when Coverage_GUI.Gcov =>
+               when Coverage_GUI.Gcov    =>
                   Coverage := new Gcov_Line_Coverage;
                   Gcov_Line_Coverage (Coverage.all).Status :=
                     Status_Value (Txt_Status);
@@ -1056,7 +1081,7 @@ package body Code_Coverage is
       Coverage   : Coverage_Access;
       Bin_Mode   : Boolean := False)
    is
-      function Txt_Sub (Coverage  : Coverage_Access) return String;
+      function Txt_Sub (Coverage : Coverage_Access) return String;
       --  Returns in a String the Subprograms specific coverage info used to
       --  fill the Gtk_Tree_Store of a coverage report
 
@@ -1091,21 +1116,27 @@ package body Code_Coverage is
          if Coverage.all in Subprogram_Coverage'Class then
             declare
                Cal_Count : constant Natural :=
-                             Subprogram_Coverage (Coverage.all).Called;
+                 Subprogram_Coverage (Coverage.all).Called;
             begin
-               return String'(-", called" & Natural'Image (Cal_Count)
-                              & Txt_Cal (Cal_Count));
+               return
+                 String'
+                   (-", called"
+                    & Natural'Image (Cal_Count)
+                    & Txt_Cal (Cal_Count));
             end;
-         elsif Coverage.all in Project_Coverage'Class and then
-           Project_Coverage (Coverage.all).Have_Runs
+         elsif Coverage.all in Project_Coverage'Class
+           and then Project_Coverage (Coverage.all).Have_Runs
          then
 
             declare
                Run_Count : constant Natural :=
-                             Project_Coverage (Coverage.all).Runs;
+                 Project_Coverage (Coverage.all).Runs;
             begin
-               return String'(-", ran" & Natural'Image (Run_Count)
-                              & Txt_Cal (Run_Count));
+               return
+                 String'
+                   (-", ran"
+                    & Natural'Image (Run_Count)
+                    & Txt_Cal (Run_Count));
             end;
          else
             return "";
@@ -1114,28 +1145,37 @@ package body Code_Coverage is
 
       Values  : Glib.Values.GValue_Array (1 .. 6);
       Columns : constant Columns_Array (Values'Range) :=
-        (Cov_Col, Cov_Sort, Cov_Bar_Txt, Cov_Bar_Val, Cov_Bar_Label,
+        (Cov_Col,
+         Cov_Sort,
+         Cov_Bar_Txt,
+         Cov_Bar_Val,
+         Cov_Bar_Label,
          Cov_Tooltip);
 
    begin
       if Coverage.Is_Valid then
          declare
             Node        : Node_Coverage'Class renames
-                            Node_Coverage'Class (Coverage.all);
-            Metric      : constant Coverage_Metric :=
-                            Displayed_Metric (Node);
+              Node_Coverage'Class (Coverage.all);
+            Metric      : constant Coverage_Metric := Displayed_Metric (Node);
             Not_Cov     : constant Natural := Uncovered (Metric);
             Cov_Percent : constant Natural := Percentage (Metric);
          begin
             Values :=
-              (1 => As_String
-                 (Image (Metric.Total) & " " & Unit_Label (Metric, True)
-                  & " (" & Image (Not_Cov) & (-" not covered)")
-                  & Txt_Sub (Coverage)),
+              (1 =>
+                 As_String
+                   (Image (Metric.Total)
+                    & " "
+                    & Unit_Label (Metric, True)
+                    & " ("
+                    & Image (Not_Cov)
+                    & (-" not covered)")
+                    & Txt_Sub (Coverage)),
                2 => As_Int (Glib.Gint (Not_Cov)),
-               3 => As_String
-                 (Image (Cov_Percent, Int_Image_Pad,
-                  Padding => Int_Char_Pad) & " %"),
+               3 =>
+                 As_String
+                   (Image (Cov_Percent, Int_Image_Pad, Padding => Int_Char_Pad)
+                    & " %"),
                4 => As_Int (Glib.Gint (Cov_Percent)),
                5 => As_String (Metric_Label (Metric)),
                6 => As_String (Coverage_Tooltip (Node, Metric)));
@@ -1144,9 +1184,9 @@ package body Code_Coverage is
       else
          Values :=
            (1 => As_String (Coverage.Print_Status),
-            2 => As_Int    (0),
+            2 => As_Int (0),
             3 => As_String (String'("n/a")),
-            4 => As_Int    (0),
+            4 => As_Int (0),
             5 => As_String (String'("")),
             6 => As_String (Coverage.Print_Status));
       end if;

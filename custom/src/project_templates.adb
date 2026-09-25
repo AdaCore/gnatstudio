@@ -17,10 +17,10 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with GNATCOLL.VFS_Utils;      use GNATCOLL.VFS_Utils;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
 
-with String_Utils;            use String_Utils;
-with GNAT.Strings;            use GNAT.Strings;
+with String_Utils; use String_Utils;
+with GNAT.Strings; use GNAT.Strings;
 
 package body Project_Templates is
 
@@ -29,10 +29,7 @@ package body Project_Templates is
    --  using case-insensitive comparison.
 
    function Find
-     (S : String;
-      C : Character;
-      Start_Index : Integer := -1)
-      return Natural;
+     (S : String; C : Character; Start_Index : Integer := -1) return Natural;
    --  Return the index of the next occurrence of C in S, and return S'Last + 1
    --  if this was not found. If Start_Index is specified, start searching
    --  at Start_Index.
@@ -91,10 +88,7 @@ package body Project_Templates is
    ----------
 
    function Find
-     (S : String;
-      C : Character;
-      Start_Index : Integer := -1)
-      return Natural
+     (S : String; C : Character; Start_Index : Integer := -1) return Natural
    is
       Ind : Natural;
    begin
@@ -125,20 +119,18 @@ package body Project_Templates is
       Templates : in out Project_Templates_List.List)
    is
       Contents              : GNAT.Strings.String_Access := File.Read_File;
-      Lines                 : constant Unbounded_String_Array := Split
-        (Contents.all, ASCII.LF);
+      Lines                 : constant Unbounded_String_Array :=
+        Split (Contents.all, ASCII.LF);
       Current               : Project_Template := Null_Project_Template;
       Index, Index2, Index3 : Natural;
       In_Description        : Boolean := False;
    begin
       for J in Lines'Range loop
          declare
-            Line : constant String := Strip_Quotes
-              (Strip_CR (To_String (Lines (J))));
+            Line : constant String :=
+              Strip_Quotes (Strip_CR (To_String (Lines (J))));
          begin
-            if Line'Length = 0
-              or else Starts_With (Line, "#")
-            then
+            if Line'Length = 0 or else Starts_With (Line, "#") then
                --  A comment or an empty line do nothing
                null;
 
@@ -146,32 +138,36 @@ package body Project_Templates is
                In_Description := True;
 
             elsif CISW (Line, "name:") then
-               Current.Label := To_Unbounded_String
-                 (Strip_Quotes (Line (Line'First + 5 .. Line'Last)));
+               Current.Label :=
+                 To_Unbounded_String
+                   (Strip_Quotes (Line (Line'First + 5 .. Line'Last)));
 
             elsif CISW (Line, "project:") then
-               Current.Project := To_Unbounded_String
-                 (Strip_Quotes (Line (Line'First + 8 .. Line'Last)));
+               Current.Project :=
+                 To_Unbounded_String
+                   (Strip_Quotes (Line (Line'First + 8 .. Line'Last)));
 
             --  We get the python script used during the creation of the pages
             --  or during the post installation step.
             elsif CISW (Line, "script:") then
                declare
-                  Python_Script : constant Virtual_File
-                     := Create_From_Dir
-                        (File.Dir,
-                        +Strip_Quotes (Line (Line'First + 7 .. Line'Last)));
+                  Python_Script : constant Virtual_File :=
+                    Create_From_Dir
+                      (File.Dir,
+                       +Strip_Quotes (Line (Line'First + 7 .. Line'Last)));
                begin
                   Current.Python_Script := Python_Script;
                end;
 
             elsif CISW (Line, "description:") then
-               Current.Description := To_Unbounded_String
-                 (Strip_Quotes (Line (Line'First + 12 .. Line'Last)));
+               Current.Description :=
+                 To_Unbounded_String
+                   (Strip_Quotes (Line (Line'First + 12 .. Line'Last)));
 
             elsif CISW (Line, "category:") then
-               Current.Category := To_Unbounded_String
-                 (Strip_Quotes (Line (Line'First + 9 .. Line'Last)));
+               Current.Category :=
+                 To_Unbounded_String
+                   (Strip_Quotes (Line (Line'First + 9 .. Line'Last)));
 
             elsif In_Description then
                Current.Description := Current.Description & ASCII.LF & Line;
@@ -179,8 +175,10 @@ package body Project_Templates is
                Index := Find (Line, ':', Line'First + 1);
                if Index > Line'Last then
                   Append
-                    (Errors, To_Unbounded_String
-                       (+File.Base_Name & J'Img
+                    (Errors,
+                     To_Unbounded_String
+                       (+File.Base_Name
+                        & J'Img
                         & ": invalid syntax, expected "
                         & "<name>:<default value>:<description>"
                         & "[<choice_1>;<choice2>;...]"
@@ -190,8 +188,10 @@ package body Project_Templates is
 
                   if Index2 > Line'Last then
                      Append
-                       (Errors, To_Unbounded_String
-                          (+File.Base_Name & J'Img
+                       (Errors,
+                        To_Unbounded_String
+                          (+File.Base_Name
+                           & J'Img
                            & ": invalid syntax, expected "
                            & "<name>:<default value>:<description>"
                            & "[:<choice_1>;<choice2>;...]"
@@ -201,26 +201,33 @@ package body Project_Templates is
                   Index3 := Find (Line, ':', Index2 + 1);
 
                   declare
-                     Choices : Unbounded_String_Array := Split
-                       (Str  => Line (Index3 + 1 .. Line'Last),
-                        On   => ';');
+                     Choices : Unbounded_String_Array :=
+                       Split
+                         (Str => Line (Index3 + 1 .. Line'Last), On => ';');
                   begin
                      for Choice of Choices loop
-                        Choice := To_Unbounded_String
-                          (Strip_Quotes (To_String (Choice)));
+                        Choice :=
+                          To_Unbounded_String
+                            (Strip_Quotes (To_String (Choice)));
                      end loop;
 
                      Current.Variables.Append
                        (New_Item =>
-                          Variable'(
-                            Nb_Choices    => Choices'Length,
-                            Label         => To_Unbounded_String
-                              (Strip_Quotes (Line (Line'First .. Index - 1))),
-                            Default_Value => To_Unbounded_String
-                              (Strip_Quotes (Line (Index + 1 .. Index2 - 1))),
-                            Description   => To_Unbounded_String
-                              (Strip_Quotes (Line (Index2 + 1 .. Line'Last))),
-                            Choices       => Choices));
+                          Variable'
+                            (Nb_Choices    => Choices'Length,
+                             Label         =>
+                               To_Unbounded_String
+                                 (Strip_Quotes
+                                    (Line (Line'First .. Index - 1))),
+                             Default_Value =>
+                               To_Unbounded_String
+                                 (Strip_Quotes
+                                    (Line (Index + 1 .. Index2 - 1))),
+                             Description   =>
+                               To_Unbounded_String
+                                 (Strip_Quotes
+                                    (Line (Index2 + 1 .. Line'Last))),
+                             Choices       => Choices));
                   end;
                end if;
             end if;
@@ -260,8 +267,8 @@ package body Project_Templates is
       Err     : Unbounded_String;
    begin
       if not Dir.Is_Directory then
-         Errors := "Not a directory: " & To_Unbounded_String
-           ((+Dir.Full_Name.all));
+         Errors :=
+           "Not a directory: " & To_Unbounded_String ((+Dir.Full_Name.all));
          return;
       end if;
 
@@ -275,7 +282,7 @@ package body Project_Templates is
 
             if Files /= null then
                for F in Files'Range loop
-                  if File_Extension  (Files (F)) = Template_File_Extension then
+                  if File_Extension (Files (F)) = Template_File_Extension then
                      Read_Templates_File (Files (F), Err, Templates);
                      Append (Errors, Err);
                   end if;
@@ -301,13 +308,11 @@ package body Project_Templates is
       Errors      : out Unbounded_String)
    is
       procedure Copy_Subdir
-        (Source_Dir : Virtual_File;
-         Target_Dir : Virtual_File);
+        (Source_Dir : Virtual_File; Target_Dir : Virtual_File);
       --  Process Subdir
 
       procedure Copy_File
-        (Source_File : Virtual_File;
-         Target_Dir  : Virtual_File);
+        (Source_File : Virtual_File; Target_Dir : Virtual_File);
       --  Process Source_File
 
       ---------------
@@ -315,14 +320,13 @@ package body Project_Templates is
       ---------------
 
       procedure Copy_File
-        (Source_File : Virtual_File;
-         Target_Dir  : Virtual_File)
+        (Source_File : Virtual_File; Target_Dir : Virtual_File)
       is
-         Contents_A  : GNAT.Strings.String_Access;
-         Target_Name : Unbounded_String;
+         Contents_A      : GNAT.Strings.String_Access;
+         Target_Name     : Unbounded_String;
          Target_Contents : Unbounded_String;
-         Target    : Virtual_File;
-         Writable  : Writable_File;
+         Target          : Virtual_File;
+         Writable        : Writable_File;
 
          use Variable_Assignments;
          C : Cursor;
@@ -347,8 +351,8 @@ package body Project_Templates is
             --  Replace the lower by the lower, the upper by the upper, the
             --  mixed case by the mixed case
             declare
-               K : constant String := To_String (Key (C));
-               E : constant String := To_String (Element (C));
+               K             : constant String := To_String (Key (C));
+               E             : constant String := To_String (Element (C));
                Lower_Pattern : constant String := "@_" & To_Lower (K) & "_@";
                Upper_Pattern : constant String := "@_" & To_Upper (K) & "_@";
                Mixed_Pattern : constant String := "@_" & To_Mixed (K) & "_@";
@@ -374,12 +378,12 @@ package body Project_Templates is
             Project := Target;
          end if;
 
-         if Target.Is_Regular_File
-           and then not Target.Is_Writable
-         then
+         if Target.Is_Regular_File and then not Target.Is_Writable then
             Append
-              (Errors, "File not writable, did not overwrite: " &
-               (+Target.Full_Name) & ASCII.LF);
+              (Errors,
+               "File not writable, did not overwrite: "
+               & (+Target.Full_Name)
+               & ASCII.LF);
          else
             Writable := Write_File (Target);
             Write (Writable, To_String (Target_Contents));
@@ -392,8 +396,7 @@ package body Project_Templates is
       -----------------
 
       procedure Copy_Subdir
-        (Source_Dir : Virtual_File;
-         Target_Dir : Virtual_File)
+        (Source_Dir : Virtual_File; Target_Dir : Virtual_File)
       is
          Files : File_Array_Access := Read_Dir (Source_Dir, Files_Only);
          Dirs  : File_Array_Access := Read_Dir (Source_Dir, Dirs_Only);

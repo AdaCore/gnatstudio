@@ -85,7 +85,7 @@ package Refactoring is
       --  Whether creating a subprogram body should first insert a subprogram
       --  box
 
-      Add_In_Keyword     : Boolean := False;
+      Add_In_Keyword : Boolean := False;
       --  Whether adding "in" parameters should explicitly show the "in"
       --  keyword. If False, the keyword is omitted
 
@@ -102,9 +102,8 @@ package Refactoring is
    --  It has been made a public report for ease of use. In practice, this is a
    --  read-only structure except at creation time.
 
-   procedure Report_Error
-     (Self : access Factory_Context_Record;
-      Msg  : String) is null;
+   procedure Report_Error (Self : access Factory_Context_Record; Msg : String)
+   is null;
    --  Report an error message to the user.
    --  The message has *not* been translated, and is in English.
 
@@ -114,7 +113,8 @@ package Refactoring is
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
       Column   : Basic_Types.Visible_Column_Type := 1;
-      Text     : String) is null;
+      Text     : String)
+   is null;
    --  Report a location where a change occurred.
    --  This can then tbe used by the user to quickly navigate across such
    --  locations to review the effects of a refactoring.
@@ -129,15 +129,15 @@ package Refactoring is
 private
 
    type Universal_Location is record
-      File   : Language.Tree.Database.Structured_File_Access;
+      File : Language.Tree.Database.Structured_File_Access;
 
-      Line          : Integer;
-      Column        : Basic_Types.Visible_Column_Type;
+      Line   : Integer;
+      Column : Basic_Types.Visible_Column_Type;
 
       Index_In_Line : Basic_Types.String_Index_Type;
       Index_In_File : Basic_Types.String_Index_Type;
 
-      Is_Column_Computed : Boolean := False;
+      Is_Column_Computed        : Boolean := False;
       Is_Index_In_File_Computed : Boolean := False;
       Is_Index_In_Line_Computed : Boolean := False;
    end record;

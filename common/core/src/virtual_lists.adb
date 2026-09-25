@@ -21,8 +21,7 @@ package body Virtual_Lists is
    -- Free --
    ----------
 
-   procedure Free (This : in out Virtual_List)
-   is
+   procedure Free (This : in out Virtual_List) is
       Current : List_Node;
       Tmp     : List_Node;
    begin
@@ -35,10 +34,10 @@ package body Virtual_Lists is
 
       Current := This.First.all;
       This.First.all := null;
-      This.Last.all  := null;
+      This.Last.all := null;
 
       while Current /= null loop
-         Tmp     := Current;
+         Tmp := Current;
          Current := Current.Next;
 
          if Tmp.Element /= null then
@@ -57,8 +56,7 @@ package body Virtual_Lists is
    -- Concat --
    ------------
 
-   procedure Concat (This : in out Virtual_List; List : Virtual_List)
-   is
+   procedure Concat (This : in out Virtual_List; List : Virtual_List) is
       F1 : List_Node_Access := List.First;
       F2 : List_Node_Access := List.Last;
    begin
@@ -76,10 +74,10 @@ package body Virtual_Lists is
 
       if Is_Empty (This) then
          This.First.all := List.First.all;
-         This.Last.all  := List.Last.all;
+         This.Last.all := List.Last.all;
       else
          This.Last.all.Next := List.First.all;
-         This.Last.all      := List.Last.all;
+         This.Last.all := List.Last.all;
       end if;
 
       Free_Node_Access (F1);
@@ -102,17 +100,21 @@ package body Virtual_Lists is
       end if;
 
       if List.Last.all = null then
-         List.First.all := new List_Node_Record'
-           (Element => new Virtual_List_Component_Access'
-              (new Virtual_List_Component'Class'(Component)),
-            Next    => null);
+         List.First.all :=
+           new List_Node_Record'
+             (Element =>
+                new Virtual_List_Component_Access'
+                  (new Virtual_List_Component'Class'(Component)),
+              Next    => null);
          List.Last.all := List.First.all;
 
       else
-         List.Last.all.Next := new List_Node_Record'
-           (Element => new Virtual_List_Component_Access'
-              (new Virtual_List_Component'Class'(Component)),
-            Next    => null);
+         List.Last.all.Next :=
+           new List_Node_Record'
+             (Element =>
+                new Virtual_List_Component_Access'
+                  (new Virtual_List_Component'Class'(Component)),
+              Next    => null);
          List.Last.all := List.Last.all.Next;
       end if;
    end Append;
@@ -140,8 +142,9 @@ package body Virtual_Lists is
       It.Current_Component := First (List);
 
       if It.Current_Component /= Null_Node then
-         It.Current_Iterator := new Virtual_List_Component_Iterator'Class'
-           (First (Data (It.Current_Component).all));
+         It.Current_Iterator :=
+           new Virtual_List_Component_Iterator'Class'
+             (First (Data (It.Current_Component).all));
       end if;
 
       while It.Current_Component /= Null_Node
@@ -152,8 +155,9 @@ package body Virtual_Lists is
          It.Current_Component := Next (It.Current_Component);
 
          if It.Current_Component /= Null_Node then
-            It.Current_Iterator := new Virtual_List_Component_Iterator'Class'
-              (First (Data (It.Current_Component).all));
+            It.Current_Iterator :=
+              new Virtual_List_Component_Iterator'Class'
+                (First (Data (It.Current_Component).all));
          end if;
       end loop;
 
@@ -200,8 +204,9 @@ package body Virtual_Lists is
          It.Current_Component := Next (It.Current_Component);
 
          if It.Current_Component /= Null_Node then
-            It.Current_Iterator := new Virtual_List_Component_Iterator'Class'
-              (First (Data (It.Current_Component).all));
+            It.Current_Iterator :=
+              new Virtual_List_Component_Iterator'Class'
+                (First (Data (It.Current_Component).all));
          end if;
       end loop;
    end Next;
@@ -229,8 +234,10 @@ package body Virtual_Lists is
    ----------
 
    procedure Free (This : in out Virtual_List_Component_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Virtual_List_Component'Class, Virtual_List_Component_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Virtual_List_Component'Class,
+           Virtual_List_Component_Access);
    begin
       Free (This.all);
       Unchecked_Free (This);
@@ -241,9 +248,10 @@ package body Virtual_Lists is
    ----------
 
    procedure Free (This : in out Virtual_List_Component_Iterator_Access) is
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (Virtual_List_Component_Iterator'Class,
-         Virtual_List_Component_Iterator_Access);
+      procedure Internal_Free is new
+        Ada.Unchecked_Deallocation
+          (Virtual_List_Component_Iterator'Class,
+           Virtual_List_Component_Iterator_Access);
    begin
       if This /= null then
          Free (This.all);
@@ -257,7 +265,8 @@ package body Virtual_Lists is
 
    function Is_Empty (This : Virtual_List) return Boolean is
    begin
-      return This.First = null
+      return
+        This.First = null
         or else This.First.all = null
         or else This.First.all.Element = null;
    end Is_Empty;

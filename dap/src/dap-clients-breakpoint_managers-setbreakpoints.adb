@@ -21,21 +21,24 @@ package body DAP.Clients.Breakpoint_Managers.SetBreakpoints is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Source_Line_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       DAP.Requests.SetBreakpoints.On_Error_Message
         (DAP.Requests.SetBreakpoints.Breakpoint_DAP_Request (Self),
-         Client, Message);
+         Client,
+         Message);
    end On_Error_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Source_Line_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
@@ -47,7 +50,8 @@ package body DAP.Clients.Breakpoint_Managers.SetBreakpoints is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Source_Line_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetBreakpointsResponse;

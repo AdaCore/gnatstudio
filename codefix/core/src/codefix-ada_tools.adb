@@ -50,15 +50,15 @@ package body Codefix.Ada_Tools is
       Exclusive    : Boolean := False;
       Result       : out Words_Lists.Vector)
    is
-      Dummy : constant Update_Lock := Lock_Updates
-        (Current_Text.Get_Structured_File (File_Name));
+      Dummy : constant Update_Lock :=
+        Lock_Updates (Current_Text.Get_Structured_File (File_Name));
 
       List_Of_With : With_Lists.Vector;
       List_Of_Use  : Use_Lists.Vector;
 
    begin
       List_All_With (Current_Text, File_Name, List_Of_With);
-      List_All_Use  (Current_Text, File_Name, List_Of_Use);
+      List_All_Use (Current_Text, File_Name, List_Of_Use);
 
       Link_All_Clauses (List_Of_With, List_Of_Use);
 
@@ -66,8 +66,7 @@ package body Codefix.Ada_Tools is
          if Item.Name_Str = Clause_Name then
             for J in Item.Clauses'Range loop
                if Item.Clauses (J) /= null
-                 and then (not Exclusive
-                           or else Item.Clauses (J).Nb_Ref = 1)
+                 and then (not Exclusive or else Item.Clauses (J).Nb_Ref = 1)
                then
                   declare
                      Word_Used : Word_Cursor;
@@ -174,9 +173,7 @@ package body Codefix.Ada_Tools is
    -- Try_Link_Clauses --
    ----------------------
 
-   procedure Try_Link_Clauses
-     (With_Clause : Ptr_With; Use_Clause : Ptr_Use)
-   is
+   procedure Try_Link_Clauses (With_Clause : Ptr_With; Use_Clause : Ptr_Use) is
       Use_Parsed : constant Arr_Str :=
         Get_Arr_Str (To_String (Use_Clause.Name));
       With_Index : Positive := 1;
@@ -188,8 +185,9 @@ package body Codefix.Ada_Tools is
          for Use_Index in 1 .. Use_Parsed'Last loop
 
             if With_Index + Use_Index - 1 > With_Clause.Name'Last
-              or else Use_Parsed (Use_Index) /=
-                With_Clause.Name (With_Index + Use_Index - 1)
+              or else
+                Use_Parsed (Use_Index)
+                /= With_Clause.Name (With_Index + Use_Index - 1)
             then
                Success := False;
             end if;
@@ -206,7 +204,8 @@ package body Codefix.Ada_Tools is
 
          With_Index := With_Index + 1;
 
-         exit when With_Index > With_Clause.Nb_Elems
+         exit when
+           With_Index > With_Clause.Nb_Elems
            or else With_Clause.Clauses (With_Index) = null;
       end loop;
    end Try_Link_Clauses;
@@ -220,20 +219,22 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Result       : out With_Lists.Vector)
    is
-      Dummy : constant Update_Lock := Lock_Updates
-        (Current_Text.Get_Structured_File (File_Name));
+      Dummy : constant Update_Lock :=
+        Lock_Updates (Current_Text.Get_Structured_File (File_Name));
 
-      Tree  : constant Construct_Tree :=
+      Tree       : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
       Iterator   : Construct_Tree_Iterator := First (Tree);
       New_Clause : Ptr_With;
    begin
       while Iterator /= Null_Construct_Tree_Iterator loop
          if Get_Construct (Iterator).Category = Cat_With then
-            New_Clause := new With_Type
-              (Get_Parts_Number (Get (Get_Construct (Iterator).Name).all));
-            New_Clause.Name := Get_Arr_Str
-              (Get (Get_Construct (Iterator).Name).all);
+            New_Clause :=
+              new With_Type
+                    (Get_Parts_Number
+                       (Get (Get_Construct (Iterator).Name).all));
+            New_Clause.Name :=
+              Get_Arr_Str (Get (Get_Construct (Iterator).Name).all);
             New_Clause.Name_Str :=
               To_Unbounded_String (Get (Get_Construct (Iterator).Name).all);
             Append (Result, New_Clause);
@@ -252,10 +253,10 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Result       : out Use_Lists.Vector)
    is
-      Dummy : Update_Lock := Lock_Updates
-        (Current_Text.Get_Structured_File (File_Name));
+      Dummy : Update_Lock :=
+        Lock_Updates (Current_Text.Get_Structured_File (File_Name));
 
-      Tree  : constant Construct_Tree :=
+      Tree       : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
       Iterator   : Construct_Tree_Iterator := First (Tree);
       New_Clause : Ptr_Use;
@@ -269,8 +270,8 @@ package body Codefix.Ada_Tools is
             Set_File (New_Clause.Position, File_Name);
             Set_Location
               (New_Clause.Position,
-               Line      => Get_Construct (Iterator).Sloc_Start.Line,
-               Column    => 1);
+               Line   => Get_Construct (Iterator).Sloc_Start.Line,
+               Column => 1);
 
             declare
                Line : constant String :=
@@ -278,12 +279,13 @@ package body Codefix.Ada_Tools is
             begin
                Set_Location
                  (New_Clause.Position,
-                  Line      => Get_Construct (Iterator).Sloc_Start.Line,
-                  Column    => To_Column_Index
-                    (String_Index_Type
+                  Line   => Get_Construct (Iterator).Sloc_Start.Line,
+                  Column =>
+                    To_Column_Index
+                      (String_Index_Type
                          (Get_Construct (Iterator).Sloc_Start.Column),
-                     Line,
-                     Current_Text.Tab_Width (File_Name)));
+                       Line,
+                       Current_Text.Tab_Width (File_Name)));
             end;
 
             Append (Result, New_Clause);
@@ -317,23 +319,24 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String := "") return File_Cursor'Class
    is
-      Lock : Update_Lock := Lock_Updates
-        (Current_Text.Get_Structured_File (File_Name));
+      Lock : Update_Lock :=
+        Lock_Updates (Current_Text.Get_Structured_File (File_Name));
 
       Current_Cursor    : File_Cursor;
       Current_Info      : Construct_Tree_Iterator;
       Current_Construct : access Simple_Construct_Information;
       Last_Info         : Construct_Tree_Iterator :=
-                            Null_Construct_Tree_Iterator;
+        Null_Construct_Tree_Iterator;
       Tree              : Construct_Tree;
    begin
       Set_File (Current_Cursor, File_Name);
       Set_Location (Current_Cursor, 1, 1);
-      Tree := Get_Tree
-        (Current_Text.Get_Structured_File (Get_File (Current_Cursor)));
+      Tree :=
+        Get_Tree
+          (Current_Text.Get_Structured_File (Get_File (Current_Cursor)));
 
-      Current_Info := Get_Iterator_At
-        (Current_Text, Current_Cursor, Position => After);
+      Current_Info :=
+        Get_Iterator_At (Current_Text, Current_Cursor, Position => After);
       Current_Construct := Get_Construct (Current_Info);
 
       --  Skip the with, use clauses and pragmas.
@@ -348,8 +351,7 @@ package body Codefix.Ada_Tools is
             use type GNATCOLL.Utils.Cst_String_Access;
 
             Current_Name : constant GNATCOLL.Utils.Cst_String_Access :=
-                               GNATCOLL.Symbols.Get
-                                 (Get_Construct (Current_Info).Name);
+              GNATCOLL.Symbols.Get (Get_Construct (Current_Info).Name);
          begin
             --  When specified, use Pkg_Name to find the right position of the
             --  with clause considering the alphabetical order.
@@ -375,8 +377,8 @@ package body Codefix.Ada_Tools is
             Set_Column
               (Current_Cursor,
                To_Column_Index
-                 (String_Index_Type
-                      (Get_Construct (Last_Info).Sloc_End.Column) + 1,
+                 (String_Index_Type (Get_Construct (Last_Info).Sloc_End.Column)
+                  + 1,
                   Line,
                   Current_Text.Tab_Width (File_Name)));
          end;
@@ -398,23 +400,24 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String := "") return File_Cursor'Class
    is
-      Lock : Update_Lock := Lock_Updates
-        (Current_Text.Get_Structured_File (File_Name));
+      Lock : Update_Lock :=
+        Lock_Updates (Current_Text.Get_Structured_File (File_Name));
 
       Current_Cursor    : File_Cursor;
       Current_Info      : Construct_Tree_Iterator;
       Current_Construct : access Simple_Construct_Information;
       Last_Info         : Construct_Tree_Iterator :=
-                            Null_Construct_Tree_Iterator;
+        Null_Construct_Tree_Iterator;
       Tree              : Construct_Tree;
    begin
       Set_File (Current_Cursor, File_Name);
       Set_Location (Current_Cursor, 1, 1);
-      Tree := Get_Tree
-        (Current_Text.Get_Structured_File (Get_File (Current_Cursor)));
+      Tree :=
+        Get_Tree
+          (Current_Text.Get_Structured_File (Get_File (Current_Cursor)));
 
-      Current_Info := Get_Iterator_At
-        (Current_Text, Current_Cursor, Position => After);
+      Current_Info :=
+        Get_Iterator_At (Current_Text, Current_Cursor, Position => After);
       Current_Construct := Get_Construct (Current_Info);
 
       --  Skip the with, use clauses and pragmas.
@@ -430,8 +433,7 @@ package body Codefix.Ada_Tools is
 
             Current_Category : Language_Category;
             Current_Name     : constant GNATCOLL.Utils.Cst_String_Access :=
-                               GNATCOLL.Symbols.Get
-                                 (Get_Construct (Current_Info).Name);
+              GNATCOLL.Symbols.Get (Get_Construct (Current_Info).Name);
          begin
             --  When specified, use Pkg_Name to find the right position of the
             --  with clause considering the alphabetical order.
@@ -442,7 +444,8 @@ package body Codefix.Ada_Tools is
             Current_Info := Next (Tree, Current_Info, Jump_Over);
             Current_Construct := Get_Construct (Current_Info);
 
-            exit when Current_Category = Cat_With
+            exit when
+              Current_Category = Cat_With
               and then Current_Name /= null
               and then Current_Name.all = Pkg_Name;
          end;
@@ -457,8 +460,8 @@ package body Codefix.Ada_Tools is
             Set_Column
               (Current_Cursor,
                To_Column_Index
-                 (String_Index_Type
-                      (Get_Construct (Last_Info).Sloc_End.Column) + 1,
+                 (String_Index_Type (Get_Construct (Last_Info).Sloc_End.Column)
+                  + 1,
                   Line,
                   Current_Text.Tab_Width (File_Name)));
          end;
@@ -480,13 +483,13 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Pkg_Name     : String) return File_Cursor'Class
    is
-      Lock : Update_Lock := Lock_Updates
-        (Current_Text.Get_Structured_File (File_Name));
+      Lock : Update_Lock :=
+        Lock_Updates (Current_Text.Get_Structured_File (File_Name));
 
-      Tree  : constant Construct_Tree :=
+      Tree     : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
-      Iterator   : Construct_Tree_Iterator := First (Tree);
-      Result     : File_Cursor;
+      Iterator : Construct_Tree_Iterator := First (Tree);
+      Result   : File_Cursor;
    begin
       while Iterator /= Null_Construct_Tree_Iterator loop
          if Get_Construct (Iterator).Category = Cat_With
@@ -494,18 +497,17 @@ package body Codefix.Ada_Tools is
          then
             Set_File (Result, File_Name);
 
-            Set_Location
-              (Result, Get_Construct (Iterator).Sloc_Start.Line,
-               1);
+            Set_Location (Result, Get_Construct (Iterator).Sloc_Start.Line, 1);
 
             declare
                Line : constant String := Get_Line (Current_Text, Result);
             begin
                Set_Location
-                 (Result, Get_Construct (Iterator).Sloc_Start.Line,
+                 (Result,
+                  Get_Construct (Iterator).Sloc_Start.Line,
                   To_Column_Index
                     (String_Index_Type
-                         (Get_Construct (Iterator).Sloc_Start.Column),
+                       (Get_Construct (Iterator).Sloc_Start.Column),
                      Line,
                      Current_Text.Tab_Width (File_Name)));
             end;

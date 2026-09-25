@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Regpat;                      use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 
 package body Codefix.Text_Manager.Spark_Commands is
 
@@ -37,7 +37,8 @@ package body Codefix.Text_Manager.Spark_Commands is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (This         : Move_Tilde_Or_Percent_Cmd;
       Current_Text : in out Text_Navigator_Abstr'Class)
    is

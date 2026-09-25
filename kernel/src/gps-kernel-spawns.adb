@@ -18,12 +18,12 @@
 with Ada.Exceptions;
 with Ada.Streams;
 
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with Gtkada.Dialogs;
 with Gtk.Handlers;
 
-with GPS.Intl;                   use GPS.Intl;
+with GPS.Intl; use GPS.Intl;
 with GUI_Utils;
 
 with Spawn.Process_Listeners;
@@ -40,70 +40,76 @@ package body GPS.Kernel.Spawns is
    --  Disable Spawn as the default API to launch external processes
    --  until we solve the remaining issues (#538).
 
-   Me_IO : constant Trace_Handle := Create
-     ("GPS.KERNEL.SPAWN_IO", Off);
+   Me_IO : constant Trace_Handle := Create ("GPS.KERNEL.SPAWN_IO", Off);
 
    Buffer_Size : constant := 2048;
 
-   type Monitor_Command is new Commands.Root_Command
-     and Spawn.Process_Listeners.Process_Listener with
-      record
-         Name          : VSS.Strings.Virtual_String;
-         Label         : VSS.Strings.Virtual_String;
-         Process       : Spawn.Processes.Process;
-         Console       : Interactive_Consoles.Interactive_Console;
-         Delete_Id     : Gtk.Handlers.Handler_Id;
-         --  Signals connecting the gtk widget to the underlying process
-         Output_Parser : GPS.Tools_Output.Tools_Output_Parser_Access;
-         Finished      : Boolean := False;  --  Process field value is invalid
-         Failed        : Boolean := False;
-         Read_Output   : Boolean := False;
-         Read_Error    : Boolean := False;
-      end record;
+   type Monitor_Command is
+     new Commands.Root_Command
+     and Spawn.Process_Listeners.Process_Listener
+   with record
+      Name          : VSS.Strings.Virtual_String;
+      Label         : VSS.Strings.Virtual_String;
+      Process       : Spawn.Processes.Process;
+      Console       : Interactive_Consoles.Interactive_Console;
+      Delete_Id     : Gtk.Handlers.Handler_Id;
+      --  Signals connecting the gtk widget to the underlying process
+      Output_Parser : GPS.Tools_Output.Tools_Output_Parser_Access;
+      Finished      : Boolean := False;  --  Process field value is invalid
+      Failed        : Boolean := False;
+      Read_Output   : Boolean := False;
+      Read_Error    : Boolean := False;
+   end record;
 
    type Monitor_Command_Access is access all Monitor_Command'Class;
    --  Command that can be used to monitor an external process through the task
    --  manager, and make it interruptible by users. The output handling is done
    --  by output parser chain.
 
-   overriding procedure Interrupt (Self : in out Monitor_Command);
-   overriding procedure Primitive_Free (Self : in out Monitor_Command);
-   overriding function Execute
+   overriding
+   procedure Interrupt (Self : in out Monitor_Command);
+   overriding
+   procedure Primitive_Free (Self : in out Monitor_Command);
+   overriding
+   function Execute
      (Self : access Monitor_Command) return Commands.Command_Return_Type;
-   overriding function Name (Self : access Monitor_Command) return String
-     is (VSS.Strings.Conversions.To_UTF_8_String (Self.Name));
-   overriding function Get_Label
-     (Self : access Monitor_Command) return String is
-       (if Self.Label.Is_Empty then Name (Self)
-        else VSS.Strings.Conversions.To_UTF_8_String (Self.Label));
+   overriding
+   function Name (Self : access Monitor_Command) return String
+   is (VSS.Strings.Conversions.To_UTF_8_String (Self.Name));
+   overriding
+   function Get_Label (Self : access Monitor_Command) return String
+   is (if Self.Label.Is_Empty
+       then Name (Self)
+       else VSS.Strings.Conversions.To_UTF_8_String (Self.Label));
 
-   overriding procedure Set_Label
-     (Self : in out Monitor_Command;
-      To   : String);
+   overriding
+   procedure Set_Label (Self : in out Monitor_Command; To : String);
 
-   overriding procedure Standard_Output_Available
-     (Self : in out Monitor_Command);
+   overriding
+   procedure Standard_Output_Available (Self : in out Monitor_Command);
 
-   overriding procedure Standard_Error_Available
-     (Self : in out Monitor_Command);
+   overriding
+   procedure Standard_Error_Available (Self : in out Monitor_Command);
 
-   overriding procedure Finished
-    (Self        : in out Monitor_Command;
-     Exit_Status : Spawn.Process_Exit_Status;
-     Exit_Code   : Spawn.Process_Exit_Code);
+   overriding
+   procedure Finished
+     (Self        : in out Monitor_Command;
+      Exit_Status : Spawn.Process_Exit_Status;
+      Exit_Code   : Spawn.Process_Exit_Code);
 
-   overriding procedure Error_Occurred
-     (Self : in out Monitor_Command;
-      Error  : Integer);
+   overriding
+   procedure Error_Occurred (Self : in out Monitor_Command; Error : Integer);
 
-   overriding procedure Exception_Occurred
+   overriding
+   procedure Exception_Occurred
      (Self  : in out Monitor_Command;
       Error : Ada.Exceptions.Exception_Occurrence);
 
-   package Monitor_Callbacks is new Gtk.Handlers.User_Return_Callback
-     (Interactive_Consoles.Interactive_Console_Record,
-      Boolean,
-      Monitor_Command_Access);
+   package Monitor_Callbacks is new
+     Gtk.Handlers.User_Return_Callback
+       (Interactive_Consoles.Interactive_Console_Record,
+        Boolean,
+        Monitor_Command_Access);
 
    function Input_Handler
      (Console   : access Interactive_Consoles.Interactive_Console_Record'Class;
@@ -123,7 +129,8 @@ package body GPS.Kernel.Spawns is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt (Self : in out Monitor_Command) is
+   overriding
+   procedure Interrupt (Self : in out Monitor_Command) is
       use all type Spawn.Process_Status;
    begin
       if not Self.Finished and then Self.Process.Status = Running then
@@ -135,7 +142,8 @@ package body GPS.Kernel.Spawns is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (Self : in out Monitor_Command) is
+   overriding
+   procedure Primitive_Free (Self : in out Monitor_Command) is
       use all type Spawn.Process_Status;
    begin
       if not Self.Finished and then Self.Process.Status = Running then
@@ -147,7 +155,8 @@ package body GPS.Kernel.Spawns is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Monitor_Command) return Commands.Command_Return_Type is
    begin
       if Self.Read_Output then
@@ -160,20 +169,18 @@ package body GPS.Kernel.Spawns is
          return Commands.Execute_Again;
       elsif Self.Finished then
 
-         return (if Self.Failed then Commands.Failure
-                 else Commands.Success);
+         return (if Self.Failed then Commands.Failure else Commands.Success);
       end if;
 
       case Self.Process.Status is
-         when Spawn.Not_Running =>
+         when Spawn.Not_Running              =>
 
             declare
                This : Commands.Command_Access :=
                  Commands.Command_Access (Self);
 
                Result : constant Commands.Command_Return_Type :=
-                 (if Self.Failed then Commands.Failure
-                    else Commands.Success);
+                 (if Self.Failed then Commands.Failure else Commands.Success);
             begin
                Commands.Unref (This);
                return Result;
@@ -184,9 +191,8 @@ package body GPS.Kernel.Spawns is
       end case;
    end Execute;
 
-   overriding procedure Set_Label
-     (Self : in out Monitor_Command;
-      To   : String) is
+   overriding
+   procedure Set_Label (Self : in out Monitor_Command; To : String) is
    begin
       Self.Label := VSS.Strings.Conversions.To_Virtual_String (To);
    end Set_Label;
@@ -195,12 +201,12 @@ package body GPS.Kernel.Spawns is
    -- Standard_Error_Available --
    ------------------------------
 
-   overriding procedure Standard_Error_Available
-     (Self : in out Monitor_Command)
-   is
+   overriding
+   procedure Standard_Error_Available (Self : in out Monitor_Command) is
       use type Ada.Streams.Stream_Element_Count;
       Data    : Ada.Streams.Stream_Element_Array (1 .. Buffer_Size);
-      Text    : String (1 .. Buffer_Size) with Import, Address => Data'Address;
+      Text    : String (1 .. Buffer_Size)
+      with Import, Address => Data'Address;
       Last    : Ada.Streams.Stream_Element_Count;
       Success : Boolean := True;
 
@@ -214,8 +220,9 @@ package body GPS.Kernel.Spawns is
          Me_IO.Trace (Text (1 .. Positive (Last)));
          Self.Output_Parser.Parse_Standard_Output
            (Text (1 .. Positive (Last)), Self'Unchecked_Access);
-         --  FIXME: use stderr! But now parsers expect whole text on
-         --  stdout, so send it there for now.
+      --  FIXME: use stderr! But now parsers expect whole text on
+      --  stdout, so send it there for now.
+
       end if;
    end Standard_Error_Available;
 
@@ -223,12 +230,12 @@ package body GPS.Kernel.Spawns is
    -- Standard_Output_Available --
    -------------------------------
 
-   overriding procedure Standard_Output_Available
-     (Self : in out Monitor_Command)
-   is
+   overriding
+   procedure Standard_Output_Available (Self : in out Monitor_Command) is
       use type Ada.Streams.Stream_Element_Count;
       Data    : Ada.Streams.Stream_Element_Array (1 .. Buffer_Size);
-      Text    : String (1 .. Buffer_Size) with Import, Address => Data'Address;
+      Text    : String (1 .. Buffer_Size)
+      with Import, Address => Data'Address;
       Last    : Ada.Streams.Stream_Element_Count;
       Success : Boolean := True;
 
@@ -249,15 +256,15 @@ package body GPS.Kernel.Spawns is
    -- Error_Occurred --
    --------------------
 
-   overriding procedure Error_Occurred
-    (Self : in out Monitor_Command;
-     Error  : Integer) is
+   overriding
+   procedure Error_Occurred (Self : in out Monitor_Command; Error : Integer) is
    begin
       Self.Failed := True;
       Me.Trace ("Error in spawn:" & Error'Image);
    end Error_Occurred;
 
-   overriding procedure Exception_Occurred
+   overriding
+   procedure Exception_Occurred
      (Self  : in out Monitor_Command;
       Error : Ada.Exceptions.Exception_Occurrence) is
    begin
@@ -277,7 +284,8 @@ package body GPS.Kernel.Spawns is
         Spawn.Process_Exit_Code (Integer'Last);
 
       Result : constant Integer :=
-        (if Code in 0 .. Integer_Last then Integer (Code)
+        (if Code in 0 .. Integer_Last
+         then Integer (Code)
          else -Integer (Spawn.Process_Exit_Code'Last - Code) - 1);
    begin
       return Result;
@@ -287,7 +295,8 @@ package body GPS.Kernel.Spawns is
    -- Finished --
    --------------
 
-   overriding procedure Finished
+   overriding
+   procedure Finished
      (Self        : in out Monitor_Command;
       Exit_Status : Spawn.Process_Exit_Status;
       Exit_Code   : Spawn.Process_Exit_Code)
@@ -329,17 +338,19 @@ package body GPS.Kernel.Spawns is
       use Gtkada.Dialogs;
       use all type Spawn.Process_Status;
 
-      Button  : Message_Dialog_Buttons;
+      Button : Message_Dialog_Buttons;
    begin
       if not Command.Finished and then Command.Process.Status = Running then
 
-         Button := GUI_Utils.GPS_Message_Dialog
-           (-"The process attached to this window" & ASCII.LF
-            & (-"is still active, do you want to kill it ?"),
-            Confirmation,
-            Button_Yes or Button_No,
-            Button_Yes,
-            Parent => Console.Kernel.Get_Main_Window);
+         Button :=
+           GUI_Utils.GPS_Message_Dialog
+             (-"The process attached to this window"
+              & ASCII.LF
+              & (-"is still active, do you want to kill it ?"),
+              Confirmation,
+              Button_Yes or Button_No,
+              Button_Yes,
+              Parent => Console.Kernel.Get_Main_Window);
 
          if Button = Button_Yes then
 
@@ -376,11 +387,11 @@ package body GPS.Kernel.Spawns is
       Input_LF : aliased constant String := Input & ASCII.LF;
       Last     : Ada.Streams.Stream_Element_Offset := Input_LF'Length;
       Data     : Ada.Streams.Stream_Element_Array (1 .. Last)
-        with Import, Address => Input_LF'Address;
+      with Import, Address => Input_LF'Address;
       Ok       : Boolean := True;
 
       Command : Monitor_Command
-        with Import, Address => User_Data;
+      with Import, Address => User_Data;
    begin
       if not Command.Finished and then Command.Process.Status = Running then
          Command.Process.Write_Standard_Input (Data, Last, Ok);
@@ -407,20 +418,20 @@ package body GPS.Kernel.Spawns is
       use type Interactive_Consoles.Interactive_Console;
       use type Spawn.Process_Status;
 
-      Obj : constant Monitor_Command_Access := new Monitor_Command'
-        (Commands.Root_Command with
-         Name          => Command_Name,
-         Output_Parser => Output_Parser,
-         others        => <>);
+      Obj : constant Monitor_Command_Access :=
+        new Monitor_Command'
+          (Commands.Root_Command
+           with
+             Name          => Command_Name,
+             Output_Parser => Output_Parser,
+             others        => <>);
 
       Arguments : Spawn.String_Vectors.UTF_8_String_Vector;
    begin
       if Exec = "" then
          return;
 
-      elsif Console /= null
-        or else not Use_Pipes
-      then
+      elsif Console /= null or else not Use_Pipes then
          --  We're displaying the process output in a Console: set
          --  stdout and stderr to use a pseudo terminal - this allows
          --  the program to use ncurses, colors, etc.
@@ -434,11 +445,12 @@ package body GPS.Kernel.Spawns is
          Console.Set_Command_Handler (Input_Handler'Access, Obj.all'Address);
 
          Obj.Console := Console;
-         Obj.Delete_Id := Monitor_Callbacks.Connect
-           (Console,
-            Gtk.Widget.Signal_Delete_Event,
-            Monitor_Callbacks.To_Marshaller (Delete_Handler'Access),
-            Obj);
+         Obj.Delete_Id :=
+           Monitor_Callbacks.Connect
+             (Console,
+              Gtk.Widget.Signal_Delete_Event,
+              Monitor_Callbacks.To_Marshaller (Delete_Handler'Access),
+              Obj);
       end if;
 
       for J in 1 .. GNATCOLL.Arg_Lists.Args_Length (Arg_List) loop
@@ -474,7 +486,7 @@ package body GPS.Kernel.Spawns is
    -- Is_Enabled --
    ----------------
 
-   function Is_Enabled return Boolean is
-     (Me.Is_Active);
+   function Is_Enabled return Boolean
+   is (Me.Is_Active);
 
 end GPS.Kernel.Spawns;

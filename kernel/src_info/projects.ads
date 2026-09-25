@@ -20,8 +20,8 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 
 with Ada.Strings.Hash;
 
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 package Projects is
 
@@ -50,8 +50,8 @@ package Projects is
    --  Project_Environment. In all cases, Initialize(Env) is called.
 
    function Create
-     (Self     : in out Project_Registry;
-      Filename : Filesystem_String) return Virtual_File;
+     (Self : in out Project_Registry; Filename : Filesystem_String)
+      return Virtual_File;
    --  Wrapper around Registry.Tree.Create, caching the results
    --  for better performance.
 
@@ -61,8 +61,7 @@ package Projects is
    --  Return the environment for the loaded projects
 
    function Tree
-     (Self : Project_Registry)
-      return GNATCOLL.Projects.Project_Tree_Access;
+     (Self : Project_Registry) return GNATCOLL.Projects.Project_Tree_Access;
    --  Return the loaded project tree
 
    procedure Destroy (Registry : in out Project_Registry_Access);
@@ -81,15 +80,13 @@ package Projects is
    --  Project_Type as key and requires a hash function.
 
    function Project_Directory
-     (Project : Project_Type;
-      Host    : String := GNATCOLL.VFS.Local_Host)
+     (Project : Project_Type; Host : String := GNATCOLL.VFS.Local_Host)
       return GNATCOLL.VFS.Virtual_File;
    --  Return the directory that contains the project file.
    --  No_File is returned if the project is No_Project.
 
    function Source_Files_Non_Recursive
-     (Projects              : Project_Type_Array;
-      Include_Project_Files : Boolean := False)
+     (Projects : Project_Type_Array; Include_Project_Files : Boolean := False)
       return GNATCOLL.Projects.File_And_Project_Array_Access;
    --  Return the list of all direct source files for all projects.
    --  If Include_Project_Files is true, then the .gpr files themselves will
@@ -97,8 +94,8 @@ package Projects is
    --  Result must be freed by the caller.
 
    function Source_Dirs_With_VCS
-     (Project   : Project_Type;
-      Recursive : Boolean) return GNATCOLL.VFS.File_Array;
+     (Project : Project_Type; Recursive : Boolean)
+      return GNATCOLL.VFS.File_Array;
    --  Return the list of source directories under version control
 
    type Paths_Type_Information is (Relative, Absolute, From_Pref);
@@ -121,20 +118,21 @@ package Projects is
 
 private
 
-   function Hash (X : Filesystem_String) return Ada.Containers.Hash_Type is
-     (Ada.Strings.Hash (+X));
+   function Hash (X : Filesystem_String) return Ada.Containers.Hash_Type
+   is (Ada.Strings.Hash (+X));
 
-   package FS_To_File is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Filesystem_String,
-      Element_Type    => Virtual_File,
-      Hash            => Hash,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package FS_To_File is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => Filesystem_String,
+        Element_Type    => Virtual_File,
+        Hash            => Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
    type Project_Registry is tagged record
-      Env  : GNATCOLL.Projects.Project_Environment_Access;
-      Tree : GNATCOLL.Projects.Project_Tree_Access;
-      Filesystem_To_File_Map  : FS_To_File.Map;
+      Env                    : GNATCOLL.Projects.Project_Environment_Access;
+      Tree                   : GNATCOLL.Projects.Project_Tree_Access;
+      Filesystem_To_File_Map : FS_To_File.Map;
    end record;
 
    type GPS_Project_Data is new GNATCOLL.Projects.Project_Data with record

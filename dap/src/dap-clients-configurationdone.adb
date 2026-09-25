@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with DAP.Requests;                   use DAP.Requests;
+with DAP.Requests; use DAP.Requests;
 with DAP.Requests.ConfigurationDone;
-with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Kernel;   use GPS.Kernel;
 
 package body DAP.Clients.ConfigurationDone is
 
@@ -28,11 +28,11 @@ package body DAP.Clients.ConfigurationDone is
      access all ConfigurationDone_Request'Class;
 
    function Create
-     (Kernel : not null Kernel_Handle)
-      return ConfigurationDone_Request_Access;
+     (Kernel : not null Kernel_Handle) return ConfigurationDone_Request_Access;
    --  Create a new DAP 'configurationDone' request.
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out ConfigurationDone_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ConfigurationDoneResponse;
@@ -43,8 +43,7 @@ package body DAP.Clients.ConfigurationDone is
    ------------
 
    function Create
-     (Kernel : not null Kernel_Handle)
-      return ConfigurationDone_Request_Access
+     (Kernel : not null Kernel_Handle) return ConfigurationDone_Request_Access
    is
       Self : constant ConfigurationDone_Request_Access :=
         new ConfigurationDone_Request (Kernel);
@@ -56,7 +55,8 @@ package body DAP.Clients.ConfigurationDone is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out ConfigurationDone_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.ConfigurationDoneResponse;

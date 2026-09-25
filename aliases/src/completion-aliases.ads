@@ -27,10 +27,10 @@ package Completion.Aliases is
 
    overriding
    procedure Get_Completion_Root
-     (Resolver   : access Completion_Aliases;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List);
+     (Resolver : access Completion_Aliases;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
    overriding
@@ -47,43 +47,47 @@ private
       Lang : Language_Access;
    end record;
 
-   type Alias_Completion_Proposal is new Simple_Completion_Proposal
-   with record
+   type Alias_Completion_Proposal is new Simple_Completion_Proposal with record
       Alias : Alias_Type;
    end record;
 
-   overriding function Deep_Copy
-     (Proposal : Alias_Completion_Proposal)
-      return Completion_Proposal'Class;
+   overriding
+   function Deep_Copy
+     (Proposal : Alias_Completion_Proposal) return Completion_Proposal'Class;
 
-   overriding procedure On_Selected
-     (Proposal : Alias_Completion_Proposal;
-      Kernel   : not null Kernel_Handle);
+   overriding
+   procedure On_Selected
+     (Proposal : Alias_Completion_Proposal; Kernel : not null Kernel_Handle);
 
-   overriding function Get_Documentation
-     (Proposal : Alias_Completion_Proposal)
-      return String;
+   overriding
+   function Get_Documentation
+     (Proposal : Alias_Completion_Proposal) return String;
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
 
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
 
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : Alias_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class)
       return UTF8_String;
 
-   overriding function To_Completion_Id
+   overriding
+   function To_Completion_Id
      (Proposal : Alias_Completion_Proposal) return Completion_Id
-   is
-     (Proposal.Name'Length,
-      "ALIAS   ",
-      Proposal.Name.all,
-      GNATCOLL.VFS.No_File, 0, 0);
+   is (Proposal.Name'Length,
+       "ALIAS   ",
+       Proposal.Name.all,
+       GNATCOLL.VFS.No_File,
+       0,
+       0);
 
 end Completion.Aliases;

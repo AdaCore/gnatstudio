@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with VSS.Strings.Conversions;
-with VSS.Transformers.Casing;      use VSS.Transformers.Casing;
+with VSS.Transformers.Casing; use VSS.Transformers.Casing;
 
 with DAP.Clients.Variables;
 with DAP.Utils;
@@ -27,8 +27,8 @@ package body DAP.Modules.Variables.Items.Variables is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Self : Variable_Item_Info) return Virtual_String is
+   overriding
+   function Get_Name (Self : Variable_Item_Info) return Virtual_String is
    begin
       return Self.Varname;
    end Get_Name;
@@ -37,9 +37,8 @@ package body DAP.Modules.Variables.Items.Variables is
    -- Get_Full_Name --
    -------------------
 
-   overriding function Get_Full_Name
-     (Self : Variable_Item_Info)
-      return Virtual_String is
+   overriding
+   function Get_Full_Name (Self : Variable_Item_Info) return Virtual_String is
    begin
       if Self.Full_Name = Empty_Virtual_String then
          return To_Lowercase.Transform (Self.Get_Name);
@@ -52,9 +51,9 @@ package body DAP.Modules.Variables.Items.Variables is
    -- Set_Full_Name --
    -------------------
 
-   overriding procedure Set_Full_Name
-     (Self  : in out Variable_Item_Info;
-      Value : Virtual_String) is
+   overriding
+   procedure Set_Full_Name
+     (Self : in out Variable_Item_Info; Value : Virtual_String) is
    begin
       Self.Full_Name := To_Lowercase.Transform (Value);
    end Set_Full_Name;
@@ -63,7 +62,8 @@ package body DAP.Modules.Variables.Items.Variables is
    -- Find_DAP_Item --
    -------------------
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : Variable_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean) is
@@ -75,14 +75,13 @@ package body DAP.Modules.Variables.Items.Variables is
    -- Store --
    -----------
 
-   overriding procedure Store
-     (Info  : Variable_Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value) is
+   overriding
+   procedure Store
+     (Info : Variable_Item_Info; Value : in out GNATCOLL.JSON.JSON_Value) is
    begin
       Value.Set_Field ("tag", "variable");
       Value.Set_Field ("value", DAP.Utils.To_UTF8 (Info.Varname));
-      Value.Set_Field
-        ("format", Value_Format'Image (Convert (Info.Format)));
+      Value.Set_Field ("format", Value_Format'Image (Convert (Info.Format)));
    end Store;
 
    ----------
@@ -91,10 +90,12 @@ package body DAP.Modules.Variables.Items.Variables is
 
    function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class is
    begin
-      return Variables.Create
-        (Variable => VSS.Strings.Conversions.To_Virtual_String
-           (String'(Value.Get ("value"))),
-         Format   => Convert (Value_Format'Value (Value.Get ("format"))));
+      return
+        Variables.Create
+          (Variable =>
+             VSS.Strings.Conversions.To_Virtual_String
+               (String'(Value.Get ("value"))),
+           Format   => Convert (Value_Format'Value (Value.Get ("format"))));
    end Load;
 
    ------------
@@ -102,13 +103,13 @@ package body DAP.Modules.Variables.Items.Variables is
    ------------
 
    function Create
-     (Variable : VSS.Strings.Virtual_String;
-      Format   : DAP.Tools.ValueFormat)
+     (Variable : VSS.Strings.Virtual_String; Format : DAP.Tools.ValueFormat)
       return Item_Info'Class is
    begin
-      return Item_Info'Class
-        (Variable_Item_Info'
-           (Varname => Variable, Format => Format, others => <>));
+      return
+        Item_Info'Class
+          (Variable_Item_Info'
+             (Varname => Variable, Format => Format, others => <>));
    end Create;
 
 end DAP.Modules.Variables.Items.Variables;

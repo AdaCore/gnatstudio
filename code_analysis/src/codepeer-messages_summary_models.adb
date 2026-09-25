@@ -43,7 +43,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Create --
    ------------
 
-   overriding function Create
+   overriding
+   function Create
      (Self : access Messages_Summary_Model_Record;
       File : Code_Analysis.File_Access)
       return Code_Analysis.Tree_Models.File_Item_Access
@@ -58,7 +59,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Create --
    ------------
 
-   overriding function Create
+   overriding
+   function Create
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Project_Access)
       return Code_Analysis.Tree_Models.Project_Item_Access
@@ -73,15 +75,16 @@ package body CodePeer.Messages_Summary_Models is
    -- Get_Column_Type --
    ---------------------
 
-   overriding function Get_Column_Type
-     (Self  : access Messages_Summary_Model_Record;
-      Index : Glib.Gint) return Glib.GType
+   overriding
+   function Get_Column_Type
+     (Self : access Messages_Summary_Model_Record; Index : Glib.Gint)
+      return Glib.GType
    is
       pragma Unreferenced (Self);
 
    begin
       case Index is
-         when Entity_Icon_Name_Column =>
+         when Entity_Icon_Name_Column    =>
             return Glib.GType_String;
 
          when Entity_Name_Column
@@ -90,17 +93,15 @@ package body CodePeer.Messages_Summary_Models is
             | Medium_Current_Count_Column
             | High_Current_Count_Column
             | Total_Checks_Count_Column
-            | Passed_Checks_Count_Column
-              =>
+            | Passed_Checks_Count_Column =>
             return Glib.GType_String;
 
          when High_Current_Color_Column
             | Medium_Current_Color_Column
-            | Low_Current_Color_Column
-            =>
+            | Low_Current_Color_Column   =>
             return Gdk.RGBA.Get_Type;
 
-         when others =>
+         when others                     =>
             return Glib.GType_Invalid;
       end case;
    end Get_Column_Type;
@@ -109,7 +110,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Get_N_Columns --
    -------------------
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Messages_Summary_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
@@ -122,7 +124,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Messages_Summary_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
@@ -215,13 +218,13 @@ package body CodePeer.Messages_Summary_Models is
          Glib.Values.Init (Value, Glib.GType_String);
 
          case Lifeage is
-            when Added =>
+            when Added     =>
                Glib.Values.Set_String (Value, "+");
 
             when Unchanged =>
                Glib.Values.Set_String (Value, "");
 
-            when Removed =>
+            when Removed   =>
                Glib.Values.Set_String (Value, "-");
          end case;
       end Set_Lifeage_Sign;
@@ -232,14 +235,15 @@ package body CodePeer.Messages_Summary_Models is
 
       function Percent_Image (Passed, Total : Natural) return String is
       begin
-         return "("
+         return
+           "("
            & Image ((if Total = 0 then 100 else Passed * 100 / Total), 1)
            & "%)";
       end Percent_Image;
 
    begin
       case Column is
-         when Entity_Icon_Name_Column =>
+         when Entity_Icon_Name_Column     =>
             Glib.Values.Init (Value, Glib.GType_String);
 
             if File_Node /= null then
@@ -255,7 +259,7 @@ package body CodePeer.Messages_Summary_Models is
                Glib.Values.Set_String (Value, "");
             end if;
 
-         when Entity_Name_Column =>
+         when Entity_Name_Column          =>
             if File_Node /= null then
                Glib.Values.Init (Value, Glib.GType_String);
                Glib.Values.Set_String (Value, +File_Node.Node.Name.Base_Name);
@@ -267,8 +271,7 @@ package body CodePeer.Messages_Summary_Models is
                   Glib.Values.Set_String (Value, -"RTL and removed");
 
                else
-                  Glib.Values.Set_String
-                    (Value, Project_Node.Node.View.Name);
+                  Glib.Values.Set_String (Value, Project_Node.Node.View.Name);
                end if;
 
             else
@@ -278,11 +281,12 @@ package body CodePeer.Messages_Summary_Models is
                Glib.Values.Set_String (Value, -"Total:");
             end if;
 
-         when Entity_Lifeage_Column =>
+         when Entity_Lifeage_Column       =>
             if File_Node /= null then
                Set_Lifeage_Sign
                  (CodePeer.File_Data
-                    (File_Node.Node.Analysis_Data.CodePeer_Data.all).Lifeage);
+                    (File_Node.Node.Analysis_Data.CodePeer_Data.all)
+                    .Lifeage);
 
             else
                --  Projects and totals don't have lifeage
@@ -291,10 +295,10 @@ package body CodePeer.Messages_Summary_Models is
                Glib.Values.Set_String (Value, "");
             end if;
 
-         when Low_Current_Count_Column =>
+         when Low_Current_Count_Column    =>
             Set_Count_Image (CodePeer.Low);
 
-         when Low_Current_Color_Column =>
+         when Low_Current_Color_Column    =>
             Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
             Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (Low));
 
@@ -305,21 +309,21 @@ package body CodePeer.Messages_Summary_Models is
             Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
             Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (Medium));
 
-         when High_Current_Count_Column =>
+         when High_Current_Count_Column   =>
             Set_Count_Image (CodePeer.High);
 
-         when High_Current_Color_Column =>
+         when High_Current_Color_Column   =>
             Glib.Values.Init (Value, Gdk.RGBA.Get_Type);
             Gdk.RGBA.Set_Value (Value, CodePeer.Module.Get_Color (High));
 
-         when Passed_Checks_Count_Column =>
+         when Passed_Checks_Count_Column  =>
             if File_Node /= null then
                declare
-                  Total  : constant Natural := CodePeer.File_Data
-                    (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                    Total_Checks;
-                  Passed : constant Integer :=
-                    Total - File_Node.Checks_Count;
+                  Total  : constant Natural :=
+                    CodePeer.File_Data
+                      (File_Node.Node.Analysis_Data.CodePeer_Data.all)
+                      .Total_Checks;
+                  Passed : constant Integer := Total - File_Node.Checks_Count;
 
                begin
                   Glib.Values.Init (Value, Glib.GType_String);
@@ -334,7 +338,8 @@ package body CodePeer.Messages_Summary_Models is
                      Glib.Values.Set_String
                        (Value,
                         Image (Passed, 1)
-                        & " " & Percent_Image (Passed, Total));
+                        & " "
+                        & Percent_Image (Passed, Total));
                   end if;
                end;
 
@@ -348,8 +353,7 @@ package body CodePeer.Messages_Summary_Models is
                   Glib.Values.Init (Value, Glib.GType_String);
                   Glib.Values.Set_String
                     (Value,
-                     Image (Passed, 1)
-                     & " " & Percent_Image (Passed, Total));
+                     Image (Passed, 1) & " " & Percent_Image (Passed, Total));
                end;
 
             else
@@ -379,12 +383,12 @@ package body CodePeer.Messages_Summary_Models is
                end;
             end if;
 
-         when Total_Checks_Count_Column =>
+         when Total_Checks_Count_Column   =>
             if File_Node /= null then
                Set_Integer_Image
                  (CodePeer.File_Data
-                    (File_Node.Node.Analysis_Data.CodePeer_Data.all).
-                       Total_Checks,
+                    (File_Node.Node.Analysis_Data.CodePeer_Data.all)
+                    .Total_Checks,
                   True);
 
             elsif Project_Node /= null then
@@ -412,7 +416,7 @@ package body CodePeer.Messages_Summary_Models is
                end;
             end if;
 
-         when others =>
+         when others                      =>
             null;
       end case;
    end Get_Value;
@@ -422,9 +426,9 @@ package body CodePeer.Messages_Summary_Models is
    -------------
 
    procedure Gtk_New
-     (Model           : out Messages_Summary_Model;
-      Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set) is
+     (Model      : out Messages_Summary_Model;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : CodePeer.Message_Category_Sets.Set) is
    begin
       Model := new Messages_Summary_Model_Record;
       Initialize (Model, Tree, Categories);
@@ -435,9 +439,9 @@ package body CodePeer.Messages_Summary_Models is
    ----------------
 
    procedure Initialize
-     (Model           : access Messages_Summary_Model_Record'Class;
-      Tree            : Code_Analysis.Code_Analysis_Tree;
-      Categories      : CodePeer.Message_Category_Sets.Set) is
+     (Model      : access Messages_Summary_Model_Record'Class;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Categories : CodePeer.Message_Category_Sets.Set) is
    begin
       Code_Analysis.Tree_Models.Initialize (Model, Tree);
 
@@ -454,7 +458,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Is_Changed --
    ----------------
 
-   overriding function Is_Changed
+   overriding
+   function Is_Changed
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
    is
@@ -468,7 +473,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Is_Changed --
    ----------------
 
-   overriding function Is_Changed
+   overriding
+   function Is_Changed
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
@@ -483,7 +489,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Is_Changed --
    ----------------
 
-   overriding function Is_Changed
+   overriding
+   function Is_Changed
      (Self       : access Messages_Summary_Model_Record;
       Project    : Code_Analysis.Tree_Models.Project_Item_Access;
       File       : Code_Analysis.Tree_Models.File_Item_Access;
@@ -500,12 +507,13 @@ package body CodePeer.Messages_Summary_Models is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
    is
       Project_Node : constant Project_Item_Access :=
-                       Project_Item_Access (Project);
+        Project_Item_Access (Project);
 
    begin
       CodePeer.Utilities.Compute_Messages_Count
@@ -520,10 +528,11 @@ package body CodePeer.Messages_Summary_Models is
          Project_Node.Total_Checks);
       Project_Node.Computed := True;
 
-      return Self.Show_All_Projects
-        or else Project_Node.Messages_Counts (Low)    /= (others => 0)
+      return
+        Self.Show_All_Projects
+        or else Project_Node.Messages_Counts (Low) /= (others => 0)
         or else Project_Node.Messages_Counts (Medium) /= (others => 0)
-        or else Project_Node.Messages_Counts (High)   /= (others => 0)
+        or else Project_Node.Messages_Counts (High) /= (others => 0)
         or else Project_Node.Total_Checks /= 0;
    end Is_Visible;
 
@@ -531,7 +540,8 @@ package body CodePeer.Messages_Summary_Models is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self    : access Messages_Summary_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
       File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
@@ -567,10 +577,11 @@ package body CodePeer.Messages_Summary_Models is
          File_Node.Checks_Count);
       File_Node.Computed := True;
 
-      return Self.Show_All_Files
-        or else File_Node.Messages_Counts (Low)    /= (others => 0)
+      return
+        Self.Show_All_Files
+        or else File_Node.Messages_Counts (Low) /= (others => 0)
         or else File_Node.Messages_Counts (Medium) /= (others => 0)
-        or else File_Node.Messages_Counts (High)   /= (others => 0);
+        or else File_Node.Messages_Counts (High) /= (others => 0);
    end Is_Visible;
 
    -----------------
@@ -579,8 +590,7 @@ package body CodePeer.Messages_Summary_Models is
 
    procedure Set_Pattern
      (Self    : access Messages_Summary_Model_Record'Class;
-      Pattern : GPS.Search.Search_Pattern_Access)
-   is
+      Pattern : GPS.Search.Search_Pattern_Access) is
    begin
       GPS.Search.Free (Self.Pattern);
       Self.Pattern := Pattern;

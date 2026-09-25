@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Vectors; use Ada.Containers;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Basic_Types;            use Basic_Types;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GVD.Types;              use GVD.Types;
-with GPS.Debuggers;          use GPS.Debuggers;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Markers;            use GPS.Markers;
+with Ada.Containers.Vectors;
+use Ada.Containers;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Basic_Types;           use Basic_Types;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GVD.Types;             use GVD.Types;
+with GPS.Debuggers;         use GPS.Debuggers;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Markers;           use GPS.Markers;
 
 package GVD.Breakpoints_List is
 
@@ -55,23 +56,23 @@ package GVD.Breakpoints_List is
    --  Use State to set the state of each breakpoint of the list.
 
    procedure Break_Source
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : Virtual_File;
-      Line          : Editable_Line_Type;
-      Temporary     : Boolean := False);
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      File      : Virtual_File;
+      Line      : Editable_Line_Type;
+      Temporary : Boolean := False);
    procedure Unbreak_Source
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : Virtual_File;
-      Line          : Editable_Line_Type);
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Line   : Editable_Line_Type);
    --  Set a breakpoint on the given location.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, they all break
    --  at that location
 
    procedure Break_Subprogram
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Subprogram    : String;
-      Temporary     : Boolean := False);
+     (Kernel     : not null access Kernel_Handle_Record'Class;
+      Subprogram : String;
+      Temporary  : Boolean := False);
    --  Set a breakpoint on the given subprogram.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, they all break
@@ -81,8 +82,7 @@ package GVD.Breakpoints_List is
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Name      : String;
       Unhandled : Boolean := False;
-      Temporary : Boolean := False)
-      return Breakpoint_Identifier;
+      Temporary : Boolean := False) return Breakpoint_Identifier;
    --  Set a breakpoint on the given exception.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, the current
@@ -90,8 +90,7 @@ package GVD.Breakpoints_List is
 
    function Catch_Assertions
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Temporary : Boolean := False)
-      return Breakpoint_Identifier;
+      Temporary : Boolean := False) return Breakpoint_Identifier;
    --  Set an assertions  breakpoint.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, the current
@@ -100,8 +99,7 @@ package GVD.Breakpoints_List is
    function Break_Regexp
      (Kernel     : not null access Kernel_Handle_Record'Class;
       Expression : String;
-      Temporary  : Boolean := False)
-      return Breakpoint_Identifier;
+      Temporary  : Boolean := False) return Breakpoint_Identifier;
    --  Set a breakpoint on Regexp.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, the current
@@ -110,8 +108,7 @@ package GVD.Breakpoints_List is
    function Break_At_Address
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Address   : GVD.Types.Address_Type;
-      Temporary : Boolean := False)
-      return Breakpoint_Identifier;
+      Temporary : Boolean := False) return Breakpoint_Identifier;
    --  Set a breakpoint on the address.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, the current
@@ -137,11 +134,11 @@ package GVD.Breakpoints_List is
    --  by this procedure.
 
    procedure Clear_All_Breakpoints
-     (Kernel        : not null access Kernel_Handle_Record'Class);
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  Remove all breakpoints
 
    type Breakpoint_Data is record
-      Num         : Breakpoint_Identifier := GVD.Types.No_Breakpoint;
+      Num : Breakpoint_Identifier := GVD.Types.No_Breakpoint;
       --  breakpoint number (internal to the debugger)
 
       The_Type      : Breakpoint_Type := Breakpoint;
@@ -152,48 +149,48 @@ package GVD.Breakpoints_List is
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
 
-      Enabled     : Boolean := True;
+      Enabled : Boolean := True;
       --  Whether the breakpoint is currently enabled
 
-      Address     : Address_Type := Invalid_Address;
+      Address : Address_Type := Invalid_Address;
       --  The address of the breakpoint.
 
-      Trigger     : Watchpoint_Trigger := Write;
+      Trigger : Watchpoint_Trigger := Write;
       --  The action that causes the watchpoint to break the program.  The
       --  value set here is valid only for watchpoints.
 
-      Expression  : Unbounded_String;
+      Expression : Unbounded_String;
       --  The name of the variable to watch for watchpoints. This is left to
       --  null for breakpoints.
 
-      Except      : Unbounded_String;
+      Except : Unbounded_String;
       --  Name of the exception on which we break
 
-      Unhandled   : Boolean := False;
+      Unhandled : Boolean := False;
       --  Unhandled exception only
 
-      Assertion   : Boolean := False;
+      Assertion : Boolean := False;
       --  catch assertion
 
-      Subprogram  : Unbounded_String;
+      Subprogram : Unbounded_String;
       --  Name of the subprogram we stop in.
 
-      Location    : Location_Marker := No_Marker;
+      Location : Location_Marker := No_Marker;
       --  The location of the breakpoint
 
-      Condition   : Unbounded_String;
+      Condition : Unbounded_String;
       --  Condition on which this breakpoint is activated
 
-      Ignore      : Natural := 0;
+      Ignore : Natural := 0;
       --  Number of hits that will be ignored before actually stopping
 
-      Commands    : Unbounded_String;
+      Commands : Unbounded_String;
       --  Commands to execute when the debugger stops at this breakpoint
 
-      Scope       : Scope_Type := No_Scope;
+      Scope : Scope_Type := No_Scope;
       --  The scope of the breakpoint
 
-      Action      : Action_Type := No_Action;
+      Action : Action_Type := No_Action;
       --  The action of the breakpoint
    end record;
    --  Information for a specific breakpoint
@@ -206,14 +203,15 @@ package GVD.Breakpoints_List is
    --  their addresses (which may change after running the debuggee) if
    --  Include_Address is False.
 
-   overriding function "=" (B1, B2 : Breakpoint_Data) return Boolean
-     is (B1.Num = B2.Num);
+   overriding
+   function "=" (B1, B2 : Breakpoint_Data) return Boolean
+   is (B1.Num = B2.Num);
    --  Whether the two breakpoints are the same.
 
    Null_Breakpoint : constant Breakpoint_Data;
 
-   package Breakpoint_Vectors is new Ada.Containers.Vectors
-     (Positive, Breakpoint_Data);
+   package Breakpoint_Vectors is new
+     Ada.Containers.Vectors (Positive, Breakpoint_Data);
 
    type Breakpoint_List is record
       List                     : Breakpoint_Vectors.Vector;
@@ -221,14 +219,13 @@ package GVD.Breakpoints_List is
    end record;
 
    function Get_Breakpoint_From_Id
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Id      : Breakpoint_Identifier)
-      return Breakpoint_Data;
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Id     : Breakpoint_Identifier) return Breakpoint_Data;
    --  Return the breakpint with the given identifier, or Null_Breakpoint
 
    function Get_Stored_List_Of_Breakpoints
      (Debugger : access Base_Visual_Debugger'Class := null)
-     return access Breakpoint_List;
+      return access Breakpoint_List;
    --  Return the list of breakpoints.
    --  If Debugger is specified, this is the list of breakpoints specific to
    --  that debugger. Otherwise, this is the global list of persistent

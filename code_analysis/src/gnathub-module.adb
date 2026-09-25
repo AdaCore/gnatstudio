@@ -15,15 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
 with Glib.Object;
 with Gtk.Widget;
 
-with GPS.Default_Styles;           use GPS.Default_Styles;
-with GPS.Intl;                     use GPS.Intl;
-with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Default_Styles; use GPS.Default_Styles;
+with GPS.Intl;           use GPS.Intl;
+with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;
 
@@ -39,8 +39,8 @@ package body GNAThub.Module is
 
    Me : constant Trace_Handle := Create ("GNATHUB");
 
-   type Loader_Listener_Type is
-     new GNAThub.Loader.Loader_Listener_Interface with record
+   type Loader_Listener_Type is new GNAThub.Loader.Loader_Listener_Interface
+   with record
       Loaders_Finished_Count : Natural := 0;
    end record;
    --  A listener used to react when a loader starts/finishes loading.
@@ -51,20 +51,22 @@ package body GNAThub.Module is
    --  The Analysis_Loading_Finished_Hook should be run when both loaders have
    --  finished loading their data.
 
-   overriding procedure On_Finish_Loading
-     (Self : not null access Loader_Listener_Type);
+   overriding
+   procedure On_Finish_Loading (Self : not null access Loader_Listener_Type);
 
-   type On_Before_Exit is
-     new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
-   overriding function Execute
+   type On_Before_Exit is new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function
+   with null record;
+   overriding
+   function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean;
    --  Called before GNAT Studio exits. Switchs perspective to default.
 
-   type On_Project_Changed is
-     new GPS.Kernel.Hooks.Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   type On_Project_Changed is new GPS.Kernel.Hooks.Simple_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Called when project view is changed. Close report and clean all data.
@@ -78,8 +80,7 @@ package body GNAThub.Module is
    -- Clean --
    -----------
 
-   procedure Clean
-     (Self  : in out GNAThub_Module_Id_Record'Class) is
+   procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
    begin
       Trace (Me, "Cleaning the GNAThub module");
 
@@ -126,8 +127,7 @@ package body GNAThub.Module is
    -- Clean_External --
    --------------------
 
-   procedure Clean_External
-     (Self  : in out GNAThub_Module_Id_Record'Class) is
+   procedure Clean_External (Self : in out GNAThub_Module_Id_Record'Class) is
    begin
       Self.Ext_Loader.Cleanup;
       Self.Ext_Loader.Remove_Messages (Force => True);
@@ -137,8 +137,7 @@ package body GNAThub.Module is
    -- Remove_Database --
    ---------------------
 
-   procedure Remove_Database
-     (Self : in out GNAThub_Module_Id_Record'Class) is
+   procedure Remove_Database (Self : in out GNAThub_Module_Id_Record'Class) is
    begin
       Self.Db_Loader.Cleanup;
       Self.Db_Loader.Remove_Database;
@@ -149,8 +148,7 @@ package body GNAThub.Module is
    -- Display_Data --
    ------------------
 
-   procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class)
-   is
+   procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class) is
       Ext_Loader_Has_Data : Boolean;
       Db_Loader_Has_Data  : Boolean;
    begin
@@ -169,7 +167,7 @@ package body GNAThub.Module is
       if Db_Loader_Has_Data or else Ext_Loader_Has_Data then
          declare
             Report_View         :
-            GNAThub.Reports.Collector.GNAThub_Report_Collector_Access;
+              GNAThub.Reports.Collector.GNAThub_Report_Collector_Access;
             Report_View_Created : Boolean;
          begin
             Trace (Me, "Starting loading the data: open the views");
@@ -216,8 +214,8 @@ package body GNAThub.Module is
    -- On_Finish_Loading --
    -----------------------
 
-   overriding procedure On_Finish_Loading
-     (Self : not null access Loader_Listener_Type) is
+   overriding
+   procedure On_Finish_Loading (Self : not null access Loader_Listener_Type) is
    begin
       Self.Loaders_Finished_Count := Self.Loaders_Finished_Count + 1;
 
@@ -234,7 +232,8 @@ package body GNAThub.Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
@@ -247,7 +246,8 @@ package body GNAThub.Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean
@@ -271,8 +271,8 @@ package body GNAThub.Module is
      (Self       : in out GNAThub_Module_Id_Record'Class;
       Tool       : not null Tool_Access;
       Name       : Ada.Strings.Unbounded.Unbounded_String;
-      Identifier : Ada.Strings.Unbounded.Unbounded_String)
-      return Rule_Access is
+      Identifier : Ada.Strings.Unbounded.Unbounded_String) return Rule_Access
+   is
    begin
       for Rule of Self.Rules loop
          if Rule.Identifier = Identifier then
@@ -280,13 +280,14 @@ package body GNAThub.Module is
          end if;
       end loop;
 
-      return Rule : constant Rule_Access :=
-        new Rule_Record'
-          (Current    => 0,
-           Total      => 0,
-           Name       => Name,
-           Identifier => Identifier,
-           Tool       => Tool)
+      return
+         Rule : constant Rule_Access :=
+           new Rule_Record'
+             (Current    => 0,
+              Total      => 0,
+              Name       => Name,
+              Identifier => Identifier,
+              Tool       => Tool)
       do
          Tool.Rules.Insert (Rule);
          Self.Rules.Insert (Rule);
@@ -301,8 +302,8 @@ package body GNAThub.Module is
      (Self       : in out GNAThub_Module_Id_Record'Class;
       Tool       : not null Tool_Access;
       Name       : Ada.Strings.Unbounded.Unbounded_String;
-      Identifier : Ada.Strings.Unbounded.Unbounded_String)
-      return Rule_Access is
+      Identifier : Ada.Strings.Unbounded.Unbounded_String) return Rule_Access
+   is
    begin
       for Rule of Self.Metrics loop
          if Rule.Identifier = Identifier then
@@ -310,13 +311,14 @@ package body GNAThub.Module is
          end if;
       end loop;
 
-      return Rule : constant Rule_Access :=
-        new Rule_Record'
-          (Current    => 0,
-           Total      => 0,
-           Name       => Name,
-           Identifier => Identifier,
-           Tool       => Tool)
+      return
+         Rule : constant Rule_Access :=
+           new Rule_Record'
+             (Current    => 0,
+              Total      => 0,
+              Name       => Name,
+              Identifier => Identifier,
+              Tool       => Tool)
       do
          Tool.Metrics.Include (Rule);
          Self.Metrics.Insert (Rule);
@@ -328,8 +330,7 @@ package body GNAThub.Module is
    ------------------
 
    function Get_Severity
-     (Self    : GNAThub_Module_Id_Record'Class;
-      Ranking : Message_Importance_Type)
+     (Self : GNAThub_Module_Id_Record'Class; Ranking : Message_Importance_Type)
       return Severity_Access is
    begin
       for Severity of Self.Severities loop
@@ -355,13 +356,14 @@ package body GNAThub.Module is
          end if;
       end loop;
 
-      return Tool : constant Tool_Access :=
-        new Tool_Record'
-          (Current => 0,
-           Total   => 0,
-           Name    => Name,
-           Rules   => <>,
-           Metrics => <>)
+      return
+         Tool : constant Tool_Access :=
+           new Tool_Record'
+             (Current => 0,
+              Total   => 0,
+              Name    => Name,
+              Rules   => <>,
+              Metrics => <>)
       do
          Self.Tools.Insert (Tool);
       end return;
@@ -415,7 +417,7 @@ package body GNAThub.Module is
 
    begin
 
-      Module        := new GNAThub_Module_Id_Record;
+      Module := new GNAThub_Module_Id_Record;
       Module.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
 
       Module.Register_Module (Kernel, "GNAThub");

@@ -32,8 +32,8 @@ package GPS.Location_View_Filter is
    --  Create a new model
 
    procedure Set_Pattern
-     (Self         : not null access Location_View_Filter_Model_Record;
-      Pattern      : GPS.Search.Search_Pattern_Access);
+     (Self    : not null access Location_View_Filter_Model_Record;
+      Pattern : GPS.Search.Search_Pattern_Access);
    --  Sets pattern to be used for filtering.
 
 private

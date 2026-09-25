@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 --  Base package for GNAT Studio scripting (GUI independent)
 
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-with GPS.Core_Kernels;   use GPS.Core_Kernels;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GPS.Core_Kernels; use GPS.Core_Kernels;
 
 package GPS.Scripts is
 
@@ -28,7 +28,8 @@ package GPS.Scripts is
    function Create
      (Kernel : GPS.Core_Kernels.Core_Kernel) return Kernel_Scripts_Repository;
 
-   function Get_Kernel (Data : GNATCOLL.Scripts.Callback_Data'Class)
+   function Get_Kernel
+     (Data : GNATCOLL.Scripts.Callback_Data'Class)
       return GPS.Core_Kernels.Core_Kernel;
    --  Return the kernel associated with Data
 
@@ -113,14 +114,14 @@ package GPS.Scripts is
       --  thus the instances can only be destroyed when the element itself has
       --  already been freed.
 
-   package Script_Proxies is
+   package Script_Proxies
+   is
 
       function Get_Or_Create_Instance
-         (Self   : in out Proxy'Class;
-          Obj    : Element_Type;
-          Script : not null access Scripting_Language_Record'Class;
-          Class_To_Create : String := "")
-         return Class_Instance;
+        (Self            : in out Proxy'Class;
+         Obj             : Element_Type;
+         Script          : not null access Scripting_Language_Record'Class;
+         Class_To_Create : String := "") return Class_Instance;
       --  If Obj was already associated with a class instance in the given
       --  scripting language, returns that same instance.
       --  Otherwise, create a new instance to wrap Obj.
@@ -130,9 +131,7 @@ package GPS.Scripts is
       --  we are creating, when there are various children classes possible
 
       procedure Store_In_Instance
-         (Self   : in out Proxy'Class;
-          Inst   : Class_Instance;
-          Obj    : Element_Type);
+        (Self : in out Proxy'Class; Inst : Class_Instance; Obj : Element_Type);
       --  Associate Inst with Obj.
       --  This procedure is only needed when the instance was created
       --  independently, for instance when implementing a Constructor_Method
@@ -151,7 +150,7 @@ package GPS.Scripts is
          --  Return a new version of E, which does not own any script
          --  instance. E will be freed (with Free above).
       function Transfer_Ownership
-         (Self : in out Proxy'Class) return Instances_Status;
+        (Self : in out Proxy'Class) return Instances_Status;
       --  This procedure is used to change the ownership of data. After
       --  calling this procedure, the following is true:
       --  * Self is no longer referencing any instance.

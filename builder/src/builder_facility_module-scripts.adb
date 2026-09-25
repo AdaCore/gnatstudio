@@ -15,21 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;               use GNAT.Strings;
-with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNAT.Strings;       use GNAT.Strings;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
-with Build_Configurations;       use Build_Configurations;
-with Commands.Builder.Scripts;   use Commands.Builder.Scripts;
+with Build_Configurations;     use Build_Configurations;
+with Commands.Builder.Scripts; use Commands.Builder.Scripts;
 with GPS.Core_Kernels;
-with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Macros;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Intl;                 use GPS.Intl;
 
-with Build_Command_Utils;        use Build_Command_Utils;
-with Remote;                     use Remote;
+with Build_Command_Utils; use Build_Command_Utils;
+with Remote;              use Remote;
 
 package body Builder_Facility_Module.Scripts is
 
@@ -38,8 +38,7 @@ package body Builder_Facility_Module.Scripts is
    -----------------------
 
    procedure Shell_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Shell command handler
 
    -------------------
@@ -47,19 +46,18 @@ package body Builder_Facility_Module.Scripts is
    -------------------
 
    procedure Shell_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Target_Class : constant Class_Type :=
-                       Get_Target_Class (Get_Kernel (Data));
+        Get_Target_Class (Get_Kernel (Data));
       Kernel       : constant Kernel_Handle := Get_Kernel (Data);
    begin
       if Command = "hide" then
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
             Name : constant String := Get_Target_Name (Inst);
-            Ref  : constant Target_Access
-              := Get_Target_From_Name (Registry, Name);
+            Ref  : constant Target_Access :=
+              Get_Target_From_Name (Registry, Name);
          begin
             if Ref = null then
                Set_Error_Msg (Data, -"Invalid target");
@@ -73,8 +71,8 @@ package body Builder_Facility_Module.Scripts is
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
             Name : constant String := Get_Target_Name (Inst);
-            Ref  : constant Target_Access
-              := Get_Target_From_Name (Registry, Name);
+            Ref  : constant Target_Access :=
+              Get_Target_From_Name (Registry, Name);
          begin
             if Ref = null then
                Set_Error_Msg (Data, -"Invalid target");
@@ -102,8 +100,9 @@ package body Builder_Facility_Module.Scripts is
 
       elsif Command = "clone" then
          declare
-            Inst : constant Class_Instance := Nth_Arg (Data, 1, Target_Class);
-            Name : constant String := Get_Target_Name (Inst);
+            Inst         : constant Class_Instance :=
+              Nth_Arg (Data, 1, Target_Class);
+            Name         : constant String := Get_Target_Name (Inst);
             New_Name     : constant String := Nth_Arg (Data, 2);
             New_Category : constant String := Nth_Arg (Data, 3);
          begin
@@ -119,12 +118,12 @@ package body Builder_Facility_Module.Scripts is
       elsif Command = "get_command_line" then
          declare
             Inst     : constant Class_Instance :=
-                         Nth_Arg (Data, 1, Target_Class);
+              Nth_Arg (Data, 1, Target_Class);
             Name     : constant String := Get_Target_Name (Inst);
-            Target   : constant Target_Access
-              := Get_Target_From_Name (Registry, Name);
+            Target   : constant Target_Access :=
+              Get_Target_From_Name (Registry, Name);
             Cmd_Line : constant String_List :=
-                         Get_Command_Line_Unexpanded (Target);
+              Get_Command_Line_Unexpanded (Target);
          begin
             Data.Set_Return_Value_As_List;
 
@@ -142,7 +141,7 @@ package body Builder_Facility_Module.Scripts is
                 (Registry      => Registry,
                  Name          => Target_Name,
                  Resolve_Alias => False);
-            Aliased_Target_Name : constant String :=  Nth_Arg (Data, 2, "");
+            Aliased_Target_Name : constant String := Nth_Arg (Data, 2, "");
             Aliased_Target      : constant Target_Access :=
               Get_Target_From_Name (Registry, Aliased_Target_Name);
          begin
@@ -157,27 +156,27 @@ package body Builder_Facility_Module.Scripts is
                return;
             end if;
 
-            Set_As_Alias
-              (Target         => Target,
-               Aliased_Target => Aliased_Target);
+            Set_As_Alias (Target => Target, Aliased_Target => Aliased_Target);
          end;
 
       elsif Command = "get_expanded_command_line" then
          declare
             Inst     : constant Class_Instance :=
-                         Nth_Arg (Data, 1, Target_Class);
+              Nth_Arg (Data, 1, Target_Class);
             Name     : constant String := Get_Target_Name (Inst);
             Target   : constant Target_Access :=
               Get_Target_From_Name (Registry, Name);
             Cmd_Line : constant String_List :=
               Get_Command_Line_Unexpanded (Target);
 
-            Server  : constant Server_Type := Get_Server
-              (Builder_Facility_Module.Registry,
-               Kernel.Get_Build_Mode,
-               Target);
-            Subdir  : constant Filesystem_String := Get_Mode_Subdir
-              (Builder_Facility_Module.Registry, Kernel.Get_Build_Mode);
+            Server  : constant Server_Type :=
+              Get_Server
+                (Builder_Facility_Module.Registry,
+                 Kernel.Get_Build_Mode,
+                 Target);
+            Subdir  : constant Filesystem_String :=
+              Get_Mode_Subdir
+                (Builder_Facility_Module.Registry, Kernel.Get_Build_Mode);
             Project : constant Project_Type :=
               Kernel.Get_Project_Tree.Root_Project;
             Main    : Virtual_File;
@@ -198,8 +197,16 @@ package body Builder_Facility_Module.Scripts is
 
             for Arg of Cmd_Line loop
                Expand_Arg
-                 (GPS.Core_Kernels.Core_Kernel (Kernel), Target, Arg.all,
-                  Server, No_File, Main, Project, Subdir, Failed, Result);
+                 (GPS.Core_Kernels.Core_Kernel (Kernel),
+                  Target,
+                  Arg.all,
+                  Server,
+                  No_File,
+                  Main,
+                  Project,
+                  Subdir,
+                  Failed,
+                  Result);
 
                if Failed then
                   Data.Set_Return_Value (Arg.all);
@@ -270,57 +277,63 @@ package body Builder_Facility_Module.Scripts is
       Commands.Builder.Scripts.Register_Commands (Kernel);
 
       Register_Command
-        (Kernel, "hide",
+        (Kernel,
+         "hide",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
       Register_Command
-        (Kernel, "show",
+        (Kernel,
+         "show",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
       Register_Command
-        (Kernel, "remove",
+        (Kernel,
+         "remove",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
       Register_Command
-        (Kernel, "clone",
+        (Kernel,
+         "clone",
          Minimum_Args => 1,
          Maximum_Args => 2,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
       Register_Command
-        (Repo         => Kernel.Scripts,
-         Command      => "set_as_alias",
-         Params       =>
-           (1 => Param ("aliased_target_name",  Optional => True)),
-         Class        => Target_Class,
-         Handler      => Shell_Handler'Access);
+        (Repo    => Kernel.Scripts,
+         Command => "set_as_alias",
+         Params  => (1 => Param ("aliased_target_name", Optional => True)),
+         Class   => Target_Class,
+         Handler => Shell_Handler'Access);
 
       Register_Command
-        (Kernel, "get_command_line",
+        (Kernel,
+         "get_command_line",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
       Register_Command
-        (Kernel, "get_expanded_command_line",
+        (Kernel,
+         "get_expanded_command_line",
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 
       Register_Command
-        (Kernel, "expand_macros",
+        (Kernel,
+         "expand_macros",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Target_Class,
@@ -329,11 +342,12 @@ package body Builder_Facility_Module.Scripts is
 
       --  Global commands
 
-      Register_Command (Kernel        => Kernel,
-                        Command       => "set_build_mode",
-                        Minimum_Args  => 1,
-                        Maximum_Args  => 1,
-                        Handler       => Shell_Handler'Access);
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "set_build_mode",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Shell_Handler'Access);
    end Register_Commands;
 
 end Builder_Facility_Module.Scripts;

@@ -24,8 +24,7 @@ package body DAP.Clients.Pause is
    ------------
 
    function Create
-     (Kernel      : not null Kernel_Handle;
-      Thread_Id   : Integer)
+     (Kernel : not null Kernel_Handle; Thread_Id : Integer)
       return Pause_Request_Access
    is
       Self : constant Pause_Request_Access := new Pause_Request (Kernel);
@@ -38,7 +37,8 @@ package body DAP.Clients.Pause is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Pause_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : DAP.Tools.PauseResponse;
@@ -54,8 +54,7 @@ package body DAP.Clients.Pause is
    ------------------------
 
    procedure Send_Pause_Request
-     (Client    : in out DAP.Clients.DAP_Client'Class;
-      Thread_Id : Integer)
+     (Client : in out DAP.Clients.DAP_Client'Class; Thread_Id : Integer)
    is
       R : DAP_Request_Access :=
         DAP_Request_Access (Create (Client.Kernel, Thread_Id));

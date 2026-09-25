@@ -19,6 +19,7 @@
 --  access to message type, reference is set to null automatically when message
 --  is destroyed.
 ------------------------------------------------------------------------------
+
 package GPS.Kernel.Messages.References is
 
    type Message_Reference is tagged private;

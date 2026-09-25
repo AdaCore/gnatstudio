@@ -27,7 +27,7 @@ with Cairo;
 with Pango.Layout;
 with Pango.Cairo;
 with GNATCOLL.VFS;
-with Basic_Types;        use Basic_Types;
+with Basic_Types; use Basic_Types;
 
 package body Src_Printing.Gtk_Printer is
 
@@ -37,33 +37,36 @@ package body Src_Printing.Gtk_Printer is
    package Line_Number_IO is new Ada.Text_IO.Integer_IO (Editable_Line_Type);
 
    type GPS_Print_Operation_Record is
-     new Gtkada.Printing.Gtkada_Print_Operation_Record with
-      record
-         Editor         : Src_Editor_Box.Source_Editor_Box;
-         From_Line      : Editable_Line_Type;
-         To_Line        : Editable_Line_Type;
-         Lines_Per_Page : Editable_Line_Type;
-         Font           : Pango.Font.Pango_Font_Description;
-         Page_Height    : Glib.Gint;
-         Line_Height    : Glib.Gint;
-      end record;
+     new Gtkada.Printing.Gtkada_Print_Operation_Record
+   with record
+      Editor         : Src_Editor_Box.Source_Editor_Box;
+      From_Line      : Editable_Line_Type;
+      To_Line        : Editable_Line_Type;
+      Lines_Per_Page : Editable_Line_Type;
+      Font           : Pango.Font.Pango_Font_Description;
+      Page_Height    : Glib.Gint;
+      Line_Height    : Glib.Gint;
+   end record;
 
-   overriding procedure Begin_Print
-     (Self        : access GPS_Print_Operation_Record;
-      Context     : Gtk.Print_Context.Gtk_Print_Context);
+   overriding
+   procedure Begin_Print
+     (Self    : access GPS_Print_Operation_Record;
+      Context : Gtk.Print_Context.Gtk_Print_Context);
 
-   overriding procedure Draw_Page
+   overriding
+   procedure Draw_Page
      (Self        : access GPS_Print_Operation_Record;
       Context     : Gtk.Print_Context.Gtk_Print_Context;
       Page_Number : Glib.Gint);
 
    type GPS_Print_Operation is access all GPS_Print_Operation_Record;
 
-   overriding procedure Begin_Print
-     (Self        : access GPS_Print_Operation_Record;
-      Context     : Gtk.Print_Context.Gtk_Print_Context)
+   overriding
+   procedure Begin_Print
+     (Self    : access GPS_Print_Operation_Record;
+      Context : Gtk.Print_Context.Gtk_Print_Context)
    is
-      X : Glib.Gint;
+      X      : Glib.Gint;
       Layout : constant Pango.Layout.Pango_Layout :=
         Context.Create_Pango_Layout;
    begin
@@ -71,8 +74,8 @@ package body Src_Printing.Gtk_Printer is
       Layout.Set_Font_Description (Self.Font);
       Layout.Set_Text ("X");
       Layout.Get_Pixel_Size (X, Self.Line_Height);
-      Self.Lines_Per_Page := Editable_Line_Type
-        (Self.Page_Height / Self.Line_Height - 5);
+      Self.Lines_Per_Page :=
+        Editable_Line_Type (Self.Page_Height / Self.Line_Height - 5);
 
       Self.Set_N_Pages
         (Glib.Gint
@@ -80,7 +83,8 @@ package body Src_Printing.Gtk_Printer is
       Layout.Unref;
    end Begin_Print;
 
-   overriding procedure Draw_Page
+   overriding
+   procedure Draw_Page
      (Self        : access GPS_Print_Operation_Record;
       Context     : Gtk.Print_Context.Gtk_Print_Context;
       Page_Number : Glib.Gint)
@@ -98,14 +102,18 @@ package body Src_Printing.Gtk_Printer is
    begin
       declare
          use type GNATCOLL.VFS.Filesystem_String;
-         File       : constant String := +Self.Editor.Get_Filename.Base_Name;
-         Layout     : constant Pango.Layout.Pango_Layout :=
+         File   : constant String := +Self.Editor.Get_Filename.Base_Name;
+         Layout : constant Pango.Layout.Pango_Layout :=
            Context.Create_Pango_Layout;
       begin
          Cairo.Move_To (CC, 0.0, Glib.Gdouble (Self.Line_Height));
          Layout.Set_Text
-           (File & " (" & Editable_Line_Type'Image (From) &
-            " .." & Editable_Line_Type'Image (To) & " )");
+           (File
+            & " ("
+            & Editable_Line_Type'Image (From)
+            & " .."
+            & Editable_Line_Type'Image (To)
+            & " )");
          Pango.Cairo.Show_Layout (CC, Layout);
          Layout.Unref;
       end;
@@ -119,7 +127,8 @@ package body Src_Printing.Gtk_Printer is
          begin
             Line_Number_IO.Put (Index, J);
             Cairo.Move_To
-              (CC, 0.0,
+              (CC,
+               0.0,
                Glib.Gdouble (Self.Line_Height) * Glib.Gdouble (J - From + 4));
             Layout.Set_Font_Description (Self.Font);
             Layout.Set_Text (Index & ": " & Content);
@@ -133,11 +142,12 @@ package body Src_Printing.Gtk_Printer is
    -- Print --
    -----------
 
-   overriding procedure Print
-     (This       : Printer;
-      Editor     : Src_Editor_Box.Source_Editor_Box;
-      From       : Editable_Line_Type := 1;
-      To         : Editable_Line_Type := Editable_Line_Type'Last)
+   overriding
+   procedure Print
+     (This   : Printer;
+      Editor : Src_Editor_Box.Source_Editor_Box;
+      From   : Editable_Line_Type := 1;
+      To     : Editable_Line_Type := Editable_Line_Type'Last)
    is
       pragma Unreferenced (This);
 
@@ -149,14 +159,15 @@ package body Src_Printing.Gtk_Printer is
       Gtkada.Printing.Initialize (Printer);
       Printer.Editor := Editor;
       Printer.From_Line := From;
-      Printer.To_Line := Editable_Line_Type'Min
-        (To, Editable_Line_Type (Editor.Get_Last_Line));
+      Printer.To_Line :=
+        Editable_Line_Type'Min (To, Editable_Line_Type (Editor.Get_Last_Line));
       Printer.Font := GPS.Kernel.Preferences.View_Fixed_Font.Get_Pref;
 
-      Ignore := Gtkada.Printing.Connect_And_Run
-        (Printer,
-         Gtk.Print_Operation.Action_Print_Dialog,
-         Editor.Get_Kernel.Get_Main_Window);
+      Ignore :=
+        Gtkada.Printing.Connect_And_Run
+          (Printer,
+           Gtk.Print_Operation.Action_Print_Dialog,
+           Editor.Get_Kernel.Get_Main_Window);
    end Print;
 
    ------------

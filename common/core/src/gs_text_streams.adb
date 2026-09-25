@@ -45,9 +45,9 @@ package body GS_Text_Streams is
    -- New_Line --
    --------------
 
-   overriding procedure New_Line
-     (Self    : in out File_UTF8_Output_Stream;
-      Success : in out Boolean) is
+   overriding
+   procedure New_Line
+     (Self : in out File_UTF8_Output_Stream; Success : in out Boolean) is
    begin
       Self.Put (VSS.Characters.Latin.Line_Feed, Success);
    end New_Line;
@@ -60,14 +60,15 @@ package body GS_Text_Streams is
      (Self : in out File_UTF8_Output_Stream'Class;
       File : GNATCOLL.VFS.Virtual_File) is
    begin
-      Self.Writable :=  File.Write_File;
+      Self.Writable := File.Write_File;
    end Open;
 
    ---------
    -- Put --
    ---------
 
-   overriding procedure Put
+   overriding
+   procedure Put
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Characters.Virtual_Character;
       Success : in out Boolean)
@@ -126,7 +127,8 @@ package body GS_Text_Streams is
    -- Put --
    ---------
 
-   overriding procedure Put
+   overriding
+   procedure Put
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Strings.Virtual_String;
       Success : in out Boolean)
@@ -144,7 +146,8 @@ package body GS_Text_Streams is
    -- Put_Line --
    --------------
 
-   overriding procedure Put_Line
+   overriding
+   procedure Put_Line
      (Self    : in out File_UTF8_Output_Stream;
       Item    : VSS.Strings.Virtual_String;
       Success : in out Boolean) is

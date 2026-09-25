@@ -17,12 +17,12 @@
 
 --  Module that incapsulate Variables information
 
-with Gtk.Tree_Model;               use Gtk.Tree_Model;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 
-with VSS.Strings;                  use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 
 with DAP.Modules.Variables.Items;
-with DAP.Tools;                    use DAP.Tools;
+with DAP.Tools; use DAP.Tools;
 
 package DAP.Clients.Variables is
 
@@ -69,36 +69,32 @@ package DAP.Clients.Variables is
    -- Variables_Holder --
 
    type Variables_Holder
-     (Client : not null access DAP.Clients.DAP_Client'Class) is tagged private;
+     (Client : not null access DAP.Clients.DAP_Client'Class)
+   is
+     tagged private;
    type Variables_Holder_Access is access all Variables_Holder'Class;
 
    function Get_Scopes
-     (Self : in out Variables_Holder)
-      return Variables_References_Trees.Tree;
+     (Self : in out Variables_Holder) return Variables_References_Trees.Tree;
    --  Returns current scopes
 
    procedure Clear (Self : in out Variables_Holder);
    --  Clear internal data
 
    procedure Get_Variable
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters);
+     (Self : in out Variables_Holder; Params : in out Request_Parameters);
    --  Get variable and update the view or call Python API.
 
    procedure Set_Variable
-     (Self   : in out Variables_Holder;
-      Params : Request_Parameters);
+     (Self : in out Variables_Holder; Params : Request_Parameters);
    --  Set variable's value and update the view
 
    procedure Set_Variable
-     (Self  : in out Variables_Holder;
-      Name  : String;
-      Value : String);
+     (Self : in out Variables_Holder; Name : String; Value : String);
    --  Set variable's value
 
    procedure Value_Of
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters);
+     (Self : in out Variables_Holder; Params : in out Request_Parameters);
    --  Get expression value
 
    -- Utils --
@@ -136,37 +132,34 @@ private
    type Variables_Holder
      (Client : not null access DAP.Clients.DAP_Client'Class)
    is tagged record
-      Has_Scopes_Ids     : Boolean := False;
+      Has_Scopes_Ids : Boolean := False;
 
-      Locals_Scope_Id    : Integer := 0;
+      Locals_Scope_Id : Integer := 0;
       --  Current 'Locals' scope Id on debugger side.
 
-      Globals_Scope_Id    : Integer := 0;
+      Globals_Scope_Id : Integer := 0;
       --  Current 'Globals' scope Id on debugger side.
 
       Arguments_Scope_Id : Integer := 0;
       --  Current 'Arguments' scope Id on debugger side.
 
-      Scopes             : Variables_References_Trees.Tree := Empty_Tree;
+      Scopes : Variables_References_Trees.Tree := Empty_Tree;
       --  Contains the different scopes that are returned by the DAP
       --  ScopesRequest (e.g: "Locals", "Arguments")
    end record;
 
    procedure On_Scopes_Result
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters);
+     (Self : in out Variables_Holder; Params : in out Request_Parameters);
    --  Callback when the `scopes` response is arrived
 
    function Find_By_Id
-     (Self : Variables_Holder;
-      Id   : Integer)
+     (Self : Variables_Holder; Id : Integer)
       return Variables_References_Trees.Cursor;
    --  Find variable with the given Id and return cursor to it.
    --  Returns No_Element if Id is not found.
 
    procedure On_Variables_Response
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters);
+     (Self : in out Variables_Holder; Params : in out Request_Parameters);
    --  Callback when the `variables` response has arrived.
 
    procedure On_Expression_Response
@@ -182,14 +175,12 @@ private
    --  Callback when the variable's value is set
 
    procedure On_Variable_Not_Found
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters);
+     (Self : in out Variables_Holder; Params : in out Request_Parameters);
    --  Called when the requested variable is not found.
    --  Informs View or Python side.
 
    procedure On_Variable_Request_Rejected
-     (Self   : in out Variables_Holder;
-      Params : in out Request_Parameters);
+     (Self : in out Variables_Holder; Params : in out Request_Parameters);
    --  Called when the variable request was rejected.
    --  Informs Python side.
 

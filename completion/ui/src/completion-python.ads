@@ -25,10 +25,10 @@ package Completion.Python is
 
    type Generic_Completion_Manager is new Completion_Manager with null record;
 
-   overriding function Get_Initial_Completion_List
+   overriding
+   function Get_Initial_Completion_List
      (Manager : access Generic_Completion_Manager;
-      Context : Completion_Context)
-      return Completion_List;
+      Context : Completion_Context) return Completion_List;
    --  See inherited documentation
 
    --------------
@@ -41,16 +41,16 @@ package Completion.Python is
    type Completion_Python_Access is access all Completion_Python'Class;
 
    function Create
-     (Class : Class_Instance;
-      Lang_Name : String) return Completion_Python_Access;
+     (Class : Class_Instance; Lang_Name : String)
+      return Completion_Python_Access;
    --  Initialize a resolver for the given class
 
    overriding
    procedure Get_Completion_Root
-     (Resolver   : access Completion_Python;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List);
+     (Resolver : access Completion_Python;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List);
    --  See inherited documentation
 
    overriding
@@ -77,32 +77,40 @@ private
       Action_Name   : Unbounded_String;
    end record;
 
-   overriding function Get_Documentation
-     (Proposal : Simple_Python_Completion_Proposal)
-      return String;
-
-   overriding function Get_Custom_Icon_Name
+   overriding
+   function Get_Documentation
      (Proposal : Simple_Python_Completion_Proposal) return String;
 
-   overriding function Get_Label
+   overriding
+   function Get_Custom_Icon_Name
+     (Proposal : Simple_Python_Completion_Proposal) return String;
+
+   overriding
+   function Get_Label
      (Proposal : Simple_Python_Completion_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String;
 
-   overriding function To_Completion_Id
-     (Proposal : Simple_Python_Completion_Proposal)
-      return Completion_Id;
+   overriding
+   function To_Completion_Id
+     (Proposal : Simple_Python_Completion_Proposal) return Completion_Id;
 
-   overriding function Deep_Copy
+   overriding
+   function Deep_Copy
      (Proposal : Simple_Python_Completion_Proposal)
       return Completion_Proposal'Class;
 
-   overriding procedure On_Selected
+   overriding
+   procedure On_Selected
      (Proposal : Simple_Python_Completion_Proposal;
       Kernel   : not null Kernel_Handle);
 
    No_Proposal : constant Simple_Python_Completion_Proposal :=
-     (null, null, Cat_Unknown,
-      Null_Unbounded_String, Null_Unbounded_String,
-      Null_Unbounded_String, Null_Unbounded_String);
+     (null,
+      null,
+      Cat_Unknown,
+      Null_Unbounded_String,
+      Null_Unbounded_String,
+      Null_Unbounded_String,
+      Null_Unbounded_String);
 
 end Completion.Python;

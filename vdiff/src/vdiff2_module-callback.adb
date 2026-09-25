@@ -46,28 +46,29 @@ package body Vdiff2_Module.Callback is
 
    function Get_Ref_Filename (File : Virtual_File) return Virtual_File is
    begin
-      return Create_From_Dir
-        (Get_Tmp_Directory, Ref_Prefix & Base_Name (File));
+      return
+        Create_From_Dir (Get_Tmp_Directory, Ref_Prefix & Base_Name (File));
    end Get_Ref_Filename;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
-      (Self : access Compare_Three_Files;
-       Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Compare_Three_Files; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       File1  : constant Virtual_File :=
-                 Select_File
-                   (Title             => -"Select Common Ancestor",
-                    Parent            => Get_Current_Window (Kernel),
-                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                    Kind              => Open_File,
-                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                    Pattern_Name      => -"All files;Ada files;C/C++ files",
-                    History           => Get_History (Kernel));
+        Select_File
+          (Title             => -"Select Common Ancestor",
+           Parent            => Get_Current_Window (Kernel),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
+           History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Button, Self);
    begin
@@ -77,15 +78,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-                   Select_File
-                     (Title             => -"Select First Changes",
-                      Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
-                      Parent            => Get_Current_Window (Kernel),
-                      Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                      Kind              => Open_File,
-                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                      Pattern_Name      => -"All files;Ada files;C/C++ files",
-                      History           => Get_History (Kernel));
+           Select_File
+             (Title             => -"Select First Changes",
+              Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
          Dummy : Command_Return_Type;
          pragma Unreferenced (Dummy);
 
@@ -116,21 +117,22 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding function Execute
-      (Self : access Compare_Two_Files;
-       Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Self : access Compare_Two_Files; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       File1  : constant Virtual_File :=
-                 Select_File
-                   (Title             => -"Select First File",
-                    Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
-                    Parent            => Get_Current_Window (Kernel),
-                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                    Kind              => Open_File,
-                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                    Pattern_Name      => -"All files;Ada files;C/C++ files",
-                    History           => Get_History (Kernel));
+        Select_File
+          (Title             => -"Select First File",
+           Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
+           Parent            => Get_Current_Window (Kernel),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
+           History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Self, Button);
 
@@ -141,15 +143,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-                   Select_File
-                     (Title             => -"Select Second File",
-                      Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
-                      Parent            => Get_Current_Window (Kernel),
-                      Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                      Kind              => Open_File,
-                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                      Pattern_Name      => -"All files;Ada files;C/C++ files",
-                      History           => Get_History (Kernel));
+           Select_File
+             (Title             => -"Select Second File",
+              Base_Directory    => GNATCOLL.VFS.Get_Current_Dir,
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
 
       begin
          if File2 = GNATCOLL.VFS.No_File then
@@ -169,15 +171,15 @@ package body Vdiff2_Module.Callback is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       File1  : constant Virtual_File :=
-                 Select_File
-                   (Title             => -"Select Common Ancestor",
-                    Base_Directory    => GNATCOLL.VFS.No_File,
-                    Parent            => Get_Current_Window (Kernel),
-                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                    Kind              => Open_File,
-                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                    Pattern_Name      => -"All files;Ada files;C/C++ files",
-                    History           => Get_History (Kernel));
+        Select_File
+          (Title             => -"Select Common Ancestor",
+           Base_Directory    => GNATCOLL.VFS.No_File,
+           Parent            => Get_Current_Window (Kernel),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
+           History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -188,15 +190,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-                   Select_File
-                     (Title             => -"Select First Changes",
-                      Base_Directory    => GNATCOLL.VFS.No_File,
-                      Parent            => Get_Current_Window (Kernel),
-                      Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                      Kind              => Open_File,
-                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                      Pattern_Name      => -"All files;Ada files;C/C++ files",
-                      History           => Get_History (Kernel));
+           Select_File
+             (Title             => -"Select First Changes",
+              Base_Directory    => GNATCOLL.VFS.No_File,
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
 
       begin
          if File2 = GNATCOLL.VFS.No_File then
@@ -253,14 +255,14 @@ package body Vdiff2_Module.Callback is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       File1  : constant Virtual_File :=
-                 Select_File
-                   (Title             => -"Select First File",
-                    Parent            => Get_Current_Window (Kernel),
-                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                    Kind              => Open_File,
-                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                    Pattern_Name      => -"All files;Ada files;C/C++ files",
-                    History           => Get_History (Kernel));
+        Select_File
+          (Title             => -"Select First File",
+           Parent            => Get_Current_Window (Kernel),
+           Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+           Kind              => Open_File,
+           File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+           Pattern_Name      => -"All files;Ada files;C/C++ files",
+           History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -271,15 +273,15 @@ package body Vdiff2_Module.Callback is
 
       declare
          File2 : constant Virtual_File :=
-                   Select_File
-                     (Title             => -"Select Second File",
-                      Base_Directory    => GNATCOLL.VFS.No_File,
-                      Parent            => Get_Current_Window (Kernel),
-                      Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                      Kind              => Open_File,
-                      File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                      Pattern_Name      => -"All files;Ada files;C/C++ files",
-                      History           => Get_History (Kernel));
+           Select_File
+             (Title             => -"Select Second File",
+              Base_Directory    => GNATCOLL.VFS.No_File,
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
 
       begin
          if File2 = GNATCOLL.VFS.No_File then
@@ -312,17 +314,18 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self   : On_Diff;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   function Execute
+     (Self                                     : On_Diff;
+      Kernel                                   :
+        not null access Kernel_Handle_Record'Class;
       Vcs_File, Orig_File, New_File, Diff_File : Virtual_File;
-      Title  : String)
-      return Boolean
+      Title                                    : String) return Boolean
    is
       pragma Unreferenced (Self);
       Success : Boolean;
 
-      Res   : Diff_Head_Access;
+      Res : Diff_Head_Access;
 
    begin
       if Orig_File = GNATCOLL.VFS.No_File then
@@ -333,8 +336,9 @@ package body Vdiff2_Module.Callback is
          declare
             Ref_F : Virtual_File renames Get_Ref_Filename (New_File);
          begin
-            Res := Visual_Patch
-              (Diff_Mode.Get_Pref, Ref_F, New_File, Diff_File, True);
+            Res :=
+              Visual_Patch
+                (Diff_Mode.Get_Pref, Ref_F, New_File, Diff_File, True);
 
             if Res /= null then
                Setup_Ref (Kernel, New_File, Ref_F, Vcs_File, Title);
@@ -348,8 +352,9 @@ package body Vdiff2_Module.Callback is
          declare
             Ref_F : Virtual_File renames Get_Ref_Filename (Orig_File);
          begin
-            Res := Visual_Patch
-              (Diff_Mode.Get_Pref, Orig_File, Ref_F, Diff_File, False);
+            Res :=
+              Visual_Patch
+                (Diff_Mode.Get_Pref, Orig_File, Ref_F, Diff_File, False);
 
             if Res /= null then
                Setup_Ref (Kernel, No_File, Ref_F, Vcs_File, Title);
@@ -359,8 +364,8 @@ package body Vdiff2_Module.Callback is
          end;
 
       else
-         Res := Visual_Patch
-           (Diff_Mode.Get_Pref, Orig_File, New_File, Diff_File);
+         Res :=
+           Visual_Patch (Diff_Mode.Get_Pref, Orig_File, New_File, Diff_File);
          if Res /= null then
             Setup_Ref (Kernel, New_File, Orig_File, Vcs_File, Title);
          end if;
@@ -373,10 +378,11 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self    : On_File_Closed;
-      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      File    : Virtual_File)
+   overriding
+   procedure Execute
+     (Self   : On_File_Closed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      File   : Virtual_File)
    is
       pragma Unreferenced (Self);
       use Diff_Head_List.Std_Vectors;
@@ -409,12 +415,13 @@ package body Vdiff2_Module.Callback is
               and then Diff.Files (J) /= File
               and then
                 (not Is_Regular_File (Diff.Files (J))
-                 or else Starts_With
-                   (Diff.Files (J).Display_Base_Name, String (Ref_Prefix)))
+                 or else
+                   Starts_With
+                     (Diff.Files (J).Display_Base_Name, String (Ref_Prefix)))
             then
                declare
                   Child : constant MDI_Child :=
-                            Get_File_Editor (Kernel, Diff.Files (J));
+                    Get_File_Editor (Kernel, Diff.Files (J));
                begin
                   if Child /= null then
                      Close_Child (Child);
@@ -431,7 +438,8 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -451,7 +459,8 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Change_Ref_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -471,9 +480,9 @@ package body Vdiff2_Module.Callback is
 
       Selected_File := Get_Ref_Filename (File_Information (Context.Context));
 
-      Node := Get_Diff_Node
-        (Selected_File,
-         VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      Node :=
+        Get_Diff_Node
+          (Selected_File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       Diff := Diff_Head_List.Std_Vectors.Element (Node);
       Ref_File := Diff.Ref_File;
 
@@ -496,7 +505,8 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Hide_Difference_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -514,9 +524,9 @@ package body Vdiff2_Module.Callback is
 
       Selected_File := Get_Ref_Filename (File_Information (Context.Context));
 
-      Node := Get_Diff_Node
-        (Selected_File,
-         VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      Node :=
+        Get_Diff_Node
+          (Selected_File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       Unchecked_Execute (Cmd, Diff_Head_List.Std_Vectors.Element (Node));
       Unref (Command_Access (Cmd));
@@ -527,14 +537,16 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Remove_Difference_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
       use Diff_Head_List.Std_Vectors;
 
-      Kernel : constant Kernel_Handle := Get_Kernel (Vdiff_Module_ID.all);
+      Kernel        : constant Kernel_Handle :=
+        Get_Kernel (Vdiff_Module_ID.all);
       Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
@@ -548,9 +560,9 @@ package body Vdiff2_Module.Callback is
 
       Selected_File := Get_Ref_Filename (File_Information (Context.Context));
 
-      Node := Get_Diff_Node
-        (Selected_File,
-         VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      Node :=
+        Get_Diff_Node
+          (Selected_File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       Unchecked_Execute (Cmd, Element (Node));
       --  Remove all virtual buffers created during diff operations
@@ -583,7 +595,8 @@ package body Vdiff2_Module.Callback is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Recompute_Diff_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -605,9 +618,9 @@ package body Vdiff2_Module.Callback is
 
       Selected_File := File_Information (Context.Context);
 
-      Node := Get_Diff_Node
-        (Selected_File,
-         VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
+      Node :=
+        Get_Diff_Node
+          (Selected_File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       for J in Element (Node).Files'Range loop
          if Element (Node).Files (J) /= GNATCOLL.VFS.No_File then
@@ -620,12 +633,10 @@ package body Vdiff2_Module.Callback is
 
                declare
                   Editor : constant Editor_Buffer'Class :=
-                    Get_Buffer_Factory
-                      (Get_Kernel (Vdiff_Module_ID.all)).Get
-                    (File, Open_View => False);
+                    Get_Buffer_Factory (Get_Kernel (Vdiff_Module_ID.all)).Get
+                      (File, Open_View => False);
                begin
-                  Editor.Save (Interactive => False,
-                               File        => File);
+                  Editor.Save (Interactive => False, File => File);
                end;
             end;
          end if;

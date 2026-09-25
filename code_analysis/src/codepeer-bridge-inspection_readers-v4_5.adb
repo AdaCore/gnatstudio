@@ -36,12 +36,13 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
       Messages        : access CodePeer.Message_Maps.Map)
       return not null Inspection_Reader_Access is
    begin
-      return Result : constant not null Inspection_Reader_Access :=
-        new Inspection_Reader_V4_5 (Kernel)
+      return
+         Result : constant not null Inspection_Reader_Access :=
+           new Inspection_Reader_V4_5 (Kernel)
       do
          declare
-            Self : Inspection_Reader_V4_5'Class
-              renames Inspection_Reader_V4_5'Class (Result.all);
+            Self : Inspection_Reader_V4_5'Class renames
+              Inspection_Reader_V4_5'Class (Result.all);
 
          begin
             Base.Initialize (Self, Base_Directory, Root_Inspection, Messages);
@@ -64,12 +65,10 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
         Self.Annotation_Category
           (Natural'Value (Attrs.Get_Value ("category")));
 
-      if not Self.Subprogram_Data.Annotations.Contains
-        (Annotation_Category)
+      if not Self.Subprogram_Data.Annotations.Contains (Annotation_Category)
       then
          Self.Subprogram_Data.Annotations.Insert
-           (Annotation_Category,
-            new CodePeer.Annotation_Vectors.Vector);
+           (Annotation_Category, new CodePeer.Annotation_Vectors.Vector);
       end if;
 
       Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
@@ -82,7 +81,8 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self  : in out Inspection_Reader_V4_5;
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class) is
@@ -99,7 +99,8 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
    -- Start_Message --
    -------------------
 
-   overriding procedure Start_Message
+   overriding
+   procedure Start_Message
      (Self  : in out Inspection_Reader_V4_5;
       Attrs : Sax.Attributes.Attributes'Class) is
    begin
@@ -115,17 +116,15 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
    -- Start_Subprogram --
    ----------------------
 
-   overriding procedure Start_Subprogram
+   overriding
+   procedure Start_Subprogram
      (Self  : in out Inspection_Reader_V4_5;
       Attrs : Sax.Attributes.Attributes'Class) is
    begin
       Self.Subprogram_Node :=
-        Code_Analysis.Get_Or_Create
-          (Self.File_Node, Attrs.Get_Value ("name"));
-      Self.Subprogram_Node.Name :=
-        new String'(Attrs.Get_Value ("name"));
-      Self.Subprogram_Node.Line :=
-        Positive'Value (Attrs.Get_Value ("line"));
+        Code_Analysis.Get_Or_Create (Self.File_Node, Attrs.Get_Value ("name"));
+      Self.Subprogram_Node.Name := new String'(Attrs.Get_Value ("name"));
+      Self.Subprogram_Node.Line := Positive'Value (Attrs.Get_Value ("line"));
       Self.Subprogram_Node.Column :=
         Positive'Value (Attrs.Get_Value ("column"));
       Self.Subprogram_Node.Analysis_Data.CodePeer_Data :=
@@ -141,9 +140,9 @@ package body CodePeer.Bridge.Inspection_Readers.V4_5 is
    -- Subprogram_Node --
    ---------------------
 
-   overriding function Subprogram_Node
-     (Self : Inspection_Reader_V4_5)
-      return Code_Analysis.Subprogram_Access is
+   overriding
+   function Subprogram_Node
+     (Self : Inspection_Reader_V4_5) return Code_Analysis.Subprogram_Access is
    begin
       return Self.Subprogram_Node;
    end Subprogram_Node;

@@ -25,9 +25,9 @@
 
 with GNAT.Strings;
 
-with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with Gexpect;         use Gexpect;
+with Gexpect; use Gexpect;
 
 package GNAT.Expect.TTY.Remote is
 
@@ -41,7 +41,8 @@ package GNAT.Expect.TTY.Remote is
    type Remote_Process_Descriptor_Access is
      access all Remote_Process_Descriptor'Class;
 
-   overriding procedure Add_Filter
+   overriding
+   procedure Add_Filter
      (Descriptor : in out Remote_Process_Descriptor;
       Filter     : Filter_Function;
       Filter_On  : Filter_Type := Output;
@@ -52,24 +53,25 @@ package GNAT.Expect.TTY.Remote is
    --  in which case it will be run after existing filters. User_Data
    --  is passed as is to the filter procedure.
 
-   overriding procedure Remove_Filter
-     (Descriptor : in out Remote_Process_Descriptor;
-      Filter     : Filter_Function);
+   overriding
+   procedure Remove_Filter
+     (Descriptor : in out Remote_Process_Descriptor; Filter : Filter_Function);
    --  Remove a filter from the list of filters (whatever the type of the
    --  filter).
 
-   overriding procedure Lock_Filters
-     (Descriptor : in out Remote_Process_Descriptor);
+   overriding
+   procedure Lock_Filters (Descriptor : in out Remote_Process_Descriptor);
    --  Temporarily disables all output and input filters. They will be
    --  reactivated only when Unlock_Filters has been called as many times as
    --  Lock_Filters;
 
-   overriding procedure Unlock_Filters
-     (Descriptor : in out Remote_Process_Descriptor);
+   overriding
+   procedure Unlock_Filters (Descriptor : in out Remote_Process_Descriptor);
    --  Unlocks the filters. They are reactivated only if Unlock_Filters
    --  has been called as many times as Lock_Filters.
 
-   overriding procedure Send
+   overriding
+   procedure Send
      (Descriptor   : in out Remote_Process_Descriptor;
       Str          : String;
       Add_LF       : Boolean := True;
@@ -106,7 +108,7 @@ package GNAT.Expect.TTY.Remote is
      (Host                : String;
       Args                : GNAT.OS_Lib.Argument_List;
       Status              : out Boolean;
-      Execution_Directory : Filesystem_String  := "");
+      Execution_Directory : Filesystem_String := "");
    --  Spawns synchronously a remote program and returns its status
    --  Host : Host on which the program is launched
    --  Args : The program to launch
@@ -118,7 +120,7 @@ package GNAT.Expect.TTY.Remote is
       Args                : GNAT.OS_Lib.Argument_List;
       Out_Value           : out GNAT.Strings.String_Access;
       Status              : out Boolean;
-      Execution_Directory : Filesystem_String  := "");
+      Execution_Directory : Filesystem_String := "");
    --  Same as above, except that the program output is also returned
 
    function Is_Ready_Session (Nickname : String) return Boolean;
@@ -133,7 +135,8 @@ package GNAT.Expect.TTY.Remote is
    --  timeout), that can really lead to infinite wait. So this value is
    --  automatically replaced with a timeout of 1s.
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -141,7 +144,8 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
@@ -149,7 +153,8 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : String;
@@ -158,7 +163,8 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
@@ -167,7 +173,8 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -175,7 +182,8 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;
@@ -183,7 +191,8 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Regexp_Array;
@@ -192,7 +201,8 @@ package GNAT.Expect.TTY.Remote is
       Full_Buffer : Boolean := False);
    --  See parent for description
 
-   overriding procedure Expect
+   overriding
+   procedure Expect
      (Descriptor  : in out Remote_Process_Descriptor;
       Result      : out Expect_Match;
       Regexps     : Compiled_Regexp_Array;
@@ -205,15 +215,15 @@ private
 
    --  The following methods are inherited. See parent for explanations.
 
-   overriding procedure Close
-     (Descriptor : in out Remote_Process_Descriptor;
-      Status     : out Integer);
+   overriding
+   procedure Close
+     (Descriptor : in out Remote_Process_Descriptor; Status : out Integer);
 
-   overriding procedure Close
-     (Descriptor : in out Remote_Process_Descriptor);
+   overriding
+   procedure Close (Descriptor : in out Remote_Process_Descriptor);
 
-   overriding procedure Interrupt
-     (Descriptor : in out Remote_Process_Descriptor);
+   overriding
+   procedure Interrupt (Descriptor : in out Remote_Process_Descriptor);
 
    type Shell_State_Type is (OFF, BUSY, READY);
    --  The state of a session.
@@ -229,11 +239,10 @@ private
    --  This record represents a machine's session. A session is an opened
    --  connection that can be reused to launch successive remote programs.
 
-   type Session_Array is
-     array (Natural range <>) of Session;
+   type Session_Array is array (Natural range <>) of Session;
 
-   type TTY_Data_Record (Max_Nb_Connections : Natural)
-     is new Machine_User_Data_Type
+   type TTY_Data_Record (Max_Nb_Connections : Natural) is
+     new Machine_User_Data_Type
    with record
       Sessions          : Session_Array (1 .. Max_Nb_Connections);
       Echoing           : Boolean := False;
@@ -243,7 +252,7 @@ private
    type TTY_Data_Access is access all TTY_Data_Record;
 
    type Remote_Process_Descriptor is new TTY_Process_Descriptor with record
-      Busy                 : Boolean                   := False;
+      Busy                 : Boolean := False;
       --  Tells if the remote shell is busy processing a command
       Current_Echo_Skipped : Boolean := False;
       --  Tells if the command we've sent has been echoed or not.

@@ -17,11 +17,11 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Glib;               use Glib;
-with Glib.Main;          use Glib.Main;
+with Glib;      use Glib;
+with Glib.Main; use Glib.Main;
 
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Traces;  use GNATCOLL.Traces;
 
 with Custom_Module;      use Custom_Module;
 with GPS.Intl;           use GPS.Intl;
@@ -31,10 +31,10 @@ with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 package body Custom_Timeout is
    Me : constant Trace_Handle := Create ("GPS.CUSTOM.TIMEOUT");
 
-   Timeout_Cst         : aliased constant String := "timeout";
-   Action_Cst          : aliased constant String := "action";
-   Constructor_Args    : constant Cst_Argument_List :=
-                           (Timeout_Cst'Access, Action_Cst'Access);
+   Timeout_Cst      : aliased constant String := "timeout";
+   Action_Cst       : aliased constant String := "action";
+   Constructor_Args : constant Cst_Argument_List :=
+     (Timeout_Cst'Access, Action_Cst'Access);
 
    Timeout_Class_Name : constant String := "Timeout";
 
@@ -45,11 +45,11 @@ package body Custom_Timeout is
    end record;
 
    type Custom_Timeout_Access is access Custom_Timeout;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Custom_Timeout, Custom_Timeout_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Custom_Timeout, Custom_Timeout_Access);
 
-   package Action_Timeout is new Glib.Main.Generic_Sources
-     (Custom_Timeout_Access);
+   package Action_Timeout is new
+     Glib.Main.Generic_Sources (Custom_Timeout_Access);
 
    type Timeout_Property is new Instance_Property_Record with record
       Timeout : Custom_Timeout_Access;
@@ -61,7 +61,7 @@ package body Custom_Timeout is
    -----------------------
 
    procedure Custom_Timeout_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handle the custom timeout commands
 
    function Callback (D : Custom_Timeout_Access) return Boolean;
@@ -92,12 +92,14 @@ package body Custom_Timeout is
      (Data : Callback_Data'Class; N : Positive) return Custom_Timeout_Access
    is
       Timeout_Class : constant Class_Type :=
-                        New_Class (Get_Kernel (Data), Timeout_Class_Name);
+        New_Class (Get_Kernel (Data), Timeout_Class_Name);
       Inst          : constant Class_Instance :=
-                        Nth_Arg (Data, N, Timeout_Class);
+        Nth_Arg (Data, N, Timeout_Class);
    begin
-      return Timeout_Property_Access
-        (Instance_Property'(Get_Data (Inst, Timeout_Class_Name))).Timeout;
+      return
+        Timeout_Property_Access
+          (Instance_Property'(Get_Data (Inst, Timeout_Class_Name)))
+          .Timeout;
    end Get_Data;
 
    --------------
@@ -106,7 +108,7 @@ package body Custom_Timeout is
 
    function Callback (D : Custom_Timeout_Access) return Boolean is
       C   : Callback_Data'Class :=
-              Create (Get_Script (D.Action.all), Arguments_Count => 1);
+        Create (Get_Script (D.Action.all), Arguments_Count => 1);
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
@@ -128,9 +130,9 @@ package body Custom_Timeout is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel        : constant Kernel_Handle :=
-                        Get_Kernel (Custom_Module_ID.all);
+        Get_Kernel (Custom_Module_ID.all);
       Timeout_Class : constant Class_Type :=
-                        New_Class (Kernel, Timeout_Class_Name);
+        New_Class (Kernel, Timeout_Class_Name);
       D             : Custom_Timeout_Access;
    begin
       if Command = Constructor_Method then
@@ -138,7 +140,7 @@ package body Custom_Timeout is
 
          declare
             Inst    : constant Class_Instance :=
-                        Nth_Arg (Data, 1, Timeout_Class);
+              Nth_Arg (Data, 1, Timeout_Class);
             Timeout : constant Integer := Nth_Arg (Data, 2);
             Act     : constant Subprogram_Type := Nth_Arg (Data, 3);
          begin
@@ -157,8 +159,8 @@ package body Custom_Timeout is
             D := new Custom_Timeout;
             D.Instance := Inst;
             D.Action := Act;
-            D.Handler := Action_Timeout.Timeout_Add
-              (Guint (Timeout), Callback'Access, D);
+            D.Handler :=
+              Action_Timeout.Timeout_Add (Guint (Timeout), Callback'Access, D);
 
             Set_Data
               (Inst, Timeout_Class_Name, Timeout_Property'(Timeout => D));
@@ -179,15 +181,17 @@ package body Custom_Timeout is
       Timeout_Class : constant Class_Type := New_Class (Kernel, "Timeout");
    begin
       Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Timeout_Class,
-         Handler       => Custom_Timeout_Handler'Access);
+        (Kernel,
+         Constructor_Method,
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class        => Timeout_Class,
+         Handler      => Custom_Timeout_Handler'Access);
       Register_Command
-        (Kernel, "remove",
-         Class         => Timeout_Class,
-         Handler       => Custom_Timeout_Handler'Access);
+        (Kernel,
+         "remove",
+         Class   => Timeout_Class,
+         Handler => Custom_Timeout_Handler'Access);
    end Register_Commands;
 
 end Custom_Timeout;

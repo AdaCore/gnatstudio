@@ -21,59 +21,65 @@ with GNAT.Expect;
 
 package Language.Debugger.Lldb.C is
 
-   type LLDB_C_Language is new
-     Language.Debugger.Language_Debugger with private;
+   type LLDB_C_Language is
+     new Language.Debugger.Language_Debugger with private;
 
    --------------------
    -- Simple Parsing --
    --------------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access LLDB_C_Language; Str : String) return Boolean;
 
-   overriding function Keywords
-     (Lang : access LLDB_C_Language)
-      return GNAT.Expect.Pattern_Matcher_Access;
+   overriding
+   function Keywords
+     (Lang : access LLDB_C_Language) return GNAT.Expect.Pattern_Matcher_Access;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access LLDB_C_Language) return GNAT.Strings.String_List;
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access LLDB_C_Language) return Language.Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access LLDB_C_Language) return Language.Explorer_Categories;
 
-   overriding function Is_System_File
+   overriding
+   function Is_System_File
      (Lang : access LLDB_C_Language; File_Name : String) return Boolean;
 
    ------------------------
    -- Naming conventions --
    ------------------------
 
-   overriding function Dereference_Name
-     (Lang : access LLDB_C_Language;
-      Name : String) return String;
+   overriding
+   function Dereference_Name
+     (Lang : access LLDB_C_Language; Name : String) return String;
 
-   overriding function Array_Item_Name
-     (Lang  : access LLDB_C_Language;
-      Name  : String;
-      Index : String) return String;
+   overriding
+   function Array_Item_Name
+     (Lang : access LLDB_C_Language; Name : String; Index : String)
+      return String;
 
-   overriding function Record_Field_Name
-     (Lang  : access LLDB_C_Language;
-      Name  : String;
-      Field : String) return String;
+   overriding
+   function Record_Field_Name
+     (Lang : access LLDB_C_Language; Name : String; Field : String)
+      return String;
 
    -------------
    -- Parsing --
    -------------
 
-   overriding procedure Parse_Type
+   overriding
+   procedure Parse_Type
      (Lang     : access LLDB_C_Language;
       Type_Str : String;
       Entity   : String;
@@ -87,7 +93,8 @@ package Language.Debugger.Lldb.C is
       Index    : in out Natural;
       Result   : out GVD.Variables.Types.GVD_Type_Holder);
 
-   overriding procedure Parse_Value
+   overriding
+   procedure Parse_Value
      (Lang       : access LLDB_C_Language;
       Entity     : String;
       Type_Str   : String;
@@ -95,7 +102,8 @@ package Language.Debugger.Lldb.C is
       Result     : in out GVD.Variables.Types.GVD_Type_Holder;
       Repeat_Num : out Positive);
 
-   overriding procedure Parse_Array_Type
+   overriding
+   procedure Parse_Array_Type
      (Lang         : access LLDB_C_Language;
       Type_Str     : String;
       Entity       : String;
@@ -111,37 +119,40 @@ package Language.Debugger.Lldb.C is
       Start_Of_Dim : Natural;
       Result       : out GVD.Variables.Types.GVD_Type_Holder);
 
-   overriding procedure Parse_Record_Type
-     (Lang      : access LLDB_C_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder;
-      End_On    : String);
+   overriding
+   procedure Parse_Record_Type
+     (Lang     : access LLDB_C_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
+      End_On   : String);
    --  End_On is ignored in the C implementation.
 
    procedure C_Parse_Record_Type
-     (Lang      : access Language.Debugger.Language_Debugger'Class;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out GVD.Variables.Types.GVD_Type_Holder;
-      End_On    : String);
+     (Lang     : access Language.Debugger.Language_Debugger'Class;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Is_Union : Boolean;
+      Result   : out GVD.Variables.Types.GVD_Type_Holder;
+      End_On   : String);
 
-   overriding procedure Parse_Array_Value
+   overriding
+   procedure Parse_Array_Value
      (Lang     : access LLDB_C_Language;
       Type_Str : String;
       Index    : in out Natural;
       Result   : in out GVD.Variables.Types.GVD_Type_Holder);
 
-   overriding function Set_Variable
-     (Lang     : access LLDB_C_Language;
-      Var_Name : String;
-      Value    : String) return String;
+   overriding
+   function Set_Variable
+     (Lang : access LLDB_C_Language; Var_Name : String; Value : String)
+      return String;
 
-   overriding function Get_Language_Debugger_Context
+   overriding
+   function Get_Language_Debugger_Context
      (Lang : access LLDB_C_Language)
       return Language.Debugger.Language_Debugger_Context;
 
@@ -176,14 +187,16 @@ package Language.Debugger.Lldb.C is
 
 private
 
-   type LLDB_C_Language is new
-     Language.Debugger.Language_Debugger with null record;
+   type LLDB_C_Language is new Language.Debugger.Language_Debugger
+   with null record;
 
-   overriding function Get_Name (Lang : access LLDB_C_Language) return String;
+   overriding
+   function Get_Name (Lang : access LLDB_C_Language) return String;
    --  See inherited documentation
 
-   overriding function Is_Interpolation_Char
-     (Lang : access LLDB_C_Language; Char : Wide_Wide_Character)
-      return Boolean is (False);
+   overriding
+   function Is_Interpolation_Char
+     (Lang : access LLDB_C_Language; Char : Wide_Wide_Character) return Boolean
+   is (False);
 
 end Language.Debugger.Lldb.C;

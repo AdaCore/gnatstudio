@@ -45,9 +45,8 @@ package body User_Interface_Tools is
    -- Query_User --
    ----------------
 
-   function Query_User
-     (Prompt        : String;
-      Password_Mode : Boolean) return String is
+   function Query_User (Prompt : String; Password_Mode : Boolean) return String
+   is
    begin
       return Query_User (Get_User_Interface, Prompt, Password_Mode);
    end Query_User;

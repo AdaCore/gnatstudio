@@ -17,35 +17,36 @@
 
 with Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with VSS.Strings.Conversions;
 
-with Basic_Types;                     use Basic_Types;
-with Commands.Interactive;            use Commands, Commands.Interactive;
-with Glib;                            use Glib;
-with GNATCOLL.Projects;               use GNATCOLL.Projects;
-with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
-with GNATCOLL.Xref;                   use GNATCOLL.Xref;
+with Basic_Types;       use Basic_Types;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Glib;              use Glib;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.Xref;     use GNATCOLL.Xref;
 
-with GPS.Editors;                     use GPS.Editors;
-with GPS.Intl;                        use GPS.Intl;
-with GPS.Kernel.Actions;              use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
+with GPS.Editors;            use GPS.Editors;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
 with GPS.Kernel.Messages.Simple;
 use GPS.Kernel.Messages, GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;              use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;           use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;              use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
-with GPS.Kernel;                      use GPS.Kernel;
-with Gtk.Box;                         use Gtk.Box;
-with Gtk.Dialog;                      use Gtk.Dialog;
-with Gtk.GEntry;                      use Gtk.GEntry;
-with Gtk.Label;                       use Gtk.Label;
-with Gtk.Widget;                      use Gtk.Widget;
-with Gtkada.Stock_Labels;             use Gtkada.Stock_Labels;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GPS.Kernel;             use GPS.Kernel;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Dialog;             use Gtk.Dialog;
+with Gtk.GEntry;             use Gtk.GEntry;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Widget;             use Gtk.Widget;
+with Gtkada.Stock_Labels;    use Gtkada.Stock_Labels;
 
 with Language;                        use Language;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
@@ -65,7 +66,8 @@ package body Refactoring.Subprograms is
 
    type Extract_Method_Command is new Interactive_Command with null record;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Extract_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Extract Method" menu
@@ -78,14 +80,14 @@ package body Refactoring.Subprograms is
    --  An entity found in the code to be extracted, and various information
    --  about its usage
 
-   package Extracted_Entity_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Extracted_Entity);
+   package Extracted_Entity_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Extracted_Entity);
 
    type Extract_Context is record
-      Code     : Range_Of_Code;
+      Code : Range_Of_Code;
       --  Which code do we want to extract ?
 
-      Source   : Virtual_File;
+      Source : Virtual_File;
       --  The file in which the extracted code is at the start
 
       Entities : Extracted_Entity_Lists.List;
@@ -98,15 +100,15 @@ package body Refactoring.Subprograms is
    --  Free the memory used by the context
 
    procedure Compute_Context_Entities
-     (Context : in out Extract_Context;
-      Db      : General_Xref_Database);
+     (Context : in out Extract_Context; Db : General_Xref_Database);
    --  Compute all entities referenced in the context.
    --  Returns Invalid_Context if something prevents the refactoring (an error
    --  message has already been displayed in that case).
 
    type Separate_Method_Command is new Interactive_Command with null record;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Separate_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Called for "Separate Method" menu
@@ -120,8 +122,8 @@ package body Refactoring.Subprograms is
       Is_Tagged : Boolean;
       PType     : Parameter_Kind;
    end record;
-   package Parameter_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Parameter_Description);
+   package Parameter_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Parameter_Description);
 
    type Parameters is tagged record
       List           : Parameter_Lists.List;
@@ -136,15 +138,14 @@ package body Refactoring.Subprograms is
    --  method
 
    function Generate
-     (Self : Parameters'Class;
-      Context : Extract_Context) return Unbounded_String;
+     (Self : Parameters'Class; Context : Extract_Context)
+      return Unbounded_String;
    --  Generate the list of parameters (including surrounding parenthesis) for
    --  the extracted subprogram
 
    function Generate_Method_Call
-     (Self : Parameters'Class;
-      Name : String;
-      Db   : General_Xref_Database) return Unbounded_String;
+     (Self : Parameters'Class; Name : String; Db : General_Xref_Database)
+      return Unbounded_String;
    --  Generate the code to call the new method
 
    procedure Sort (Self : in out Parameters'Class);
@@ -155,9 +156,9 @@ package body Refactoring.Subprograms is
    ----------
 
    procedure Compute_Params_And_Vars
-     (Context             : Extract_Context;
-      Params              : out Parameters'Class;
-      Local_Vars          : out Extracted_Entity_Lists.List'Class);
+     (Context    : Extract_Context;
+      Params     : out Parameters'Class;
+      Local_Vars : out Extracted_Entity_Lists.List'Class);
    --  From the list of entities in the context, compute those that should
    --  become parameters and those that should be local variables
 
@@ -174,8 +175,7 @@ package body Refactoring.Subprograms is
    --  Generate the code of the new method
 
    procedure Generate_Local_Vars
-     (Local_Vars : Extracted_Entity_Lists.List;
-      Result     : out Unbounded_String);
+     (Local_Vars : Extracted_Entity_Lists.List; Result : out Unbounded_String);
    --  Generate the local variables declarations
 
    function Extract_Method
@@ -240,7 +240,7 @@ package body Refactoring.Subprograms is
       Skip_Blanks (Code, Code_Start);
 
       Comment_Start := Code_Start;
-      Comment_End   := Comment_Start - 1;
+      Comment_End := Comment_Start - 1;
 
       while Code_Start < Code'Last
         and then Code (Code_Start .. Code_Start + 1) = "--"
@@ -286,10 +286,11 @@ package body Refactoring.Subprograms is
             Dispatchs.Append (E);
          else
             case E.PType is
-            when Out_Parameter | In_Out_Parameter =>
-               Outs.Append (E);
-            when In_Parameter | Access_Parameter =>
-               Normals.Append (E);
+               when Out_Parameter | In_Out_Parameter =>
+                  Outs.Append (E);
+
+               when In_Parameter | Access_Parameter  =>
+                  Normals.Append (E);
             end case;
          end if;
       end loop;
@@ -314,9 +315,9 @@ package body Refactoring.Subprograms is
    -----------------------------
 
    procedure Compute_Params_And_Vars
-     (Context             : Extract_Context;
-      Params              : out Parameters'Class;
-      Local_Vars          : out Extracted_Entity_Lists.List'Class)
+     (Context    : Extract_Context;
+      Params     : out Parameters'Class;
+      Local_Vars : out Extracted_Entity_Lists.List'Class)
    is
       type Parameter_Count is array (Parameter_Kind) of Natural;
       Count  : Parameter_Count := (others => 0);
@@ -326,8 +327,9 @@ package body Refactoring.Subprograms is
       Struct : Structured_File_Access;
       Offset : String_Index_Type;
    begin
-      Struct := Get_Or_Create
-        (Context.Code.Context.Db.Constructs, File => Context.Code.File);
+      Struct :=
+        Get_Or_Create
+          (Context.Code.Context.Db.Constructs, File => Context.Code.File);
       Offset := To_String_Index (Struct, Context.Code.From_Line, 1);
 
       Count := (others => 0);
@@ -336,15 +338,20 @@ package body Refactoring.Subprograms is
       while Has_Element (P) loop
          E := Element (P);
 
-         Flags  := E.Flags;
+         Flags := E.Flags;
 
-         Trace (Me, "Compute Params: Entity="
-                & Get_Name (E.Entity.Element)
-                & " Flags: read=" & Flags (Flag_Read)'Img
-                & " modified=" & Flags (Flag_Modified)'Img
-                & " modified_before=" & Flags (Flag_Modified_Before)'Img
-                & " ref_outside_parent="
-                & Flags (Flag_Ref_Outside_Parent)'Img);
+         Trace
+           (Me,
+            "Compute Params: Entity="
+            & Get_Name (E.Entity.Element)
+            & " Flags: read="
+            & Flags (Flag_Read)'Img
+            & " modified="
+            & Flags (Flag_Modified)'Img
+            & " modified_before="
+            & Flags (Flag_Modified_Before)'Img
+            & " ref_outside_parent="
+            & Flags (Flag_Ref_Outside_Parent)'Img);
 
          if Flags (Flag_Read) and then not Flags (Flag_Modified) then
             if Flags (Flag_Modified_Before)
@@ -352,8 +359,9 @@ package body Refactoring.Subprograms is
             then
                Params.List.Append
                  ((Parameter => E,
-                   Is_Tagged => Accepts_Primitive_Ops
-                     (Context.Code.Context, E.Entity.Element, Offset),
+                   Is_Tagged =>
+                     Accepts_Primitive_Ops
+                       (Context.Code.Context, E.Entity.Element, Offset),
                    PType     => In_Parameter));
                Count (In_Parameter) := Count (In_Parameter) + 1;
 
@@ -390,8 +398,9 @@ package body Refactoring.Subprograms is
                --  Not set before the call, but needed after
                Params.List.Append
                  ((Parameter => E,
-                   Is_Tagged => Accepts_Primitive_Ops
-                     (Context.Code.Context, E.Entity.Element, Offset),
+                   Is_Tagged =>
+                     Accepts_Primitive_Ops
+                       (Context.Code.Context, E.Entity.Element, Offset),
                    PType     => Out_Parameter));
                Count (Out_Parameter) := Count (Out_Parameter) + 1;
                Params.Last_Out_Param.Replace_Element (E.Entity.Element);
@@ -405,9 +414,7 @@ package body Refactoring.Subprograms is
          Next (P);
       end loop;
 
-      if Count (Out_Parameter) = 1
-        and then Count (In_Out_Parameter) = 0
-      then
+      if Count (Out_Parameter) = 1 and then Count (In_Out_Parameter) = 0 then
          Params.Is_Function := True;
          Params.Count := Integer (Params.List.Length) - 1;
       else
@@ -422,8 +429,8 @@ package body Refactoring.Subprograms is
    --------------
 
    function Generate
-     (Self : Parameters'Class;
-      Context : Extract_Context) return Unbounded_String
+     (Self : Parameters'Class; Context : Extract_Context)
+      return Unbounded_String
    is
       Decl  : Unbounded_String;
       Param : Parameter_Lists.Cursor;
@@ -439,8 +446,9 @@ package body Refactoring.Subprograms is
               or else not Self.Is_Function
             then
                Append
-                 (Decl, Element (Param).Parameter.Decl.Display_As_Parameter
-                  (Context.Code.Context, Element (Param).PType));
+                 (Decl,
+                  Element (Param).Parameter.Decl.Display_As_Parameter
+                    (Context.Code.Context, Element (Param).PType));
 
                if Element (Param).Is_Tagged then
                   --  Since we are putting the code in the body, we should not
@@ -449,8 +457,9 @@ package body Refactoring.Subprograms is
                end if;
 
                if Param /= Self.List.Last
-                 and then Element (Next (Param)).Parameter.Entity.Element /=
-                 Self.Last_Out_Param.Element
+                 and then
+                   Element (Next (Param)).Parameter.Entity.Element
+                   /= Self.Last_Out_Param.Element
                then
                   Append (Decl, ";" & ASCII.LF & "    ");
                end if;
@@ -468,17 +477,17 @@ package body Refactoring.Subprograms is
    --------------------------
 
    function Generate_Method_Call
-     (Self : Parameters'Class;
-      Name : String;
-      Db   : General_Xref_Database) return Unbounded_String
+     (Self : Parameters'Class; Name : String; Db : General_Xref_Database)
+      return Unbounded_String
    is
       pragma Unreferenced (Db);
-      Param : Parameter_Lists.Cursor;
+      Param       : Parameter_Lists.Cursor;
       Method_Call : Unbounded_String;
    begin
       if Self.Is_Function then
-         Method_Call := To_Unbounded_String
-           (Get_Name (Self.Last_Out_Param.Element) & " := ");
+         Method_Call :=
+           To_Unbounded_String
+             (Get_Name (Self.Last_Out_Param.Element) & " := ");
       end if;
 
       Append (Method_Call, Name);
@@ -491,12 +500,14 @@ package body Refactoring.Subprograms is
             if Element (Param).PType /= Out_Parameter
               or else not Self.Is_Function
             then
-               Append (Method_Call,
-                       Get_Name (Element (Param).Parameter.Entity.Element));
+               Append
+                 (Method_Call,
+                  Get_Name (Element (Param).Parameter.Entity.Element));
 
                if Param /= Self.List.Last
-                 and then Element (Next (Param)).Parameter.Entity.Element /=
-                 Self.Last_Out_Param.Element
+                 and then
+                   Element (Next (Param)).Parameter.Entity.Element
+                   /= Self.Last_Out_Param.Element
                then
                   Append (Method_Call, ", ");
                end if;
@@ -516,11 +527,10 @@ package body Refactoring.Subprograms is
    -------------------------
 
    procedure Generate_Local_Vars
-     (Local_Vars : Extracted_Entity_Lists.List;
-      Result     : out Unbounded_String)
+     (Local_Vars : Extracted_Entity_Lists.List; Result : out Unbounded_String)
    is
-      E    : Extracted_Entity;
-      P    : Extracted_Entity_Lists.Cursor;
+      E : Extracted_Entity;
+      P : Extracted_Entity_Lists.Cursor;
    begin
       Result := Null_Unbounded_String;
 
@@ -547,20 +557,21 @@ package body Refactoring.Subprograms is
       Method_Body : out Unbounded_String;
       Method_Call : out Unbounded_String)
    is
-      Editor  : constant Editor_Buffer'Class :=
+      Editor : constant Editor_Buffer'Class :=
         Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
-      Code    : constant String :=
+      Code   : constant String :=
         Editor.Get_Chars_S
           (Editor.New_Location_At_Line
              (Editable_Line_Type (Context.Code.From_Line)),
            Editor.New_Location_At_Line
-             (Editable_Line_Type (Context.Code.To_Line)).End_Of_Line);
+             (Editable_Line_Type (Context.Code.To_Line))
+             .End_Of_Line);
 
-      Params               : Parameters;
-      Code_Start, Code_End : Integer;
+      Params                     : Parameters;
+      Code_Start, Code_End       : Integer;
       Comment_Start, Comment_End : Integer;
-      PList, Local, Returns : Unbounded_String;
-      Newline_Before_Is : Boolean := False;
+      PList, Local, Returns      : Unbounded_String;
+      Newline_Before_Is          : Boolean := False;
    begin
       Prepare_Code (Code, Comment_Start, Comment_End, Code_Start, Code_End);
       Compute_Params_And_Vars (Context, Params, Local_Vars);
@@ -568,9 +579,10 @@ package body Refactoring.Subprograms is
       PList := Params.Generate (Context);
 
       if Params.Is_Function then
-         Returns := To_Unbounded_String
-           (" return " & Get_Name
-              (Get_Type_Of (Params.Last_Out_Param.Element)));
+         Returns :=
+           To_Unbounded_String
+             (" return "
+              & Get_Name (Get_Type_Of (Params.Last_Out_Param.Element)));
       end if;
 
       if Params.Is_Function then
@@ -584,8 +596,9 @@ package body Refactoring.Subprograms is
       if PList /= Null_Unbounded_String then
          --  4 = " " + " is"
          if Params.Count > 1
-           or else Length (Method_Decl) + Length (PList) + Length (Returns) + 4
-           > Highlight_Column.Get_Pref
+           or else
+             Length (Method_Decl) + Length (PList) + Length (Returns) + 4
+             > Highlight_Column.Get_Pref
          then
             Append (Method_Decl, ASCII.LF & "  ");
             Newline_Before_Is := True;
@@ -617,9 +630,12 @@ package body Refactoring.Subprograms is
       if Params.Is_Function then
          Append
            (Method_Body,
-            "   " & Get_Name (Params.Last_Out_Param.Element)
-            & " : " & Get_Name (Get_Type_Of (Params.Last_Out_Param.Element))
-            & ";" & ASCII.LF);
+            "   "
+            & Get_Name (Params.Last_Out_Param.Element)
+            & " : "
+            & Get_Name (Get_Type_Of (Params.Last_Out_Param.Element))
+            & ";"
+            & ASCII.LF);
       end if;
 
       Append (Method_Body, "begin" & ASCII.LF & "   ");
@@ -627,8 +643,12 @@ package body Refactoring.Subprograms is
       Append (Method_Body, ASCII.LF);
 
       if Params.Is_Function then
-         Append (Method_Body, "   return "
-                 & Get_Name (Params.Last_Out_Param.Element) & ";" & ASCII.LF);
+         Append
+           (Method_Body,
+            "   return "
+            & Get_Name (Params.Last_Out_Param.Element)
+            & ";"
+            & ASCII.LF);
       end if;
 
       Append (Method_Body, "end " & Name & ";" & ASCII.LF);
@@ -641,10 +661,9 @@ package body Refactoring.Subprograms is
    ------------------------------
 
    procedure Compute_Context_Entities
-     (Context : in out Extract_Context;
-      Db      : General_Xref_Database)
+     (Context : in out Extract_Context; Db : General_Xref_Database)
    is
-      Editor  : constant Editor_Buffer'Class :=
+      Editor : constant Editor_Buffer'Class :=
         Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
 
       procedure Callback
@@ -652,8 +671,7 @@ package body Refactoring.Subprograms is
       --  Called when an entity used in the range of text has been found
 
       procedure Callback
-        (Entity : Root_Entity'Class;
-         Flags  : Entity_References_Flags)
+        (Entity : Root_Entity'Class; Flags : Entity_References_Flags)
       is
          Decl : Refactoring.Services.Entity_Declaration;
          H    : Root_Entity_Ref;
@@ -670,18 +688,14 @@ package body Refactoring.Subprograms is
          H.Replace_Element (Entity);
 
          Context.Entities.Append
-           (Extracted_Entity'
-              (Entity => H,
-               Decl   => Decl,
-               Flags  => Flags));
+           (Extracted_Entity'(Entity => H, Decl => Decl, Flags => Flags));
       end Callback;
 
       Success : Boolean;
 
    begin
       Context.Code.For_All_Variable_In_Range
-        (Db, Callback'Access,
-         Omit_Library_Level => True, Success => Success);
+        (Db, Callback'Access, Omit_Library_Level => True, Success => Success);
       if not Success then
          Context := Invalid_Context;
       end if;
@@ -697,13 +711,14 @@ package body Refactoring.Subprograms is
       Method_Name : String) return Command_Return_Type
    is
       Method_Decl, Method_Body, Method_Call : Unbounded_String;
-      Local_Vars : Extracted_Entity_Lists.List;
-      Iter       : Extracted_Entity_Lists.Cursor;
-      Result     : Command_Return_Type;
-      E          : Extracted_Entity;
-      Category   : constant VSS.Strings.Virtual_String :=
-        VSS.Strings.Conversions.To_Virtual_String
-          (-"Refactoring - extract subprogram " & Method_Name);
+      Local_Vars                            : Extracted_Entity_Lists.List;
+      Iter                                  : Extracted_Entity_Lists.Cursor;
+      Result                                : Command_Return_Type;
+      E                                     : Extracted_Entity;
+      Category                              :
+        constant VSS.Strings.Virtual_String :=
+          VSS.Strings.Conversions.To_Virtual_String
+            (-"Refactoring - extract subprogram " & Method_Name);
 
    begin
       if Context = Invalid_Context then
@@ -714,8 +729,7 @@ package body Refactoring.Subprograms is
       declare
          Buffer : constant Editor_Buffer'Class :=
            Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
-         G      : constant Group_Block :=
-           Buffer.New_Undo_Group;
+         G      : constant Group_Block := Buffer.New_Undo_Group;
       begin
          Generate_Extracted_Method
            (Name        => Method_Name,
@@ -730,11 +744,13 @@ package body Refactoring.Subprograms is
             declare
                Line_Start : Editor_Mark'Class :=
                  Buffer.New_Location_At_Line
-                   (Editable_Line_Type (Context.Code.From_Line)).Create_Mark;
-               Line_End : Editor_Mark'Class :=
+                   (Editable_Line_Type (Context.Code.From_Line))
+                   .Create_Mark;
+               Line_End   : Editor_Mark'Class :=
                  Buffer.New_Location_At_Line
                    (Editable_Line_Type (Context.Code.To_Line))
-                 .End_Of_Line.Create_Mark;
+                   .End_Of_Line
+                   .Create_Mark;
             begin
                Iter := Local_Vars.First;
 
@@ -750,24 +766,26 @@ package body Refactoring.Subprograms is
                end loop;
 
                Delete_Text
-                 (Kernel      => Kernel,
-                  In_File     => Context.Code.File,
-                  Line_Start  => Line_Start.Line,
-                  Line_End    => Line_End.Line);
+                 (Kernel     => Kernel,
+                  In_File    => Context.Code.File,
+                  Line_Start => Line_Start.Line,
+                  Line_End   => Line_End.Line);
 
                if Insert_Text
-                 (Context    => Context.Code.Context,
-                  In_File    => Context.Code.File,
-                  Line       => Line_Start.Line,
-                  Column     => 1,
-                  Text       => To_String (Method_Call),
-                  Indent     => True)
+                    (Context => Context.Code.Context,
+                     In_File => Context.Code.File,
+                     Line    => Line_Start.Line,
+                     Column  => 1,
+                     Text    => To_String (Method_Call),
+                     Indent  => True)
                then
                   Create_Simple_Message
                     (Get_Messages_Container (Kernel),
                      Category,
-                     Context.Code.File, Line_Start.Line,
-                     1, -"Extracted subprogram call inserted",
+                     Context.Code.File,
+                     Line_Start.Line,
+                     1,
+                     -"Extracted subprogram call inserted",
                      Unspecified,
                      Side_And_Locations);
 
@@ -796,8 +814,8 @@ package body Refactoring.Subprograms is
                Line_End.Delete;
             end;
          else
-            Trace (Me,
-                   "Extract_Method: Couldn't compute body of new subprogram");
+            Trace
+              (Me, "Extract_Method: Couldn't compute body of new subprogram");
             Result := Failure;
          end if;
       end;
@@ -814,14 +832,15 @@ package body Refactoring.Subprograms is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Extract_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Dialog : GPS_Dialog;
-      Ent    : Gtk_Entry;
-      Button : Gtk_Widget;
-      Label  : Gtk_Label;
+      Dialog             : GPS_Dialog;
+      Ent                : Gtk_Entry;
+      Button             : Gtk_Widget;
+      Label              : Gtk_Label;
       From_Line, To_Line : Integer;
 
       Extract : Extract_Context;
@@ -831,18 +850,19 @@ package body Refactoring.Subprograms is
 
    begin
       Get_Area (Context.Context, From_Line, To_Line);
-      Extract := (Code => Create_Range
-                  (Context      =>
-                     Get_Kernel (Context.Context).Refactoring_Context,
-                   File         => File_Information (Context.Context),
-                   Project_View =>
-                     Projects.Views.Create_Project_View_Reference
-                       (Get_Kernel (Context.Context),
-                        Project_Information (Context.Context)),
-                   From_Line    => From_Line,
-                   To_Line      => To_Line),
-                  Source     => No_File,
-                  Entities   => <>);
+      Extract :=
+        (Code     =>
+           Create_Range
+             (Context      => Get_Kernel (Context.Context).Refactoring_Context,
+              File         => File_Information (Context.Context),
+              Project_View =>
+                Projects.Views.Create_Project_View_Reference
+                  (Get_Kernel (Context.Context),
+                   Project_Information (Context.Context)),
+              From_Line    => From_Line,
+              To_Line      => To_Line),
+         Source   => No_File,
+         Entities => <>);
       Compute_Context_Entities
         (Extract, Db => Get_Kernel (Context.Context).Databases);
 
@@ -852,10 +872,11 @@ package body Refactoring.Subprograms is
          return Failure;
       end if;
 
-      Gtk_New (Dialog,
-               Title  => -"Extract Method",
-               Kernel => Get_Kernel (Context.Context),
-               Flags  => Destroy_With_Parent or Modal);
+      Gtk_New
+        (Dialog,
+         Title  => -"Extract Method",
+         Kernel => Get_Kernel (Context.Context),
+         Flags  => Destroy_With_Parent or Modal);
       Gtk_New (Label, -"Name of the new subprogram:");
       Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 
@@ -871,10 +892,11 @@ package body Refactoring.Subprograms is
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
-         Result := Extract_Method
-           (Kernel      => Get_Kernel (Context.Context),
-            Method_Name => Get_Text (Ent),
-            Context     => Extract);
+         Result :=
+           Extract_Method
+             (Kernel      => Get_Kernel (Context.Context),
+              Method_Name => Get_Text (Ent),
+              Context     => Extract);
       end if;
 
       Destroy (Dialog);
@@ -907,22 +929,24 @@ package body Refactoring.Subprograms is
          Project := F_Info.Project;
       end;
 
-      Context := (Code     => Create_Range
-                  (Context      => Kernel.Refactoring_Context,
-                   File         => File,
-                   Project_View =>
-                     Projects.Views.Create_Project_View_Reference
-                       (Kernel, Project),
-                   From_Line    => Nth_Arg (Data, 2),
-                   To_Line      => Nth_Arg (Data, 3)),
-                  Source   => No_File,
-                  Entities => <>);
+      Context :=
+        (Code     =>
+           Create_Range
+             (Context      => Kernel.Refactoring_Context,
+              File         => File,
+              Project_View =>
+                Projects.Views.Create_Project_View_Reference (Kernel, Project),
+              From_Line    => Nth_Arg (Data, 2),
+              To_Line      => Nth_Arg (Data, 3)),
+         Source   => No_File,
+         Entities => <>);
       Compute_Context_Entities (Context, Db => Get_Kernel (Data).Databases);
 
       if Extract_Method
-        (Kernel      => Get_Kernel (Data),
-         Method_Name => Nth_Arg (Data, 4, "New_Method"),
-         Context     => Context) /= Success
+           (Kernel      => Get_Kernel (Data),
+            Method_Name => Nth_Arg (Data, 4, "New_Method"),
+            Context     => Context)
+        /= Success
       then
          Set_Error_Msg (Data, "Couldn't extract method");
       end if;
@@ -944,9 +968,7 @@ package body Refactoring.Subprograms is
       declare
          Entity : constant Root_Entity'Class := Get_Entity (Context);
       begin
-         if Entity = No_Root_Entity
-           or else not Is_Subprogram (Entity)
-         then
+         if Entity = No_Root_Entity or else not Is_Subprogram (Entity) then
             --  No Entity or it is not a subprogram
             return False;
          end if;
@@ -967,7 +989,8 @@ package body Refactoring.Subprograms is
             declare
                Current : Semantic_Tree_Iterator'Class :=
                  Get_Kernel (Context).Get_Abstract_Tree_For_File
-                 ("EDIT", File_Information (Context)).Root_Iterator;
+                   ("EDIT", File_Information (Context))
+                   .Root_Iterator;
             begin
                while Has_Element (Current) loop
                   declare
@@ -989,12 +1012,11 @@ package body Refactoring.Subprograms is
                         if Node.Parent.Parent = No_Semantic_Node then
                            declare
                               Item : constant not null Context_Item_Access :=
-                                       new Separate_Context_Item'
-                                         (From => Node.Sloc_Start.Line,
-                                          To   => Node.Sloc_End.Line,
-                                          Text =>
-                                            To_Unbounded_String
-                                              (Name (Node.Parent)));
+                                new Separate_Context_Item'
+                                  (From => Node.Sloc_Start.Line,
+                                   To   => Node.Sloc_End.Line,
+                                   Text =>
+                                     To_Unbounded_String (Name (Node.Parent)));
                               --  Fill information and add it into the Context
                               --  for a future usage in
                               --  Separate_Method_Command.Execurt
@@ -1024,7 +1046,8 @@ package body Refactoring.Subprograms is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Separate_Method_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1044,29 +1067,34 @@ package body Refactoring.Subprograms is
          Entity    : constant Language.Tree.Database.Entity_Access :=
            Get_Entity_Access (Kernel.Refactoring_Context, XEntity);
          Editor    : constant Editor_Buffer'Class :=
-           Get_Buffer_Factory
-             (Kernel).Get (File_Information (Context.Context));
+           Get_Buffer_Factory (Kernel).Get
+             (File_Information (Context.Context));
          Loc_Start : constant Editor_Location'Class :=
            Editor.New_Location_At_Line (Editable_Line_Type (Item.From));
          Loc_End   : constant Editor_Location'Class :=
-           Editor.New_Location_At_Line
-             (Editable_Line_Type (Item.To)).End_Of_Line;
+           Editor.New_Location_At_Line (Editable_Line_Type (Item.To))
+             .End_Of_Line;
 
          Struct : Structured_File_Access;
          Spec   : Ada.Strings.Unbounded.Unbounded_String;
          Impl   : Ada.Strings.Unbounded.Unbounded_String;
       begin
-         Struct := Get_Or_Create
-           (Db   => Kernel.Refactoring_Context.Db.Constructs,
-            File => File_Information (Context.Context));
+         Struct :=
+           Get_Or_Create
+             (Db   => Kernel.Refactoring_Context.Db.Constructs,
+              File => File_Information (Context.Context));
          Update_Contents (Struct);
 
-         Spec := To_Unbounded_String
-           ((if Returned_Type (XEntity) = No_Root_Entity
-            then "   procedure "
-            else "   function ") & Get_Name (XEntity) & " " &
-              Get_Tree_Language (Struct).Get_Profile (Entity) &
-              " is separate;" & ASCII.LF);
+         Spec :=
+           To_Unbounded_String
+             ((if Returned_Type (XEntity) = No_Root_Entity
+               then "   procedure "
+               else "   function ")
+              & Get_Name (XEntity)
+              & " "
+              & Get_Tree_Language (Struct).Get_Profile (Entity)
+              & " is separate;"
+              & ASCII.LF);
 
          Impl := Editor.Get_Chars_U (Loc_Start, Loc_End);
          Editor.Start_Undo_Group;
@@ -1078,20 +1106,26 @@ package body Refactoring.Subprograms is
          declare
             New_Editor : constant Editor_Buffer'Class :=
               Get_Buffer_Factory (Kernel).Get
-              (Create_From_Dir
-                 (Dir (File_Information (Context.Context)),
-                  Get_Project (Kernel).File_From_Unit
-                  (Unit_Name       => Ada.Characters.Handling.To_Lower
-                   (To_String (Item.Text) & "." & Get_Name (XEntity)),
-                   Part            => GNATCOLL.Projects.Unit_Body,
-                   File_Must_Exist => False,
-                   Language        => "ada")),
-               Force => True, Open_Buffer => True, Open_View => True);
+                (Create_From_Dir
+                   (Dir (File_Information (Context.Context)),
+                    Get_Project (Kernel).File_From_Unit
+                      (Unit_Name       =>
+                         Ada.Characters.Handling.To_Lower
+                           (To_String (Item.Text) & "." & Get_Name (XEntity)),
+                       Part            => GNATCOLL.Projects.Unit_Body,
+                       File_Must_Exist => False,
+                       Language        => "ada")),
+                 Force       => True,
+                 Open_Buffer => True,
+                 Open_View   => True);
          begin
             New_Editor.Insert
               (New_Editor.End_Of_Buffer,
-               "separate (" & To_String (Item.Text) & ")" & ASCII.LF &
-                 To_String (Impl));
+               "separate ("
+               & To_String (Item.Text)
+               & ")"
+               & ASCII.LF
+               & To_String (Impl));
             New_Editor.Indent
               (New_Editor.Beginning_Of_Buffer, New_Editor.End_Of_Buffer);
          end;
@@ -1107,12 +1141,14 @@ package body Refactoring.Subprograms is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Action
-        (Kernel, "extract subprogram",
-         Command     => new Extract_Method_Command,
-         Description => -"Move selected code into its own subprogram",
-         Filter  => Create (Module => "Source_Editor")
-         and Create (Language => "ada")
-         and new Is_Area_Context,
+        (Kernel,
+         "extract subprogram",
+         Command      => new Extract_Method_Command,
+         Description  => -"Move selected code into its own subprogram",
+         Filter       =>
+           Create (Module => "Source_Editor")
+           and Create (Language => "ada")
+           and new Is_Area_Context,
          Category     => -"Refactoring",
          For_Learning => True);
       Register_Contextual_Menu
@@ -1122,13 +1158,15 @@ package body Refactoring.Subprograms is
          Group  => Editing_Contextual_Group);
 
       Register_Action
-        (Kernel, "separate subprogram",
-         Command     => new Separate_Method_Command,
-         Description =>
+        (Kernel,
+         "separate subprogram",
+         Command      => new Separate_Method_Command,
+         Description  =>
            -"Move selected subprogram into its own separate package",
-         Filter  => Create (Module => "Source_Editor")
-         and Create (Language => "ada")
-         and Lookup_Filter (Kernel, "Entity"),
+         Filter       =>
+           Create (Module => "Source_Editor")
+           and Create (Language => "ada")
+           and Lookup_Filter (Kernel, "Entity"),
          Category     => -"Refactoring",
          For_Learning => True);
       Register_Contextual_Menu

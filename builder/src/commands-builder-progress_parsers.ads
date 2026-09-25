@@ -18,7 +18,7 @@
 --  Declare parser to exclude progress strings from output.
 
 private with GNAT.Regpat;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with GPS.Tools_Output; use GPS.Tools_Output;
 
 package Commands.Builder.Progress_Parsers is
 
@@ -27,7 +27,8 @@ package Commands.Builder.Progress_Parsers is
 
    type Progress_Parser_Access is access all Progress_Parser'Class;
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Progress_Parser;
       Item    : String;
       Command : access Root_Command'Class);
@@ -39,18 +40,16 @@ package Commands.Builder.Progress_Parsers is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set_Progress_Pattern
-     (Self    : access Output_Parser_Fabric;
-      Pattern : String);
+     (Self : access Output_Parser_Fabric; Pattern : String);
    --  Set regexp pattern to extract progress information
 
    procedure Set_Phase_Pattern
-     (Self    : access Output_Parser_Fabric;
-      Pattern : String);
+     (Self : access Output_Parser_Fabric; Pattern : String);
    --  Set regexp pattern to extract phase information
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
    --  Create new parser to exclude progress strings from output.
    --  Parser will use Data to access Command and set progress on it.
@@ -59,8 +58,8 @@ private
 
    type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
 
-   type Output_Parser_Fabric is
-     new GPS.Tools_Output.Output_Parser_Fabric with record
+   type Output_Parser_Fabric is new GPS.Tools_Output.Output_Parser_Fabric
+   with record
       Phase_Matcher    : Pattern_Matcher_Access;
       Progress_Matcher : Pattern_Matcher_Access;
    end record;

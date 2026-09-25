@@ -17,16 +17,16 @@
 
 with Ada.Strings.Fixed;
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with Default_Preferences;        use Default_Preferences;
+with GPS.Intl;            use GPS.Intl;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
+with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
+with Default_Preferences; use Default_Preferences;
 
 with GPS.Kernel.Properties.File_Writer;
 
@@ -66,69 +66,78 @@ package body GPS.Kernel.Properties is
 
    type Dummy_Writer_Record is new Writer_Record with null record;
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self     : not null access Dummy_Writer_Record;
       Key      : String;
       Name     : String;
       Property : out Property_Record'Class;
       Found    : out Boolean);
 
-   overriding procedure Get_Values
+   overriding
+   procedure Get_Values
      (Self     : not null access Dummy_Writer_Record;
       Name     : String;
       Property : in out Property_Record'Class;
-      Callback : access procedure
-        (Key : String; Property : in out Property_Record'Class)) is null;
+      Callback :
+        access procedure
+          (Key : String; Property : in out Property_Record'Class))
+   is null;
 
-   overriding procedure Insert
+   overriding
+   procedure Insert
      (Self     : not null access Dummy_Writer_Record;
       Key      : String;
       Name     : String;
-      Property : Property_Description) is null;
+      Property : Property_Description)
+   is null;
 
-   overriding procedure Include
+   overriding
+   procedure Include
      (Self     : not null access Dummy_Writer_Record;
       Key      : String;
       Name     : String;
-      Property : Property_Description) is null;
+      Property : Property_Description)
+   is null;
 
-   overriding function Contains
-     (Self : not null access Dummy_Writer_Record;
-      Key  : String;
-      Name : String)
+   overriding
+   function Contains
+     (Self : not null access Dummy_Writer_Record; Key : String; Name : String)
       return Boolean;
 
-   overriding procedure Update
+   overriding
+   procedure Update
      (Self     : not null access Dummy_Writer_Record;
       Key      : String;
       Name     : String;
-      Property : Property_Description) is null;
+      Property : Property_Description)
+   is null;
 
-   overriding procedure Remove
-     (Self : not null access Dummy_Writer_Record;
-      Key  : String;
-      Name : String) is null;
+   overriding
+   procedure Remove
+     (Self : not null access Dummy_Writer_Record; Key : String; Name : String)
+   is null;
 
-   overriding procedure Dump_Database
-     (Self : not null access Dummy_Writer_Record) is null;
+   overriding
+   procedure Dump_Database (Self : not null access Dummy_Writer_Record)
+   is null;
 
    procedure Store_Properties;
    --  Stores properties in DB
 
    procedure Split
-     (Value : String;
-      Key   : out Unbounded_String;
-      Name  : out Unbounded_String);
+     (Value : String; Key : out Unbounded_String; Name : out Unbounded_String);
    --  Splits Value into Key and Name
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
 
-   procedure Free is
-     new Ada.Unchecked_Deallocation (Writer_Record'Class, Writer);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Writer_Record'Class, Writer);
 
    Current_Writer : Writer := new Dummy_Writer_Record;
 
@@ -137,8 +146,7 @@ package body GPS.Kernel.Properties is
    -----------------------------------
 
    function Open_Persistent_Properties_DB
-     (Kernel : access Kernel_Handle_Record'Class)
-     return GPS.Properties.Writer
+     (Kernel : access Kernel_Handle_Record'Class) return GPS.Properties.Writer
    is
       Object : constant Writer := Writer (File_Writer.Constructor (Kernel));
    begin
@@ -146,8 +154,9 @@ package body GPS.Kernel.Properties is
         Kernel.Get_Preferences.Create_Invisible_Pref
           (Name    => "Store_Properties_On_The_Fly",
            Label   => "Store properties on the fly",
-           Doc     => -"Whether to store the properties database on disk " &
-             " after each change.",
+           Doc     =>
+             -"Whether to store the properties database on disk "
+             & " after each change.",
            Default => False);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
@@ -168,17 +177,14 @@ package body GPS.Kernel.Properties is
    -- Store_Properties --
    ----------------------
 
-   procedure Store_Properties
-   is
+   procedure Store_Properties is
       C         : Cursor;
       Key, Name : Unbounded_String;
 
    begin
       C := First (All_Properties);
       while Has_Element (C) loop
-         if Element (C).Persistent
-           and then Element (C).Modified
-         then
+         if Element (C).Persistent and then Element (C).Modified then
             Split (Properties_Indefinite_Hashed_Maps.Key (C), Key, Name);
             if Key /= Null_Unbounded_String
               and then Name /= Null_Unbounded_String
@@ -237,7 +243,7 @@ package body GPS.Kernel.Properties is
 
       C := Find (All_Properties, Key & Sep & Name);
       if Has_Element (C) then
-         Descr     := Element (C);
+         Descr := Element (C);
          New_Value := Descr.Value = null;
          Replace_Element (All_Properties, C, Prop);
          Free (Descr);
@@ -246,9 +252,7 @@ package body GPS.Kernel.Properties is
          Insert (All_Properties, Key & Sep & Name, Prop);
       end if;
 
-      if Property.Persistent
-        and then Store_Properties_On_The_Fly.Get_Pref
-      then
+      if Property.Persistent and then Store_Properties_On_The_Fly.Get_Pref then
          if Property.Value /= null then
             Current_Writer.Include (Key, Name, Property);
 
@@ -280,9 +284,7 @@ package body GPS.Kernel.Properties is
       end if;
 
       Descr := Element (C);
-      if Descr.Value /= null
-        and then Descr.Persistent
-      then
+      if Descr.Value /= null and then Descr.Persistent then
          if Store_Properties_On_The_Fly.Get_Pref then
             Current_Writer.Remove (Key, Name);
             Delete (All_Properties, C);
@@ -308,10 +310,10 @@ package body GPS.Kernel.Properties is
    begin
       Set_Resource_Property
         (Kernel,
-         Key, Name,
-         Property_Description'(Value      => Property,
-                               Persistent => Persistent,
-                               Modified   => True));
+         Key,
+         Name,
+         Property_Description'
+           (Value => Property, Persistent => Persistent, Modified => True));
    end Set_Property;
 
    ---------------------
@@ -331,14 +333,13 @@ package body GPS.Kernel.Properties is
    ------------------
 
    procedure Set_Property
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Name       : String;
       Property   : Property_Access;
       Persistent : Boolean := False) is
    begin
-      Set_Property
-        (Kernel, To_String (File), Name, Property, Persistent);
+      Set_Property (Kernel, To_String (File), Name, Property, Persistent);
    end Set_Property;
 
    ------------------
@@ -352,8 +353,7 @@ package body GPS.Kernel.Properties is
       Property   : Property_Access;
       Persistent : Boolean := False) is
    begin
-      Set_Property
-        (Kernel, To_String (Project), Name, Property, Persistent);
+      Set_Property (Kernel, To_String (Project), Name, Property, Persistent);
    end Set_Property;
 
    ---------------------
@@ -384,9 +384,7 @@ package body GPS.Kernel.Properties is
    -- Reset_Properties --
    ----------------------
 
-   procedure Reset_Properties
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure Reset_Properties (Kernel : access Kernel_Handle_Record'Class) is
       pragma Unreferenced (Kernel);
 
       C         : Cursor := First (All_Properties);
@@ -436,8 +434,7 @@ package body GPS.Kernel.Properties is
            (Kernel     => Kernel,
             File       => Filename,
             Name       => "language",
-            Property   =>
-               new String_Property'(Value => new String'(Language)),
+            Property   => new String_Property'(Value => new String'(Language)),
             Persistent => True);
       end if;
    end Set_Language_From_File;
@@ -458,20 +455,22 @@ package body GPS.Kernel.Properties is
       Value      : aliased constant String := "value";
       Persistent : aliased constant String := "persistent";
 
-      Found      : Boolean;
-      Prop2      : aliased String_Property;
+      Found : Boolean;
+      Prop2 : aliased String_Property;
 
    begin
       if Command = "set_property" then
-         Name_Parameters (Data, (2 => Name'Unchecked_Access,
-                                 3 => Value'Unchecked_Access,
-                                 4 => Persistent'Unchecked_Access));
+         Name_Parameters
+           (Data,
+            (2 => Name'Unchecked_Access,
+             3 => Value'Unchecked_Access,
+             4 => Persistent'Unchecked_Access));
          Set_Property
            (Kernel     => Kernel,
             File       => File,
             Name       => Nth_Arg (Data, 2),
             Property   =>
-               new String_Property'(Value => new String'(Nth_Arg (Data, 3))),
+              new String_Property'(Value => new String'(Nth_Arg (Data, 3))),
             Persistent => Nth_Arg (Data, 4, False));
 
       elsif Command = "get_property" then
@@ -495,9 +494,7 @@ package body GPS.Kernel.Properties is
       else
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Remove_Property
-           (Kernel => Kernel,
-            File   => File,
-            Name   => Nth_Arg (Data, 2));
+           (Kernel => Kernel, File => File, Name => Nth_Arg (Data, 2));
       end if;
    end File_Command_Handler;
 
@@ -508,32 +505,34 @@ package body GPS.Kernel.Properties is
    procedure Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Project    : constant Project_Type  := Get_Data (Data, 1);
+      Project    : constant Project_Type := Get_Data (Data, 1);
       Name       : aliased constant String := "name";
       Value      : aliased constant String := "value";
       Persistent : aliased constant String := "persistent";
 
-      Found      : Boolean;
-      Prop2      : aliased String_Property;
+      Found : Boolean;
+      Prop2 : aliased String_Property;
 
    begin
       if Command = "set_property" then
-         Name_Parameters (Data, (2 => Name'Unchecked_Access,
-                                 3 => Value'Unchecked_Access,
-                                 4 => Persistent'Unchecked_Access));
+         Name_Parameters
+           (Data,
+            (2 => Name'Unchecked_Access,
+             3 => Value'Unchecked_Access,
+             4 => Persistent'Unchecked_Access));
          Set_Property
            (Kernel     => Get_Kernel (Data),
             Project    => Project,
             Name       => Nth_Arg (Data, 2),
             Property   =>
-               new String_Property'(Value => new String'(Nth_Arg (Data, 3))),
+              new String_Property'(Value => new String'(Nth_Arg (Data, 3))),
             Persistent => Nth_Arg (Data, 4, False));
 
       elsif Command = "get_property" then
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Get_Property
            (Property => Prop2,
-            Project     => Project,
+            Project  => Project,
             Name     => Nth_Arg (Data, 2),
             Found    => Found);
 
@@ -550,9 +549,9 @@ package body GPS.Kernel.Properties is
       else
          Name_Parameters (Data, (2 => Name'Unchecked_Access));
          Remove_Property
-           (Kernel   => Get_Kernel (Data),
-            Project  => Project,
-            Name     => Nth_Arg (Data, 2));
+           (Kernel  => Get_Kernel (Data),
+            Project => Project,
+            Name    => Nth_Arg (Data, 2));
       end if;
    end Project_Command_Handler;
 
@@ -590,45 +589,52 @@ package body GPS.Kernel.Properties is
       Project_Class : constant Class_Type := New_Class (Kernel, "Project");
    begin
       Register_Command
-        (Kernel, "set_property",
+        (Kernel,
+         "set_property",
          Minimum_Args => 2,
          Maximum_Args => 3,
          Class        => File_Class,
          Handler      => File_Command_Handler'Access);
       Register_Command
-        (Kernel, "get_property",
+        (Kernel,
+         "get_property",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => File_Class,
          Handler      => File_Command_Handler'Access);
       Register_Command
-        (Kernel, "remove_property",
+        (Kernel,
+         "remove_property",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => File_Class,
          Handler      => File_Command_Handler'Access);
 
       Register_Command
-        (Kernel, "set_property",
+        (Kernel,
+         "set_property",
          Minimum_Args => 2,
          Maximum_Args => 3,
          Class        => Project_Class,
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "get_property",
+        (Kernel,
+         "get_property",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Project_Class,
          Handler      => Project_Command_Handler'Access);
       Register_Command
-        (Kernel, "remove_property",
+        (Kernel,
+         "remove_property",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Project_Class,
          Handler      => Project_Command_Handler'Access);
 
       Register_Command
-        (Kernel, "save_persistent_properties",
+        (Kernel,
+         "save_persistent_properties",
          Handler => Properties_Command_Handler'Access);
    end Register_Script_Commands;
 
@@ -636,7 +642,8 @@ package body GPS.Kernel.Properties is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self     : not null access Dummy_Writer_Record;
       Key      : String;
       Name     : String;
@@ -652,10 +659,9 @@ package body GPS.Kernel.Properties is
    -- Contains --
    --------------
 
-   overriding function Contains
-     (Self : not null access Dummy_Writer_Record;
-      Key  : String;
-      Name : String)
+   overriding
+   function Contains
+     (Self : not null access Dummy_Writer_Record; Key : String; Name : String)
       return Boolean
    is
       pragma Unreferenced (Key, Name);
@@ -667,7 +673,8 @@ package body GPS.Kernel.Properties is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -686,18 +693,16 @@ package body GPS.Kernel.Properties is
    -----------
 
    procedure Split
-     (Value : String;
-      Key   : out Unbounded_String;
-      Name  : out Unbounded_String)
+     (Value : String; Key : out Unbounded_String; Name : out Unbounded_String)
    is
       Idx : Integer;
    begin
-      Key  := Null_Unbounded_String;
+      Key := Null_Unbounded_String;
       Name := Null_Unbounded_String;
-      Idx  := Ada.Strings.Fixed.Index (Value, Sep);
+      Idx := Ada.Strings.Fixed.Index (Value, Sep);
 
       if Idx in Value'Range then
-         Key  := To_Unbounded_String (Value (Value'First .. Idx - 1));
+         Key := To_Unbounded_String (Value (Value'First .. Idx - 1));
          Name := To_Unbounded_String (Value (Idx + Sep'Length .. Value'Last));
       end if;
    end Split;

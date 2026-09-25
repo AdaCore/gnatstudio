@@ -47,9 +47,7 @@ package Lazy_Vectors is
    Null_Iterator : constant Iterator;
 
    procedure Insert
-     (Vector : Lazy_Vector;
-      Data   : Data_Type;
-      Pos    : out Iterator);
+     (Vector : Lazy_Vector; Data : Data_Type; Pos : out Iterator);
    --  Same as previous function insert, but gives the position where the data
    --  has been inserted.
 

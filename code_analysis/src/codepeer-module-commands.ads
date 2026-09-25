@@ -20,17 +20,19 @@ private package CodePeer.Module.Commands is
 
    use Standard.Commands;
 
-   type CodePeer_Root_Command
-     (Module : not null CodePeer_Module_Id) is
-     abstract new Root_Command with null record;
+   type CodePeer_Root_Command (Module : not null CodePeer_Module_Id) is
+      abstract new Root_Command
+   with null record;
 
    type Review_Message_Command is new CodePeer_Root_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Review_Message_Command) return Command_Return_Type;
    --  Called to review message
 
    type Multiple_Message_Command is new CodePeer_Root_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Multiple_Message_Command) return Command_Return_Type;
    --  Called to display contextual menu for selecting action
 

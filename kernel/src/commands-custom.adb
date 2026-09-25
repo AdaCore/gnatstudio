@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Ada.Strings.Maps;          use Ada; use Ada.Strings.Maps;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Maps;
+use Ada;
+use Ada.Strings.Maps;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;
@@ -26,37 +28,39 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;               use GNAT.Expect;
 with GNAT.Regpat;               use GNAT.Regpat;
 
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Templates;        use GNATCOLL.Templates;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GNATCOLL.Templates; use GNATCOLL.Templates;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with XML_Utils;                 use XML_Utils;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Widget;                use Gtk.Widget;
+with XML_Utils;      use XML_Utils;
+with Gtk.Enums;      use Gtk.Enums;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Gtk.Widget;     use Gtk.Widget;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Interactive;    use GPS.Kernel.Interactive;
-with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
+with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Interactive;  use GPS.Kernel.Interactive;
+with GPS.Kernel.Macros;       use GPS.Kernel.Macros;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Preferences;
-with Interactive_Consoles;      use Interactive_Consoles;
-with Password_Manager;          use Password_Manager;
-with Remote;                    use Remote;
-with String_Utils;              use String_Utils;
+with Interactive_Consoles;    use Interactive_Consoles;
+with Password_Manager;        use Password_Manager;
+with Remote;                  use Remote;
+with String_Utils;            use String_Utils;
 
 package body Commands.Custom is
 
    Me : constant Trace_Handle := Create ("GPS.KERNEL.Commands_Custom", Off);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Boolean_Array, Boolean_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Boolean_Array, Boolean_Array_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (GNAT.Regpat.Pattern_Matcher,
+        GNAT.Expect.Pattern_Matcher_Access);
 
    -----------------------
    -- Custom components --
@@ -65,27 +69,28 @@ package body Commands.Custom is
    type Component_Type is (Component_Shell, Component_External);
 
    type Custom_Component_Record (The_Type : Component_Type) is
-     new Command_Component_Record with
-      record
-         Show_Command : Boolean := True; --  "show-command" attribute
-         Output       : String_Access;   --  use Default if this is null
-         Command      : String_Access;
+     new Command_Component_Record
+   with record
+      Show_Command : Boolean := True; --  "show-command" attribute
+      Output       : String_Access;   --  use Default if this is null
+      Command      : String_Access;
 
-         case The_Type is
-            when Component_Shell =>
-               Script               : Scripting_Language;
-            when Component_External =>
-               Server               : Server_Type;      --  "server" attribute
-               Check_Password       : Boolean := False; --  "check-password"
-               Show_In_Task_Manager : Boolean := False; --  "show-task-manager"
-               Progress_Regexp      : String_Access;    --  "progress-regexp"
-               Progress_Current     : Natural := 1;     --  "progress-current"
-               Progress_Final       : Natural := 2;     --  "progress-final"
-               Progress_Hide        : Boolean := True;  --  "progress-hide"
-               --  Changes to this list must be reflected in the record
-               --  Custom_Component_Editor_Record as well
-         end case;
-      end record;
+      case The_Type is
+         when Component_Shell =>
+            Script : Scripting_Language;
+
+         when Component_External =>
+            Server               : Server_Type;      --  "server" attribute
+            Check_Password       : Boolean := False; --  "check-password"
+            Show_In_Task_Manager : Boolean := False; --  "show-task-manager"
+            Progress_Regexp      : String_Access;    --  "progress-regexp"
+            Progress_Current     : Natural := 1;     --  "progress-current"
+            Progress_Final       : Natural := 2;     --  "progress-final"
+            Progress_Hide        : Boolean := True;  --  "progress-hide"
+            --  Changes to this list must be reflected in the record
+            --  Custom_Component_Editor_Record as well
+      end case;
+   end record;
    type Custom_Component is access all Custom_Component_Record'Class;
 
    procedure Free (Component : in out Custom_Component);
@@ -96,8 +101,7 @@ package body Commands.Custom is
    ----------------------
 
    procedure Check_Save_Output
-     (Command          : access Custom_Command'Class;
-      Save_Output      : out Boolean_Array);
+     (Command : access Custom_Command'Class; Save_Output : out Boolean_Array);
    --  Compute whether we should save the output of each commands. This depends
    --  on whether later commands reference this output through %1, %2,...
 
@@ -112,10 +116,10 @@ package body Commands.Custom is
 
    pragma Warnings (Off);
    --  These 2 UCs are safe aliasing-wise, so kill warning
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Custom_Command_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (Custom_Command_Access, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Custom_Command_Access);
+   function Convert is new
+     Ada.Unchecked_Conversion (Custom_Command_Access, System.Address);
    pragma Warnings (On);
 
    procedure Free (Execution : in out Custom_Command_Execution);
@@ -153,11 +157,13 @@ package body Commands.Custom is
       Command : Custom_Command_Access;
    end record;
    type Custom_Callback_Data_Access is access all Custom_Callback_Data'Class;
-   overriding procedure On_Output
+   overriding
+   procedure On_Output
      (Self     : not null access Custom_Callback_Data;
       External : not null access Root_Command'Class;
       Output   : String);
-   overriding procedure On_Exit
+   overriding
+   procedure On_Exit
      (Self     : not null access Custom_Callback_Data;
       External : not null access Root_Command'Class);
 
@@ -186,8 +192,9 @@ package body Commands.Custom is
    -- Is_Active_Command --
    -----------------------
 
-   overriding function Is_Active_Command
-     (Command : access Custom_Command) return Boolean is
+   overriding
+   function Is_Active_Command (Command : access Custom_Command) return Boolean
+   is
    begin
       return Command.Active;
    end Is_Active_Command;
@@ -196,7 +203,8 @@ package body Commands.Custom is
    -- On_Exit --
    -------------
 
-   overriding procedure On_Exit
+   overriding
+   procedure On_Exit
      (Self     : not null access Custom_Callback_Data;
       External : not null access Root_Command'Class)
    is
@@ -213,13 +221,14 @@ package body Commands.Custom is
    -- On_Output --
    ---------------
 
-   overriding procedure On_Output
+   overriding
+   procedure On_Output
      (Self     : not null access Custom_Callback_Data;
       External : not null access Root_Command'Class;
       Output   : String)
    is
       pragma Unreferenced (External);
-      Command : constant Custom_Command_Access := Self.Command;
+      Command     : constant Custom_Command_Access := Self.Command;
       Save_Output : Boolean;
 
       procedure Append (S : in out String_Access; Value : String);
@@ -234,7 +243,7 @@ package body Commands.Custom is
 
       procedure Insert (Message : String) is
          Console : constant Interactive_Console :=
-                     Command.Execution.External_Process_Console;
+           Command.Execution.External_Process_Console;
       begin
          if Console /= null then
             Insert (Console, Message, Add_LF => False);
@@ -252,22 +261,24 @@ package body Commands.Custom is
             if S = null then
                S := new String'(Value);
             else
-               if S'Length >
-                 GPS.Kernel.Preferences.Max_Output_Length.Get_Pref
+               if S'Length > GPS.Kernel.Preferences.Max_Output_Length.Get_Pref
                then
                   --  If we are collecting more output than we should, emit a
                   --  warning and stop collecting.
                   Save_Output := False;
-                  Insert (Kernel => Command.Kernel,
-                          Text   => (-"Output from command """)
-                          & Command.Name.all
-                          & (-""" exceeds the maximum length, truncating."),
-                          Mode   => Error);
+                  Insert
+                    (Kernel => Command.Kernel,
+                     Text   =>
+                       (-"Output from command """)
+                       & Command.Name.all
+                       & (-""" exceeds the maximum length, truncating."),
+                     Mode   => Error);
                   Command.Execution.Save_Output
-                    (Command.Execution.Cmd_Index) := False;
+                    (Command.Execution.Cmd_Index) :=
+                    False;
                else
                   Previous := S;
-                  S        := new String (1 .. Previous'Length + Value'Length);
+                  S := new String (1 .. Previous'Length + Value'Length);
                   S (1 .. Previous'Length) := Previous.all;
                   S (Previous'Length + 1 .. S'Last) := Value;
                   Free (Previous);
@@ -304,9 +315,10 @@ package body Commands.Custom is
             end if;
 
             --  Retrieve password prompt if any
-            Match (Get_Default_Password_Regexp,
-                   Output (Output'First .. Idx),
-                   Matched);
+            Match
+              (Get_Default_Password_Regexp,
+               Output (Output'First .. Idx),
+               Matched);
 
             if Matched (0) /= No_Match then
                Force := Command.Execution.Nb_Password > 0;
@@ -315,8 +327,7 @@ package body Commands.Custom is
 
                declare
                   Password : constant String :=
-                    Get_Tool_Password (Command.Name.all,
-                                       Force);
+                    Get_Tool_Password (Command.Name.all, Force);
                begin
                   if Password /= "" then
                      Send (Self.Descriptor.all, Password);
@@ -330,9 +341,10 @@ package body Commands.Custom is
             end if;
 
             --  Retrieve passphrase prompt if any
-            Match (Get_Default_Passphrase_Regexp,
-                   Output (Output'First .. Idx),
-                   Matched);
+            Match
+              (Get_Default_Passphrase_Regexp,
+               Output (Output'First .. Idx),
+               Matched);
 
             if Matched (0) /= No_Match then
                Force := Command.Execution.Nb_Password > 0;
@@ -342,8 +354,7 @@ package body Commands.Custom is
                declare
                   Password : constant String :=
                     Get_Passphrase
-                      (Output (Matched (1).First .. Matched (1).Last),
-                       Force);
+                      (Output (Matched (1).First .. Matched (1).Last), Force);
                begin
                   if Password /= "" then
                      Send (Self.Descriptor.all, Password);
@@ -365,24 +376,28 @@ package body Commands.Custom is
 
       if Command.Execution.Progress_Matcher /= null then
          declare
-            Matched : Match_Array
-              (0 .. Integer'Max (Command.Execution.Current_In_Regexp,
-                                 Command.Execution.Total_In_Regexp));
+            Matched :
+              Match_Array
+                (0
+                 ..
+                   Integer'Max
+                     (Command.Execution.Current_In_Regexp,
+                      Command.Execution.Total_In_Regexp));
          begin
             Index := Output'First;
             while Index <= Output'Last loop
                EOL := Index;
-               while EOL <= Output'Last
-                 and then Output (EOL) /= ASCII.LF
-               loop
+               while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
                   EOL := EOL + 1;
                end loop;
                if EOL > Output'Last then
                   EOL := EOL - 1;
                end if;
 
-               Match (Command.Execution.Progress_Matcher.all,
-                      Output (Index .. EOL), Matched);
+               Match
+                 (Command.Execution.Progress_Matcher.all,
+                  Output (Index .. EOL),
+                  Matched);
                if Matched (Command.Execution.Current_In_Regexp) = No_Match
                  or else Matched (Command.Execution.Total_In_Regexp) = No_Match
                then
@@ -396,8 +411,8 @@ package body Commands.Custom is
                else
                   declare
                      Outp : constant String :=
-                              Output (Index .. Matched (0).First - 1)
-                                & Output (Matched (0).Last + 1 .. EOL);
+                       Output (Index .. Matched (0).First - 1)
+                       & Output (Matched (0).Last + 1 .. EOL);
                   begin
                      if Command.Execution.Hide_Progress then
                         Insert (Outp);
@@ -410,14 +425,19 @@ package body Commands.Custom is
                      end if;
                   end;
 
-                  Current := Safe_Value
-                    (Output
-                       (Matched (Command.Execution.Current_In_Regexp).First ..
-                          Matched (Command.Execution.Current_In_Regexp).Last));
-                  Total := Safe_Value
-                    (Output
-                       (Matched (Command.Execution.Total_In_Regexp).First
-                        .. Matched (Command.Execution.Total_In_Regexp).Last));
+                  Current :=
+                    Safe_Value
+                      (Output
+                         (Matched (Command.Execution.Current_In_Regexp).First
+                          ..
+                            Matched (Command.Execution.Current_In_Regexp)
+                              .Last));
+                  Total :=
+                    Safe_Value
+                      (Output
+                         (Matched (Command.Execution.Total_In_Regexp).First
+                          ..
+                            Matched (Command.Execution.Total_In_Regexp).Last));
                   Set_Progress
                     (Command,
                      Progress_Record'
@@ -460,8 +480,9 @@ package body Commands.Custom is
            and then Name.all /= No_Output
            and then Name.all /= Console_Output
          then
-            Console := Create_Interactive_Console
-              (Kernel, Name.all, Create_If_Not_Exist => False);
+            Console :=
+              Create_Interactive_Console
+                (Kernel, Name.all, Create_If_Not_Exist => False);
             if Console /= null then
                Clear (Console);
             end if;
@@ -517,8 +538,7 @@ package body Commands.Custom is
    -----------------------
 
    procedure Check_Save_Output
-     (Command     : access Custom_Command'Class;
-      Save_Output : out Boolean_Array)
+     (Command : access Custom_Command'Class; Save_Output : out Boolean_Array)
    is
       Index : Natural;
 
@@ -535,8 +555,7 @@ package body Commands.Custom is
       begin
          Sub_Index := Safe_Value (Param, Default => 0);
          if Sub_Index /= 0 then
-            Ref_Index := Output_Substitution
-              (Command, Index, Sub_Index);
+            Ref_Index := Output_Substitution (Command, Index, Sub_Index);
 
             if Ref_Index >= Command.Components'First then
                Save_Output (Ref_Index) := True;
@@ -552,12 +571,14 @@ package body Commands.Custom is
       Index := Command.Components'First;
       while Index <= Command.Components'Last loop
          declare
-            S : constant String := Substitute
-              (Str               => Custom_Component
-                 (Command.Components (Index).Component).Command.all,
-               Delimiter         => GPS.Kernel.Macros.Special_Character,
-               Callback          => Substitution'Unrestricted_Access,
-               Recursive         => False);
+            S : constant String :=
+              Substitute
+                (Str       =>
+                   Custom_Component (Command.Components (Index).Component)
+                     .Command.all,
+                 Delimiter => GPS.Kernel.Macros.Special_Character,
+                 Callback  => Substitution'Unrestricted_Access,
+                 Recursive => False);
             pragma Unreferenced (S);
          begin
             null;
@@ -572,15 +593,17 @@ package body Commands.Custom is
    ----------
 
    procedure Free (Execution : in out Custom_Command_Execution) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Custom_Command_Execution_Record, Custom_Command_Execution);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Custom_Command_Execution_Record,
+           Custom_Command_Execution);
    begin
       if Execution /= null then
-         Free              (Execution.Current_Output);
+         Free (Execution.Current_Output);
          GNAT.Strings.Free (Execution.Outputs);
-         Unchecked_Free    (Execution.Save_Output);
-         Unchecked_Free    (Execution.Progress_Matcher);
-         Unchecked_Free    (Execution);
+         Unchecked_Free (Execution.Save_Output);
+         Unchecked_Free (Execution.Progress_Matcher);
+         Unchecked_Free (Execution);
       end if;
    end Free;
 
@@ -589,14 +612,17 @@ package body Commands.Custom is
    ----------
 
    procedure Free (Component : in out Custom_Component) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Custom_Component_Record'Class, Custom_Component);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Custom_Component_Record'Class,
+           Custom_Component);
    begin
       Free (Component.Output);
       Free (Component.Command);
       case Component.The_Type is
-         when Component_Shell =>
+         when Component_Shell    =>
             null;
+
          when Component_External =>
             Free (Component.Progress_Regexp);
       end case;
@@ -607,9 +633,10 @@ package body Commands.Custom is
    -- Primitive_Free --
    --------------------
 
-   overriding procedure Primitive_Free (X : in out Custom_Command) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Components_Array, Components_Array_Access);
+   overriding
+   procedure Primitive_Free (X : in out Custom_Command) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Components_Array, Components_Array_Access);
    begin
       Free (X.Default_Output_Destination);
       Free (X.Name);
@@ -635,17 +662,21 @@ package body Commands.Custom is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
-      Item.Name   := new String'(Name);
+      Item.Name := new String'(Name);
       Item.Active := Active;
-      Item.Components := new Components_Array'
-        (1 => (Component => new Custom_Component_Record'
-                 (Command_Component_Record with
-                  The_Type     => Component_Shell,
-                  Show_Command => False,
-                  Output       => new String'(No_Output),
-                  Command      => new String'(Command),
-                  Script       => Script),
-               On_Failure_For => -1));
+      Item.Components :=
+        new Components_Array'
+          (1 =>
+             (Component      =>
+                new Custom_Component_Record'
+                  (Command_Component_Record
+                   with
+                     The_Type     => Component_Shell,
+                     Show_Command => False,
+                     Output       => new String'(No_Output),
+                     Command      => new String'(Command),
+                     Script       => Script),
+              On_Failure_For => -1));
    end Create;
 
    --------------------
@@ -658,11 +689,11 @@ package body Commands.Custom is
       Default_Show_Command : Boolean) return Command_Component
    is
       Output       : constant String :=
-                       Get_Attribute_S (Command, "output", "@@");
+        Get_Attribute_S (Command, "output", "@@");
       Script       : constant String :=
-                       Get_Attribute_S (Command, "lang", GPS_Shell_Name);
+        Get_Attribute_S (Command, "lang", GPS_Shell_Name);
       Show_Command : constant String :=
-                       Get_Attribute_S (Command, "show-command");
+        Get_Attribute_S (Command, "show-command");
       Show_C       : Boolean := Show_Command = "true";
       Outp         : GNAT.Strings.String_Access := null;
 
@@ -675,13 +706,16 @@ package body Commands.Custom is
          Show_C := Default_Show_Command;
       end if;
 
-      return new Custom_Component_Record'
-        (Command_Component_Record with
-         The_Type     => Component_Shell,
-         Show_Command => Show_C,
-         Output       => Outp,
-         Command      => new String'(Command.Value.all),
-         Script       => Kernel.Scripts.Lookup_Scripting_Language (Script));
+      return
+        new Custom_Component_Record'
+          (Command_Component_Record
+           with
+             The_Type     => Component_Shell,
+             Show_Command => Show_C,
+             Output       => Outp,
+             Command      => new String'(Command.Value.all),
+             Script       =>
+               Kernel.Scripts.Lookup_Scripting_Language (Script));
    end Shell_From_XML;
 
    -----------------------
@@ -694,29 +728,25 @@ package body Commands.Custom is
       Default_Show_Command         : Boolean) return Command_Component
    is
       Output            : constant String :=
-                            Get_Attribute_S (Command, "output", "@@");
+        Get_Attribute_S (Command, "output", "@@");
       Show_Command      : constant String :=
-                            Get_Attribute_S (Command, "show-command");
+        Get_Attribute_S (Command, "show-command");
       Show_C            : Boolean := Show_Command = "true";
       Show_Task_Manager : constant String :=
-                            Get_Attribute_S (Command, "show-task-manager");
+        Get_Attribute_S (Command, "show-task-manager");
       Show_TM           : Boolean := Show_Task_Manager = "true";
       Progress_Regexp   : constant String :=
-                            Get_Attribute_S (Command, "progress-regexp", "");
+        Get_Attribute_S (Command, "progress-regexp", "");
       Progress_Current  : constant Integer :=
-                            Safe_Value
-                              (Get_Attribute_S
-                                 (Command, "progress-current", "1"));
+        Safe_Value (Get_Attribute_S (Command, "progress-current", "1"));
       Progress_Final    : constant Integer :=
         Safe_Value (Get_Attribute_S (Command, "progress-final", "2"));
       Progress_Hide     : constant Boolean :=
-                            Get_Attribute_S
-                              (Command, "progress-hide", "true") = "true";
+        Get_Attribute_S (Command, "progress-hide", "true") = "true";
       Server            : constant String :=
-                            Get_Attribute_S (Command, "server", "gps_server");
+        Get_Attribute_S (Command, "server", "gps_server");
       Check_Password    : constant Boolean :=
-                            Get_Attribute_S
-                              (Command, "check-password", "false") = "true";
+        Get_Attribute_S (Command, "check-password", "false") = "true";
       Outp              : GNAT.Strings.String_Access := null;
       Server_T          : Server_Type;
    begin
@@ -739,19 +769,21 @@ package body Commands.Custom is
             Server_T := GPS_Server;
       end;
 
-      return new Custom_Component_Record'
-        (Command_Component_Record with
-         The_Type             => Component_External,
-         Server               => Server_T,
-         Check_Password       => Check_Password,
-         Show_Command         => Show_C,
-         Output               => Outp,
-         Command              => new String'(Command.Value.all),
-         Show_In_Task_Manager => Show_TM,
-         Progress_Regexp      => new String'(Progress_Regexp),
-         Progress_Current     => Progress_Current,
-         Progress_Final       => Progress_Final,
-         Progress_Hide        => Progress_Hide);
+      return
+        new Custom_Component_Record'
+          (Command_Component_Record
+           with
+             The_Type             => Component_External,
+             Server               => Server_T,
+             Check_Password       => Check_Password,
+             Show_Command         => Show_C,
+             Output               => Outp,
+             Command              => new String'(Command.Value.all),
+             Show_In_Task_Manager => Show_TM,
+             Progress_Regexp      => new String'(Progress_Regexp),
+             Progress_Current     => Progress_Current,
+             Progress_Final       => Progress_Final,
+             Progress_Hide        => Progress_Hide);
    end External_From_XML;
 
    --------------
@@ -771,42 +803,45 @@ package body Commands.Custom is
       On_Failure : Integer := -1;
    begin
       while N /= null loop
-         if N.Tag.all = "shell"
-           or else N.Tag.all = "external"
-         then
+         if N.Tag.all = "shell" or else N.Tag.all = "external" then
             Count := Count + 1;
 
          elsif N.Tag.all = "on-failure" then
-            if N.Value /= null
-              and then N.Value.all /= ""
-            then
-               Insert (Kernel,
-                       "<on-failure> can only contain <shell> and <external>"
-                       & " tags, not a string, in definition of action """
-                       & Name & """",
-                       Mode => Error);
+            if N.Value /= null and then N.Value.all /= "" then
+               Insert
+                 (Kernel,
+                  "<on-failure> can only contain <shell> and <external>"
+                  & " tags, not a string, in definition of action """
+                  & Name
+                  & """",
+                  Mode => Error);
                return new Components_Array (1 .. 0);
             end if;
 
             M := N.Child;
             while M /= null loop
-               if M.Tag.all = "shell"
-                 or else M.Tag.all = "external"
-               then
+               if M.Tag.all = "shell" or else M.Tag.all = "external" then
                   Count := Count + 1;
 
                elsif M.Tag.all = "on-failure" then
-                  Insert (Kernel,
-                          "Nested <on-failure> nodes not supported, in "
-                          & "definition of action """ & Name & """",
-                          Mode => Error);
+                  Insert
+                    (Kernel,
+                     "Nested <on-failure> nodes not supported, in "
+                     & "definition of action """
+                     & Name
+                     & """",
+                     Mode => Error);
                   return new Components_Array (1 .. 0);
 
                else
-                  Insert (Kernel,
-                          "Unknown tag in action definition: " & M.Tag.all
-                          & " in definition of action """ & Name & """",
-                          Mode => Error);
+                  Insert
+                    (Kernel,
+                     "Unknown tag in action definition: "
+                     & M.Tag.all
+                     & " in definition of action """
+                     & Name
+                     & """",
+                     Mode => Error);
                   return new Components_Array (1 .. 0);
                end if;
 
@@ -822,10 +857,14 @@ package body Commands.Custom is
             null;
 
          else
-            Insert (Kernel,
-                    "Unknown tag " & N.Tag.all & " in definition of action """
-                    & Name & """",
-                    Mode => Error);
+            Insert
+              (Kernel,
+               "Unknown tag "
+               & N.Tag.all
+               & " in definition of action """
+               & Name
+               & """",
+               Mode => Error);
             return new Components_Array (1 .. 0);
          end if;
          N := N.Next;
@@ -842,22 +881,27 @@ package body Commands.Custom is
             Count := Count + 1;
 
          elsif N.Tag.all = "external" then
-            Result (Count) := (External_From_XML
-              (N,
-               Default_Show_In_Task_Manager => Default_Show_In_Task_Manager,
-               Default_Show_Command         => Default_Show_Command),
-              -1);
+            Result (Count) :=
+              (External_From_XML
+                 (N,
+                  Default_Show_In_Task_Manager => Default_Show_In_Task_Manager,
+                  Default_Show_Command         => Default_Show_Command),
+               -1);
             Count := Count + 1;
 
          elsif N.Tag.all = "on-failure" then
             if Count = Result'First
-              or else Custom_Component (Result (Count - 1).Component).The_Type
+              or else
+                Custom_Component (Result (Count - 1).Component).The_Type
                 /= Component_External
             then
-               Insert (Kernel,
-                       "<on-failure> can only follow an <external> node, in"
-                       & " definition of action """ & Name & """",
-                       Mode => Error);
+               Insert
+                 (Kernel,
+                  "<on-failure> can only follow an <external> node, in"
+                  & " definition of action """
+                  & Name
+                  & """",
+                  Mode => Error);
                return new Components_Array (1 .. 0);
             end if;
 
@@ -872,12 +916,13 @@ package body Commands.Custom is
                   Count := Count + 1;
 
                elsif M.Tag.all = "external" then
-                  Result (Count) := (External_From_XML
-                    (M,
-                       Default_Show_In_Task_Manager =>
-                         Default_Show_In_Task_Manager,
-                       Default_Show_Command         => Default_Show_Command),
-                    On_Failure);
+                  Result (Count) :=
+                    (External_From_XML
+                       (M,
+                        Default_Show_In_Task_Manager =>
+                          Default_Show_In_Task_Manager,
+                        Default_Show_Command         => Default_Show_Command),
+                     On_Failure);
                   Count := Count + 1;
                end if;
 
@@ -910,32 +955,34 @@ package body Commands.Custom is
       Item.Default_Show_Command := Show_Command;
       Item.Name := new String'(Name);
       Item.Active := Active;
-      Item.Components := From_XML
-        (Kernel, Command, Name,
-         Default_Show_In_Task_Manager => Show_In_Task_Manager,
-         Default_Show_Command         => Show_Command);
+      Item.Components :=
+        From_XML
+          (Kernel,
+           Command,
+           Name,
+           Default_Show_In_Task_Manager => Show_In_Task_Manager,
+           Default_Show_Command         => Show_Command);
    end Create;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Custom_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Custom_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       Success        : Boolean := True;
       Current_Server : Server_Type := GPS_Server;
       Old_Server     : Server_Type := GPS_Server;
 
       function Dollar_Substitution
-        (Param : String;
-         Mode  : Command_Line_Mode) return Arg_List;
+        (Param : String; Mode : Command_Line_Mode) return Arg_List;
       --  Substitution function for the "$1" .. "$N", "$*", "$@" parameters
 
       function Substitution
-        (Param  : String;
-         Mode   : Command_Line_Mode) return Arg_List;
+        (Param : String; Mode : Command_Line_Mode) return Arg_List;
       --  Substitution function for '%1', '%2',...
 
       function Execute_Simple_Command
@@ -955,15 +1002,14 @@ package body Commands.Custom is
       -------------------------
 
       function Dollar_Substitution
-        (Param : String;
-         Mode  : Command_Line_Mode) return Arg_List
+        (Param : String; Mode : Command_Line_Mode) return Arg_List
       is
          Is_Num    : Boolean;
          Result    : Natural;
          Multiple  : Boolean := False;
          First_Arg : Natural := 1;
 
-         CL        : Arg_List;
+         CL : Arg_List;
          pragma Unreferenced (Mode);
       begin
          if Param = "repeat" then
@@ -982,13 +1028,13 @@ package body Commands.Custom is
          elsif Param (Param'Last) = '-' then
             Multiple := True;
 
-            First_Arg := Safe_Value
-              (Param (Param'First .. Param'Last - 1), Param'Length + 1);
+            First_Arg :=
+              Safe_Value
+                (Param (Param'First .. Param'Last - 1), Param'Length + 1);
          end if;
 
          if Multiple then
-            for J in
-              Context.Args'First - 1 + First_Arg .. Context.Args'Last
+            for J in Context.Args'First - 1 + First_Arg .. Context.Args'Last
             loop
                if Context.Args (J) /= null then
                   Append_Argument (CL, Context.Args (J).all, Expandable);
@@ -1025,16 +1071,18 @@ package body Commands.Custom is
       ------------------
 
       function Substitution
-        (Param  : String;
-         Mode   : Command_Line_Mode) return Arg_List
+        (Param : String; Mode : Command_Line_Mode) return Arg_List
       is
          Num   : Integer;
          Done  : aliased Boolean := False;
          Macro : constant String :=
-                   Substitute
-                     (Param, Command.Execution.Context,
-                      False, Done'Access, Current_Server,
-                      For_Shell => False);
+           Substitute
+             (Param,
+              Command.Execution.Context,
+              False,
+              Done'Access,
+              Current_Server,
+              For_Shell => False);
       begin
          if Done then
             if Macro = "" then
@@ -1047,8 +1095,8 @@ package body Commands.Custom is
          Num := Safe_Value (Param, Default => 0);
 
          declare
-            Output_Index : constant Integer := Output_Substitution
-              (Command, Command.Execution.Cmd_Index, Num);
+            Output_Index : constant Integer :=
+              Output_Substitution (Command, Command.Execution.Cmd_Index, Num);
             Output       : GNAT.Strings.String_Access;
          begin
             if Output_Index = -1 then
@@ -1119,8 +1167,8 @@ package body Commands.Custom is
                Treatment := Separate_Args;
             end if;
 
-            The_Command_Line := Parse_String
-              (Component.Command.all, Treatment);
+            The_Command_Line :=
+              Parse_String (Component.Command.all, Treatment);
 
             --  Implement $-substitution
             Substitute
@@ -1147,23 +1195,23 @@ package body Commands.Custom is
                      Add_LF => True);
                end if;
 
-               if Command.Execution.Save_Output
-                 (Command.Execution.Cmd_Index)
+               if Command.Execution.Save_Output (Command.Execution.Cmd_Index)
                then
                   Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
                     new String'
                       (Execute_Command
-                           (Component.Script,
-                            The_Command_Line,
-                            Hide_Output  => Output_Location.all = No_Output,
-                            Show_Command => Component.Show_Command,
-                            Console      =>
-                              Get_Or_Create_Virtual_Console (Console),
-                            Errors       => Errors'Unchecked_Access));
+                         (Component.Script,
+                          The_Command_Line,
+                          Hide_Output  => Output_Location.all = No_Output,
+                          Show_Command => Component.Show_Command,
+                          Console      =>
+                            Get_Or_Create_Virtual_Console (Console),
+                          Errors       => Errors'Unchecked_Access));
 
                else
                   Execute_Command
-                    (Component.Script, The_Command_Line,
+                    (Component.Script,
+                     The_Command_Line,
                      Hide_Output  => Output_Location.all = No_Output,
                      Show_Command => Component.Show_Command,
                      Console      => Get_Or_Create_Virtual_Console (Console),
@@ -1187,12 +1235,13 @@ package body Commands.Custom is
          is
             Data : Custom_Callback_Data_Access;
          begin
-            The_Command_Line := Parse_String
-              (Trim
-                 (Component.Command.all,
-                  Left  => To_Set (' ' & ASCII.LF & ASCII.HT),
-                  Right => Strings.Maps.Null_Set),
-               Separate_Args);
+            The_Command_Line :=
+              Parse_String
+                (Trim
+                   (Component.Command.all,
+                    Left  => To_Set (' ' & ASCII.LF & ASCII.HT),
+                    Right => Strings.Maps.Null_Set),
+                 Separate_Args);
 
             --  Implement $-substitution
             Substitute
@@ -1213,16 +1262,18 @@ package body Commands.Custom is
             Unchecked_Free (Command.Execution.Progress_Matcher);
             Command.Execution.Current_In_Regexp :=
               Integer'Max (0, Component.Progress_Current);
-            Command.Execution.Total_In_Regexp   :=
+            Command.Execution.Total_In_Regexp :=
               Integer'Max (0, Component.Progress_Final);
-            Command.Execution.Hide_Progress     := Component.Progress_Hide;
-            Command.Execution.Check_Password    := Component.Check_Password;
-            Command.Execution.Nb_Password       := 0;
+            Command.Execution.Hide_Progress := Component.Progress_Hide;
+            Command.Execution.Check_Password := Component.Check_Password;
+            Command.Execution.Nb_Password := 0;
 
             if Component.Progress_Regexp.all /= "" then
-               Command.Execution.Progress_Matcher := new Pattern_Matcher'
-                 (Compile (Component.Progress_Regexp.all,
-                           Multiple_Lines or Single_Line));
+               Command.Execution.Progress_Matcher :=
+                 new Pattern_Matcher'
+                   (Compile
+                      (Component.Progress_Regexp.all,
+                       Multiple_Lines or Single_Line));
             end if;
 
             if The_Command_Line = Empty_Command_Line then
@@ -1237,9 +1288,10 @@ package body Commands.Custom is
 
                Command.Execution.External_Process_Console := Console;
 
-               Data := new Custom_Callback_Data'
-                 (External_Process_Data with
-                  Command => Custom_Command_Access (Command));
+               Data :=
+                 new Custom_Callback_Data'
+                   (External_Process_Data
+                    with Command => Custom_Command_Access (Command));
 
                Launch_Process
                  (Kernel               => Command.Kernel,
@@ -1258,8 +1310,8 @@ package body Commands.Custom is
                   Show_In_Task_Manager => Component.Show_In_Task_Manager,
                   Line_By_Line         => False,
                   Synchronous          => Context.Synchronous,
-                  Directory            => To_Remote
-                    (Context.Dir, Get_Nickname (Component.Server)),
+                  Directory            =>
+                    To_Remote (Context.Dir, Get_Nickname (Component.Server)),
                   Scheduled            => Command.Sub_Command);
 
                Command.Execution.External_Process_In_Progress := Success;
@@ -1276,8 +1328,8 @@ package body Commands.Custom is
          end if;
 
          if Success and then Output_Location.all /= No_Output then
-            Console := Create_Interactive_Console
-              (Command.Kernel, Output_Location.all);
+            Console :=
+              Create_Interactive_Console (Command.Kernel, Output_Location.all);
          end if;
 
          --  If substitution failed
@@ -1287,13 +1339,13 @@ package body Commands.Custom is
          end if;
 
          case Component.The_Type is
-            when Component_Shell =>
+            when Component_Shell    =>
                Success := Execute_Shell (Component.all);
 
             when Component_External =>
-               Old_Server     := Current_Server;
+               Old_Server := Current_Server;
                Current_Server := Component.Server;
-               Success        := Execute_External (Component.all);
+               Success := Execute_External (Component.all);
                Current_Server := Old_Server;
          end case;
 
@@ -1307,10 +1359,11 @@ package body Commands.Custom is
       exception
          when E : others =>
             Trace (Me, E);
-            Insert (Command.Kernel,
-                    -("An unexpected error occurred while executing the custom"
-                      & " command. See the log file for more information."),
-                    Mode => Error);
+            Insert
+              (Command.Kernel,
+               -("An unexpected error occurred while executing the custom"
+                 & " command. See the log file for more information."),
+               Mode => Error);
             return False;
       end Execute_Simple_Command;
 
@@ -1326,12 +1379,13 @@ package body Commands.Custom is
          loop
             Current := Command.Components (Command.Execution.Cmd_Index);
             if Current.On_Failure_For = Command.Execution.Current_Failure then
-               Success := Execute_Simple_Command
-                 (Custom_Component (Current.Component));
+               Success :=
+                 Execute_Simple_Command (Custom_Component (Current.Component));
 
                if not Context.Synchronous
-                 and then Custom_Component (Current.Component).The_Type =
-                   Component_External
+                 and then
+                   Custom_Component (Current.Component).The_Type
+                   = Component_External
                then
                   --  We'll have to run again to check for completion
                   return True;
@@ -1343,8 +1397,8 @@ package body Commands.Custom is
 
             if Context.Synchronous
               and then
-                Custom_Component (Current.Component).The_Type =
-                Component_External
+                Custom_Component (Current.Component).The_Type
+                = Component_External
             then
                Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
                  Command.Execution.Current_Output;
@@ -1377,7 +1431,8 @@ package body Commands.Custom is
 
       Old_Dir : Virtual_File;
 
-   begin  --  Execute
+   begin
+      --  Execute
       --  If there was an external command executing:
       if Command.Execution /= null then
          if Command.Execution.External_Process_In_Progress then
@@ -1411,7 +1466,7 @@ package body Commands.Custom is
          end if;
 
          Command.Execution := new Custom_Command_Execution_Record;
-         Command.Execution.Outputs     :=
+         Command.Execution.Outputs :=
            new GNAT.Strings.String_List (Command.Components'Range);
          Command.Execution.Save_Output :=
            new Boolean_Array (Command.Components'Range);
@@ -1422,7 +1477,7 @@ package body Commands.Custom is
             Command.Execution.Context := Context.Context;
          end if;
 
-         Command.Execution.Cmd_Index  := Command.Components'First;
+         Command.Execution.Cmd_Index := Command.Components'First;
 
          Check_Save_Output (Command, Command.Execution.Save_Output.all);
          Clear_Consoles (Command.Kernel, Command);
@@ -1447,7 +1502,8 @@ package body Commands.Custom is
    -- Name --
    ----------
 
-   overriding function Name (Command : access Custom_Command) return String is
+   overriding
+   function Name (Command : access Custom_Command) return String is
    begin
       return Command.Name.all;
    end Name;
@@ -1456,7 +1512,8 @@ package body Commands.Custom is
    -- Interrupt --
    ---------------
 
-   overriding procedure Interrupt (Command : in out Custom_Command) is
+   overriding
+   procedure Interrupt (Command : in out Custom_Command) is
    begin
       if Command.Execution /= null then
          Command.Execution.Cmd_Index := Command.Components'First;

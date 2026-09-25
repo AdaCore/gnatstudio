@@ -21,9 +21,10 @@ package body Completion.C is
    -- Get_Initial_Completion_List --
    ---------------------------------
 
-   overriding function Get_Initial_Completion_List
-     (Manager : access C_Completion_Manager;
-      Context : Completion_Context) return Completion_List
+   overriding
+   function Get_Initial_Completion_List
+     (Manager : access C_Completion_Manager; Context : Completion_Context)
+      return Completion_List
    is
       Result : Completion_List;
 

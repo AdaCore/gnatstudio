@@ -24,14 +24,14 @@ with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with Command_Lines;
-with GNAT.Strings;      use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 private with Shared_Macros;
 
 package Switches_Chooser is
 
    type Switches_Editor_Config_Record (<>) is tagged private;
    type Switches_Editor_Config is
-      access all Switches_Editor_Config_Record'Class;
+     access all Switches_Editor_Config_Record'Class;
 
    type Popup_Index is private;
    Main_Window : constant Popup_Index;
@@ -74,13 +74,9 @@ package Switches_Chooser is
    --  Does nothing for now, but at least ensures that appropriate calls are
    --  done where needed.
 
-   procedure Define_Prefix
-     (Config : Switches_Editor_Config;
-      Prefix : String);
+   procedure Define_Prefix (Config : Switches_Editor_Config; Prefix : String);
    procedure Define_Alias
-     (Config   : Switches_Editor_Config;
-      Switch   : String;
-      Expanded : String);
+     (Config : Switches_Editor_Config; Switch : String; Expanded : String);
    --  Define_Prefix and Define_Alias are wrappers to actual calls performed
    --  on Config.Config. See Gnat.Command_Line for documentation.
 
@@ -153,12 +149,12 @@ package Switches_Chooser is
 
    type Radio_Switch is private;
    function Add_Radio
-     (Config    : Switches_Editor_Config;
-      Label     : String;
-      Tip       : String;
-      Line      : Positive := 1;
-      Column    : Positive := 1;
-      Popup     : Popup_Index := Main_Window) return Radio_Switch;
+     (Config : Switches_Editor_Config;
+      Label  : String;
+      Tip    : String;
+      Line   : Positive := 1;
+      Column : Positive := 1;
+      Popup  : Popup_Index := Main_Window) return Radio_Switch;
    procedure Add_Radio_Entry
      (Config     : Switches_Editor_Config;
       Radio      : Radio_Switch;
@@ -211,11 +207,11 @@ package Switches_Chooser is
    --  the command line.
 
    function Add_Popup
-     (Config        : Switches_Editor_Config;
-      Label         : String;
-      Line          : Positive := 1;
-      Column        : Positive := 1;
-      Popup         : Popup_Index := Main_Window) return Popup_Index;
+     (Config : Switches_Editor_Config;
+      Label  : String;
+      Line   : Positive := 1;
+      Column : Positive := 1;
+      Popup  : Popup_Index := Main_Window) return Popup_Index;
    --  Adds a new button, which, when clicked, displays a popup window with
    --  additional switches. These additional switches can be set by passing
    --  the returned value as the Popup parameter to the subprograms in this
@@ -247,12 +243,12 @@ package Switches_Chooser is
    --  builder, "-g" will also be forced for the compiler.
 
    procedure Add_Default_Value_Dependency
-     (Config         : Switches_Editor_Config;
-      Switch         : String;
-      Section        : String;
-      Slave_Switch   : String;
-      Slave_Section  : String;
-      Slave_Status   : Boolean := True);
+     (Config        : Switches_Editor_Config;
+      Switch        : String;
+      Section       : String;
+      Slave_Switch  : String;
+      Slave_Section : String;
+      Slave_Status  : Boolean := True);
    --  Add dependency between two switches: if Switch's status becomes
    --  Status, then Slave_Switch will have its default value set to
    --  Slave_Status.
@@ -270,8 +266,8 @@ package Switches_Chooser is
       --  So that your editor itself is a widget
    package Switches_Editors is
       type Root_Switches_Editor is abstract new Root_Editor with private;
-      type Root_Switches_Editor_Access is access all
-        Root_Switches_Editor'Class;
+      type Root_Switches_Editor_Access is
+        access all Root_Switches_Editor'Class;
       --  A graphical window representing a switches editor. This type is
       --  abstract because it isn't directly related to any GUI toolkit, and
       --  thus needs to be instanced. But it provides services to be used by
@@ -280,8 +276,7 @@ package Switches_Chooser is
       --  Root_Widget
 
       procedure Set_Command_Line
-        (Editor   : access Root_Switches_Editor;
-         Cmd_Line : String);
+        (Editor : access Root_Switches_Editor; Cmd_Line : String);
       procedure Set_Command_Line
         (Editor         : access Root_Switches_Editor;
          Cmd_Line       : GNAT.Strings.String_List;
@@ -292,20 +287,19 @@ package Switches_Chooser is
       --  command line to a string to be displayed in the entry.
 
       function "="
-        (Editor : access Root_Switches_Editor;
-         Args   : GNAT.Strings.String_List) return Boolean;
+        (Editor : access Root_Switches_Editor; Args : GNAT.Strings.String_List)
+         return Boolean;
       --  Whether Editor's command line is exactly equivalent to Args.
       --  This properly ungroup arguments from Args, so that the expanded
       --  command lines are compared.
 
       function Get_Config
-        (Editor : access Root_Switches_Editor)
-         return Switches_Editor_Config;
+        (Editor : access Root_Switches_Editor) return Switches_Editor_Config;
       --  Return the switches configuration used for this editor
 
       function Get_Command_Line
-        (Editor   : access Root_Switches_Editor;
-         Expanded : Boolean) return GNAT.Strings.String_List_Access;
+        (Editor : access Root_Switches_Editor; Expanded : Boolean)
+         return GNAT.Strings.String_List_Access;
       --  Return the command line. Result value must be freed by the user
 
       ------------------------------
@@ -314,8 +308,8 @@ package Switches_Chooser is
       ------------------------------
 
       procedure Initialize
-        (Editor    : in out Root_Switches_Editor;
-         Config    : Switches_Editor_Config);
+        (Editor : in out Root_Switches_Editor;
+         Config : Switches_Editor_Config);
       --  Initialize the editor
 
       procedure Set_Widget
@@ -337,31 +331,30 @@ package Switches_Chooser is
       --  whether the switch should be on the command line.
 
       function Get_Tool_By_Name
-        (Editor          : Root_Switches_Editor;
-         Dummy_Tool_Name : String)
-         return Root_Switches_Editor_Access is (null);
+        (Editor : Root_Switches_Editor; Dummy_Tool_Name : String)
+         return Root_Switches_Editor_Access
+      is (null);
       --  Return the editor for the switches of Tool. By default, this returns
       --  null. When the editor is found, it is possible that changing some
       --  switches in Editor will also impact switches from the returned editor
       --  depending on how the dependencies were set up.
 
       procedure On_Command_Line_Changed
-        (Editor    : in out Root_Switches_Editor;
-         Cmd_Line  : String);
+        (Editor : in out Root_Switches_Editor; Cmd_Line : String);
       procedure On_Command_Line_Changed
-        (Editor    : in out Root_Switches_Editor'Class);
+        (Editor : in out Root_Switches_Editor'Class);
       --  The command line widget was typed in by the user, and we need to
       --  reflect the new list of switches on the widgets.
       --  The second version is only used to refresh the widgets, from an
       --  already parsed command line.
 
       procedure Update_Graphical_Command_Line
-        (Editor    : in out Root_Switches_Editor);
+        (Editor : in out Root_Switches_Editor);
       --  Recompute what should be displayed in the command line widget
 
       procedure Set_Graphical_Command_Line
-        (Editor    : in out Root_Switches_Editor;
-         Cmd_Line  : String) is abstract;
+        (Editor : in out Root_Switches_Editor; Cmd_Line : String)
+      is abstract;
       --  Show Cmd_Line in the graphical widget showing the current command
       --  line. No update of the other widgets should take place
 
@@ -370,7 +363,8 @@ package Switches_Chooser is
          Widget     : access Root_Widget_Record'Class;
          Switch     : Switch_Type;
          Parameter  : String;
-         Is_Default : Boolean := False) is abstract;
+         Is_Default : Boolean := False)
+      is abstract;
       --  Change Widget so that it shows the value of Parameter. The exact
       --  meaning of Parameter depends on the type of Switch
       --  Is_Default tells if the parameter corresponds to a default value.
@@ -381,95 +375,75 @@ package Switches_Chooser is
       type Widget_Array_Access is access Widget_Array;
 
       type Root_Switches_Editor is abstract new Root_Editor with record
-         Config     : Switches_Editor_Config;
-         Cmd_Line   : Command_Lines.Command_Line;
-         Widgets    : Widget_Array_Access;
-         Block      : Boolean := False;
+         Config   : Switches_Editor_Config;
+         Cmd_Line : Command_Lines.Command_Line;
+         Widgets  : Widget_Array_Access;
+         Block    : Boolean := False;
       end record;
    end Switches_Editors;
 
    type Switch_Description (<>) is tagged private;
 
    function Get_Switches_Element
-     (Switches : Switches_Editor_Config;
-      Index : Natural)
+     (Switches : Switches_Editor_Config; Index : Natural)
       return Switch_Description;
    --  Switches_Editor_Config object Switches field Element at Index getter
 
-   function Get_Switch
-     (Switch : Switch_Description) return String;
+   function Get_Switch (Switch : Switch_Description) return String;
    --  Switch_Description object Switch field getter
 
-   function Get_Label
-     (Switch : Switch_Description) return String;
+   function Get_Label (Switch : Switch_Description) return String;
    --  Switch_Description object Label field getter
 
-   function Get_Tip
-     (Switch : Switch_Description) return String;
+   function Get_Tip (Switch : Switch_Description) return String;
    --  Switch_Description object Tip field getter
 
-   function Get_Section
-     (Switch : Switch_Description) return String;
+   function Get_Section (Switch : Switch_Description) return String;
    --  Switch_Description object Section field getter
 
-   function Is_Add_First
-     (Switch : Switch_Description) return Boolean;
+   function Is_Add_First (Switch : Switch_Description) return Boolean;
    --  Switch_Description object Add_First field getter
 
-   function Get_Line
-     (Switch : Switch_Description) return Positive;
+   function Get_Line (Switch : Switch_Description) return Positive;
    --  Switch_Description object Line field getter
 
-   function Get_Column
-     (Switch : Switch_Description) return Positive;
+   function Get_Column (Switch : Switch_Description) return Positive;
    --  Switch_Description object Column field getter
 
-   function Get_Separator
-     (Switch : Switch_Description) return String;
+   function Get_Separator (Switch : Switch_Description) return String;
    --  Switch_Description object Separator field getter
 
-   function Get_Type
-     (Switch : Switch_Description) return Switch_Type;
+   function Get_Type (Switch : Switch_Description) return Switch_Type;
    --  Switch_Description object Switches_Element field getter
 
-   function Get_Switch_Unset
-     (Switch : Switch_Description) return String;
+   function Get_Switch_Unset (Switch : Switch_Description) return String;
    --  Switch_Description object Switch_Unset field getter (Type=Switch_Check)
 
-   function Get_Default_State
-     (Switch : Switch_Description) return Boolean;
+   function Get_Default_State (Switch : Switch_Description) return Boolean;
    --  Switch_Description object Default_State field getter (Type=Switch_Check)
 
-   function Get_Initial_State
-     (Switch : Switch_Description) return Boolean;
+   function Get_Initial_State (Switch : Switch_Description) return Boolean;
    --  Switch_Description object Initial_State field getter (Type=Switch_Check)
 
-   function Is_Field_As_Directory
-     (Switch : Switch_Description) return Boolean;
+   function Is_Field_As_Directory (Switch : Switch_Description) return Boolean;
    --  Switch_Description object Field_As_Directory field getter (Switch_Field)
 
-   function Is_Field_As_File
-     (Switch : Switch_Description) return Boolean;
+   function Is_Field_As_File (Switch : Switch_Description) return Boolean;
    --  Switch_Description object Field_As_File field getter (Switch_Field)
 
-   function Get_Spin_Min
-     (Switch : Switch_Description) return Integer;
+   function Get_Spin_Min (Switch : Switch_Description) return Integer;
    --  Switch_Description object Spin_Min field getter
 
-   function Get_Spin_Max
-     (Switch : Switch_Description) return Integer;
+   function Get_Spin_Max (Switch : Switch_Description) return Integer;
    --  Switch_Description object Spin_Max field getter
 
-   function Get_Spin_Default
-     (Switch : Switch_Description) return Integer;
+   function Get_Spin_Default (Switch : Switch_Description) return Integer;
    --  Switch_Description object Spin_Default field getter
 
-   function Get_Combo_No_Switch
-     (Switch : Switch_Description) return String;
+   function Get_Combo_No_Switch (Switch : Switch_Description) return String;
    --  Switch_Description object Combo_No_Switch field getter
 
-   function Get_Combo_No_Digit
-     (Switch : Switch_Description) return String;
+   function Get_Combo_No_Digit (Switch : Switch_Description) return String;
    --  Switch_Description object Combo_No_Digit field getter
 
    function Get_Combo_Entries
@@ -479,71 +453,55 @@ package Switches_Chooser is
    type Frame_Description is tagged private;
 
    function Get_Frames_Element
-     (Switches : Switches_Editor_Config;
-      Index : Natural)
+     (Switches : Switches_Editor_Config; Index : Natural)
       return Frame_Description;
    --  Switches_Editor_Config object Frames field Element at index getter
 
-   function Get_Title
-     (Frame : Frame_Description) return String;
+   function Get_Title (Frame : Frame_Description) return String;
    --  Frame_Desription object Title field getter
 
-   function Get_Line
-     (Frame : Frame_Description) return Positive;
+   function Get_Line (Frame : Frame_Description) return Positive;
    --  Frame_Desription object Line field getter
 
-   function Get_Column
-     (Frame : Frame_Description) return Positive;
+   function Get_Column (Frame : Frame_Description) return Positive;
    --  Frame_Desription object Column field getter
 
-   function Get_Lines
-     (Switches : Switches_Editor_Config)
-      return Positive;
+   function Get_Lines (Switches : Switches_Editor_Config) return Positive;
    --  Switches_Editor_Config object Lines field getter
 
-   function Get_Columns
-     (Switches : Switches_Editor_Config)
-      return Positive;
+   function Get_Columns (Switches : Switches_Editor_Config) return Positive;
    --  Switches_Editor_Config object Columns field getter
 
    function Is_Show_Command_Line
-     (Switches : Switches_Editor_Config)
-      return Boolean;
+     (Switches : Switches_Editor_Config) return Boolean;
    --  Switches_Editor_Config object Show_Command_Line field getter
 
    function Get_Default_Separator
-     (Switches : Switches_Editor_Config)
-      return String;
+     (Switches : Switches_Editor_Config) return String;
    --  Switches_Editor_Config object Default_Separator field getter
 
-   function Get_Sections
-     (Switches : Switches_Editor_Config)
-      return String;
+   function Get_Sections (Switches : Switches_Editor_Config) return String;
    --  Switches_Editor_Config object Sections field getter
 
    function Is_Scrolled_Window
-     (Switches : Switches_Editor_Config)
-      return Boolean;
+     (Switches : Switches_Editor_Config) return Boolean;
    --  Switches_Editor_Config object Scrolled_Window field getter
 
    function Get_Switch_Char
-     (Switches : Switches_Editor_Config)
-      return Character;
+     (Switches : Switches_Editor_Config) return Character;
    --  Switches_Editor_Config object Switch_Char field getter
 
    function Get_Frames_Length
-     (Switches : Switches_Editor_Config)
-      return Ada.Containers.Count_Type;
+     (Switches : Switches_Editor_Config) return Ada.Containers.Count_Type;
    --  Switches_Editor_Config object Frames vector length getter
 
    function Get_Switches_Length
-     (Switches : Switches_Editor_Config)
-     return Ada.Containers.Count_Type;
+     (Switches : Switches_Editor_Config) return Ada.Containers.Count_Type;
    --  Switches_Editor_Config object Switches vector length getter
 
    function Empty_Command_Line
      (Switches : not null access Switches_Editor_Config_Record'Class)
-     return Command_Lines.Command_Line;
+      return Command_Lines.Command_Line;
    --  Return empty command line configured using current settings of
    --  given Switches_Editor_Config
 
@@ -582,49 +540,81 @@ package Switches_Chooser is
    function First
      (Config : Switches_Editor_Config) return Switch_Filter_Cursor;
    procedure Next (Cursor : in out Switch_Filter_Cursor);
-   function Has_Element
-     (Cursor : Switch_Filter_Cursor) return Boolean;
+   function Has_Element (Cursor : Switch_Filter_Cursor) return Boolean;
    function Element
      (Cursor : Switch_Filter_Cursor) return Switch_Filter_Description;
    --  Standard iteration support for switch filters
 
 private
-   LF : constant Character := ASCII.LF;
+   LF                               : constant Character := ASCII.LF;
    Command_Line_Editor_Tooltip_Text : aliased constant String :=
-        "%subdir subdirectory of obj dir where object files are stored" & LF
-      & "%subdirsarg  switch --subdirs=..." & LF
-      & "%X      switches -Xname=value for scenario variables" & LF
-      & "%vars   list of name=value for scenario variables" & LF
-      & "%vars(-D) switches -Dname=value for scenario variables" & LF
-      & "%eL     switch -eL, if fast project loading is set" & LF
+     "%subdir subdirectory of obj dir where object files are stored"
+     & LF
+     & "%subdirsarg  switch --subdirs=..."
+     & LF
+     & "%X      switches -Xname=value for scenario variables"
+     & LF
+     & "%vars   list of name=value for scenario variables"
+     & LF
+     & "%vars(-D) switches -Dname=value for scenario variables"
+     & LF
+     & "%eL     switch -eL, if fast project loading is set"
+     & LF
 
-      & LF & "Project attributes" & LF
-      & "%attr(pkg'name[,default])     value of a specific attribute" & LF
-      & "%dirattr(pkg'name[,default])  dirname of a specific attribute" & LF
-      & "%baseattr(pkg'name[,default]) base name of a specific attribute" & LF
-      & "%switches(tool)  value for attribute Ide'default_switches(tool)" & LF
+     & LF
+     & "Project attributes"
+     & LF
+     & "%attr(pkg'name[,default])     value of a specific attribute"
+     & LF
+     & "%dirattr(pkg'name[,default])  dirname of a specific attribute"
+     & LF
+     & "%baseattr(pkg'name[,default]) base name of a specific attribute"
+     & LF
+     & "%switches(tool)  value for attribute Ide'default_switches(tool)"
+     & LF
 
-      & LF & "Compilation (when building, only)" & LF
-      & "%builder  default language builder (gnatmake or gprbuild)" & LF
-      & "%gprbuild gprbuild command" & LF
-      & "%gnatmake gnatmake command" & LF
-      & "%gprclean clean command (gprclean or gnat clean)" & LF
-      & "%gnathub gnathub command" & LF
-      & "%external  the ""execute command"" preference" & LF
-      & "[exec_dir] exec dir from the project" & LF
-      & "%fp        base name of the file to compile" & LF
-      & "%Fp        absolute path of the file to compile" & LF
-      & "%TT        absolute path of main source to compile" & LF
-      & "%TP        absolute path of main source's project" & LF
-      & "%python(cmd) a python command that returns one string," & LF
-      & "           interpreted as a single argument, or a list of" & LF
-      & "           strings, interpreted as separate arguments" & LF
-      & "%T         base name of main source to compile" & LF
-      & "%E         full path to the executable name corresponding"
-      & " to the target" & LF
-      & "%config    configuration for builder" & LF
-      & "%autoconf  autogenerated configuration for builder" & LF
-      & LF & Shared_Macros.Doc;
+     & LF
+     & "Compilation (when building, only)"
+     & LF
+     & "%builder  default language builder (gnatmake or gprbuild)"
+     & LF
+     & "%gprbuild gprbuild command"
+     & LF
+     & "%gnatmake gnatmake command"
+     & LF
+     & "%gprclean clean command (gprclean or gnat clean)"
+     & LF
+     & "%gnathub gnathub command"
+     & LF
+     & "%external  the ""execute command"" preference"
+     & LF
+     & "[exec_dir] exec dir from the project"
+     & LF
+     & "%fp        base name of the file to compile"
+     & LF
+     & "%Fp        absolute path of the file to compile"
+     & LF
+     & "%TT        absolute path of main source to compile"
+     & LF
+     & "%TP        absolute path of main source's project"
+     & LF
+     & "%python(cmd) a python command that returns one string,"
+     & LF
+     & "           interpreted as a single argument, or a list of"
+     & LF
+     & "           strings, interpreted as separate arguments"
+     & LF
+     & "%T         base name of main source to compile"
+     & LF
+     & "%E         full path to the executable name corresponding"
+     & " to the target"
+     & LF
+     & "%config    configuration for builder"
+     & LF
+     & "%autoconf  autogenerated configuration for builder"
+     & LF
+     & LF
+     & Shared_Macros.Doc;
 
    type Radio_Switch is new Integer;
    type Popup_Index is new Integer;
@@ -644,7 +634,7 @@ private
       Separator : Ada.Strings.Unbounded.Unbounded_String;
       Popup     : Popup_Index := Main_Window;
 
-      Active    : Boolean := True;
+      Active : Boolean := True;
       --  Boolean indicating if the switch is currently valid. A non-valid
       --  switch should not be editable by the user: it's the switches editor
       --  GUI's responsability to implement this behavior.
@@ -655,25 +645,30 @@ private
             Default_State : Boolean;
             Initial_State : Boolean;
             Dependencies  : Default_Value_Dependency;
+
          when Switch_Field =>
             As_Directory  : Boolean;
             As_File       : Boolean;
             File_Filter   : Ada.Strings.Unbounded.Unbounded_String;
             Base_Dir      : Ada.Strings.Unbounded.Unbounded_String;
             Except_Filter : Ada.Strings.Unbounded.Unbounded_String;
+
          when Switch_Spin =>
             Min, Max, Default : Integer;
+
          when Switch_Radio =>
             Is_Entry : Boolean;
             Group    : Radio_Switch;
+
          when Switch_Combo =>
             No_Switch : Ada.Strings.Unbounded.Unbounded_String;
             No_Digit  : Ada.Strings.Unbounded.Unbounded_String;
             Entries   : Combo_Switch_Vectors.Vector;
+
          when Switch_Popup =>
-            To_Popup  : Popup_Index;
-            Lines     : Positive;
-            Columns   : Positive;
+            To_Popup : Popup_Index;
+            Lines    : Positive;
+            Columns  : Positive;
       end case;
    end record;
 

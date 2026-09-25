@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 
-with Glib.Object;              use Glib.Object;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Glib.Object;         use Glib.Object;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Menu;            use Gtk.Menu;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Widget;
-with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.MDI;          use Gtkada.MDI;
 
 with Commands.Interactive;     use Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
@@ -50,20 +50,23 @@ package body GNAThub.Reports.Collector is
      (Self : access GNAThub_Report_Collector'Class)
       return Gtk.Widget.Gtk_Widget;
 
-   package GNAThub_Report_Collector_Views is new Generic_Views.Simple_Views
-     (Module_Name        => "analysis_report",
-      View_Name          => "Analysis Report",
-      Formal_View_Record => GNAThub_Report_Collector,
-      Formal_MDI_Child   => GPS.Kernel.MDI.GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Local_Config       => True,
-      Areas              => Gtkada.MDI.Central_Only,
-      Position           => Gtkada.MDI.Position_Right,
-      Initialize         => Initialize);
+   package GNAThub_Report_Collector_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "analysis_report",
+        View_Name          => "Analysis Report",
+        Formal_View_Record => GNAThub_Report_Collector,
+        Formal_MDI_Child   => GPS.Kernel.MDI.GPS_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Local_Config       => True,
+        Areas              => Gtkada.MDI.Central_Only,
+        Position           => Gtkada.MDI.Position_Right,
+        Initialize         => Initialize);
 
    type Expand_Or_Collapse_Command (Command : Expansion_Command_Type) is
-     new Interactive_Command with null record;
-   overriding function Execute
+     new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Self    : access Expand_Or_Collapse_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
@@ -74,18 +77,17 @@ package body GNAThub.Reports.Collector is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access GNAThub_Report_Collector;
       Menu : not null access Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Self);
    begin
       GPS.Kernel.Preferences.Append_Menu
-        (Menu, GNAThub_Module.Kernel,
-         GNAThub.Module.Hide_Others_Node);
+        (Menu, GNAThub_Module.Kernel, GNAThub.Module.Hide_Others_Node);
       GPS.Kernel.Preferences.Append_Menu
-        (Menu, GNAThub_Module.Kernel,
-         GNAThub.Module.Auto_Location_Filtering);
+        (Menu, GNAThub_Module.Kernel, GNAThub.Module.Auto_Location_Filtering);
    end Create_Menu;
 
    ------------------------
@@ -95,8 +97,7 @@ package body GNAThub.Reports.Collector is
    function Get_Or_Create_View
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module  : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class;
-      Created : out Boolean)
-      return GNAThub_Report_Collector_Access
+      Created : out Boolean) return GNAThub_Report_Collector_Access
    is
       use GNAThub_Report_Collector_Views;
 
@@ -139,8 +140,7 @@ package body GNAThub.Reports.Collector is
 
    function Initialize
      (Self : access GNAThub_Report_Collector'Class)
-      return Gtk.Widget.Gtk_Widget
-   is
+      return Gtk.Widget.Gtk_Widget is
    begin
       Trace (Me, "Creating the GNAThub Analysis Report");
 
@@ -165,7 +165,8 @@ package body GNAThub.Reports.Collector is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self    : access Expand_Or_Collapse_Command;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
@@ -175,8 +176,7 @@ package body GNAThub.Reports.Collector is
           (Get_Kernel (Context.Context));
    begin
       GNAThub.Reports.Messages.Expand_Or_Collapse_Selected_Rows
-        (Self    => View.Messages_Report,
-         Command => Self.Command);
+        (Self => View.Messages_Report, Command => Self.Command);
 
       return Commands.Success;
    end Execute;
@@ -189,14 +189,16 @@ package body GNAThub.Reports.Collector is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Action
-        (Kernel, "gnathub report expand rows",
+        (Kernel,
+         "gnathub report expand rows",
          Command     => new Expand_Or_Collapse_Command (Expand_Rows),
          Category    => "Analyze",
          Icon_Name   => "gps-expand-all-symbolic",
          Description => "Expand the rows selected in the Analysis Report.");
 
       Register_Action
-        (Kernel, "gnathub report collapse rows",
+        (Kernel,
+         "gnathub report collapse rows",
          Command     => new Expand_Or_Collapse_Command (Collapse_Rows),
          Category    => "Analyze",
          Icon_Name   => "gps-collapse-all-symbolic",

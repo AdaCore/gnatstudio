@@ -18,11 +18,11 @@
 with Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GPR.Osint;                  use GPR.Osint;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GPR.Osint;         use GPR.Osint;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 package body GPS.Properties is
 
@@ -30,7 +30,7 @@ package body GPS.Properties is
 
    use Properties_Indefinite_Hashed_Maps;
 
-   Current_Writer   : Writer;
+   Current_Writer : Writer;
 
    Languages_Loaded : Boolean := False;
    --  Have languages been loaded
@@ -47,8 +47,10 @@ package body GPS.Properties is
    ----------
 
    procedure Free (Description : in out Property_Description_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Property_Description, Property_Description_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Property_Description,
+           Property_Description_Access);
    begin
       Clear (Description);
       Unchecked_Free (Description);
@@ -59,8 +61,8 @@ package body GPS.Properties is
    -----------
 
    procedure Clear (Description : Property_Description_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Property_Record'Class, Property_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Property_Record'Class, Property_Access);
    begin
       if Description.Value /= null then
          Destroy (Description.Value.all);
@@ -83,8 +85,7 @@ package body GPS.Properties is
    -----------
 
    function Store
-     (Property : access Property_Record'Class)
-      return GNATCOLL.JSON.JSON_Value
+     (Property : access Property_Record'Class) return GNATCOLL.JSON.JSON_Value
    is
       use GNATCOLL.JSON;
       Result : JSON_Value := Create_Object;
@@ -102,7 +103,8 @@ package body GPS.Properties is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access String_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value) is
    begin
@@ -117,7 +119,8 @@ package body GPS.Properties is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Integer_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value) is
    begin
@@ -128,7 +131,8 @@ package body GPS.Properties is
    -- Save --
    ----------
 
-   overriding procedure Save
+   overriding
+   procedure Save
      (Property : access Boolean_Property;
       Value    : in out GNATCOLL.JSON.JSON_Value) is
    begin
@@ -139,9 +143,9 @@ package body GPS.Properties is
    -- Load --
    ----------
 
-   overriding procedure Load
-     (Property : in out String_Property;
-      Value    : GNATCOLL.JSON.JSON_Value)
+   overriding
+   procedure Load
+     (Property : in out String_Property; Value : GNATCOLL.JSON.JSON_Value)
    is
       Data : constant String := Value.Get ("value");
    begin
@@ -156,9 +160,9 @@ package body GPS.Properties is
    -- Load --
    ----------
 
-   overriding procedure Load
-     (Property : in out Integer_Property;
-      Value    : GNATCOLL.JSON.JSON_Value) is
+   overriding
+   procedure Load
+     (Property : in out Integer_Property; Value : GNATCOLL.JSON.JSON_Value) is
    begin
       Property.Value := Value.Get ("value");
 
@@ -171,9 +175,9 @@ package body GPS.Properties is
    -- Load --
    ----------
 
-   overriding procedure Load
-     (Property : in out Boolean_Property;
-      Value    : GNATCOLL.JSON.JSON_Value) is
+   overriding
+   procedure Load
+     (Property : in out Boolean_Property; Value : GNATCOLL.JSON.JSON_Value) is
    begin
       Property.Value := Value.Get ("value");
 
@@ -186,7 +190,8 @@ package body GPS.Properties is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Property : in out String_Property) is
+   overriding
+   procedure Destroy (Property : in out String_Property) is
    begin
       Free (Property.Value);
    end Destroy;
@@ -204,9 +209,7 @@ package body GPS.Properties is
       Descr : Property_Description_Access;
 
       procedure Append
-        (Key      : String;
-         Property : Property_Record'Class;
-         Found    : Boolean);
+        (Key : String; Property : Property_Record'Class; Found : Boolean);
       --  Append the property to the registry
 
       procedure Process
@@ -218,9 +221,7 @@ package body GPS.Properties is
       ------------
 
       procedure Append
-        (Key      : String;
-         Property : Property_Record'Class;
-         Found    : Boolean) is
+        (Key : String; Property : Property_Record'Class; Found : Boolean) is
       begin
          Descr := new Property_Description;
          Descr.Persistent := True;
@@ -248,8 +249,9 @@ package body GPS.Properties is
                   elsif Property.all in Boolean_Property'Class then
                      return Boolean_Property (Property.all).Value'Img;
                   else
-                     return "Unsupported property class:" &
-                       Ada.Tags.External_Tag (Property'Tag);
+                     return
+                       "Unsupported property class:"
+                       & Ada.Tags.External_Tag (Property'Tag);
                   end if;
                end if;
             end Get;
@@ -257,9 +259,15 @@ package body GPS.Properties is
          begin
             if C /= No_Element then
                Trace
-                 (Me, "Key '" & Key & Sep & Name &
-                    "' already exsists with " & Get (Element (C).Value) &
-                    " value. New value:" & Get (Descr.Value));
+                 (Me,
+                  "Key '"
+                  & Key
+                  & Sep
+                  & Name
+                  & "' already exsists with "
+                  & Get (Element (C).Value)
+                  & " value. New value:"
+                  & Get (Descr.Value));
             else
                Insert (All_Properties, Key & Sep & Name, Descr);
             end if;
@@ -270,8 +278,8 @@ package body GPS.Properties is
       -- Process --
       -------------
 
-      procedure Process
-        (Key : String; Property : in out Property_Record'Class) is
+      procedure Process (Key : String; Property : in out Property_Record'Class)
+      is
       begin
          Append (Key, Property, True);
          String_Property (Property).Value := null;
@@ -279,9 +287,7 @@ package body GPS.Properties is
 
       C : Cursor;
    begin
-      if not Languages_Loaded
-        and then Name = "language"
-      then
+      if not Languages_Loaded and then Name = "language" then
          declare
             P : String_Property;
          begin
@@ -324,7 +330,7 @@ package body GPS.Properties is
             Found := False;
          else
             Property := Descr.Value.all;
-            Found    := True;
+            Found := True;
          end if;
       end if;
 
@@ -351,8 +357,7 @@ package body GPS.Properties is
    -- To_String --
    ---------------
 
-   function To_String
-     (File : GNATCOLL.VFS.Virtual_File) return String is
+   function To_String (File : GNATCOLL.VFS.Virtual_File) return String is
       Filename : String := +Full_Name (File, True);
    begin
       Canonical_Case_File_Name (Filename);
@@ -415,8 +420,7 @@ package body GPS.Properties is
    is
       use GNATCOLL.JSON;
    begin
-      if String'(Value.Get ("type")) =
-        Ada.Tags.External_Tag (Property'Tag)
+      if String'(Value.Get ("type")) = Ada.Tags.External_Tag (Property'Tag)
       then
          Valid := True;
          Property.Load (Value);

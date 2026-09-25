@@ -26,8 +26,7 @@ package Ada_Semantic_Tree.Declarations is
    type Search_Context_Type is (From_Database, From_File);
 
    type Search_Context (Context_Type : Search_Context_Type) is record
-      Generic_Context : Instance_Info :=
-        Null_Instance_Info;
+      Generic_Context : Instance_Info := Null_Instance_Info;
 
       case Context_Type is
          when From_Database =>
@@ -35,7 +34,7 @@ package Ada_Semantic_Tree.Declarations is
             --  The database where to perform the search
 
          when From_File =>
-            File   : Structured_File_Access;
+            File : Structured_File_Access;
             --  The file handle where the occurence is set.
 
             Offset : String_Index_Type;
@@ -45,26 +44,25 @@ package Ada_Semantic_Tree.Declarations is
    end record;
 
    function Find_Declarations
-     (Context                   : Search_Context;
+     (Context              : Search_Context;
       --  The context of the search, either database wide or from a file.
 
-      From_Visibility           : Visibility_Context :=
-        Null_Visibility_Context;
+      From_Visibility      : Visibility_Context := Null_Visibility_Context;
       --  The location from wich public / private / body visiblity has to be
       --  calculated. With / Use visiblity will be calculated from the
       --  File/Offset given in parameter from the context. If no value is
       --  given, then File / Offset will be taken, and Library_Visible will be
       --  the required confidence.
 
-      Analyzed_Expressions      : Expressions_List.List :=
-                                    Expressions_List.Empty_List;
+      Analyzed_Expressions : Expressions_List.List :=
+        Expressions_List.Empty_List;
       --  The list of expressions already analyzed.
 
-      Expression                : Parsed_Expression := Null_Parsed_Expression;
+      Expression           : Parsed_Expression := Null_Parsed_Expression;
       --  The expression of the occurence. If null, an expression will be
       --  analyzed from the offset given in parameter by the context.
 
-      Filter                    : Entity_Filter := Null_Filter;
+      Filter               : Entity_Filter := Null_Filter;
       --  A filter to avoid returning certain entities. If there is any former
       --  knowledge, setting this variable might improve the search mechanism.
       --  In any case, the declarations mechanism will try to reduce the set
@@ -72,12 +70,12 @@ package Ada_Semantic_Tree.Declarations is
       --  account as-is in all cases, certain constructions imply certain
       --  category filters - e.g. use clauses will imply packages.
 
-      Is_Partial                : Boolean := False;
+      Is_Partial           : Boolean := False;
       --  If the expression is partial, then the last construct of the
       --  expression will be considered to be the prefix of the actual
       --  declaration looked for.
 
-      Excluded_Entities         : Excluded_Stack_Type := Null_Excluded_Stack
+      Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack
       --  This holds a list of entities that can't be returned by the
       --  declaration procedure. It can be used by tools to break some
       --  circularities.
@@ -97,8 +95,7 @@ package Ada_Semantic_Tree.Declarations is
      (Entity          : Entity_Access;
       File            : Structured_File_Access;
       Offset          : String_Index_Type;
-      From_Visibility : Visibility_Context :=
-        Null_Visibility_Context;
+      From_Visibility : Visibility_Context := Null_Visibility_Context;
       Expression      : Parsed_Expression := Null_Parsed_Expression)
       return Visibility_Confidence;
    --  Check if the entity given in parameter is the one located at
@@ -106,8 +103,7 @@ package Ada_Semantic_Tree.Declarations is
    --  the case.
 
    function Get_Actual_Parameters
-     (It : Entity_View)
-      return Actual_Parameter_Resolver_Access;
+     (It : Entity_View) return Actual_Parameter_Resolver_Access;
    --  If the instance of the declaration has been found with actual
    --  parameters, these parameters will be accessible trough this function.
    --  If not, then null will be returned.
@@ -136,13 +132,14 @@ package Ada_Semantic_Tree.Declarations is
       Is_Accessible   : Boolean := True;
    end record;
 
-   overriding function Get_Name
-     (E : access Declaration_View_Record) return UTF8_String;
+   overriding
+   function Get_Name (E : access Declaration_View_Record) return UTF8_String;
 
-   overriding function Is_Accessible
-     (E : access Declaration_View_Record) return Boolean;
+   overriding
+   function Is_Accessible (E : access Declaration_View_Record) return Boolean;
 
-   overriding procedure Fill_Children
+   overriding
+   procedure Fill_Children
      (E                   : access Declaration_View_Record;
       From_Visibility     : Visibility_Context;
       Name                : String;
@@ -153,11 +150,14 @@ package Ada_Semantic_Tree.Declarations is
 
 private
 
-   overriding procedure Free (This : in out Declaration_View_Record);
+   overriding
+   procedure Free (This : in out Declaration_View_Record);
 
-   overriding procedure Deep_Copy (This : in out Declaration_View_Record);
+   overriding
+   procedure Deep_Copy (This : in out Declaration_View_Record);
 
-   overriding procedure Configure_View
+   overriding
+   procedure Configure_View
      (E : in out Declaration_View_Record; It : Entity_Iterator);
 
 end Ada_Semantic_Tree.Declarations;

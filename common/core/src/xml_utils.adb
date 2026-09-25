@@ -23,14 +23,14 @@ with Ada.Strings.Unbounded.Aux;       use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, "is an internal GNAT unit");
 with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
 
-with GNAT.Decode_UTF8_String;         use GNAT.Decode_UTF8_String;
-with GNAT.Encode_UTF8_String;         use GNAT.Encode_UTF8_String;
-with GNAT.Strings;                    use GNAT.Strings;
-with GNAT.UTF_32;                     use GNAT.UTF_32;
+with GNAT.Decode_UTF8_String; use GNAT.Decode_UTF8_String;
+with GNAT.Encode_UTF8_String; use GNAT.Encode_UTF8_String;
+with GNAT.Strings;            use GNAT.Strings;
+with GNAT.UTF_32;             use GNAT.UTF_32;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body XML_Utils is
 
@@ -68,9 +68,7 @@ package body XML_Utils is
    --  Empty_Node is set to True.
 
    procedure Get_Next_Word
-     (Buf   : String;
-      Index : in out Natural;
-      Word  : out String_Ptr);
+     (Buf : String; Index : in out Natural; Word : out String_Ptr);
    --  extract the next textual word from Buf and return it.
    --  return null if no word left.
    --  The special XML '&' characters are translated appropriately in S.
@@ -81,10 +79,12 @@ package body XML_Utils is
 
    procedure Skip_Blanks (Buf : String; Index : in out Natural) is
    begin
-      while Index < Buf'Last and then
-        (Buf (Index) = ' '  or else Buf (Index) = ASCII.LF
-          or else Buf (Index) = ASCII.HT
-          or else Buf (Index) = ASCII.CR)
+      while Index < Buf'Last
+        and then
+          (Buf (Index) = ' '
+           or else Buf (Index) = ASCII.LF
+           or else Buf (Index) = ASCII.HT
+           or else Buf (Index) = ASCII.CR)
       loop
          Index := Index + 1;
       end loop;
@@ -156,11 +156,12 @@ package body XML_Utils is
       end if;
 
       while Index <= Tag'Last
-        and then not
-          (Tag (Index) = ' '  or else Tag (Index) = ASCII.LF
-           or else Tag (Index) = ASCII.HT
-           or else Tag (Index) = ASCII.CR
-           or else Tag (Index) = '/')
+        and then
+          not (Tag (Index) = ' '
+               or else Tag (Index) = ASCII.LF
+               or else Tag (Index) = ASCII.HT
+               or else Tag (Index) = ASCII.CR
+               or else Tag (Index) = '/')
       loop
          Index := Index + 1;
       end loop;
@@ -186,9 +187,7 @@ package body XML_Utils is
    -------------------
 
    procedure Get_Next_Word
-     (Buf   : String;
-      Index : in out Natural;
-      Word  : out String_Ptr)
+     (Buf : String; Index : in out Natural; Word : out String_Ptr)
    is
       Terminator : Character := ' ';
    begin
@@ -232,7 +231,7 @@ package body XML_Utils is
       Str       : String (1 .. S'Length);
       Start, J  : Positive;
       Index     : Positive := S'First;
-      In_String : Boolean  := False;
+      In_String : Boolean := False;
 
    begin
       if S'Length = 0 then
@@ -282,7 +281,7 @@ package body XML_Utils is
             end if;
 
             Index := Index + 1;
-            J     := J + 1;
+            J := J + 1;
          end loop;
 
          return Str (1 .. J);
@@ -294,9 +293,8 @@ package body XML_Utils is
    -------------------
 
    function Get_Attribute_S
-     (N              : Node_Ptr;
-      Attribute_Name : UTF8_String;
-      Default        : UTF8_String := "") return UTF8_String
+     (N : Node_Ptr; Attribute_Name : UTF8_String; Default : UTF8_String := "")
+      return UTF8_String
    is
       Index      : Natural;
       Key, Value : String_Ptr;
@@ -343,8 +341,7 @@ package body XML_Utils is
      (N              : Node_Ptr;
       Attribute_Name : VSS.Strings.Virtual_String;
       Default        : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String)
-      return VSS.Strings.Virtual_String is
+        VSS.Strings.Empty_Virtual_String) return VSS.Strings.Virtual_String is
    begin
       return
         VSS.Strings.Conversions.To_Virtual_String
@@ -381,10 +378,11 @@ package body XML_Utils is
             Free (Value);
 
             if Attribute_Name = Key.all then
-               Atts := new String'
-                 (Str
-                  & N.Attributes (N.Attributes'First .. Tmp - 1)
-                  & N.Attributes (Index .. N.Attributes'Last));
+               Atts :=
+                 new String'
+                   (Str
+                    & N.Attributes (N.Attributes'First .. Tmp - 1)
+                    & N.Attributes (Index .. N.Attributes'Last));
                Free (N.Attributes);
                N.Attributes := Atts;
                Free (Key);
@@ -536,16 +534,21 @@ package body XML_Utils is
 
       for J in 1 .. Length loop
          case Wide (J) is
-            when '<' =>
+            when '<'    =>
                Append (R, "&lt;");
-            when '>' =>
+
+            when '>'    =>
                Append (R, "&gt;");
-            when '&' =>
+
+            when '&'    =>
                Append (R, "&amp;");
-            when ''' =>
+
+            when '''    =>
                Append (R, "&apos;");
-            when '"' =>
+
+            when '"'    =>
                Append (R, "&quot;");
+
             when others =>
                declare
                   C_Val : Natural;
@@ -557,7 +560,7 @@ package body XML_Utils is
                   then
                      declare
                         Img : constant Wide_Wide_String :=
-                                Natural'Wide_Wide_Image (C_Val);
+                          Natural'Wide_Wide_Image (C_Val);
                      begin
                         Append
                           (R, "&#" & Img (Img'First + 1 .. Img'Last) & ";");
@@ -648,11 +651,21 @@ package body XML_Utils is
       begin
          for J in S'Range loop
             case S (J) is
-               when '<' => Put ("&lt;");
-               when '>' => Put ("&gt;");
-               when '&' => Put ("&amp;");
-               when ''' => Put ("&apos;");
-               when '"' => Put ("&quot;");
+               when '<'                                      =>
+                  Put ("&lt;");
+
+               when '>'                                      =>
+                  Put ("&gt;");
+
+               when '&'                                      =>
+                  Put ("&amp;");
+
+               when '''                                      =>
+                  Put ("&apos;");
+
+               when '"'                                      =>
+                  Put ("&quot;");
+
                when ASCII.NUL .. Character'Val (9)
                   | Character'Val (11) .. Character'Val (31) =>
                   declare
@@ -661,7 +674,9 @@ package body XML_Utils is
                   begin
                      Put ("&#" & Img (Img'First + 1 .. Img'Last) & ";");
                   end;
-               when others => Put ((1 => S (J)));
+
+               when others                                   =>
+                  Put ((1 => S (J)));
             end case;
          end loop;
       end Print_String;
@@ -691,9 +706,7 @@ package body XML_Utils is
             Do_Indent (Indent);
             Put_Line ("</" & N.Tag.all & ">");
 
-         elsif N.Value = null
-           or else N.Value.all = ""
-         then
+         elsif N.Value = null or else N.Value.all = "" then
             --  The following handles the difference between what you got
             --  when you parsed <tag/> vs. <tag />.
             if N.Tag (N.Tag'Last) = '/' then
@@ -891,8 +904,8 @@ package body XML_Utils is
       procedure Free_Node (N : in out Node_Ptr);
       --  Free the memory for a node, but doesn't remove it from its parent
 
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation (Node, Node_Ptr);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Node, Node_Ptr);
 
       ---------------
       -- Free_Node --
@@ -965,8 +978,8 @@ package body XML_Utils is
       function Deep_Copy_Internal
         (N : Node_Ptr; Parent : Node_Ptr := null) return Node_Ptr
       is
-         Attr    : String_Ptr;
-         Value   : String_Ptr;
+         Attr  : String_Ptr;
+         Value : String_Ptr;
 
          New_N   : Node_Ptr;
          Child   : Node_Ptr;
@@ -988,14 +1001,15 @@ package body XML_Utils is
             --  the next nodes, only its children. And for children this is
             --  done by Deep_Copy_Internal on the parent
 
-            New_N := new Node'
-              (Tag => new String'(N.Tag.all),
-               Attributes => Attr,
-               Value => Value,
-               Parent => Parent,
-               Child => null,
-               Next => null,
-               Specific_Data => N.Specific_Data);
+            New_N :=
+              new Node'
+                (Tag           => new String'(N.Tag.all),
+                 Attributes    => Attr,
+                 Value         => Value,
+                 Parent        => Parent,
+                 Child         => null,
+                 Next          => null,
+                 Specific_Data => N.Specific_Data);
 
             --  Clone each child
 
@@ -1095,12 +1109,9 @@ package body XML_Utils is
       U : Unbounded_String;
    begin
       for J in S'Range loop
-         if S (J) = '#'
-           or else Character'Pos (S (J)) >= 127
-         then
+         if S (J) = '#' or else Character'Pos (S (J)) >= 127 then
             declare
-               Img : constant String :=
-                       Natural'Image (Character'Pos (S (J)));
+               Img : constant String := Natural'Image (Character'Pos (S (J)));
             begin
                Append (U, "#" & Img (Img'First + 1 .. Img'Last) & ";");
             end;
@@ -1142,8 +1153,7 @@ package body XML_Utils is
                Append (U, Character'Val (N));
             exception
                when Constraint_Error =>
-                  Trace
-                    (Me, "XML error: could not read number in '#' entity");
+                  Trace (Me, "XML error: could not read number in '#' entity");
                   return To_String (U);
             end;
 
@@ -1177,8 +1187,8 @@ package body XML_Utils is
       else
          Child.Tag := new UTF8_String'(Tag);
       end if;
-      Child.Value := new UTF8_String'
-        (String_To_Encoded_ASCII (+Full_Name (File)));
+      Child.Value :=
+        new UTF8_String'(String_To_Encoded_ASCII (+Full_Name (File)));
 
       declare
          Host : constant String := Get_Host (File);
@@ -1244,9 +1254,9 @@ package body XML_Utils is
 
       declare
          Value     : constant String :=
-                       Encoded_ASCII_To_String (Child.Value.all);
+           Encoded_ASCII_To_String (Child.Value.all);
          Host_Attr : constant String :=
-                       Get_Attribute_S (Child, "server", Host);
+           Get_Attribute_S (Child, "server", Host);
       begin
          if Value = "" then
             return No_File;

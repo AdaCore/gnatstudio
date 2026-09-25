@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;                  use Basic_Types;
-with Vdiff2_Module.Utils;          use Vdiff2_Module.Utils;
+with Basic_Types;                       use Basic_Types;
+with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
-with Vdiff2_Module.Utils.Text;     use Vdiff2_Module.Utils.Text;
-with GPS.Editors;                  use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
+with GPS.Editors;                       use GPS.Editors;
+with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
+with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 
 package body Vdiff2_Command_Line is
 
@@ -32,11 +32,12 @@ package body Vdiff2_Command_Line is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Line;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-   pragma Unreferenced (Context);
+      pragma Unreferenced (Context);
    begin
       return Execute (Command);
    end Execute;
@@ -45,7 +46,8 @@ package body Vdiff2_Command_Line is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type
    is
       use Diff_Head_List.Std_Vectors;
@@ -58,13 +60,11 @@ package body Vdiff2_Command_Line is
         and Command.Action /= null
       then
          Diff := Element (Command.Head);
-         Diff.Current_Node := Is_In_Diff_Chunk_List
-           (Command.File, Diff.all, Command.Line);
+         Diff.Current_Node :=
+           Is_In_Diff_Chunk_List (Command.File, Diff.all, Command.Line);
 
          if Diff_Chunk_List.Std_Vectors.Has_Element (Diff.Current_Node) then
-            Command.Action
-              (Command.Kernel, Diff,
-               Command.Line, Command.File);
+            Command.Action (Command.Kernel, Diff, Command.Line, Command.File);
          end if;
       end if;
 
@@ -88,13 +88,13 @@ package body Vdiff2_Command_Line is
       Action    : Vdiff2_Command_Line.Handler_Action_Line) is
    begin
 
-      Item           := new Diff_Command_Line;
-      Item.Kernel    := Kernel;
+      Item := new Diff_Command_Line;
+      Item.Kernel := Kernel;
       Item.List_Diff := List_Diff;
-      Item.File      := File;
-      Item.Line      := Line;
-      Item.Action    := Action;
-      Item.Head      := Get_Diff_Node (File, List_Diff.all);
+      Item.File := File;
+      Item.Line := Line;
+      Item.Action := Action;
+      Item.Head := Get_Diff_Node (File, List_Diff.all);
    end Create;
 
    ---------------------------
@@ -102,9 +102,7 @@ package body Vdiff2_Command_Line is
    ---------------------------
 
    function Is_In_Diff_Chunk_List
-     (Selected_File : Virtual_File;
-      Item          : Diff_Head;
-      Line          : Natural)
+     (Selected_File : Virtual_File; Item : Diff_Head; Line : Natural)
       return Diff_Chunk_List.Std_Vectors.Cursor
    is
       use Diff_Chunk_List.Std_Vectors;
@@ -118,18 +116,18 @@ package body Vdiff2_Command_Line is
          Diff := Element (Curr_Node);
 
          if Selected_File = Item.Files (1) then
-            exit when Diff.Range1.First <= Line
-              and then Diff.Range1.Last >= Line;
+            exit when
+              Diff.Range1.First <= Line and then Diff.Range1.Last >= Line;
 
          elsif Selected_File = Item.Files (2) then
-            exit when Diff.Range2.First <= Line
-              and then Diff.Range2.Last >= Line;
+            exit when
+              Diff.Range2.First <= Line and then Diff.Range2.Last >= Line;
 
          elsif Item.Files (3) /= GNATCOLL.VFS.No_File
            and then Selected_File = Item.Files (3)
          then
-            exit when Diff.Range3.First <= Line
-              and then Diff.Range3.Last >= Line;
+            exit when
+              Diff.Range3.First <= Line and then Diff.Range3.Last >= Line;
          end if;
 
          Next (Curr_Node);
@@ -148,7 +146,7 @@ package body Vdiff2_Command_Line is
       Line   : Natural := 0;
       File   : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Diff1     : Diff_Chunk_Access;
+      Diff1    : Diff_Chunk_Access;
       VFile    : T_VFile;
       VRange   : T_VRange;
       Num_File : T_Loc := 0;
@@ -160,7 +158,7 @@ package body Vdiff2_Command_Line is
       VRange (1) := Diff1.Range1;
       VRange (2) := Diff1.Range2;
       VRange (3) := Diff1.Range3;
-      VFile      := Diff.Files;
+      VFile := Diff.Files;
 
       for J in VFile'Range loop
          if File = VFile (J) then
@@ -173,14 +171,18 @@ package body Vdiff2_Command_Line is
          return;
       end if;
 
-      Move_Block (Kernel, VFile (Num_File), VFile (Diff.Ref_File),
-                  VRange (Num_File), VRange (Diff.Ref_File));
+      Move_Block
+        (Kernel,
+         VFile (Num_File),
+         VFile (Diff.Ref_File),
+         VRange (Num_File),
+         VRange (Diff.Ref_File));
 
       declare
-         Info : Line_Information_Array
-           (Editable_Line_Type
-              (VRange (Num_File).First - 1) ..
-              Editable_Line_Type (VRange (Num_File).First - 1));
+         Info           :
+           Line_Information_Array
+             (Editable_Line_Type (VRange (Num_File).First - 1)
+              .. Editable_Line_Type (VRange (Num_File).First - 1));
          Null_Line_Info : Line_Information_Record;
 
       begin
@@ -207,7 +209,7 @@ package body Vdiff2_Command_Line is
       Line   : Natural := 0;
       File   : Virtual_File := GNATCOLL.VFS.No_File)
    is
-      Diff1     : Diff_Chunk_Access;
+      Diff1    : Diff_Chunk_Access;
       VFile    : T_VFile;
       VRange   : T_VRange;
       Num_File : T_Loc := 0;
@@ -220,7 +222,7 @@ package body Vdiff2_Command_Line is
       VRange (1) := Diff1.Range1;
       VRange (2) := Diff1.Range2;
       VRange (3) := Diff1.Range3;
-      VFile      := Diff.Files;
+      VFile := Diff.Files;
 
       for J in VFile'Range loop
          if File = VFile (J) then
@@ -240,14 +242,17 @@ package body Vdiff2_Command_Line is
          return;
       end if;
 
-      Delete_Block (Kernel, VFile (Diff.Ref_File),
-                    VRange (Num_File), VRange (Diff.Ref_File));
+      Delete_Block
+        (Kernel,
+         VFile (Diff.Ref_File),
+         VRange (Num_File),
+         VRange (Diff.Ref_File));
 
       declare
-         Info           : Line_Information_Array
-           (Editable_Line_Type
-              (VRange (Num_File).First - 1) ..
-              Editable_Line_Type (VRange (Num_File).First - 1));
+         Info           :
+           Line_Information_Array
+             (Editable_Line_Type (VRange (Num_File).First - 1)
+              .. Editable_Line_Type (VRange (Num_File).First - 1));
          Null_Line_Info : Line_Information_Record;
 
       begin

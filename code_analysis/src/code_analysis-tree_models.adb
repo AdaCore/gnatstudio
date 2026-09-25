@@ -22,23 +22,23 @@ with Gtk.Tree_Model.Utils;
 
 package body Code_Analysis.Tree_Models is
 
-   package Node_Conversion is
-     new System.Address_To_Access_Conversions (Code_Analysis.Node);
+   package Node_Conversion is new
+     System.Address_To_Access_Conversions (Code_Analysis.Node);
 
-   package Project_Conversions is
-     new System.Address_To_Access_Conversions (Project_Item'Class);
+   package Project_Conversions is new
+     System.Address_To_Access_Conversions (Project_Item'Class);
 
-   package File_Conversions is
-     new System.Address_To_Access_Conversions (File_Item'Class);
+   package File_Conversions is new
+     System.Address_To_Access_Conversions (File_Item'Class);
 
-   package Subprogram_Conversions is
-     new System.Address_To_Access_Conversions (Subprogram_Item'Class);
+   package Subprogram_Conversions is new
+     System.Address_To_Access_Conversions (Subprogram_Item'Class);
 
    package Utilities is
 
       function Project_At
-        (Tree  : Code_Analysis.Code_Analysis_Tree;
-         Index : Positive) return Code_Analysis.Project_Access;
+        (Tree : Code_Analysis.Code_Analysis_Tree; Index : Positive)
+         return Code_Analysis.Project_Access;
 
       function Project_Index
         (Tree    : Code_Analysis.Code_Analysis_Tree;
@@ -50,8 +50,8 @@ package body Code_Analysis.Tree_Models is
          return Code_Analysis.Project_Access;
 
       function File_At
-        (Project : Code_Analysis.Project_Access;
-         Index   : Positive) return Code_Analysis.File_Access;
+        (Project : Code_Analysis.Project_Access; Index : Positive)
+         return Code_Analysis.File_Access;
 
       function File_Index
         (Project : Code_Analysis.Project_Access;
@@ -62,8 +62,8 @@ package body Code_Analysis.Tree_Models is
          File    : Code_Analysis.File_Access) return Code_Analysis.File_Access;
 
       function Subprogram_At
-        (File  : Code_Analysis.File_Access;
-         Index : Positive) return Code_Analysis.Subprogram_Access;
+        (File : Code_Analysis.File_Access; Index : Positive)
+         return Code_Analysis.Subprogram_Access;
 
       function Subprogram_Index
         (File       : Code_Analysis.File_Access;
@@ -80,17 +80,18 @@ package body Code_Analysis.Tree_Models is
    -- Children --
    --------------
 
-   overriding function Children
+   overriding
+   function Children
      (Self   : access Simple_Tree_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Project_Node    : constant Code_Analysis.Project_Access :=
-                          Self.Project_At (Parent);
+        Self.Project_At (Parent);
       File_Node       : constant Code_Analysis.File_Access :=
-                          Self.File_At (Parent);
+        Self.File_At (Parent);
       Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                          Self.Subprogram_At (Parent);
+        Self.Subprogram_At (Parent);
 
    begin
       if Subprogram_Node /= null then
@@ -118,13 +119,14 @@ package body Code_Analysis.Tree_Models is
    -- Children --
    --------------
 
-   overriding function Children
+   overriding
+   function Children
      (Self   : access Filterable_Tree_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Project    : constant Project_Item_Access    := Self.Project (Parent);
-      File       : constant File_Item_Access       := Self.File (Parent);
+      Project    : constant Project_Item_Access := Self.Project (Parent);
+      File       : constant File_Item_Access := Self.File (Parent);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Parent);
 
    begin
@@ -210,8 +212,8 @@ package body Code_Analysis.Tree_Models is
 
    function Create_Tree_Iter
      (Self            : access Simple_Tree_Model_Record'Class;
-      Project_Node    : Code_Analysis.Project_Access    := null;
-      File_Node       : Code_Analysis.File_Access       := null;
+      Project_Node    : Code_Analysis.Project_Access := null;
+      File_Node       : Code_Analysis.File_Access := null;
       Subprogram_Node : Code_Analysis.Subprogram_Access := null)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
@@ -235,8 +237,8 @@ package body Code_Analysis.Tree_Models is
 
    function Create_Tree_Iter
      (Self       : access Filterable_Tree_Model_Record'Class;
-      Project    : Project_Item_Access    := null;
-      File       : File_Item_Access       := null;
+      Project    : Project_Item_Access := null;
+      File       : File_Item_Access := null;
       Subprogram : Subprogram_Item_Access := null)
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
@@ -268,7 +270,7 @@ package body Code_Analysis.Tree_Models is
       return
         File_Item_Access
           (File_Conversions.To_Pointer
-               (Gtk.Tree_Model.Utils.Get_User_Data_2 (Iter)));
+             (Gtk.Tree_Model.Utils.Get_User_Data_2 (Iter)));
    end File;
 
    -------------
@@ -277,8 +279,7 @@ package body Code_Analysis.Tree_Models is
 
    function File_At
      (Self : access Simple_Tree_Model_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Code_Analysis.File_Access
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Code_Analysis.File_Access
    is
       pragma Unreferenced (Self);
       --  Not used because all related information is stored directly in the
@@ -288,8 +289,8 @@ package body Code_Analysis.Tree_Models is
       return
         Code_Analysis.File_Access
           (Code_Analysis.Node_Access
-               (Node_Conversion.To_Pointer
-                    (Gtk.Tree_Model.Utils.Get_User_Data_2 (Iter))));
+             (Node_Conversion.To_Pointer
+                (Gtk.Tree_Model.Utils.Get_User_Data_2 (Iter))));
    end File_At;
 
    -------------
@@ -298,8 +299,7 @@ package body Code_Analysis.Tree_Models is
 
    function File_At
      (Self : access Filterable_Tree_Model_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Code_Analysis.File_Access
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Code_Analysis.File_Access
    is
       File : constant File_Item_Access := Self.File (Iter);
 
@@ -316,10 +316,10 @@ package body Code_Analysis.Tree_Models is
    -- Get_Iter --
    --------------
 
-   overriding function Get_Iter
+   overriding
+   function Get_Iter
      (Self : access Simple_Tree_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
 
@@ -367,10 +367,10 @@ package body Code_Analysis.Tree_Models is
    -- Get_Iter --
    --------------
 
-   overriding function Get_Iter
+   overriding
+   function Get_Iter
      (Self : access Filterable_Tree_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
 
@@ -387,8 +387,7 @@ package body Code_Analysis.Tree_Models is
          if Natural (Indices (Index_1)) < Natural (Self.Projects.Length) then
             Project := Self.Projects.Element (Natural (Indices (Index_1)) + 1);
 
-         elsif Natural (Indices (Index_1))
-                 = Natural (Self.Projects.Length)
+         elsif Natural (Indices (Index_1)) = Natural (Self.Projects.Length)
          then
             --  "Totals" line
 
@@ -409,8 +408,7 @@ package body Code_Analysis.Tree_Models is
       end if;
 
       if Indices'Length >= 3 then
-         if Natural (Indices (Index_3))
-              < Natural (File.Subprograms.Length)
+         if Natural (Indices (Index_3)) < Natural (File.Subprograms.Length)
          then
             Subprogram :=
               File.Subprograms.Element (Natural (Indices (Index_3)) + 1);
@@ -431,17 +429,17 @@ package body Code_Analysis.Tree_Models is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
+   overriding
+   function Get_Path
      (Self : access Simple_Tree_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
       Project_Node    : constant Code_Analysis.Project_Access :=
-                          Self.Project_At (Iter);
+        Self.Project_At (Iter);
       File_Node       : constant Code_Analysis.File_Access :=
-                          Self.File_At (Iter);
+        Self.File_At (Iter);
       Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                          Self.Subprogram_At (Iter);
+        Self.Subprogram_At (Iter);
       Result          : Gtk.Tree_Model.Gtk_Tree_Path;
 
    begin
@@ -460,8 +458,8 @@ package body Code_Analysis.Tree_Models is
                Gtk.Tree_Model.Append_Index
                  (Result,
                   Glib.Gint
-                    (Utilities.Subprogram_Index
-                       (File_Node, Subprogram_Node) - 1));
+                    (Utilities.Subprogram_Index (File_Node, Subprogram_Node)
+                     - 1));
             end if;
          end if;
       end if;
@@ -473,13 +471,13 @@ package body Code_Analysis.Tree_Models is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
+   overriding
+   function Get_Path
      (Self : access Filterable_Tree_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
-      Project    : constant Project_Item_Access    := Self.Project (Iter);
-      File       : constant File_Item_Access       := Self.File (Iter);
+      Project    : constant Project_Item_Access := Self.Project (Iter);
+      File       : constant File_Item_Access := Self.File (Iter);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Iter);
       Result     : Gtk.Tree_Model.Gtk_Tree_Path;
 
@@ -496,8 +494,7 @@ package body Code_Analysis.Tree_Models is
             if Subprogram /= null then
                Gtk.Tree_Model.Append_Index
                  (Result,
-                  Glib.Gint
-                    (File.Subprograms.Find_Index (Subprogram) - 1));
+                  Glib.Gint (File.Subprograms.Find_Index (Subprogram) - 1));
             end if;
          end if;
 
@@ -513,16 +510,17 @@ package body Code_Analysis.Tree_Models is
    -- Has_Child --
    ---------------
 
-   overriding function Has_Child
+   overriding
+   function Has_Child
      (Self : access Simple_Tree_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
       Project_Node    : constant Code_Analysis.Project_Access :=
-                          Self.Project_At (Iter);
+        Self.Project_At (Iter);
       File_Node       : constant Code_Analysis.File_Access :=
-                          Self.File_At (Iter);
+        Self.File_At (Iter);
       Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                          Self.Subprogram_At (Iter);
+        Self.Subprogram_At (Iter);
 
    begin
       if Iter = Null_Iter then
@@ -530,7 +528,7 @@ package body Code_Analysis.Tree_Models is
 
       elsif Subprogram_Node /= null then
          return False;
-         --  Subprogram cann't have child.
+      --  Subprogram cann't have child.
 
       elsif File_Node /= null then
          return not File_Node.Subprograms.Is_Empty;
@@ -549,12 +547,13 @@ package body Code_Analysis.Tree_Models is
    -- Has_Child --
    ---------------
 
-   overriding function Has_Child
+   overriding
+   function Has_Child
      (Self : access Filterable_Tree_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
-      Project    : constant Project_Item_Access    := Self.Project (Iter);
-      File       : constant File_Item_Access       := Self.File (Iter);
+      Project    : constant Project_Item_Access := Self.Project (Iter);
+      File       : constant File_Item_Access := Self.File (Iter);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Iter);
 
    begin
@@ -563,7 +562,7 @@ package body Code_Analysis.Tree_Models is
 
       elsif Subprogram /= null then
          return False;
-         --  Subprogram cann't have child.
+      --  Subprogram cann't have child.
 
       elsif File /= null then
          return not File.Subprograms.Is_Empty;
@@ -584,8 +583,7 @@ package body Code_Analysis.Tree_Models is
 
    procedure Initialize
      (Self : access Simple_Tree_Model_Record'Class;
-      Tree : Code_Analysis.Code_Analysis_Tree)
-   is
+      Tree : Code_Analysis.Code_Analysis_Tree) is
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Self);
 
@@ -598,8 +596,7 @@ package body Code_Analysis.Tree_Models is
 
    procedure Initialize
      (Self : access Filterable_Tree_Model_Record'Class;
-      Tree : Code_Analysis.Code_Analysis_Tree)
-   is
+      Tree : Code_Analysis.Code_Analysis_Tree) is
    begin
       Gtkada.Abstract_Tree_Model.Initialize (Self);
 
@@ -610,17 +607,18 @@ package body Code_Analysis.Tree_Models is
    -- N_Children --
    ----------------
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Simple_Tree_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
       return Glib.Gint
    is
       Project_Node    : constant Code_Analysis.Project_Access :=
-                          Self.Project_At (Iter);
+        Self.Project_At (Iter);
       File_Node       : constant Code_Analysis.File_Access :=
-                          Self.File_At (Iter);
+        Self.File_At (Iter);
       Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                          Self.Subprogram_At (Iter);
+        Self.Subprogram_At (Iter);
 
    begin
       if Subprogram_Node /= null then
@@ -634,7 +632,7 @@ package body Code_Analysis.Tree_Models is
 
       elsif Iter = Null_Iter then
          return Glib.Gint (Self.Tree.Length + 1);
-         --  Additional child here is a "Totals" line
+      --  Additional child here is a "Totals" line
 
       else
          return 0;
@@ -645,13 +643,14 @@ package body Code_Analysis.Tree_Models is
    -- N_Children --
    ----------------
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Filterable_Tree_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Gtk.Tree_Model.Null_Iter)
       return Glib.Gint
    is
-      Project    : constant Project_Item_Access    := Self.Project (Iter);
-      File       : constant File_Item_Access       := Self.File (Iter);
+      Project    : constant Project_Item_Access := Self.Project (Iter);
+      File       : constant File_Item_Access := Self.File (Iter);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Iter);
 
    begin
@@ -666,7 +665,7 @@ package body Code_Analysis.Tree_Models is
 
       elsif Iter = Null_Iter then
          return Glib.Gint (Self.Projects.Length + 1);
-         --  Additional child here is a "Totals" line
+      --  Additional child here is a "Totals" line
 
       else
          return 0;
@@ -677,14 +676,15 @@ package body Code_Analysis.Tree_Models is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Simple_Tree_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
       Project_Node    : Code_Analysis.Project_Access := Self.Project_At (Iter);
-      File_Node       : Code_Analysis.File_Access    := Self.File_At (Iter);
+      File_Node       : Code_Analysis.File_Access := Self.File_At (Iter);
       Subprogram_Node : Code_Analysis.Subprogram_Access :=
-                          Self.Subprogram_At (Iter);
+        Self.Subprogram_At (Iter);
 
    begin
       if Subprogram_Node /= null then
@@ -725,20 +725,20 @@ package body Code_Analysis.Tree_Models is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Filterable_Tree_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      Project    : constant Project_Item_Access    := Self.Project (Iter);
-      File       : constant File_Item_Access       := Self.File (Iter);
+      Project    : constant Project_Item_Access := Self.Project (Iter);
+      File       : constant File_Item_Access := Self.File (Iter);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Iter);
 
    begin
       if Subprogram /= null then
          declare
             Next : constant Subprogram_Vectors.Cursor :=
-                     Subprogram_Vectors.Next
-                       (File.Subprograms.Find (Subprogram));
+              Subprogram_Vectors.Next (File.Subprograms.Find (Subprogram));
 
          begin
             if Subprogram_Vectors.Has_Element (Next) then
@@ -753,7 +753,7 @@ package body Code_Analysis.Tree_Models is
       elsif File /= null then
          declare
             Next : constant File_Vectors.Cursor :=
-                     File_Vectors.Next (Project.Files.Find (File));
+              File_Vectors.Next (Project.Files.Find (File));
 
          begin
             if File_Vectors.Has_Element (Next) then
@@ -767,7 +767,7 @@ package body Code_Analysis.Tree_Models is
       elsif Project /= null then
          declare
             Next : constant Project_Vectors.Cursor :=
-                     Project_Vectors.Next (Self.Projects.Find (Project));
+              Project_Vectors.Next (Self.Projects.Find (Project));
 
          begin
             if Project_Vectors.Has_Element (Next) then
@@ -790,17 +790,17 @@ package body Code_Analysis.Tree_Models is
    -- Nth_Child --
    ---------------
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Simple_Tree_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Project_Node    : Code_Analysis.Project_Access :=
-                          Self.Project_At (Parent);
-      File_Node       : Code_Analysis.File_Access :=
-                          Self.File_At (Parent);
+        Self.Project_At (Parent);
+      File_Node       : Code_Analysis.File_Access := Self.File_At (Parent);
       Subprogram_Node : Code_Analysis.Subprogram_Access :=
-                          Self.Subprogram_At (Parent);
+        Self.Subprogram_At (Parent);
 
    begin
       if Subprogram_Node /= null then
@@ -844,13 +844,14 @@ package body Code_Analysis.Tree_Models is
    -- Nth_Child --
    ---------------
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Filterable_Tree_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Project    : constant Project_Item_Access    := Self.Project (Parent);
-      File       : constant File_Item_Access       := Self.File (Parent);
+      Project    : constant Project_Item_Access := Self.Project (Parent);
+      File       : constant File_Item_Access := Self.File (Parent);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Parent);
 
    begin
@@ -890,17 +891,17 @@ package body Code_Analysis.Tree_Models is
    -- Parent --
    ------------
 
-   overriding function Parent
+   overriding
+   function Parent
      (Self  : access Simple_Tree_Model_Record;
-      Child : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Child : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Project_Node    : constant Code_Analysis.Project_Access :=
-                          Self.Project_At (Child);
+        Self.Project_At (Child);
       File_Node       : constant Code_Analysis.File_Access :=
-                          Self.File_At (Child);
+        Self.File_At (Child);
       Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-                          Self.Subprogram_At (Child);
+        Self.Subprogram_At (Child);
 
    begin
       if Subprogram_Node /= null then
@@ -921,13 +922,13 @@ package body Code_Analysis.Tree_Models is
    -- Parent --
    ------------
 
-   overriding function Parent
+   overriding
+   function Parent
      (Self  : access Filterable_Tree_Model_Record;
-      Child : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Child : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      Project    : constant Project_Item_Access    := Self.Project (Child);
-      File       : constant File_Item_Access       := Self.File (Child);
+      Project    : constant Project_Item_Access := Self.Project (Child);
+      File       : constant File_Item_Access := Self.File (Child);
       Subprogram : constant Subprogram_Item_Access := Self.Subprogram (Child);
 
    begin
@@ -959,7 +960,7 @@ package body Code_Analysis.Tree_Models is
       return
         Project_Item_Access
           (Project_Conversions.To_Pointer
-               (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter)));
+             (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter)));
    end Project;
 
    ----------------
@@ -968,8 +969,7 @@ package body Code_Analysis.Tree_Models is
 
    function Project_At
      (Self : access Simple_Tree_Model_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Code_Analysis.Project_Access
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Code_Analysis.Project_Access
    is
       pragma Unreferenced (Self);
       --  Not used because all related information is stored directly in the
@@ -979,8 +979,8 @@ package body Code_Analysis.Tree_Models is
       return
         Code_Analysis.Project_Access
           (Code_Analysis.Node_Access
-               (Node_Conversion.To_Pointer
-                    (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter))));
+             (Node_Conversion.To_Pointer
+                (Gtk.Tree_Model.Utils.Get_User_Data_1 (Iter))));
    end Project_At;
 
    ----------------
@@ -989,8 +989,7 @@ package body Code_Analysis.Tree_Models is
 
    function Project_At
      (Self : access Filterable_Tree_Model_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Code_Analysis.Project_Access
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Code_Analysis.Project_Access
    is
       Project : constant Project_Item_Access := Self.Project (Iter);
 
@@ -1014,25 +1013,26 @@ package body Code_Analysis.Tree_Models is
       procedure Reconstruct_Project (Project : Project_Item_Access);
 
       procedure Reconstruct_File
-        (Project : Project_Item_Access;
-         File    : File_Item_Access);
+        (Project : Project_Item_Access; File : File_Item_Access);
 
       ----------------------
       -- Reconstruct_File --
       ----------------------
 
       procedure Reconstruct_File
-        (Project : Project_Item_Access;
-         File    : File_Item_Access)
+        (Project : Project_Item_Access; File : File_Item_Access)
       is
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Subprogram_Item'Class, Subprogram_Item_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation
+             (Subprogram_Item'Class,
+              Subprogram_Item_Access);
 
          Map_Cur    : Code_Analysis.Subprogram_Maps.Cursor :=
-                        File.Node.Subprograms.First;
-         Sort_Arr   : Code_Analysis.Subprogram_Array
-                        (1 .. Integer (File.Node.Subprograms.Length));
+           File.Node.Subprograms.First;
+         Sort_Arr   :
+           Code_Analysis.Subprogram_Array
+             (1 .. Integer (File.Node.Subprograms.Length));
          Subprogram : Subprogram_Item_Access;
          Index      : Positive := 1;
          Hidden     : Boolean;
@@ -1093,12 +1093,12 @@ package body Code_Analysis.Tree_Models is
 
       procedure Reconstruct_Project (Project : Project_Item_Access) is
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (File_Item'Class, File_Item_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation (File_Item'Class, File_Item_Access);
 
          Map_Cur  : Code_Analysis.File_Maps.Cursor := Project.Node.Files.First;
-         Sort_Arr : Code_Analysis.File_Array
-                      (1 .. Integer (Project.Node.Files.Length));
+         Sort_Arr :
+           Code_Analysis.File_Array (1 .. Integer (Project.Node.Files.Length));
          File     : File_Item_Access;
          Index    : Positive := 1;
          Hidden   : Boolean;
@@ -1159,8 +1159,10 @@ package body Code_Analysis.Tree_Models is
       ----------------------
 
       procedure Reconstruct_Tree (Tree : Code_Analysis.Code_Analysis_Tree) is
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Project_Item'Class, Project_Item_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation
+             (Project_Item'Class,
+              Project_Item_Access);
 
          Map_Cur  : Code_Analysis.Project_Maps.Cursor := Tree.First;
          Sort_Arr : Code_Analysis.Project_Array (1 .. Integer (Tree.Length));
@@ -1238,11 +1240,11 @@ package body Code_Analysis.Tree_Models is
    procedure Row_Changed
      (Self       : access Filterable_Tree_Model_Record'Class;
       Project    : Project_Item_Access;
-      File       : File_Item_Access       := null;
+      File       : File_Item_Access := null;
       Subprogram : Subprogram_Item_Access := null)
    is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-               Self.Create_Tree_Iter (Project, File, Subprogram);
+        Self.Create_Tree_Iter (Project, File, Subprogram);
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
@@ -1257,11 +1259,11 @@ package body Code_Analysis.Tree_Models is
    procedure Row_Deleted
      (Self       : access Filterable_Tree_Model_Record'Class;
       Project    : Project_Item_Access;
-      File       : File_Item_Access       := null;
+      File       : File_Item_Access := null;
       Subprogram : Subprogram_Item_Access := null)
    is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-               Self.Create_Tree_Iter (Project, File, Subprogram);
+        Self.Create_Tree_Iter (Project, File, Subprogram);
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
@@ -1276,11 +1278,11 @@ package body Code_Analysis.Tree_Models is
    procedure Row_Has_Child_Toggled
      (Self       : access Filterable_Tree_Model_Record'Class;
       Project    : Project_Item_Access;
-      File       : File_Item_Access       := null;
+      File       : File_Item_Access := null;
       Subprogram : Subprogram_Item_Access := null)
    is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-               Self.Create_Tree_Iter (Project, File, Subprogram);
+        Self.Create_Tree_Iter (Project, File, Subprogram);
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
@@ -1295,11 +1297,11 @@ package body Code_Analysis.Tree_Models is
    procedure Row_Inserted
      (Self       : access Filterable_Tree_Model_Record'Class;
       Project    : Project_Item_Access;
-      File       : File_Item_Access       := null;
+      File       : File_Item_Access := null;
       Subprogram : Subprogram_Item_Access := null)
    is
       Iter : constant Gtk.Tree_Model.Gtk_Tree_Iter :=
-               Self.Create_Tree_Iter (Project, File, Subprogram);
+        Self.Create_Tree_Iter (Project, File, Subprogram);
       Path : constant Gtk.Tree_Model.Gtk_Tree_Path := Self.Get_Path (Iter);
 
    begin
@@ -1321,7 +1323,7 @@ package body Code_Analysis.Tree_Models is
       return
         Subprogram_Item_Access
           (Subprogram_Conversions.To_Pointer
-               (Gtk.Tree_Model.Utils.Get_User_Data_3 (Iter)));
+             (Gtk.Tree_Model.Utils.Get_User_Data_3 (Iter)));
    end Subprogram;
 
    -------------------
@@ -1341,8 +1343,8 @@ package body Code_Analysis.Tree_Models is
       return
         Code_Analysis.Subprogram_Access
           (Code_Analysis.Node_Access
-               (Node_Conversion.To_Pointer
-                    (Gtk.Tree_Model.Utils.Get_User_Data_3 (Iter))));
+             (Node_Conversion.To_Pointer
+                (Gtk.Tree_Model.Utils.Get_User_Data_3 (Iter))));
    end Subprogram_At;
 
    -------------------
@@ -1376,12 +1378,12 @@ package body Code_Analysis.Tree_Models is
       -------------
 
       function File_At
-        (Project : Code_Analysis.Project_Access;
-         Index   : Positive) return Code_Analysis.File_Access
+        (Project : Code_Analysis.Project_Access; Index : Positive)
+         return Code_Analysis.File_Access
       is
          Map_Cur  : Code_Analysis.File_Maps.Cursor := Project.Files.First;
-         Sort_Arr : Code_Analysis.File_Array
-           (1 .. Integer (Project.Files.Length));
+         Sort_Arr :
+           Code_Analysis.File_Array (1 .. Integer (Project.Files.Length));
 
       begin
          for J in Sort_Arr'Range loop
@@ -1408,8 +1410,8 @@ package body Code_Analysis.Tree_Models is
          File    : Code_Analysis.File_Access) return Natural
       is
          Map_Cur  : Code_Analysis.File_Maps.Cursor := Project.Files.First;
-         Sort_Arr : Code_Analysis.File_Array
-           (1 .. Integer (Project.Files.Length));
+         Sort_Arr :
+           Code_Analysis.File_Array (1 .. Integer (Project.Files.Length));
 
       begin
          for J in Sort_Arr'Range loop
@@ -1437,8 +1439,8 @@ package body Code_Analysis.Tree_Models is
          File    : Code_Analysis.File_Access) return Code_Analysis.File_Access
       is
          Map_Cur  : Code_Analysis.File_Maps.Cursor := Project.Files.First;
-         Sort_Arr : Code_Analysis.File_Array
-           (1 .. Integer (Project.Files.Length));
+         Sort_Arr :
+           Code_Analysis.File_Array (1 .. Integer (Project.Files.Length));
 
       begin
          for J in Sort_Arr'Range loop
@@ -1505,10 +1507,11 @@ package body Code_Analysis.Tree_Models is
          Subprogram : Code_Analysis.Subprogram_Access)
          return Code_Analysis.Subprogram_Access
       is
-         Map_Cur  : Code_Analysis.Subprogram_Maps.Cursor
-           := File.Subprograms.First;
-         Sort_Arr : Code_Analysis.Subprogram_Array
-           (1 .. Integer (File.Subprograms.Length));
+         Map_Cur  : Code_Analysis.Subprogram_Maps.Cursor :=
+           File.Subprograms.First;
+         Sort_Arr :
+           Code_Analysis.Subprogram_Array
+             (1 .. Integer (File.Subprograms.Length));
 
       begin
          for J in Sort_Arr'Range loop
@@ -1537,8 +1540,8 @@ package body Code_Analysis.Tree_Models is
       ----------------
 
       function Project_At
-        (Tree  : Code_Analysis.Code_Analysis_Tree;
-         Index : Positive) return Code_Analysis.Project_Access
+        (Tree : Code_Analysis.Code_Analysis_Tree; Index : Positive)
+         return Code_Analysis.Project_Access
       is
          Map_Cur  : Code_Analysis.Project_Maps.Cursor := Tree.First;
          Sort_Arr : Code_Analysis.Project_Array (1 .. Integer (Tree.Length));
@@ -1592,13 +1595,14 @@ package body Code_Analysis.Tree_Models is
       -------------------
 
       function Subprogram_At
-        (File  : Code_Analysis.File_Access;
-         Index : Positive) return Code_Analysis.Subprogram_Access
+        (File : Code_Analysis.File_Access; Index : Positive)
+         return Code_Analysis.Subprogram_Access
       is
          Map_Cur  : Code_Analysis.Subprogram_Maps.Cursor :=
            File.Subprograms.First;
-         Sort_Arr : Code_Analysis.Subprogram_Array
-           (1 .. Integer (File.Subprograms.Length));
+         Sort_Arr :
+           Code_Analysis.Subprogram_Array
+             (1 .. Integer (File.Subprograms.Length));
 
       begin
          for J in Sort_Arr'Range loop
@@ -1626,8 +1630,9 @@ package body Code_Analysis.Tree_Models is
       is
          Map_Cur  : Code_Analysis.Subprogram_Maps.Cursor :=
            File.Subprograms.First;
-         Sort_Arr : Code_Analysis.Subprogram_Array
-           (1 .. Integer (File.Subprograms.Length));
+         Sort_Arr :
+           Code_Analysis.Subprogram_Array
+             (1 .. Integer (File.Subprograms.Length));
 
       begin
          for J in Sort_Arr'Range loop

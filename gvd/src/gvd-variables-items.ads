@@ -19,11 +19,11 @@
 --  its type and current value (from the debugger), and display properties
 --  (in views).
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Debugger;               use Debugger;
-with GVD.Variables.Types;    use GVD.Variables.Types;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Debugger;              use Debugger;
+with GVD.Variables.Types;   use GVD.Variables.Types;
 with GPS.Kernel;
-with GVD.Process;            use GVD.Process;
+with GVD.Process;           use GVD.Process;
 
 package GVD.Variables.Items is
 
@@ -44,15 +44,13 @@ package GVD.Variables.Items is
    --  Free the memory used by self
 
    function Is_A_Variable (Self : Item_Info) return Boolean
-      is (Self.Varname /= "");
+   is (Self.Varname /= "");
    --  Whether this item relates to a variable (as opposed to a gdb command)
 
    function Wrap_Debugger_Command
-     (Cmd         : String;
-      Split_Lines : Boolean := False) return Item_Info;
+     (Cmd : String; Split_Lines : Boolean := False) return Item_Info;
    function Wrap_Variable
-     (Varname  : String;
-      Format   : Debugger.Value_Format := Default_Format)
+     (Varname : String; Format : Debugger.Value_Format := Default_Format)
       return Item_Info;
    --  Two ways to create items: either they wrap a debugger command (for
    --  instance to show local variables), or an actual variable.
@@ -63,8 +61,8 @@ package GVD.Variables.Items is
    --  Return the display name for this item
 
    procedure Update
-     (Self     : in out Item_Info;
-      Process  : not null access Visual_Debugger_Record'Class);
+     (Self    : in out Item_Info;
+      Process : not null access Visual_Debugger_Record'Class);
    --  Update type info and value of the item
 
    procedure Mark_As_Up_To_Date (Self : in out Item_Info);
@@ -72,16 +70,18 @@ package GVD.Variables.Items is
    --  views, as if it had just been updated).
 
    function Has_Address (Self : Item_Info) return Boolean
-      is (Self.Auto_Refresh and then Self.Is_A_Variable);
+   is (Self.Auto_Refresh and then Self.Is_A_Variable);
    --  Whether we should check the address of Self when computing aliases.
 
    No_Item_Info : constant Item_Info :=
-     Item_Info'(Varname      => Null_Unbounded_String,
-                Cmd_Name     => Null_Unbounded_String,
-                Cmd          => Null_Unbounded_String,
-                Entity       => <>,
-                Split_Lines  => False,
-                Auto_Refresh => False, Format => <>);
+     Item_Info'
+       (Varname      => Null_Unbounded_String,
+        Cmd_Name     => Null_Unbounded_String,
+        Cmd          => Null_Unbounded_String,
+        Entity       => <>,
+        Split_Lines  => False,
+        Auto_Refresh => False,
+        Format       => <>);
 
    type Context_Item_Info is new GPS.Kernel.Context_Item with record
       Info : Item_Info;

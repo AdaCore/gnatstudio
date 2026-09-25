@@ -23,8 +23,8 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNATCOLL.Projects;     use GNATCOLL.Projects;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with GPS.Kernel.Messages;
 
@@ -88,19 +88,20 @@ package Build_Command_Manager is
    end record;
    type Build_Command_Access is access all Build_Command'Class;
 
-   overriding function Execute
-     (Command : access Build_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Build_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  See inherited documentation
 
    procedure Create
-     (Item        : out Build_Command_Access;
-      Builder     : Builder_Context;
-      Target_Name : String;
-      Main        : Virtual_File;
+     (Item         : out Build_Command_Access;
+      Builder      : Builder_Context;
+      Target_Name  : String;
+      Main         : Virtual_File;
       Main_Project : Project_Type;
-      Quiet       : Boolean;
-      Dialog      : Dialog_Mode);
+      Quiet        : Boolean;
+      Dialog       : Dialog_Mode);
    --  Create a build command
    --  Force_Dialog indicates that the command should always be launched
    --  through the interactive dialog.
@@ -112,12 +113,12 @@ package Build_Command_Manager is
    --  A command specialized in building a main, when knowing only its number
 
    type Build_Main_Command is new Interactive_Command with record
-      Target_Name  : Unbounded_String;
-      Target_Type  : Unbounded_String;
-      Main         : Natural;
-      Dialog       : Dialog_Mode;
-      Quiet        : Boolean;
-      Builder      : Builder_Context;
+      Target_Name : Unbounded_String;
+      Target_Type : Unbounded_String;
+      Main        : Natural;
+      Dialog      : Dialog_Mode;
+      Quiet       : Boolean;
+      Builder     : Builder_Context;
    end record;
    type Build_Main_Command_Access is access all Build_Main_Command'Class;
 

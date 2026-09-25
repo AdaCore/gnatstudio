@@ -37,10 +37,12 @@ package Commands.Socket is
       Stream  : Stream_Access);
    --  Create a new custom command
 
-   overriding procedure Primitive_Free (X : in out Socket_Command);
+   overriding
+   procedure Primitive_Free (X : in out Socket_Command);
    --  Free memory associated to X
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Socket_Command) return Command_Return_Type;
    --  Execute Command, and return Success if the command could be launched
    --  successfully.

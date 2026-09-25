@@ -42,8 +42,8 @@ package GPS.Scripts.File_Locations is
      (Location : File_Location_Info) return Basic_Types.Visible_Column_Type;
    --  Return the information stored in the file location
 
-   function Get_Data (Data : Callback_Data'Class; N : Positive)
-      return File_Location_Info;
+   function Get_Data
+     (Data : Callback_Data'Class; N : Positive) return File_Location_Info;
    --  Retrieve the file location information from an instance
 
    function Create_File_Location

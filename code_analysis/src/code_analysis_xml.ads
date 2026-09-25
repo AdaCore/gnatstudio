@@ -28,9 +28,7 @@ with Code_Analysis;     use Code_Analysis;
 
 package Code_Analysis_XML is
 
-   procedure Dump_Full_XML
-     (Projects : Code_Analysis_Tree;
-      Parent   : Node_Ptr);
+   procedure Dump_Full_XML (Projects : Code_Analysis_Tree; Parent : Node_Ptr);
    --  Starts a dominos calling to the xml dumping subprograms
    --  following the Code_Analysis tree structure.
    --  If full is False, then the minimal xml structure is dumped so that it

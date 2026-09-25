@@ -20,8 +20,11 @@ with CodePeer.Bridge.Annotations_Readers.Base;
 private package CodePeer.Bridge.Annotations_Readers.V4_5 is
 
    type Annotations_Reader_V4_5 is
-     new CodePeer.Bridge.Annotations_Readers.Base.Annotations_Reader_Base
-       with private;
+     new CodePeer
+          .Bridge
+          .Annotations_Readers
+          .Base
+          .Annotations_Reader_Base with private;
 
    function Create_Reader
      (Categories : Annotation_Category_Maps.Map;
@@ -31,17 +34,18 @@ private package CodePeer.Bridge.Annotations_Readers.V4_5 is
 private
 
    type Annotations_Reader_V4_5 is
-     new CodePeer.Bridge.Annotations_Readers.Base.Annotations_Reader_Base with
-   record
+     new CodePeer.Bridge.Annotations_Readers.Base.Annotations_Reader_Base
+   with record
       Subprogram : CodePeer.Subprogram_Data_Access;
    end record;
 
-   overriding function Get_Subprogram
-     (Self : Annotations_Reader_V4_5)
-      return CodePeer.Subprogram_Data_Access;
+   overriding
+   function Get_Subprogram
+     (Self : Annotations_Reader_V4_5) return CodePeer.Subprogram_Data_Access;
 
-   overriding procedure Start_Subprogram
-     (Self : in out Annotations_Reader_V4_5;
+   overriding
+   procedure Start_Subprogram
+     (Self  : in out Annotations_Reader_V4_5;
       Attrs : Sax.Attributes.Attributes'Class);
    --  Process start of "subprogram" element
 

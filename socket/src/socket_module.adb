@@ -22,12 +22,12 @@ with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GPS.Kernel;              use GPS.Kernel;
 
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with GNATCOLL.Traces;                  use GNATCOLL.Traces;
-with Commands.Socket;         use Commands.Socket;
-with Commands;                use Commands;
-with GPS.Intl;                use GPS.Intl;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with Commands.Socket;    use Commands.Socket;
+with Commands;           use Commands;
+with GPS.Intl;           use GPS.Intl;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
@@ -44,8 +44,8 @@ package body Socket_Module is
    use Commands.Command_Lists;
 
    type Socket_Set_Type_Access is access Socket_Set_Type;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Socket_Set_Type, Socket_Set_Type_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Socket_Set_Type, Socket_Set_Type_Access);
 
    type Read_Data_Record;
    type Read_Data_Access is access Read_Data_Record;
@@ -71,21 +71,21 @@ package body Socket_Module is
       W_Set    : Socket_Set_Type_Access;
       Socket   : Socket_Type;
 
-      Buffer   : String (1 .. 4096);
-      Index    : Natural := 1;
+      Buffer : String (1 .. 4096);
+      Index  : Natural := 1;
 
-      Name     : GNAT.Strings.String_Access := new String'("");
-      Next     : Read_Data_Access;
+      Name : GNAT.Strings.String_Access := new String'("");
+      Next : Read_Data_Access;
 
-      Timeout  : Glib.Main.G_Source_Id;
+      Timeout : Glib.Main.G_Source_Id;
       --  The handler for Read()
    end record;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Selector_Type, Selector_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Selector_Type, Selector_Access);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Read_Data_Record, Read_Data_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Read_Data_Record, Read_Data_Access);
 
    package Read_Timeout is new Glib.Main.Generic_Sources (Read_Data_Access);
 
@@ -93,7 +93,8 @@ package body Socket_Module is
    -- Local declarations --
    ------------------------
 
-   overriding procedure Destroy (Id : in out Socket_Module_Record);
+   overriding
+   procedure Destroy (Id : in out Socket_Module_Record);
    --  Free memory associated to Id and close the corresponding server socket.
 
    function Timeout_Process_Commands return Boolean;
@@ -110,13 +111,11 @@ package body Socket_Module is
    --  Read input on Data.Socket and process it.
 
    procedure Socket_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the socket module.
 
    procedure Socket_Static_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handles all shell commands for static methods
 
    function Find_Data (Id : String) return Read_Data_Access;
@@ -148,7 +147,8 @@ package body Socket_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Id : in out Socket_Module_Record) is
+   overriding
+   procedure Destroy (Id : in out Socket_Module_Record) is
    begin
       Empty (Id.R_Set.all);
       Empty (Id.W_Set.all);
@@ -236,17 +236,13 @@ package body Socket_Module is
 
       Read_Loop : loop
          Check_Selector
-           (Data.Selector.all,
-            Data.R_Set.all,
-            Data.W_Set.all,
-            Status,
-            0.0001);
+           (Data.Selector.all, Data.R_Set.all, Data.W_Set.all, Status, 0.0001);
 
          case Status is
-            when Expired =>
+            when Expired   =>
                return True;
 
-            when Aborted =>
+            when Aborted   =>
                return False;
 
             when Completed =>
@@ -282,8 +278,13 @@ package body Socket_Module is
                            GNAT.Strings.Free (Data.Name);
                            Data.Name :=
                              new String'(Data.Buffer (4 .. Data.Index - 1));
-                           String'Write (Data.Channel, "id set to '" &
-                             Data.Name.all & "'" & ASCII.LF & "GPS>> ");
+                           String'Write
+                             (Data.Channel,
+                              "id set to '"
+                              & Data.Name.all
+                              & "'"
+                              & ASCII.LF
+                              & "GPS>> ");
 
                         elsif Data.Index > 8
                           and then Data.Buffer (1 .. 7) = "python "
@@ -364,8 +365,9 @@ package body Socket_Module is
             Set (Data.R_Set.all, Data.Socket);
             String'Write (Data.Channel, "GPS>> ");
 
-            Data.Timeout := Read_Timeout.Timeout_Add
-              (100, Idle_Read'Access, Data, Notify => Close'Access);
+            Data.Timeout :=
+              Read_Timeout.Timeout_Add
+                (100, Idle_Read'Access, Data, Notify => Close'Access);
          end;
       end if;
 
@@ -386,13 +388,13 @@ package body Socket_Module is
    ----------------------------
 
    procedure Socket_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel       : constant Kernel_Handle := Get_Kernel (Data);
       Socket_Class : constant Class_Type := New_Class (Kernel, "Socket");
       Read_Data    : Read_Data_Access;
-      Inst        : constant Class_Instance := Nth_Arg (Data, 1, Socket_Class);
+      Inst         : constant Class_Instance :=
+        Nth_Arg (Data, 1, Socket_Class);
    begin
       if Command = Constructor_Method then
          Read_Data := Find_Data (Nth_Arg (Data, 2));
@@ -419,7 +421,8 @@ package body Socket_Module is
       when Socket_Error | End_Error =>
          Trace (Me, "Communication error, closing socket.");
 
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Socket_Command_Handler;
 
    -----------------------------------
@@ -427,10 +430,9 @@ package body Socket_Module is
    -----------------------------------
 
    procedure Socket_Static_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
-      Read_Data    : Read_Data_Access;
+      Read_Data : Read_Data_Access;
    begin
       if Command = "list" then
          Set_Return_Value_As_List (Data);
@@ -457,10 +459,9 @@ package body Socket_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Port   : Natural)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Port : Natural)
    is
-      T : Glib.Main.G_Source_Id;
+      T            : Glib.Main.G_Source_Id;
       pragma Unreferenced (T);
       Socket_Class : constant Class_Type := New_Class (Kernel, "Socket");
 
@@ -470,8 +471,7 @@ package body Socket_Module is
       Socket_Module_ID := new Socket_Module_Record;
       Socket_Module (Socket_Module_ID).Timeout_Handler :=
         Glib.Main.Timeout_Add (100, Timeout_Process_Commands'Access);
-      Socket_Module (Socket_Module_ID).Address.Addr :=
-        Inet_Addr ("127.0.0.1");
+      Socket_Module (Socket_Module_ID).Address.Addr := Inet_Addr ("127.0.0.1");
 
       --  Get a socket address that is an Internet address and a port
 
@@ -482,7 +482,8 @@ package body Socket_Module is
 
       Set_Socket_Option
         (Socket_Module (Socket_Module_ID).Server,
-         Socket_Level, (Reuse_Address, True));
+         Socket_Level,
+         (Reuse_Address, True));
 
       Bind_Socket
         (Socket_Module (Socket_Module_ID).Server,
@@ -500,8 +501,9 @@ package body Socket_Module is
       Socket_Module (Socket_Module_ID).R_Set := new Socket_Set_Type;
       Socket_Module (Socket_Module_ID).W_Set := new Socket_Set_Type;
 
-      Set (Socket_Module (Socket_Module_ID).R_Set.all,
-           Socket_Module (Socket_Module_ID).Server);
+      Set
+        (Socket_Module (Socket_Module_ID).R_Set.all,
+         Socket_Module (Socket_Module_ID).Server);
 
       T := Timeout_Add (2000, Idle_Accept'Access);
 
@@ -512,29 +514,34 @@ package body Socket_Module is
          Priority    => Default_Priority);
 
       Register_Command
-        (Kernel, Constructor_Method,
+        (Kernel,
+         Constructor_Method,
          Class        => Socket_Class,
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Socket_Command_Handler'Access);
       Register_Command
-        (Kernel, "send",
+        (Kernel,
+         "send",
          Class        => Socket_Class,
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Socket_Command_Handler'Access);
       Register_Command
-        (Kernel, "close",
-         Class        => Socket_Class,
-         Handler      => Socket_Command_Handler'Access);
+        (Kernel,
+         "close",
+         Class   => Socket_Class,
+         Handler => Socket_Command_Handler'Access);
       Register_Command
-        (Kernel, "list",
+        (Kernel,
+         "list",
          Class         => Socket_Class,
          Static_Method => True,
          Handler       => Socket_Static_Command_Handler'Access);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
    end Register_Module;
 
 end Socket_Module;

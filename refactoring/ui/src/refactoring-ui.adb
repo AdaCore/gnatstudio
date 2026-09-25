@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Main_Window;        use GPS.Main_Window;
-with GPS.Intl;               use GPS.Intl;
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
-with GPS.Dialogs;            use GPS.Dialogs;
+with GPS.Kernel;      use GPS.Kernel;
+with GPS.Main_Window; use GPS.Main_Window;
+with GPS.Intl;        use GPS.Intl;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
+with GPS.Dialogs;     use GPS.Dialogs;
 
-with Glib;                   use Glib;
-with Glib_Values_Utils;      use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
@@ -57,10 +57,11 @@ package body Refactoring.UI is
       Result : Boolean;
    begin
       if not Files.Is_Empty then
-         Gtk_New (Dialog,
-                  Title  => Title,
-                  Kernel => Kernel,
-                  Flags  => Destroy_With_Parent or Modal);
+         Gtk_New
+           (Dialog,
+            Title  => Title,
+            Kernel => Kernel,
+            Flags  => Destroy_With_Parent or Modal);
          Set_Default_Size_From_History
            (Dialog, "refactoring", Kernel, -1, 350);
 
@@ -95,9 +96,12 @@ package body Refactoring.UI is
       No_LI_List      : Source_File_Set;
       Stale_LI_List   : Source_File_Set) return Boolean
    is
-      function Lang_C (SFS : Source_File_Set) return Boolean is
-        (SFS.Is_Empty or else Kernel.Lang_Handler.Get_Language_From_File
-           (Basic_Types.File_Sets.Element (SFS.First)).Get_Name
+      function Lang_C (SFS : Source_File_Set) return Boolean
+      is (SFS.Is_Empty
+          or else
+            Kernel.Lang_Handler.Get_Language_From_File
+              (Basic_Types.File_Sets.Element (SFS.First))
+              .Get_Name
             in "c" | "C" | "c++" | "C++");
       --  Returns true when
       --  1. SFS is empty
@@ -108,35 +112,43 @@ package body Refactoring.UI is
       --  We want to ignore information from the ALI database for C and C++
       --  since they get their information directly from libclang
    begin
-      return Dialog
-        (Kernel,
-         -"Read-only files",
-         -("The following files are not writable, and will not be updated."
-           & ASCII.LF
-           & "Do you want to refactor the other files anyway ?"),
-         Files => Read_Only_Files)
+      return
+        Dialog
+          (Kernel,
+           -"Read-only files",
+           -("The following files are not writable, and will not be updated."
+             & ASCII.LF
+             & "Do you want to refactor the other files anyway ?"),
+           Files => Read_Only_Files)
 
         and then
-          (Ignore_ALIs or else Dialog
-             (Kernel,
-              -"Missing cross-references",
-              -("The following files might contain references to the entity,"
-                & ASCII.LF
-                & "but no cross-reference information was found for them"),
-              No_LI_List))
+          (Ignore_ALIs
+           or else
+             Dialog
+               (Kernel,
+                -"Missing cross-references",
+                -("The following files might contain references to the entity,"
+                  & ASCII.LF
+                  & "but no cross-reference information was found for them"),
+                No_LI_List))
 
         and then
-          (Ignore_ALIs or else Dialog
-             (Kernel,
-              -"Cross-references not up-to-date",
-              -("The following files contain references to the entity, but the"
-                & ASCII.LF
-                & "cross-reference information is not up-to-date." & ASCII.LF
-                & "This might mean that the files have been modified"
-                & ASCII.LF
-                & "since the last compilation." & ASCII.LF
-                & "As a result, replace might fail."),
-              Stale_LI_List));
+          (Ignore_ALIs
+           or else
+             Dialog
+               (Kernel,
+                -"Cross-references not up-to-date",
+                -("The following files contain references to the entity, "
+                  & "but the"
+                  & ASCII.LF
+                  & "cross-reference information is not up-to-date."
+                  & ASCII.LF
+                  & "This might mean that the files have been modified"
+                  & ASCII.LF
+                  & "since the last compilation."
+                  & ASCII.LF
+                  & "As a result, replace might fail."),
+                Stale_LI_List));
    end Confirm_Files;
 
    ----------------------
@@ -192,7 +204,8 @@ package body Refactoring.UI is
             Append (Model, Iter, Null_Iter);
 
             Set_And_Clear
-              (Model, Iter,
+              (Model,
+               Iter,
                (0 => As_String (F.Display_Base_Name),
                 1 => As_String (F.Display_Dir_Name)));
          end;

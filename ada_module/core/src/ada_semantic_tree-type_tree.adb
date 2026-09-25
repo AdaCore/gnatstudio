@@ -17,7 +17,7 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 
-with Language.Ada;                   use Language.Ada;
+with Language.Ada; use Language.Ada;
 
 with Ada_Semantic_Tree.Lang;         use Ada_Semantic_Tree.Lang;
 with Ada_Semantic_Tree.Parts;        use Ada_Semantic_Tree.Parts;
@@ -31,7 +31,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    Ada_Type_Assistant_Id : constant String := "ADA_TYPE_ASSISTANT";
 
    type Ada_Type_Assistant is new Database_Assistant with record
-      Ada_Type_Key      : Construct_Annotations_Pckg.Annotation_Key;
+      Ada_Type_Key : Construct_Annotations_Pckg.Annotation_Key;
 
       Ada_Primitive_Key : Construct_Annotations_Pckg.Annotation_Key;
       --  This key is used to store the primitive information on primitive
@@ -67,41 +67,41 @@ package body Ada_Semantic_Tree.Type_Tree is
       Kind      : Update_Kind);
 
    function Get_Type_Info
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Ada_Type_Access;
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Ada_Type_Access;
 
    function Get_Primitive_Info
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Ada_Primitive_Access;
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Ada_Primitive_Access;
    pragma Unreferenced (Get_Primitive_Info);
 
    function Is_Primitive_Param
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Boolean;
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Boolean;
 
    procedure Perform_Type_Analyzis_If_Needed
-     (Entity_Type : Entity_Access;
-      Excluded    : in out Excluded_Stack_Type);
+     (Entity_Type : Entity_Access; Excluded : in out Excluded_Stack_Type);
    --  This function will perform the needed type analysis if the type
    --  information isn't up to date anymore
 
-   package Primitive_List is new Standard.Ada.Containers.Doubly_Linked_Lists
-     (Ada_Primitive_Access);
+   package Primitive_List is new
+     Standard.Ada.Containers.Doubly_Linked_Lists (Ada_Primitive_Access);
    use Primitive_List;
 
    package Entity_Persistent_List is new
      Standard.Ada.Containers.Doubly_Linked_Lists (Entity_Persistent_Access);
    use Entity_Persistent_List;
 
-   package Type_List is new Standard.Ada.Containers.Doubly_Linked_Lists
-     (Ada_Type_Access);
+   package Type_List is new
+     Standard.Ada.Containers.Doubly_Linked_Lists (Ada_Type_Access);
    use Type_List;
 
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free (Annotation : in out Ada_Primitive_Annotation) is
+   overriding
+   procedure Free (Annotation : in out Ada_Primitive_Annotation) is
    begin
       if Annotation.Ada_Primitive /= null then
          Unref (Annotation.Ada_Primitive);
@@ -123,11 +123,11 @@ package body Ada_Semantic_Tree.Type_Tree is
    begin
       for J in The_Type.Parents'Range loop
          if Exists (The_Type.Parents (J).Entity) then
-            Assistant := Get_Assistant
-              (Get_Database (Get_File (The_Type.Entity)),
-               Ada_Type_Assistant_Id);
-            Ada_Type_Key :=
-              Ada_Type_Assistant (Assistant.all).Ada_Type_Key;
+            Assistant :=
+              Get_Assistant
+                (Get_Database (Get_File (The_Type.Entity)),
+                 Ada_Type_Assistant_Id);
+            Ada_Type_Key := Ada_Type_Assistant (Assistant.all).Ada_Type_Key;
 
             declare
                --  WARNING! Do not use Get_Ada_Type here, as it will recompute
@@ -159,14 +159,14 @@ package body Ada_Semantic_Tree.Type_Tree is
    -- Free --
    ----------
 
-   overriding procedure Free (Annotation : in out Ada_Type_Annotation) is
+   overriding
+   procedure Free (Annotation : in out Ada_Type_Annotation) is
    begin
       if Annotation.Ada_Type /= null then
          Free_Parents_Array (Annotation.Ada_Type);
 
          declare
-            C : Entity_Lists_Pck.Cursor :=
-              Annotation.Ada_Type.Children.First;
+            C : Entity_Lists_Pck.Cursor := Annotation.Ada_Type.Children.First;
             E : Entity_Persistent_Access;
          begin
             while C /= Entity_Lists_Pck.No_Element loop
@@ -211,23 +211,24 @@ package body Ada_Semantic_Tree.Type_Tree is
       Ada_Type_Key := Get_Ref_Key (Db);
 
       Get_Annotation_Key
-        (Get_Construct_Annotation_Key_Registry (Db).all,
-         Ada_Primitive_Key);
+        (Get_Construct_Annotation_Key_Registry (Db).all, Ada_Primitive_Key);
 
       Register_Assistant
         (Db,
          Ada_Type_Assistant_Id,
          new Ada_Type_Assistant'
-           (Database_Assistant with
-            Ada_Type_Key      => Ada_Type_Key,
-            Ada_Primitive_Key => Ada_Primitive_Key));
+           (Database_Assistant
+            with
+              Ada_Type_Key      => Ada_Type_Key,
+              Ada_Primitive_Key => Ada_Primitive_Key));
    end Register_Assistant;
 
    ------------------
    -- File_Updated --
    ------------------
 
-   overriding procedure File_Updated
+   overriding
+   procedure File_Updated
      (Assistant : access Ada_Type_Assistant;
       File      : Structured_File_Access;
       Old_Tree  : Construct_Tree;
@@ -246,8 +247,8 @@ package body Ada_Semantic_Tree.Type_Tree is
    -------------------
 
    function Get_Type_Info
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Ada_Type_Access
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Ada_Type_Access
    is
       use Construct_Annotations_Pckg;
       Type_Annotation : Annotation;
@@ -256,14 +257,13 @@ package body Ada_Semantic_Tree.Type_Tree is
          Get_Annotation
            (Get_Annotation_Container
               (Get_Tree (Get_File (Entity)),
-               To_Construct_Tree_Iterator
-                 (Entity)).all,
+               To_Construct_Tree_Iterator (Entity)).all,
             Key,
             Type_Annotation);
 
          if Type_Annotation /= Null_Annotation then
-            return Ada_Type_Annotation
-              (Type_Annotation.Other_Val.all).Ada_Type;
+            return
+              Ada_Type_Annotation (Type_Annotation.Other_Val.all).Ada_Type;
          else
             return null;
          end if;
@@ -277,8 +277,8 @@ package body Ada_Semantic_Tree.Type_Tree is
    ------------------------
 
    function Get_Primitive_Info
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Ada_Primitive_Access
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Ada_Primitive_Access
    is
       use Construct_Annotations_Pckg;
       Prim_Annotation : Annotation;
@@ -286,14 +286,14 @@ package body Ada_Semantic_Tree.Type_Tree is
       Get_Annotation
         (Get_Annotation_Container
            (Get_Tree (Get_File (Entity)),
-            To_Construct_Tree_Iterator
-              (Entity)).all,
+            To_Construct_Tree_Iterator (Entity)).all,
          Key,
          Prim_Annotation);
 
       if Prim_Annotation /= Null_Annotation then
-         return Ada_Primitive_Annotation
-           (Prim_Annotation.Other_Val.all).Ada_Primitive;
+         return
+           Ada_Primitive_Annotation (Prim_Annotation.Other_Val.all)
+             .Ada_Primitive;
       else
          return null;
       end if;
@@ -304,8 +304,8 @@ package body Ada_Semantic_Tree.Type_Tree is
    ------------------------
 
    function Is_Primitive_Param
-     (Key    : Construct_Annotations_Pckg.Annotation_Key;
-      Entity : Entity_Access) return Boolean
+     (Key : Construct_Annotations_Pckg.Annotation_Key; Entity : Entity_Access)
+      return Boolean
    is
       use Construct_Annotations_Pckg;
       Prim_Annotation : Annotation;
@@ -313,8 +313,7 @@ package body Ada_Semantic_Tree.Type_Tree is
       Get_Annotation
         (Get_Annotation_Container
            (Get_Tree (Get_File (Entity)),
-            To_Construct_Tree_Iterator
-              (Entity)).all,
+            To_Construct_Tree_Iterator (Entity)).all,
          Key,
          Prim_Annotation);
 
@@ -330,8 +329,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    -------------------------------------
 
    procedure Perform_Type_Analyzis_If_Needed
-     (Entity_Type : Entity_Access;
-      Excluded    : in out Excluded_Stack_Type)
+     (Entity_Type : Entity_Access; Excluded : in out Excluded_Stack_Type)
    is
       use Construct_Annotations_Pckg;
 
@@ -347,14 +345,14 @@ package body Ada_Semantic_Tree.Type_Tree is
       Ada_Primitive_Key : constant Annotation_Key :=
         Ada_Type_Assistant (Assistant.all).Ada_Primitive_Key;
 
-      Tree   : Construct_Tree;
+      Tree : Construct_Tree;
 
       New_Primitives : Primitive_List.List;
       --  This variable holds the new primitives declared for this type.
 
       function Same_Overriding_Subprogram
-        (S_1, S_2             : Entity_Access;
-         Check_Returned_Types : Boolean) return Boolean;
+        (S_1, S_2 : Entity_Access; Check_Returned_Types : Boolean)
+         return Boolean;
       --  Return true if S1 and S2 are two same overriding subprograms, that
       --  is to say the controlling primitive parameters are on the same
       --  location, other parameters are the same, and names matches. Primitive
@@ -373,12 +371,12 @@ package body Ada_Semantic_Tree.Type_Tree is
       --------------------------------
 
       function Same_Overriding_Subprogram
-        (S_1, S_2             : Entity_Access;
-         Check_Returned_Types : Boolean) return Boolean
+        (S_1, S_2 : Entity_Access; Check_Returned_Types : Boolean)
+         return Boolean
       is
-         It_1, It_2     : Construct_Tree_Iterator;
-         File_1, File_2 : Structured_File_Access;
-         Tree_1, Tree_2 : Construct_Tree;
+         It_1, It_2       : Construct_Tree_Iterator;
+         File_1, File_2   : Structured_File_Access;
+         Tree_1, Tree_2   : Construct_Tree;
          Scope_1, Scope_2 : Construct_Tree_Iterator;
       begin
          if Get_Identifier (S_1) /= Get_Identifier (S_2)
@@ -405,10 +403,10 @@ package body Ada_Semantic_Tree.Type_Tree is
            and then Is_Parent_Scope (Scope_2, It_2)
          loop
             if Is_Primitive_Param
-              (Ada_Primitive_Key, To_Entity_Access (File_1, It_1))
+                 (Ada_Primitive_Key, To_Entity_Access (File_1, It_1))
             then
                if not Is_Primitive_Param
-                 (Ada_Primitive_Key, To_Entity_Access (File_2, It_2))
+                        (Ada_Primitive_Key, To_Entity_Access (File_2, It_2))
                then
                   --  One of the two parameters is not primitive, while the
                   --  other is. Subprograms doesn't match.
@@ -465,15 +463,15 @@ package body Ada_Semantic_Tree.Type_Tree is
         (Subprogram : Entity_Access) return Ada_Primitive_Access
       is
          Return_Is_Primitive : Boolean := False;
-         C : Primitive_List.Cursor := First (New_Primitives);
+         C                   : Primitive_List.Cursor := First (New_Primitives);
       begin
          if Get_Construct (Subprogram).Category = Cat_Function
-           and then not Get_Construct (Subprogram).Attributes
-           (Ada_Class_Attribute)
+           and then
+             not Get_Construct (Subprogram).Attributes (Ada_Class_Attribute)
          then
             if Get_Referenced_Identifiers
-              (To_Construct_Tree_Iterator (Subprogram)) =
-              Get_Identifier (The_Type)
+                 (To_Construct_Tree_Iterator (Subprogram))
+              = Get_Identifier (The_Type)
             then
                Return_Is_Primitive := True;
             end if;
@@ -481,13 +479,13 @@ package body Ada_Semantic_Tree.Type_Tree is
 
          while C /= Primitive_List.No_Element loop
             if Element (C).Entity = Null_Entity_Persistent_Access
-              and then not
-                (Return_Is_Primitive
-                 xor Element (C).Is_Returned_Primitive)
-              and then Same_Overriding_Subprogram
-                (Get_Entity_Or_Overridden (Element (C)),
-                 Subprogram,
-                 not Return_Is_Primitive)
+              and then
+                not (Return_Is_Primitive xor Element (C).Is_Returned_Primitive)
+              and then
+                Same_Overriding_Subprogram
+                  (Get_Entity_Or_Overridden (Element (C)),
+                   Subprogram,
+                   not Return_Is_Primitive)
             then
                return Element (C);
             end if;
@@ -503,7 +501,7 @@ package body Ada_Semantic_Tree.Type_Tree is
       It    : Construct_Tree_Iterator;
       Scope : Construct_Tree_Iterator;
 
-      Parent_Types   : Type_List.List;
+      Parent_Types : Type_List.List;
 
       Dotted_Notation_Sb : Entity_Persistent_List.List;
 
@@ -573,12 +571,12 @@ package body Ada_Semantic_Tree.Type_Tree is
       else
          --  Check if we want to do analysis on this kind of construct
 
-         if
-           Get_Construct (The_Type).Category not in Cat_Class .. Cat_Subtype
+         if Get_Construct (The_Type).Category not in Cat_Class .. Cat_Subtype
            or else
              (not Get_Construct (The_Type).Attributes (Ada_Tagged_Attribute)
-              and then not
-                Get_Construct (The_Type).Attributes (Ada_Interface_Attribute))
+              and then
+                not Get_Construct (The_Type).Attributes
+                      (Ada_Interface_Attribute))
          then
             return;
          end if;
@@ -591,8 +589,7 @@ package body Ada_Semantic_Tree.Type_Tree is
          if Active (Test_Trace) then
             Trace
               (Test_Trace,
-               "NEW TYPE: "
-               & Get (Get_Construct (Entity_Type).Name).all);
+               "NEW TYPE: " & Get (Get_Construct (Entity_Type).Name).all);
          end if;
       end if;
 
@@ -616,16 +613,16 @@ package body Ada_Semantic_Tree.Type_Tree is
 
       --  First analyze parent types.
 
-      Ref_Ids := Get_Referenced_Identifiers
-        (To_Construct_Tree_Iterator (The_Type));
+      Ref_Ids :=
+        Get_Referenced_Identifiers (To_Construct_Tree_Iterator (The_Type));
 
       while Ref_Ids /= Null_Referenced_Identifiers_List loop
          --  Extracts all the inherited primitives and add them in the type's
          --  list. We'll see later if the primitive is overridden.
 
          declare
-            Expression : Parsed_Expression := Parse_Expression_Backward
-              (Get (Get_Identifier (Ref_Ids)));
+            Expression : Parsed_Expression :=
+              Parse_Expression_Backward (Get (Get_Identifier (Ref_Ids)));
 
             Decl_List   : Entity_List;
             It          : Entity_Iterator;
@@ -635,9 +632,9 @@ package body Ada_Semantic_Tree.Type_Tree is
             Decl_List :=
               Find_Declarations
                 ((From_File,
-                 Null_Instance_Info,
-                 Get_File (The_Type),
-                 String_Index_Type (Get_Construct (The_Type).Sloc_End.Index)),
+                  Null_Instance_Info,
+                  Get_File (The_Type),
+                  String_Index_Type (Get_Construct (The_Type).Sloc_End.Index)),
                  Expression        => Expression,
                  Excluded_Entities => Excluded);
             It := First (Decl_List);
@@ -654,8 +651,8 @@ package body Ada_Semantic_Tree.Type_Tree is
                --  loop in the type references. The use of an excluding stack
                --  avoids infinite loops
 
-               if Parent_Type /= Null_Entity_Access and then
-                 not Is_Excluded (Excluded, Parent_Type)
+               if Parent_Type /= Null_Entity_Access
+                 and then not Is_Excluded (Excluded, Parent_Type)
                then
                   Perform_Type_Analyzis_If_Needed (Parent_Type, Excluded);
 
@@ -665,15 +662,16 @@ package body Ada_Semantic_Tree.Type_Tree is
                      Append (Parent_Types, Parent_Info);
 
                      declare
-                        Primitives : constant Primitive_Array :=
+                        Primitives    : constant Primitive_Array :=
                           Extract_Primitives (Parent_Info);
-                        Dotted_Sb  : Entity_Persistent_Array :=
+                        Dotted_Sb     : Entity_Persistent_Array :=
                           Extract_Dotted_Notation_Sb (Parent_Info);
                         New_Primitive : Ada_Primitive_Access;
                      begin
                         for J in Primitives'Range loop
                            if Find_Overridden_Primitive
-                             (To_Entity_Access (Primitives (J).Entity)) = null
+                                (To_Entity_Access (Primitives (J).Entity))
+                             = null
                            then
                               --  Add the primitive to the primitive list, only
                               --  if this is the first occurence of such a
@@ -681,14 +679,15 @@ package body Ada_Semantic_Tree.Type_Tree is
                               --  from different parents, only consider the
                               --  first one.
 
-                              New_Primitive := new Primitive_Subprogram'
-                                (Entity
-                                 => Null_Entity_Persistent_Access,
-                                 Overridden_Entities
-                                 => new Primitive_Array'(1 => Primitives (J)),
-                                 Is_Returned_Primitive =>
-                                   Primitives (J).Is_Returned_Primitive,
-                                 Refs => 0);
+                              New_Primitive :=
+                                new Primitive_Subprogram'
+                                  (Entity                =>
+                                     Null_Entity_Persistent_Access,
+                                   Overridden_Entities   =>
+                                     new Primitive_Array'(1 => Primitives (J)),
+                                   Is_Returned_Primitive =>
+                                     Primitives (J).Is_Returned_Primitive,
+                                   Refs                  => 0);
 
                               Append (New_Primitives, New_Primitive);
                            end if;
@@ -751,8 +750,8 @@ package body Ada_Semantic_Tree.Type_Tree is
 
                Primitive_Info : Ada_Primitive_Access;
                Is_Primitive   : Boolean := False;
-               Subprogram     : constant Entity_Access := To_Entity_Access
-                 (Get_File (The_Type), It);
+               Subprogram     : constant Entity_Access :=
+                 To_Entity_Access (Get_File (The_Type), It);
                Param_Number   : Integer := 0;
                Add_To_Dotted  : Boolean := False;
             begin
@@ -766,19 +765,19 @@ package body Ada_Semantic_Tree.Type_Tree is
                   Param_Number := Param_Number + 1;
 
                   if not Get_Construct (Param_It).Attributes
-                    (Ada_Class_Attribute) or else Param_Number = 1
+                           (Ada_Class_Attribute)
+                    or else Param_Number = 1
                   then
                      if Get_Referenced_Identifiers (Param_It)
                        = Get_Identifier (The_Type)
                      then
                         if not Get_Construct (Param_It).Attributes
-                          (Ada_Class_Attribute)
+                                 (Ada_Class_Attribute)
                         then
                            Set_Annotation
                              (Get_Annotation_Container (Tree, Param_It).all,
                               Ada_Primitive_Key,
-                              (Kind        => Boolean_Kind,
-                               Boolean_Val => True));
+                              (Kind => Boolean_Kind, Boolean_Val => True));
 
                            Is_Primitive := True;
                         end if;
@@ -796,12 +795,13 @@ package body Ada_Semantic_Tree.Type_Tree is
                --  well.
 
                if Get_Construct (Subprogram).Category = Cat_Function
-                 and then not Get_Construct (Subprogram).Attributes
-                 (Ada_Class_Attribute)
+                 and then
+                   not Get_Construct (Subprogram).Attributes
+                         (Ada_Class_Attribute)
                then
                   if Get_Referenced_Identifiers
-                    (To_Construct_Tree_Iterator (Subprogram)) =
-                    Get_Identifier (The_Type)
+                       (To_Construct_Tree_Iterator (Subprogram))
+                    = Get_Identifier (The_Type)
                   then
                      Is_Primitive := True;
                   end if;
@@ -835,8 +835,9 @@ package body Ada_Semantic_Tree.Type_Tree is
                     (Get_Annotation_Container (Tree, It).all,
                      Ada_Primitive_Key,
                      (Kind      => Other_Kind,
-                      Other_Val => new Ada_Primitive_Annotation'
-                        (Ada_Primitive => Primitive_Info)));
+                      Other_Val =>
+                        new Ada_Primitive_Annotation'
+                          (Ada_Primitive => Primitive_Info)));
                end if;
 
                if Add_To_Dotted then
@@ -863,11 +864,11 @@ package body Ada_Semantic_Tree.Type_Tree is
          Free (Type_Info.Primitives);
       end if;
 
-      Type_Info.Primitives := new Primitive_Array
-        (1 .. Integer (Length (New_Primitives)));
+      Type_Info.Primitives :=
+        new Primitive_Array (1 .. Integer (Length (New_Primitives)));
 
       declare
-         Cursor : Primitive_List.Cursor := First (New_Primitives);
+         Cursor         : Primitive_List.Cursor := First (New_Primitives);
          Primitive_Info : Ada_Primitive_Access;
       begin
          for J in Type_Info.Primitives'Range loop
@@ -893,8 +894,9 @@ package body Ada_Semantic_Tree.Type_Tree is
          Free (Type_Info.Dotted_Notation_Sb);
       end if;
 
-      Type_Info.Dotted_Notation_Sb := new Entity_Persistent_Array
-        (1 .. Integer (Length (Dotted_Notation_Sb)));
+      Type_Info.Dotted_Notation_Sb :=
+        new Entity_Persistent_Array
+              (1 .. Integer (Length (Dotted_Notation_Sb)));
 
       declare
          Cursor : Entity_Persistent_List.Cursor := First (Dotted_Notation_Sb);
@@ -907,9 +909,9 @@ package body Ada_Semantic_Tree.Type_Tree is
       end;
 
       if Is_Set
-        (Get_Annotation_Container
-           (Tree, To_Construct_Tree_Iterator (The_Type)).all,
-         Ada_Type_Key)
+           (Get_Annotation_Container
+              (Tree, To_Construct_Tree_Iterator (The_Type)).all,
+            Ada_Type_Key)
       then
          --  If the annotation is already set, we want to avoid to delete the
          --  type pointer (which we've jut modified). That's why we remove set
@@ -924,8 +926,10 @@ package body Ada_Semantic_Tree.Type_Tree is
                Ada_Type_Key,
                Annot);
 
-            pragma Assert
-              (Type_Info = Ada_Type_Annotation (Annot.Other_Val.all).Ada_Type);
+            pragma
+              Assert
+                (Type_Info
+                 = Ada_Type_Annotation (Annot.Other_Val.all).Ada_Type);
 
             Ada_Type_Annotation (Annot.Other_Val.all).Ada_Type := null;
          end;
@@ -936,8 +940,7 @@ package body Ada_Semantic_Tree.Type_Tree is
            (Tree, To_Construct_Tree_Iterator (The_Type)).all,
          Ada_Type_Key,
          (Kind      => Other_Kind,
-          Other_Val => new Ada_Type_Annotation'
-            (Ada_Type => Type_Info)));
+          Other_Val => new Ada_Type_Annotation'(Ada_Type => Type_Info)));
 
       Pop_Entity (Excluded);
    end Perform_Type_Analyzis_If_Needed;
@@ -955,8 +958,9 @@ package body Ada_Semantic_Tree.Type_Tree is
       Excluded : Excluded_Stack_Type := Null_Excluded_Stack;
    begin
       if Get_Construct (Entity).Category in Cat_Class .. Cat_Subtype then
-         Assistant := Get_Assistant
-           (Get_Database (Get_File (Entity)), Ada_Type_Assistant_Id);
+         Assistant :=
+           Get_Assistant
+             (Get_Database (Get_File (Entity)), Ada_Type_Assistant_Id);
          Ada_Type_Key := Ada_Type_Assistant (Assistant.all).Ada_Type_Key;
          Ref (Excluded);
          Perform_Type_Analyzis_If_Needed (Entity, Excluded);
@@ -1008,8 +1012,8 @@ package body Ada_Semantic_Tree.Type_Tree is
          if Get_Construct (E).Attributes (Ada_Tagged_Attribute)
            or else Get_Construct (E).Attributes (Ada_Interface_Attribute)
          then
-            return Is_Accessible
-              (E, From_Visibility.File, From_Visibility.Offset);
+            return
+              Is_Accessible (E, From_Visibility.File, From_Visibility.Offset);
          end if;
 
          return False;
@@ -1021,7 +1025,8 @@ package body Ada_Semantic_Tree.Type_Tree is
       else
          Entity := To_Entity_Access (Ada_Type.Entity);
 
-         return Is_Tagged_And_Visible (Get_First_Occurence (Entity))
+         return
+           Is_Tagged_And_Visible (Get_First_Occurence (Entity))
            or else Is_Tagged_And_Visible (Get_Second_Occurence (Entity))
            or else Is_Tagged_And_Visible (Get_Third_Occurence (Entity));
       end if;
@@ -1032,8 +1037,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    --------------------------------
 
    function Extract_Dotted_Notation_Sb
-     (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array
-   is
+     (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array is
    begin
       return Ada_Type.Dotted_Notation_Sb.all;
    end Extract_Dotted_Notation_Sb;
@@ -1042,8 +1046,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    -- Get_Entity --
    ----------------
 
-   function Get_Entity
-     (Primitive : Ada_Primitive_Access) return Entity_Access
+   function Get_Entity (Primitive : Ada_Primitive_Access) return Entity_Access
    is
    begin
       return To_Entity_Access (Primitive.Entity);
@@ -1067,13 +1070,12 @@ package body Ada_Semantic_Tree.Type_Tree is
       then
          Parent := To_Entity_Access (Ada_Type.Parents (1).Entity);
 
-         Assistant := Get_Assistant
-           (Get_Database (Get_File (Parent)), Ada_Type_Assistant_Id);
-         Ada_Type_Key :=
-           Ada_Type_Assistant (Assistant.all).Ada_Type_Key;
+         Assistant :=
+           Get_Assistant
+             (Get_Database (Get_File (Parent)), Ada_Type_Assistant_Id);
+         Ada_Type_Key := Ada_Type_Assistant (Assistant.all).Ada_Type_Key;
 
-         if not
-           Get_Construct (Parent).Attributes (Ada_Interface_Attribute)
+         if not Get_Construct (Parent).Attributes (Ada_Interface_Attribute)
          then
             return Get_Type_Info (Ada_Type_Key, Parent);
          end if;
@@ -1105,10 +1107,10 @@ package body Ada_Semantic_Tree.Type_Tree is
    function Get_Children
      (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array
    is
-      Result : Entity_Persistent_Array
-        (1 .. Integer (Ada_Type.Children.Length));
-      C : Entity_Lists_Pck.Cursor := Ada_Type.Children.First;
-      J : Integer := 1;
+      Result :
+        Entity_Persistent_Array (1 .. Integer (Ada_Type.Children.Length));
+      C      : Entity_Lists_Pck.Cursor := Ada_Type.Children.First;
+      J      : Integer := 1;
    begin
       while C /= Entity_Lists_Pck.No_Element loop
          Result (J) := Element (C);
@@ -1126,8 +1128,7 @@ package body Ada_Semantic_Tree.Type_Tree is
    function Get_Parents
      (Ada_Type : Ada_Type_Access) return Entity_Persistent_Array
    is
-      Result : Entity_Persistent_Array
-        (1 .. Ada_Type.Parents'Last);
+      Result : Entity_Persistent_Array (1 .. Ada_Type.Parents'Last);
    begin
       for J in Result'Range loop
          Result (J) := Ada_Type.Parents (J).Entity;
@@ -1141,15 +1142,16 @@ package body Ada_Semantic_Tree.Type_Tree is
    --------------------------
 
    function First_Private_Parent
-     (Ada_Type        : Ada_Type_Access;
-      From_Visibility : Visibility_Context) return Ada_Type_Access
+     (Ada_Type : Ada_Type_Access; From_Visibility : Visibility_Context)
+      return Ada_Type_Access
    is
       Parent : Ada_Type_Access;
    begin
       if Ada_Type /= Null_Ada_Type_Access then
          if not Is_Accessible
-           (To_Entity_Access (Ada_Type.Entity),
-            From_Visibility.File, From_Visibility.Offset)
+                  (To_Entity_Access (Ada_Type.Entity),
+                   From_Visibility.File,
+                   From_Visibility.Offset)
          then
             return Ada_Type;
          else
@@ -1171,12 +1173,10 @@ package body Ada_Semantic_Tree.Type_Tree is
    ---------------------
 
    function Get_Fields_From
-     (Ada_Type       : Ada_Type_Access;
-      Starting_After : Ada_Type_Access) return Entity_Array
-   is
+     (Ada_Type : Ada_Type_Access; Starting_After : Ada_Type_Access)
+      return Entity_Array is
    begin
-      if Ada_Type /= Null_Ada_Type_Access
-        and then  Starting_After /= Ada_Type
+      if Ada_Type /= Null_Ada_Type_Access and then Starting_After /= Ada_Type
       then
          declare
             Entity : constant Entity_Access :=
@@ -1184,13 +1184,15 @@ package body Ada_Semantic_Tree.Type_Tree is
             File   : constant Structured_File_Access := Get_File (Entity);
             Tree   : constant Construct_Tree := Get_Tree (File);
 
-            Result : Entity_Array
-              (1 .. Get_Child_Number (To_Construct_Tree_Iterator (Entity)));
+            Result :
+              Entity_Array
+                (1 .. Get_Child_Number (To_Construct_Tree_Iterator (Entity)));
 
             Result_It : Integer := 1;
-            Scope : constant Construct_Tree_Iterator :=
+            Scope     : constant Construct_Tree_Iterator :=
               To_Construct_Tree_Iterator (Entity);
-            It : Construct_Tree_Iterator := Next (Tree, Scope, Jump_Into);
+            It        : Construct_Tree_Iterator :=
+              Next (Tree, Scope, Jump_Into);
 
             Parent : Ada_Type_Access;
          begin
@@ -1208,7 +1210,8 @@ package body Ada_Semantic_Tree.Type_Tree is
 
             Parent := Get_Tagged_Parent (Ada_Type);
 
-            return Get_Fields_From (Parent, Starting_After)
+            return
+              Get_Fields_From (Parent, Starting_After)
               & Result (1 .. Result_It - 1);
          end;
       end if;
@@ -1254,8 +1257,10 @@ package body Ada_Semantic_Tree.Type_Tree is
    -----------
 
    procedure Unref (Sb : in out Ada_Primitive_Access) is
-      procedure Free is new Standard.Ada.Unchecked_Deallocation
-        (Primitive_Subprogram, Ada_Primitive_Access);
+      procedure Free is new
+        Standard.Ada.Unchecked_Deallocation
+          (Primitive_Subprogram,
+           Ada_Primitive_Access);
    begin
       Sb.Refs := Sb.Refs - 1;
 

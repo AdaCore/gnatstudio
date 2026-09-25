@@ -19,26 +19,26 @@ pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
-with GNAT.Strings;               use GNAT.Strings;
+with GNAT.Strings;      use GNAT.Strings;
 with GNAT.Heap_Sort;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with String_Utils;               use String_Utils;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with String_Utils;      use String_Utils;
 
-with Cairo.Region;               use Cairo.Region;
-with Gdk.RGBA;                   use Gdk.RGBA;
-with Gdk.Window;                 use Gdk.Window;
-with Glib.Object;                use Glib.Object;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Text_Tag;               use Gtk.Text_Tag;
-with Gtk.Text_View;              use Gtk.Text_View;
-with Gtk.Widget;                 use Gtk.Widget;
-with Pango.Enums;                use Pango.Enums;
-with Pango.Font;                 use Pango.Font;
+with Cairo.Region;    use Cairo.Region;
+with Gdk.RGBA;        use Gdk.RGBA;
+with Gdk.Window;      use Gdk.Window;
+with Glib.Object;     use Glib.Object;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Text_Buffer; use Gtk.Text_Buffer;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Gtk.Text_Tag;    use Gtk.Text_Tag;
+with Gtk.Text_View;   use Gtk.Text_View;
+with Gtk.Widget;      use Gtk.Widget;
+with Pango.Enums;     use Pango.Enums;
+with Pango.Font;      use Pango.Font;
 
 with VSS.Strings.Conversions;
 
@@ -65,16 +65,19 @@ package body GPS.Kernel.Search.Sources is
       Line_End, Column_End : Natural;
    end record;
    type Source_Search_Result_Access is access all Source_Search_Result'Class;
-   overriding procedure Execute
-      (Self       : not null access Source_Search_Result;
-       Give_Focus : Boolean);
-   overriding function Full
+   overriding
+   procedure Execute
+     (Self : not null access Source_Search_Result; Give_Focus : Boolean);
+   overriding
+   function Full
      (Self : not null access Source_Search_Result)
       return Gtk.Widget.Gtk_Widget;
-   overriding procedure To_Message
-     (Self : not null access Source_Search_Result);
-   overriding function Can_Display_In_Locations
-     (Self : not null access Source_Search_Result) return Boolean is (True);
+   overriding
+   procedure To_Message (Self : not null access Source_Search_Result);
+   overriding
+   function Can_Display_In_Locations
+     (Self : not null access Source_Search_Result) return Boolean
+   is (True);
 
    type Result_View is new Gtk_Text_View_Record with record
       Result : Source_Search_Result_Access;
@@ -85,14 +88,14 @@ package body GPS.Kernel.Search.Sources is
       Provider : access Sources_Search_Provider;
       --  The provider to refresh (do not free)
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project view has changed
 
    procedure On_Size_Allocate
-     (View       : access Gtk_Widget_Record'Class;
-      Allocation : Cairo_Rectangle_Int);
+     (View : access Gtk_Widget_Record'Class; Allocation : Cairo_Rectangle_Int);
    --  Called when the preview widget is resized.
 
    procedure Sort (X : in out File_And_Project_Array);
@@ -161,15 +164,15 @@ package body GPS.Kernel.Search.Sources is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class)
-   is
+      Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Free (Self.Provider.Files);
       Self.Provider.Files :=
         Get_Project (Kernel).Source_Files
-           (Recursive => True, Include_Project_Files => True);
+          (Recursive => True, Include_Project_Files => True);
 
       --  In testsuite mode, we want to sort the results so that the matches
       --  do not depend on the filesystem order.
@@ -184,7 +187,8 @@ package body GPS.Kernel.Search.Sources is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Sources_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Sources_Search_Provider) is
    begin
       Free (Self.Files);
       Free (Self.Current);
@@ -200,7 +204,8 @@ package body GPS.Kernel.Search.Sources is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Single_Source_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Single_Source_Search_Provider) is
    begin
       Free (Self.Text);
 
@@ -215,7 +220,8 @@ package body GPS.Kernel.Search.Sources is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
+   overriding
+   function Documentation
      (Self : not null access Sources_Search_Provider) return String
    is
       pragma Unreferenced (Self);
@@ -227,8 +233,9 @@ package body GPS.Kernel.Search.Sources is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
-     (Self    : not null access Single_Source_Search_Provider) return String
+   overriding
+   function Documentation
+     (Self : not null access Single_Source_Search_Provider) return String
    is
       pragma Unreferenced (Self);
    begin
@@ -248,12 +255,10 @@ package body GPS.Kernel.Search.Sources is
       Props : File_Props;
 
    begin
-      if File /= Self.File
-        or else Project /= Self.Project
-      then
+      if File /= Self.File or else Project /= Self.Project then
          Trace (Me, "Examining " & (+File.Full_Name.all));
          Free (Self.Text);
-         Self.File    := File;
+         Self.File := File;
          Self.Project := Project;
 
          if File /= No_File then
@@ -295,7 +300,8 @@ package body GPS.Kernel.Search.Sources is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Single_Source_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -309,10 +315,11 @@ package body GPS.Kernel.Search.Sources is
       end if;
 
       --  Set Self.Pattern to Approximate if Pattern.Kind = Fuzzy
-      Self.Pattern := Pattern.Build_If_Needed
-        (Kind     => Fuzzy,
-         New_Kind => Approximate,
-         Built    => Self.Pattern_Needs_Free);
+      Self.Pattern :=
+        Pattern.Build_If_Needed
+          (Kind     => Fuzzy,
+           New_Kind => Approximate,
+           Built    => Self.Pattern_Needs_Free);
 
       Self.Set_File (Self.File, Self.Project);  --  reset search
    end Set_Pattern;
@@ -321,7 +328,8 @@ package body GPS.Kernel.Search.Sources is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Sources_Search_Provider;
       Pattern : not null access Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -341,9 +349,10 @@ package body GPS.Kernel.Search.Sources is
       end if;
 
       case Pattern.Get_Kind is
-         when Full_Text | Regexp =>
+         when Full_Text | Regexp  =>
             Self.Pattern := Search_Pattern_Access (Pattern);
             Self.Pattern_Needs_Free := False;
+
          when Fuzzy | Approximate =>
             Self.Pattern := Pattern.Build (Kind => Approximate);
             Self.Pattern_Needs_Free := True;
@@ -354,8 +363,7 @@ package body GPS.Kernel.Search.Sources is
 
       if Self.Files'Length > 0 then
          Self.Current.Set_File
-           (Self.Files (Self.Index).File,
-            Self.Files (Self.Index).Project);
+           (Self.Files (Self.Index).File, Self.Files (Self.Index).Project);
       end if;
 
       Self.Current.Kernel := Self.Kernel;
@@ -366,14 +374,15 @@ package body GPS.Kernel.Search.Sources is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Single_Source_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
       L : GNAT.Strings.String_Access;
    begin
-      Result   := null;
+      Result := null;
       Has_Next := False;
 
       if Self.Text = null
@@ -384,11 +393,13 @@ package body GPS.Kernel.Search.Sources is
 
       if Self.Restart then
          Self.Restart := False;
-         Self.Context := Self.Pattern.Start
-           (Self.Text.all,
-            Tab_Width =>
-              Self.Kernel.Get_Language_Handler.Get_Language_From_File
-                (Self.File).Get_Indentation_Level);
+         Self.Context :=
+           Self.Pattern.Start
+             (Self.Text.all,
+              Tab_Width =>
+                Self.Kernel.Get_Language_Handler.Get_Language_From_File
+                  (Self.File)
+                  .Get_Indentation_Level);
       else
          Self.Pattern.Next (Self.Text.all, Self.Context);
       end if;
@@ -398,59 +409,70 @@ package body GPS.Kernel.Search.Sources is
       end if;
 
       declare
-         Empty        : constant Boolean := Is_Empty_Match (Self.Context);
+         Empty : constant Boolean := Is_Empty_Match (Self.Context);
 
          Matched_Line : constant String :=
-           (if not Empty then
-                 Get_Surrounding_Line
-                   (Self.Text.all,
-                    Byte_Index (Self.Context.Start),
-                    Byte_Index (Self.Context.Finish))
+           (if not Empty
+            then
+              Get_Surrounding_Line
+                (Self.Text.all,
+                 Byte_Index (Self.Context.Start),
+                 Byte_Index (Self.Context.Finish))
             else
-               Get_Surrounding_Line
-                 (Self.Text.all,
-                  Byte_Index (Self.Context.Start),
-                  Byte_Index (Self.Context.Start)));
+              Get_Surrounding_Line
+                (Self.Text.all,
+                 Byte_Index (Self.Context.Start),
+                 Byte_Index (Self.Context.Start)));
 
          --  An empty match has no end of its own: report no end position
          --  at all, which is how Full knows there is nothing to highlight.
 
-         Line_End     : constant Natural :=
+         Line_End   : constant Natural :=
            (if Empty then 0 else Self.Context.Finish.Line);
-         Column_End   : constant Natural :=
+         Column_End : constant Natural :=
            (if Empty then 0 else Natural (Self.Context.Finish.Column));
 
-         P_Name       : constant String :=
+         P_Name : constant String :=
            (if Self.Project = No_Project
-            or else not Get_Registry
-              (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project
+              or else
+                not Get_Registry (Self.Kernel)
+                      .Tree
+                      .Root_Project
+                      .Is_Aggregate_Project
             then ""
-            else ASCII.LF
-            & "(" & Self.Project.Project_Path.Display_Base_Name & " -- "
-            & (+Self.Project.Project_Path.Dir_Name) & ')');
+            else
+              ASCII.LF
+              & "("
+              & Self.Project.Project_Path.Display_Base_Name
+              & " -- "
+              & (+Self.Project.Project_Path.Dir_Name)
+              & ')');
       begin
-         L := new String'
-           (Path_And_Name (Self.Kernel, Self.File, Self.Project)
-            & ":" & Image (Self.Context.Start.Line, Min_Width => 0)
-            & ":"
-            & Image (Integer (Self.Context.Start.Column), Min_Width => 0)
-            & P_Name);
+         L :=
+           new String'
+             (Path_And_Name (Self.Kernel, Self.File, Self.Project)
+              & ":"
+              & Image (Self.Context.Start.Line, Min_Width => 0)
+              & ":"
+              & Image (Integer (Self.Context.Start.Column), Min_Width => 0)
+              & P_Name);
 
-         Result   := new Source_Search_Result'
-           (Kernel     => Self.Kernel,
-            Provider   => Self,
-            Score      => Self.Context.Score,
-            Short      => new String'
-              (Self.Pattern.Highlight_Match
-                   (Matched_Line, Self.Context)),
-            Long       => L,
-            Id         => VSS.Strings.Conversions.To_Virtual_String (L.all),
-            File       => Self.File,
-            Project    => Self.Project,
-            Line       => Self.Context.Start.Line,
-            Column     => Integer (Self.Context.Start.Column),
-            Line_End   => Line_End,
-            Column_End => Column_End);
+         Result :=
+           new Source_Search_Result'
+             (Kernel     => Self.Kernel,
+              Provider   => Self,
+              Score      => Self.Context.Score,
+              Short      =>
+                new String'
+                  (Self.Pattern.Highlight_Match (Matched_Line, Self.Context)),
+              Long       => L,
+              Id         => VSS.Strings.Conversions.To_Virtual_String (L.all),
+              File       => Self.File,
+              Project    => Self.Project,
+              Line       => Self.Context.Start.Line,
+              Column     => Integer (Self.Context.Start.Column),
+              Line_End   => Line_End,
+              Column_End => Column_End);
          Self.Adjust_Score (Result);
          Has_Next := True;
       end;
@@ -460,7 +482,8 @@ package body GPS.Kernel.Search.Sources is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Sources_Search_Provider;
       Result   : out Search_Result_Access;
       Has_Next : out Boolean)
@@ -469,9 +492,7 @@ package body GPS.Kernel.Search.Sources is
    begin
       Result := null;
 
-      if Self.Pattern.Get_Text = ""
-        or else Self.Index > Self.Files'Last
-      then
+      if Self.Pattern.Get_Text = "" or else Self.Index > Self.Files'Last then
          Has_Next := False;
          return;
       end if;
@@ -499,21 +520,21 @@ package body GPS.Kernel.Search.Sources is
       end if;
 
       Self.Current.Set_File
-        (Self.Files (Self.Index).File,
-         Self.Files (Self.Index).Project);
+        (Self.Files (Self.Index).File, Self.Files (Self.Index).Project);
    end Next;
 
    ------------------------
    -- Get_Total_Progress --
    ------------------------
 
-   overriding function Get_Total_Progress
+   overriding
+   function Get_Total_Progress
      (Self : not null access Sources_Search_Provider) return Integer is
    begin
       if Self.Files = null then
          Self.Files :=
            Get_Project (Self.Kernel).Source_Files
-           (Recursive => True, Include_Project_Files => True);
+             (Recursive => True, Include_Project_Files => True);
       end if;
 
       return Self.Files'Length;
@@ -523,9 +544,9 @@ package body GPS.Kernel.Search.Sources is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self       : not null access Source_Search_Result;
-       Give_Focus : Boolean) is
+   overriding
+   procedure Execute
+     (Self : not null access Source_Search_Result; Give_Focus : Boolean) is
    begin
       if Self.File /= No_File then
          Open_File_Action_Hook.Run
@@ -546,13 +567,12 @@ package body GPS.Kernel.Search.Sources is
    ----------------------
 
    procedure On_Size_Allocate
-     (View       : access Gtk_Widget_Record'Class;
-      Allocation : Cairo_Rectangle_Int)
+     (View : access Gtk_Widget_Record'Class; Allocation : Cairo_Rectangle_Int)
    is
       pragma Unreferenced (Allocation);
-      V : constant Result_View_Access := Result_View_Access (View);
+      V      : constant Result_View_Access := Result_View_Access (View);
       Buffer : constant Gtk_Text_Buffer := V.Get_Buffer;
-      First : Gtk_Text_Iter;
+      First  : Gtk_Text_Iter;
    begin
       Buffer.Get_Iter_At_Line_Offset
         (First, Gint (V.Result.Line - 1), Gint (V.Result.Column - 1));
@@ -569,9 +589,9 @@ package body GPS.Kernel.Search.Sources is
    -- Full --
    ----------
 
-   overriding function Full
-     (Self : not null access Source_Search_Result)
-     return Gtk.Widget.Gtk_Widget
+   overriding
+   function Full
+     (Self : not null access Source_Search_Result) return Gtk.Widget.Gtk_Widget
    is
       Text   : VSS.Strings.Virtual_String;
       View   : Result_View_Access;
@@ -627,13 +647,16 @@ package body GPS.Kernel.Search.Sources is
 
             Tag := Buffer.Create_Tag;
             Set_Property
-              (Tag, Gtk.Text_Tag.Font_Desc_Property,
+              (Tag,
+               Gtk.Text_Tag.Font_Desc_Property,
                Keywords_Style.Get_Pref_Font);
             Set_Property
-              (Tag, Gtk.Text_Tag.Foreground_Rgba_Property,
+              (Tag,
+               Gtk.Text_Tag.Foreground_Rgba_Property,
                Keywords_Style.Get_Pref_Fg);
             Set_Property
-              (Tag, Gtk.Text_Tag.Background_Rgba_Property,
+              (Tag,
+               Gtk.Text_Tag.Background_Rgba_Property,
                Keywords_Style.Get_Pref_Bg);
             Set_Property
               (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
@@ -651,63 +674,65 @@ package body GPS.Kernel.Search.Sources is
    -- To_Message --
    ----------------
 
-   overriding procedure To_Message
-     (Self : not null access Source_Search_Result)
-   is
+   overriding
+   procedure To_Message (Self : not null access Source_Search_Result) is
       Msg : Markup_Message_Access;
       pragma Unreferenced (Msg);
    begin
-      Msg := GPS.Kernel.Messages.Markup.Create_Markup_Message
-        (Container                => Get_Messages_Container (Self.Kernel),
-         Category                 =>
-           VSS.Strings.Conversions.To_Virtual_String
-             (Self.Provider.Display_Name),
-         File                     => Self.File,
-         Line                     => Self.Line,
-         Column                   => Visible_Column_Type (Self.Column),
-         Text                     => Self.Short.all,
-         Importance               => Informational,
-         Flags                    => Side_And_Locations,
-         Allow_Auto_Jump_To_First => True);
+      Msg :=
+        GPS.Kernel.Messages.Markup.Create_Markup_Message
+          (Container                => Get_Messages_Container (Self.Kernel),
+           Category                 =>
+             VSS.Strings.Conversions.To_Virtual_String
+               (Self.Provider.Display_Name),
+           File                     => Self.File,
+           Line                     => Self.Line,
+           Column                   => Visible_Column_Type (Self.Column),
+           Text                     => Self.Short.all,
+           Importance               => Informational,
+           Flags                    => Side_And_Locations,
+           Allow_Auto_Jump_To_First => True);
    end To_Message;
 
    -----------------
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Current_File_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
    is
       --  Get the current editor
       Editor : constant Editor_Buffer'Class :=
-         Self.Kernel.Get_Buffer_Factory.Get
-            (File => No_File, Open_View => False);
+        Self.Kernel.Get_Buffer_Factory.Get
+          (File => No_File, Open_View => False);
    begin
       Single_Source_Search_Provider (Self.all).Set_Pattern
-         (Pattern, Limit);  --  inherited
+        (Pattern, Limit);  --  inherited
       Self.Set_File
         (Editor.File,
          Project =>
            File_Info'Class
-             (Get_Registry (Self.Kernel).Tree.Info_Set
-              (Editor.File).First_Element).Project);
+             (Get_Registry (Self.Kernel).Tree.Info_Set (Editor.File)
+                .First_Element)
+             .Project);
    end Set_Pattern;
 
    ------------------------
    -- On_Result_Executed --
    ------------------------
 
-   overriding procedure On_Result_Executed
-      (Self   : not null access Sources_Search_Provider;
-       Result : not null access GPS.Search.Search_Result'Class)
+   overriding
+   procedure On_Result_Executed
+     (Self   : not null access Sources_Search_Provider;
+      Result : not null access GPS.Search.Search_Result'Class)
    is
       R : constant Source_Search_Result_Access :=
         Source_Search_Result_Access (Result);
 
-      type Kernel_Search_Provider_Access is
-        access all Kernel_Search_Provider;
+      type Kernel_Search_Provider_Access is access all Kernel_Search_Provider;
 
    begin
       if Self.Pattern /= null then
@@ -716,8 +741,7 @@ package body GPS.Kernel.Search.Sources is
       end if;
 
       GPS.Kernel.Search.On_Result_Executed
-        (Kernel_Search_Provider_Access (Self),
-         Result);
+        (Kernel_Search_Provider_Access (Self), Result);
    end On_Result_Executed;
 
 end GPS.Kernel.Search.Sources;

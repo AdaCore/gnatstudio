@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Shell;    use GNATCOLL.Scripts.Shell;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Kernel;                use GPS.Kernel;
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
-with String_Utils;              use String_Utils;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Shell;  use GNATCOLL.Scripts.Shell;
+with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel;              use GPS.Kernel;
+with Commands;                use Commands;
+with Commands.Interactive;    use Commands.Interactive;
+with String_Utils;            use String_Utils;
 
 package body Shell_Script is
 
@@ -33,11 +33,12 @@ package body Shell_Script is
    -- Shell_GPS_Scripting --
    -------------------------
 
-   type Shell_GPS_Scripting_Record
-     is new Shell_Scripting_Record with null record;
-   overriding function Create
-     (Script          : access Shell_GPS_Scripting_Record;
-      Arguments_Count : Natural) return Callback_Data'Class;
+   type Shell_GPS_Scripting_Record is new Shell_Scripting_Record
+   with null record;
+   overriding
+   function Create
+     (Script : access Shell_GPS_Scripting_Record; Arguments_Count : Natural)
+      return Callback_Data'Class;
    --  Create our own callback_data
 
    --  The memory for script is never reclaimed: doing so might
@@ -55,15 +56,17 @@ package body Shell_Script is
    ----------------------
 
    type Shell_GPS_Subprogram_Record is new Shell_Subprogram_Record
-      with null record;
+   with null record;
    type Shell_GPS_Subprogram is access all Shell_GPS_Subprogram_Record'Class;
    --  A subprogram that executes its command as a GNAT Studio action
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;
       Args       : Callback_Data'Class;
       Error      : not null access Boolean) return String;
-   overriding function Get_Name
+   overriding
+   function Get_Name
      (Subprogram : access Shell_GPS_Subprogram_Record) return String;
    --  See doc from inherited subprograms
 
@@ -72,7 +75,8 @@ package body Shell_Script is
    -------------------
 
    type Shell_GPS_Callback_Data is new Shell_Callback_Data with null record;
-   overriding function Nth_Arg
+   overriding
+   function Nth_Arg
      (Data : Shell_GPS_Callback_Data; N : Positive) return Subprogram_Type;
    --  See doc from inherited subprogram
 
@@ -92,9 +96,10 @@ package body Shell_Script is
    -- Create --
    ------------
 
-   overriding function Create
-     (Script          : access Shell_GPS_Scripting_Record;
-      Arguments_Count : Natural) return Callback_Data'Class
+   overriding
+   function Create
+     (Script : access Shell_GPS_Scripting_Record; Arguments_Count : Natural)
+      return Callback_Data'Class
    is
       Data : Shell_GPS_Callback_Data;
       pragma Unreferenced (Arguments_Count);
@@ -108,34 +113,37 @@ package body Shell_Script is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_GPS_Subprogram_Record;
       Args       : Callback_Data'Class;
       Error      : not null access Boolean) return String
    is
-      D    : constant Shell_Callback_Data := Shell_Callback_Data (Args);
+      D      : constant Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
-      A    : constant Action_Access := Lookup_Action
-        (Get_Kernel (Args), Get_Command (Subprogram));
+      A      : constant Action_Access :=
+        Lookup_Action (Get_Kernel (Args), Get_Command (Subprogram));
    begin
-      Custom := Create_Proxy
-        (Get_Command (A),
-         Context => (Event       => null,
-                     Context     => No_Context,
-                     Synchronous => True,
-                     Dir         => No_File,
-                     Args        => new Argument_List'(Clone (Get_Args (D))),
-                     Label       => null,
-                     Via_Menu    => False,
-                     Repeat_Count => 1,
-                     Remaining_Repeat => 0));
+      Custom :=
+        Create_Proxy
+          (Get_Command (A),
+           Context =>
+             (Event            => null,
+              Context          => No_Context,
+              Synchronous      => True,
+              Dir              => No_File,
+              Args             => new Argument_List'(Clone (Get_Args (D))),
+              Label            => null,
+              Via_Menu         => False,
+              Repeat_Count     => 1,
+              Remaining_Repeat => 0));
 
       Launch_Background_Command
-        (Kernel          => Get_Kernel (Args),
-         Command         => Custom,
-         Active          => True,
-         Show_Bar        => True,
-         Queue_Id        => "");
+        (Kernel   => Get_Kernel (Args),
+         Command  => Custom,
+         Active   => True,
+         Show_Bar => True,
+         Queue_Id => "");
 
       --  ??? Should evaluate output properly, but we are in asynchronous mode
       --  ??? In fact, this is no longer true if we use Active set to False
@@ -149,7 +157,8 @@ package body Shell_Script is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
+   overriding
+   function Get_Name
      (Subprogram : access Shell_GPS_Subprogram_Record) return String is
    begin
       return "action: " & Get_Command (Subprogram);
@@ -159,7 +168,8 @@ package body Shell_Script is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
+   overriding
+   function Nth_Arg
      (Data : Shell_GPS_Callback_Data; N : Positive) return Subprogram_Type
    is
       A    : Action_Access;

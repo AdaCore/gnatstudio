@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with GNAT.Regpat;            use GNAT.Regpat;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Regpat;           use GNAT.Regpat;
 
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with Glib.Convert;           use Glib.Convert;
+with Glib.Convert; use Glib.Convert;
 with Gtkada.Style;
 
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
@@ -28,28 +28,26 @@ with String_Utils;           use String_Utils;
 
 package body GVD.Assembly_Decorators is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.DEBUGGING.ASSEMBLY_DECORATORS", On);
+   Me : constant Trace_Handle :=
+     Create ("GPS.DEBUGGING.ASSEMBLY_DECORATORS", On);
 
-   Location_Pattern : constant Pattern_Matcher := Compile
-     ("^(0x[0-9a-zA-Z]+)");
+   Location_Pattern : constant Pattern_Matcher :=
+     Compile ("^(0x[0-9a-zA-Z]+)");
 
    --------------
    -- Decorate --
    --------------
 
    function Decorate
-     (Self        : Decorator;
-      Instruction : String;
-      Registers   : Registers_Set.Set)
+     (Self : Decorator; Instruction : String; Registers : Registers_Set.Set)
       return String
    is
       pragma Unreferenced (Self);
 
-      Index   : Natural := Instruction'First;
-      Start   : Natural;
-      Part    : Natural;
-      Result  : Ada.Strings.Unbounded.Unbounded_String;
+      Index  : Natural := Instruction'First;
+      Start  : Natural;
+      Part   : Natural;
+      Result : Ada.Strings.Unbounded.Unbounded_String;
 
       procedure Parse_Argument (Arg : String);
 
@@ -62,18 +60,28 @@ package body GVD.Assembly_Decorators is
       begin
          Match (Location_Pattern, Arg, Matched);
          if Matched (0) /= No_Match then
-            Append (Result, "<span foreground=" & '"' &
-                    Gtkada.Style.To_Hex
-                      (Keywords_Style.Get_Pref_Fg_Color) &
-                      '"' & ">" & Escape_Text (Arg) & "</span>");
+            Append
+              (Result,
+               "<span foreground="
+               & '"'
+               & Gtkada.Style.To_Hex (Keywords_Style.Get_Pref_Fg_Color)
+               & '"'
+               & ">"
+               & Escape_Text (Arg)
+               & "</span>");
 
          elsif Arg (Arg'First) = '%'
            and then Registers.Contains (Arg (Arg'First + 1 .. Arg'Last))
          then
-            Append (Result, "<span foreground=" & '"' &
-                    Gtkada.Style.To_Hex
-                      (Numbers_Style.Get_Pref_Fg_Color) &
-                      '"' & ">" & Escape_Text (Arg) & "</span>");
+            Append
+              (Result,
+               "<span foreground="
+               & '"'
+               & Gtkada.Style.To_Hex (Numbers_Style.Get_Pref_Fg_Color)
+               & '"'
+               & ">"
+               & Escape_Text (Arg)
+               & "</span>");
 
          else
             Append (Result, Escape_Text (Arg));
@@ -89,8 +97,11 @@ package body GVD.Assembly_Decorators is
          return "<b>" & Escape_Text (Instruction) & "</b>";
       end if;
 
-      Append (Result, "<b>" & Escape_Text
-              (Instruction (Instruction'First .. Index - 1)) & "</b>");
+      Append
+        (Result,
+         "<b>"
+         & Escape_Text (Instruction (Instruction'First .. Index - 1))
+         & "</b>");
 
       while Index <= Instruction'Last loop
          while Index <= Instruction'Last

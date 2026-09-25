@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk;               use Gdk;
-with Gdk.Cursor;        use Gdk.Cursor;
-with Gdk.Event;         use Gdk.Event;
-with Gdk.Types;         use Gdk.Types;
-with Gdk.Window;        use Gdk.Window;
+with Gdk;        use Gdk;
+with Gdk.Cursor; use Gdk.Cursor;
+with Gdk.Event;  use Gdk.Event;
+with Gdk.Types;  use Gdk.Types;
+with Gdk.Window; use Gdk.Window;
 
 with Gtk.Handlers;
 with Gtk.Enums;  use Gtk.Enums;
@@ -32,30 +32,30 @@ with Src_Editor_Buffer; use Src_Editor_Buffer;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Src_Editor_Buffer.Hyper_Mode; use Src_Editor_Buffer.Hyper_Mode;
-with Gtk.Text_Iter; use Gtk.Text_Iter;
+with Gtk.Text_Iter;                use Gtk.Text_Iter;
 
 with GPS.Kernel.Hyper_Mode; use GPS.Kernel.Hyper_Mode;
 
 package body Src_Editor_View.Hyper_Mode is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.SOURCE_EDITOR.HYPER_MODE", GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle :=
+     Create ("GPS.SOURCE_EDITOR.HYPER_MODE", GNATCOLL.Traces.Off);
 
    ---------------
    -- Callbacks --
    ---------------
 
    function Button_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
 
    function Motion_Notify_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
 
    function Toplevel_Focus_Out_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
 
    -----------------------
    -- Local subprograms --
@@ -87,7 +87,7 @@ package body Src_Editor_View.Hyper_Mode is
    ----------------------
 
    procedure Hyper_Mode_Enter (Widget : access Gtk_Widget_Record'Class) is
-      View   : constant Source_View   := Source_View (Widget);
+      View : constant Source_View := Source_View (Widget);
    begin
       if View.Hyper_Mode then
          return;
@@ -105,7 +105,8 @@ package body Src_Editor_View.Hyper_Mode is
       --  Connect the motion handler
       View.Hyper_Mode_Motion_Handler :=
         Return_Callback.Connect
-          (View, Signal_Motion_Notify_Event,
+          (View,
+           Signal_Motion_Notify_Event,
            Marsh =>
              Return_Callback.To_Marshaller (Motion_Notify_Event_Cb'Access),
            After => False);
@@ -113,7 +114,8 @@ package body Src_Editor_View.Hyper_Mode is
       --  Connect to a button press on the view
       View.Hyper_Mode_Button_Handler :=
         Return_Callback.Connect
-          (View, Signal_Button_Press_Event,
+          (View,
+           Signal_Button_Press_Event,
            Marsh =>
              Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
            After => False);
@@ -137,7 +139,7 @@ package body Src_Editor_View.Hyper_Mode is
    --  See comments in body of GUI_Utils.Set_Busy_Cursor.
 
    procedure Hyper_Mode_Leave (Widget : access Gtk_Widget_Record'Class) is
-      View   : constant Source_View   := Source_View (Widget);
+      View : constant Source_View := Source_View (Widget);
    begin
       if not View.Hyper_Mode then
          return;
@@ -153,9 +155,7 @@ package body Src_Editor_View.Hyper_Mode is
          Gdk_New (Text_View_Cursor, Xterm);
       end if;
 
-      if not In_Destruction (View)
-        and then not View.Cursor_Needs_Change
-      then
+      if not In_Destruction (View) and then not View.Cursor_Needs_Change then
          Set_Cursor (Get_Window (View, Text_Window_Text), Text_View_Cursor);
       end if;
 
@@ -165,13 +165,11 @@ package body Src_Editor_View.Hyper_Mode is
 
       --  Disconnect the motion handler
       Gtk.Handlers.Disconnect (View, View.Hyper_Mode_Motion_Handler);
-      View.Hyper_Mode_Motion_Handler :=
-        (Gtk.Handlers.Null_Handler_Id, null);
+      View.Hyper_Mode_Motion_Handler := (Gtk.Handlers.Null_Handler_Id, null);
 
       --  Disconnect the button handler
       Gtk.Handlers.Disconnect (View, View.Hyper_Mode_Button_Handler);
-      View.Hyper_Mode_Button_Handler :=
-        (Gtk.Handlers.Null_Handler_Id, null);
+      View.Hyper_Mode_Button_Handler := (Gtk.Handlers.Null_Handler_Id, null);
 
       --  Disconnect the focus handler from the toplevel
       Gtk.Handlers.Disconnect
@@ -186,10 +184,11 @@ package body Src_Editor_View.Hyper_Mode is
 
    procedure Activate_Hyper_Mode (View : access Source_View_Record) is
    begin
-      Enable_Hyper_Mode (Kernel              => View.Kernel,
-                         Widget              => Gtk_Widget (View),
-                         On_Hyper_Mode_Enter => Hyper_Mode_Enter'Access,
-                         On_Hyper_Mode_Leave => Hyper_Mode_Leave'Access);
+      Enable_Hyper_Mode
+        (Kernel              => View.Kernel,
+         Widget              => Gtk_Widget (View),
+         On_Hyper_Mode_Enter => Hyper_Mode_Enter'Access,
+         On_Hyper_Mode_Leave => Hyper_Mode_Leave'Access);
    end Activate_Hyper_Mode;
 
    ---------------------------
@@ -197,12 +196,12 @@ package body Src_Editor_View.Hyper_Mode is
    ---------------------------
 
    function Button_Press_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
-      View           : constant Source_View := Source_View (Widget);
-      Button         : Guint;
-      X, Y           : Gint;
+      View   : constant Source_View := Source_View (Widget);
+      Button : Guint;
+      X, Y   : Gint;
    begin
       if not View.Hyper_Mode then
          return False;
@@ -234,15 +233,17 @@ package body Src_Editor_View.Hyper_Mode is
    ------------------
 
    procedure Highlight_On (View : Source_View; X, Y : Gint) is
-      Line, Column : Gint;
-      Iter         : Gtk_Text_Iter;
+      Line, Column  : Gint;
+      Iter          : Gtk_Text_Iter;
       Out_Of_Bounds : Boolean := False;
    begin
       Window_To_Buffer_Coords
         (View,
          X - Get_Border_Window_Size (View, Text_Window_Left),
          Y - Get_Border_Window_Size (View, Text_Window_Top),
-         Line, Column, Out_Of_Bounds);
+         Line,
+         Column,
+         Out_Of_Bounds);
       Get_Iter_At_Line_Offset
         (Source_Buffer (Get_Buffer (View)), Iter, Line, Column);
 
@@ -258,11 +259,11 @@ package body Src_Editor_View.Hyper_Mode is
    ----------------------------
 
    function Motion_Notify_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
-      View  : constant Source_View := Source_View (Widget);
-      X, Y  : Gint;
+      View : constant Source_View := Source_View (Widget);
+      X, Y : Gint;
 
    begin
       if Active (Me) then
@@ -303,8 +304,8 @@ package body Src_Editor_View.Hyper_Mode is
    ---------------------------------
 
    function Toplevel_Focus_Out_Event_Cb
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       pragma Unreferenced (Event);
       View : constant Source_View := Source_View (Widget);

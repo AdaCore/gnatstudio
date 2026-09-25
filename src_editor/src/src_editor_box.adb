@@ -15,73 +15,73 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;        use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;                    use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Strings;
 
-with GNATCOLL.Projects;              use GNATCOLL.Projects;
-with GNATCOLL.Symbols;               use GNATCOLL.Symbols;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
-with GNATCOLL.Utils;                 use GNATCOLL.Utils;
-with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Symbols;  use GNATCOLL.Symbols;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.Utils;    use GNATCOLL.Utils;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Gdk;                            use Gdk;
-with Gdk.Event;                      use Gdk.Event;
-with Gdk.Screen;                     use Gdk.Screen;
-with Gdk.Rectangle;                  use Gdk.Rectangle;
-with Gdk.Window;                     use Gdk.Window;
+with Gdk;           use Gdk;
+with Gdk.Event;     use Gdk.Event;
+with Gdk.Screen;    use Gdk.Screen;
+with Gdk.Rectangle; use Gdk.Rectangle;
+with Gdk.Window;    use Gdk.Window;
 
-with Glib.Object;                    use Glib.Object;
-with Glib.Unicode;                   use Glib.Unicode;
-with Glib.Values;                    use Glib.Values;
+with Glib.Object;  use Glib.Object;
+with Glib.Unicode; use Glib.Unicode;
+with Glib.Values;  use Glib.Values;
 
-with Gtk;                            use Gtk;
-with Gtk.Box;                        use Gtk.Box;
-with Gtk.Dialog;                     use Gtk.Dialog;
-with Gtk.Drawing_Area;               use Gtk.Drawing_Area;
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.Event_Box;                  use Gtk.Event_Box;
-with Gtk.Frame;                      use Gtk.Frame;
-with Gtk.Handlers;                   use Gtk.Handlers;
-with Gtk.Style_Context;              use Gtk.Style_Context;
-with Gtk.Text_Iter;                  use Gtk.Text_Iter;
-with Gtk.Text_Mark;                  use Gtk.Text_Mark;
-with Gtk.Widget;                     use Gtk.Widget;
+with Gtk;               use Gtk;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Dialog;        use Gtk.Dialog;
+with Gtk.Drawing_Area;  use Gtk.Drawing_Area;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Event_Box;     use Gtk.Event_Box;
+with Gtk.Frame;         use Gtk.Frame;
+with Gtk.Handlers;      use Gtk.Handlers;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Gtk.Text_Iter;     use Gtk.Text_Iter;
+with Gtk.Text_Mark;     use Gtk.Text_Mark;
+with Gtk.Widget;        use Gtk.Widget;
 
-with Gtkada.Dialogs;                 use Gtkada.Dialogs;
-with Gtkada.File_Selector;           use Gtkada.File_Selector;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;
-with Gtkada.MDI;                     use Gtkada.MDI;
+with Gtkada.MDI;           use Gtkada.MDI;
 
-with GPS.Dialogs;                    use GPS.Dialogs;
-with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
-with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Charsets;            use GPS.Kernel.Charsets;
-with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;             use GPS.Kernel.Project;
+with GPS.Dialogs;                  use GPS.Dialogs;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Charsets;          use GPS.Kernel.Charsets;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
 
 with Completion_Module;
-with Find_Utils;                     use Find_Utils;
-with Language;                       use Language;
-with Language.Ada;                   use Language.Ada;
-with Language_Handlers;              use Language_Handlers;
-with Src_Editor_Box.Scrolled_Window; use Src_Editor_Box.Scrolled_Window;
-with Src_Editor_Box.Tooltips;        use Src_Editor_Box.Tooltips;
+with Find_Utils;                         use Find_Utils;
+with Language;                           use Language;
+with Language.Ada;                       use Language.Ada;
+with Language_Handlers;                  use Language_Handlers;
+with Src_Editor_Box.Scrolled_Window;     use Src_Editor_Box.Scrolled_Window;
+with Src_Editor_Box.Tooltips;            use Src_Editor_Box.Tooltips;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Module.Markers;      use Src_Editor_Module.Markers;
-with Src_Editor_Module;              use Src_Editor_Module;
-with Src_Editor_Module.Editors;      use Src_Editor_Module.Editors;
-with Src_Editor_View;                use Src_Editor_View;
+with Src_Editor_Module.Markers;          use Src_Editor_Module.Markers;
+with Src_Editor_Module;                  use Src_Editor_Module;
+with Src_Editor_Module.Editors;          use Src_Editor_Module.Editors;
+with Src_Editor_View;                    use Src_Editor_View;
 with String_Utils;
-with Tooltips;                       use Tooltips;
-with Xref;                           use Xref;
+with Tooltips;                           use Tooltips;
+with Xref;                               use Xref;
 
 package body Src_Editor_Box is
 
@@ -93,18 +93,19 @@ package body Src_Editor_Box is
      Create ("GPS.SOURCE_EDITOR.EDITOR_BOX.ADVANCED");
 
    procedure Setup (Data : Source_Editor_Box; Id : Handler_Id);
-   package Box_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Widget_Type => Glib.Object.GObject_Record,
-      User_Type   => Source_Editor_Box,
-      Setup       => Setup);
+   package Box_Callback is new
+     Gtk.Handlers.User_Callback_With_Setup
+       (Widget_Type => Glib.Object.GObject_Record,
+        User_Type   => Source_Editor_Box,
+        Setup       => Setup);
 
    --------------------------
    -- Forward declarations --
    --------------------------
 
    function Delete_Callback
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
+      return Boolean;
    --  Callback for the "delete_event" signal
 
    procedure Status_Changed_Handler
@@ -165,12 +166,13 @@ package body Src_Editor_Box is
       Get_Cursor_Position (Source.Source_Buffer, Line, Column);
       Push_Marker_In_History
         (Kernel => Source.Kernel,
-         Marker => Create_File_Marker
-           (Kernel  => Source.Kernel,
-            File    => File,
-            Project => Get_Project (Source),
-            Line    => Line,
-            Column  => Column));
+         Marker =>
+           Create_File_Marker
+             (Kernel  => Source.Kernel,
+              File    => File,
+              Project => Get_Project (Source),
+              Line    => Line,
+              Column  => Column));
    end Add_Navigation_Location;
 
    -------------------
@@ -178,8 +180,7 @@ package body Src_Editor_Box is
    -------------------
 
    procedure Set_Is_Locked
-     (Box    : not null access Source_Editor_Box_Record;
-      Locked : Boolean) is
+     (Box : not null access Source_Editor_Box_Record; Locked : Boolean) is
    begin
       Box.Locked := Locked;
 
@@ -241,8 +242,7 @@ package body Src_Editor_Box is
    begin
       if Get_Filename (Editor) = GNATCOLL.VFS.No_File then
          Kernel.Insert
-           (-"Cross-references not possible on unamed files",
-            Mode => Error);
+           (-"Cross-references not possible on unamed files", Mode => Error);
          return;
       end if;
 
@@ -258,7 +258,8 @@ package body Src_Editor_Box is
 
             Kernel.Insert
               (-"No cross-reference information found for "
-               & Entity_Name_Information (Context) & ASCII.LF,
+               & Entity_Name_Information (Context)
+               & ASCII.LF,
                Mode => Error);
             return;
          end if;
@@ -266,11 +267,11 @@ package body Src_Editor_Box is
          --  Get the declaration/body
 
          if To_Body then
-            Current := (File => File_Information (Context),
-                        Line => GPS.Kernel.Contexts.Line_Information (Context),
-                        Project_Path => Project_Information
-                          (Context).Project_Path,
-                        Column => Entity_Column_Information (Context));
+            Current :=
+              (File         => File_Information (Context),
+               Line         => GPS.Kernel.Contexts.Line_Information (Context),
+               Project_Path => Project_Information (Context).Project_Path,
+               Column       => Entity_Column_Information (Context));
             Location := Get_Body (Entity, After => Current);
          else
             Get_Entity_Spec_Locations (Context, Location);
@@ -329,15 +330,17 @@ package body Src_Editor_Box is
       Is_Case_Sensitive : Boolean;
       Iter              : Gtk_Text_Iter;
 
-      Char_Column       : Character_Index;
-      Indent_Level      : constant Integer :=
-        Kernel.Get_Language_Handler.Get_Language_From_File
-          (Filename).Get_Indentation_Level;
+      Char_Column  : Character_Index;
+      Indent_Level : constant Integer :=
+        Kernel.Get_Language_Handler.Get_Language_From_File (Filename)
+          .Get_Indentation_Level;
 
    begin
       if Dir (Filename) = No_File and then Filename /= No_File then
-         Insert (Kernel, -"File not found: "
-                 & Display_Base_Name (Filename), Mode => Error);
+         Insert
+           (Kernel,
+            -"File not found: " & Display_Base_Name (Filename),
+            Mode => Error);
          return;
       end if;
 
@@ -347,10 +350,13 @@ package body Src_Editor_Box is
       end if;
 
       Open_File_Action_Hook.Run
-         (Kernel, File => Filename, Project => Project,
-          Line => Natural (Line), Column => Column,
-          Column_End => Column + Visible_Column_Type (Length),
-          Enable_Navigation => True);
+        (Kernel,
+         File              => Filename,
+         Project           => Project,
+         Line              => Natural (Line),
+         Column            => Column,
+         Column_End        => Column + Visible_Column_Type (Length),
+         Enable_Navigation => True);
 
       --  Find the correct location for the entity, in case it is in fact
       --  different from what was found in the LI file (ie for instance the LI
@@ -364,26 +370,32 @@ package body Src_Editor_Box is
          --  Find the closest match of the entity, in case the LI file wasn't
          --  up-to-date.
 
-         File_Up_To_Date := Is_Valid_Position
-             (Source.Source_Buffer, Line, Char_Column)
-           and then Is_Valid_Position
-             (Source.Source_Buffer, Line,
-              Char_Column + Character_Index'Base (Length));
+         File_Up_To_Date :=
+           Is_Valid_Position (Source.Source_Buffer, Line, Char_Column)
+           and then
+             Is_Valid_Position
+               (Source.Source_Buffer,
+                Line,
+                Char_Column + Character_Index'Base (Length));
 
-         Is_Case_Sensitive := Get_Language_Context
-           (Get_Language (Source.Source_Buffer)).Case_Sensitive;
+         Is_Case_Sensitive :=
+           Get_Language_Context (Get_Language (Source.Source_Buffer))
+             .Case_Sensitive;
 
-         File_Up_To_Date := File_Up_To_Date
-           and then Equal
-             (To_String (Get_Text
-              (Source.Source_Buffer,
-                 Line,
-                 Char_Column,
-                 Line,
-                 As_Optional
-                   (Char_Column + Character_Index'Base (Length)))),
-              Entity_Name,
-              Case_Sensitive => Is_Case_Sensitive);
+         File_Up_To_Date :=
+           File_Up_To_Date
+           and then
+             Equal
+               (To_String
+                  (Get_Text
+                     (Source.Source_Buffer,
+                      Line,
+                      Char_Column,
+                      Line,
+                      As_Optional
+                        (Char_Column + Character_Index'Base (Length)))),
+                Entity_Name,
+                Case_Sensitive => Is_Case_Sensitive);
 
          --  Search for the closest reference to the entity if
          --  necessary. Otherwise, there's nothing to be done, since the region
@@ -391,17 +403,19 @@ package body Src_Editor_Box is
          if not File_Up_To_Date then
             --  Remove selection
             Get_Iter_At_Mark
-              (Source.Source_Buffer, Iter,
+              (Source.Source_Buffer,
+               Iter,
                Get_Mark (Source.Source_Buffer, "selection_bound"));
             Place_Cursor (Source.Source_Buffer, Iter);
 
             if Display_Msg_On_Non_Accurate
-              and then Get_Language_Context
-                (Get_Language (Source.Source_Buffer)).Accurate_Xref
+              and then
+                Get_Language_Context (Get_Language (Source.Source_Buffer))
+                  .Accurate_Xref
             then
                Kernel.Insert
                  (-("xref info mismatch, cursor was set at closest ref to ")
-                    & Entity_Name);
+                  & Entity_Name);
             end if;
 
             --  Search for the closest reference to entity, and highlight the
@@ -421,38 +435,48 @@ package body Src_Editor_Box is
                L := Convert (Line);
                Buffer := Get_Text (Source.Source_Buffer);
                Find_Closest_Match
-                 (Buffer.all, L, Match_Column, Found,
+                 (Buffer.all,
+                  L,
+                  Match_Column,
+                  Found,
                   Entity_Name,
-                  Case_Sensitive => Get_Language_Context
-                    (Get_Language (Source.Source_Buffer)).Case_Sensitive,
+                  Case_Sensitive =>
+                    Get_Language_Context (Get_Language (Source.Source_Buffer))
+                      .Case_Sensitive,
                   Tab_Width      => Indent_Level);
                Free (Buffer);
 
                Col :=
                  (if Match_Column = 0
                   then 1
-                  else Expand_Tabs
-                         (Source.Source_Buffer,
-                          Line,
-                          Character_Index (Match_Column)));
+                  else
+                    Expand_Tabs
+                      (Source.Source_Buffer,
+                       Line,
+                       Character_Index (Match_Column)));
 
                if Found then
                   --  Expand the character position just after the match,
                   --  rather than adding a length to a visible column, so
                   --  that a tab within the match is accounted for.
 
-                  Col_End := Expand_Tabs
-                    (Source.Source_Buffer,
-                     Line,
-                     Character_Index (Match_Column)
+                  Col_End :=
+                    Expand_Tabs
+                      (Source.Source_Buffer,
+                       Line,
+                       Character_Index (Match_Column)
                        + Character_Index'Base (Length));
                else
                   Col_End := 0;
                end if;
 
                Open_File_Action_Hook.Run
-                 (Kernel, Filename, Project => Project,
-                  Line => L, Column => Col, Column_End => Col_End,
+                 (Kernel,
+                  Filename,
+                  Project           => Project,
+                  Line              => L,
+                  Column            => Col,
+                  Column_End        => Col_End,
                   Enable_Navigation => False);
             end;
          end if;
@@ -466,10 +490,7 @@ package body Src_Editor_Box is
    -- To_Box_Line --
    -----------------
 
-   function To_Box_Line
-     (B    : Source_Buffer;
-      Line : Gint) return Natural
-   is
+   function To_Box_Line (B : Source_Buffer; Line : Gint) return Natural is
       The_Line : Natural;
    begin
       The_Line := Natural (Get_Editable_Line (B, Buffer_Line_Type (Line + 1)));
@@ -520,14 +541,15 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Params);
-      Buf    : constant Source_Buffer := Source_Buffer (Buffer);
-      Child  : constant MDI_Child := Find_Child (Box.Kernel, Box);
-      File   : constant Virtual_File := Buf.Get_Filename;
-      P      : constant Project_Type := Get_Project (Box);
+      Buf          : constant Source_Buffer := Source_Buffer (Buffer);
+      Child        : constant MDI_Child := Find_Child (Box.Kernel, Box);
+      File         : constant Virtual_File := Buf.Get_Filename;
+      P            : constant Project_Type := Get_Project (Box);
       Show_Project : constant Boolean :=
-        P /= No_Project and then
-        Get_Registry (Box.Kernel).Tree.Root_Project.Is_Aggregate_Project;
-      P_Full_Name   : constant String :=
+        P /= No_Project
+        and then
+          Get_Registry (Box.Kernel).Tree.Root_Project.Is_Aggregate_Project;
+      P_Full_Name  : constant String :=
         (if Show_Project
          then " - Project : " & P.Project_Path.Display_Full_Name
          else "");
@@ -538,8 +560,7 @@ package body Src_Editor_Box is
             Buf.Get_Title);
       elsif Is_Local (File) then
          Child.Set_Title
-           (File.Display_Full_Name & P_Full_Name,
-            File.Display_Base_Name);
+           (File.Display_Full_Name & P_Full_Name, File.Display_Base_Name);
       else
          Child.Set_Title
            (File.Get_Host & ":|" & File.Display_Full_Name & P_Full_Name,
@@ -601,8 +622,7 @@ package body Src_Editor_Box is
       --  we are waiting for an async event (e.g: LSP-based ctrl-click).
 
       GUI_Utils.Gtk_New_Activity_Progress_Bar
-        (Box.Progress_Bar,
-         Container => Box.Box);
+        (Box.Progress_Bar, Container => Box.Box);
 
       Box.Kernel := Kernel;
 
@@ -659,7 +679,8 @@ package body Src_Editor_Box is
          Project,
          Scrolling_Area,
          Drawing_Area,
-         Box.Source_Buffer, Kernel);
+         Box.Source_Buffer,
+         Kernel);
       Scrolling_Area.Add (Box.Source_View);
 
       --  The newly created buffer is now under the responsability of the
@@ -672,17 +693,19 @@ package body Src_Editor_Box is
 
       declare
          Tooltip_Factory : constant Editor_Tooltip_Handler_Factory_Access :=
-                  Src_Editor_Module.Get_Editor_Tooltip_Handler_Factory;
+           Src_Editor_Module.Get_Editor_Tooltip_Handler_Factory;
       begin
          Tooltip_Factory (Box).Associate_To_Widget
-           (Widget              => Box,
-            Scroll_Event_Widget => Box.Source_View);
+           (Widget => Box, Scroll_Event_Widget => Box.Source_View);
       end;
 
       --  The status bar, at the bottom of the window...
 
-      Gtk_New (Box.Status_Bar, Gtk_Event_Box (Box),
-               Box.Source_View, Box.Source_Buffer);
+      Gtk_New
+        (Box.Status_Bar,
+         Gtk_Event_Box (Box),
+         Box.Source_View,
+         Box.Source_Buffer);
 
       Gtk_New (Frame);
       Frame.Set_Shadow_Type (Shadow_None);
@@ -698,19 +721,21 @@ package body Src_Editor_Box is
 
       --  Connect to source buffer signals
 
-      Box.Status_Handler := Box_Callback.Connect
-        (Box.Source_Buffer,
-         Signal_Status_Changed,
-         Status_Changed_Handler'Access,
-         User_Data => Source_Editor_Box (Box),
-         After     => True);
+      Box.Status_Handler :=
+        Box_Callback.Connect
+          (Box.Source_Buffer,
+           Signal_Status_Changed,
+           Status_Changed_Handler'Access,
+           User_Data => Source_Editor_Box (Box),
+           After     => True);
 
-      Box.Status_Handler := Box_Callback.Connect
-        (Box.Source_Buffer,
-         Signal_Filename_Changed,
-         Filename_Changed_Handler'Access,
-         User_Data => Source_Editor_Box (Box),
-         After     => True);
+      Box.Status_Handler :=
+        Box_Callback.Connect
+          (Box.Source_Buffer,
+           Signal_Filename_Changed,
+           Filename_Changed_Handler'Access,
+           User_Data => Source_Editor_Box (Box),
+           After     => True);
 
       Box_Callback.Connect
         (Box.Source_View,
@@ -722,13 +747,15 @@ package body Src_Editor_Box is
       Object_Return_Callback.Object_Connect
         (Box.Source_View, Signal_Focus_In_Event, Focus_In'Access, Box, False);
       Object_Return_Callback.Object_Connect
-        (Box.Source_View, Signal_Focus_Out_Event,
-         Focus_Out'Access, Box, False);
+        (Box.Source_View,
+         Signal_Focus_Out_Event,
+         Focus_Out'Access,
+         Box,
+         False);
 
       --  The Contextual Menu handling
       Setup_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Box.Source_View);
+        (Kernel => Kernel, Event_On_Widget => Box.Source_View);
 
       --  We do not want to send a context_changed even here. It will be done
       --  later anyway, with more accurate information.
@@ -754,8 +781,8 @@ package body Src_Editor_Box is
          Source          =>
          --  Try to reuse a pure_buffer if any: it will retrieve the undo/redo
          --  queue.
-           Src_Editor_Buffer_Factory
-             (Kernel.Get_Buffer_Factory.all).Get_Pure_Buffer (Filename),
+           Src_Editor_Buffer_Factory (Kernel.Get_Buffer_Factory.all)
+             .Get_Pure_Buffer (Filename),
          Is_Load_Desktop => Is_Load_Desktop);
    end Initialize;
 
@@ -779,8 +806,9 @@ package body Src_Editor_Box is
 
       if Old_Status /= B.Source_Buffer.Get_Writable then
          Get_Kernel (B).Refresh_Context;
-         --  Refresh context to update state of Undo/Redo actions when file
-         --  permissions has been changed.
+      --  Refresh context to update state of Undo/Redo actions when file
+      --  permissions has been changed.
+
       end if;
 
       return False;
@@ -808,8 +836,8 @@ package body Src_Editor_Box is
    ------------------------------------------
 
    procedure Set_Activity_Progress_Bar_Visibility
-     (Self    : not null access Source_Editor_Box_Record'Class;
-      Visible : Boolean) is
+     (Self : not null access Source_Editor_Box_Record'Class; Visible : Boolean)
+   is
    begin
       Self.Progress_Bar.Set_Activity_Progress_Bar_Visibility (Visible);
    end Set_Activity_Progress_Bar_Visibility;
@@ -831,8 +859,7 @@ package body Src_Editor_Box is
          return False;
       end if;
 
-      if Has_File_Information (Context)
-        and then Has_Line_Information (Context)
+      if Has_File_Information (Context) and then Has_Line_Information (Context)
       then
          File := File_Information (Context);
          Line := GPS.Kernel.Contexts.Line_Information (Context);
@@ -847,15 +874,14 @@ package body Src_Editor_Box is
          return False;
       end if;
 
-      if Spec_Location.File = File
-        and then Spec_Location.Line = Line
-      then
+      if Spec_Location.File = File and then Spec_Location.Line = Line then
          --  we are on the same line so don't add "goto to ..."
          return False;
       end if;
 
       if Is_Subprogram (Entity) then
-         return Spec_Location.File /= Body_Location.File
+         return
+           Spec_Location.File /= Body_Location.File
            or else Spec_Location.Line /= Body_Location.Line
            or else Spec_Location.Column /= Body_Location.Column;
       else
@@ -878,8 +904,7 @@ package body Src_Editor_Box is
          return False;
       end if;
 
-      if Has_File_Information (Context)
-        and then Has_Line_Information (Context)
+      if Has_File_Information (Context) and then Has_Line_Information (Context)
       then
          File := File_Information (Context);
          Line := GPS.Kernel.Contexts.Line_Information (Context);
@@ -894,9 +919,7 @@ package body Src_Editor_Box is
          return False;
       end if;
 
-      if Body_Location.File = File
-        and then Body_Location.Line = Line
-      then
+      if Body_Location.File = File and then Body_Location.Line = Line then
          --  we are on the same line so don't add "goto to ..."
          return False;
       end if;
@@ -913,23 +936,25 @@ package body Src_Editor_Box is
    ---------------------
 
    function Delete_Callback
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
+      return Boolean
    is
       pragma Unreferenced (Params);
       Kernel : constant Kernel_Handle :=
-                 Get_Kernel (Source_Editor_Box (Widget));
+        Get_Kernel (Source_Editor_Box (Widget));
    begin
       --  We cannot delete the last remaining view if the buffer has to be
       --  saved and the user cancelled the action.
       --  The call to Needs_To_Be_Saved will return False if the box is not the
       --  last view, so that we always authorize closing the other views
 
-      return Needs_To_Be_Saved (Get_Buffer (Source_Editor_Box (Widget)))
-        and then not Save_MDI_Children
-          (Kernel,
-           Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
-           Force => False);
+      return
+        Needs_To_Be_Saved (Get_Buffer (Source_Editor_Box (Widget)))
+        and then
+          not Save_MDI_Children
+                (Kernel,
+                 Children => (1 => Find_MDI_Child (Get_MDI (Kernel), Widget)),
+                 Force    => False);
 
    exception
       when E : others =>
@@ -972,7 +997,9 @@ package body Src_Editor_Box is
 
       Box := new Source_Editor_Box_Record;
       Initialize
-        (Box, Project, Kernel_Handle (Kernel),
+        (Box,
+         Project,
+         Kernel_Handle (Kernel),
          Filename        => No_File,
          Source          => Source.Source_Buffer,
          Is_Load_Desktop => Is_Load_Desktop);
@@ -982,9 +1009,7 @@ package body Src_Editor_Box is
       end if;
 
       --  Preserve the current location
-      Box.Set_Cursor_Location
-        (Line   => Line,
-         Column => Col);
+      Box.Set_Cursor_Location (Line => Line, Column => Col);
       Box.Source_View.Set_Position_Set_Explicitely;
 
       Update_Status (Box.Status_Bar);
@@ -1076,16 +1101,12 @@ package body Src_Editor_Box is
       end if;
 
       Editor.Source_Buffer.Get_Cursor_Position
-        (Line   => Line,
-         Column => Column);
+        (Line => Line, Column => Column);
 
       --  Get the root coordinates of the editor's cursor
 
       Editor.Get_View.Get_Root_Coords_For_Location
-        (Line   => Line,
-         Column => Column,
-         Root_X => Root_X,
-         Root_Y => Root_Y);
+        (Line => Line, Column => Column, Root_X => Root_X, Root_Y => Root_Y);
 
       Trace (Me_Advanced, "Cursor X: " & Root_X'Img);
       Trace (Me_Advanced, "Cursor Y: " & Root_Y'Img);
@@ -1098,7 +1119,7 @@ package body Src_Editor_Box is
       Monitor := Screen.Get_Monitor_At_Point (Root_X, Root_Y);
       Screen.Get_Monitor_Geometry (Monitor, Geom);
 
-      Screen_Width  := Geom.Width;
+      Screen_Width := Geom.Width;
       Screen_Height := Geom.Height;
 
       Trace (Me_Advanced, "Screen width: " & Screen_Width'Img);
@@ -1110,9 +1131,7 @@ package body Src_Editor_Box is
       --  Otherwise, make sure to not overlap the completion window, by
       --  moving it when it's needed.
 
-      if Completion_Window = null
-        or else not Completion_Window.Is_Visible
-      then
+      if Completion_Window = null or else not Completion_Window.Is_Visible then
 
          --  Check if the window does not go outside of the screen
          --  on the x-axis. Move it if necessary.
@@ -1129,8 +1148,10 @@ package body Src_Editor_Box is
             Root_Y := Root_Y - Total_Height;
          else
             Editor.Get_View.Get_Root_Coords_For_Location
-              (Line   => Editable_Line_Type (Line + 1), Column => Column,
-               Root_X => Dummy, Root_Y => Root_Y);
+              (Line   => Editable_Line_Type (Line + 1),
+               Column => Column,
+               Root_X => Dummy,
+               Root_Y => Root_Y);
          end if;
       else
          --  Get the coordinates and the height of the completion window.
@@ -1162,8 +1183,10 @@ package body Src_Editor_Box is
                Root_Y := Root_Y - Total_Height;
             else
                Editor.Get_View.Get_Root_Coords_For_Location
-                 (Line   => Editable_Line_Type (Line + 1), Column => Column,
-                  Root_X => Dummy, Root_Y => Root_Y);
+                 (Line   => Editable_Line_Type (Line + 1),
+                  Column => Column,
+                  Root_X => Dummy,
+                  Root_Y => Root_Y);
 
                if Completion_Y in Root_Y .. Root_Y + Total_Height then
                   Completion_Window.Move
@@ -1174,16 +1197,18 @@ package body Src_Editor_Box is
             if Root_Y + Total_Height > Screen_Height then
                Root_Y := Root_Y - Total_Height;
 
-               if Completion_Y + Completion_Height in
-                 Root_Y .. Root_Y + Total_Height
+               if Completion_Y + Completion_Height
+                  in Root_Y .. Root_Y + Total_Height
                then
                   Completion_Window.Move
                     (Completion_X, Completion_Y - Total_Height);
                end if;
             else
                Editor.Get_View.Get_Root_Coords_For_Location
-                 (Line   => Editable_Line_Type (Line + 1), Column => Column,
-                  Root_X => Dummy, Root_Y => Root_Y);
+                 (Line   => Editable_Line_Type (Line + 1),
+                  Column => Column,
+                  Root_X => Dummy,
+                  Root_Y => Root_Y);
             end if;
          end if;
       end if;
@@ -1205,15 +1230,15 @@ package body Src_Editor_Box is
       Force    : Boolean := False)
    is
       File          : constant GNATCOLL.VFS.Virtual_File :=
-                        Get_Filename (Editor.Source_Buffer);
+        Get_Filename (Editor.Source_Buffer);
       Constructs    : Construct_List;
       Info          : Construct_Access;
       New_Base_Name : Filesystem_String_Access;
       Part          : Unit_Parts;
 
-      Buffer        : GNAT.Strings.String_Access;
+      Buffer : GNAT.Strings.String_Access;
 
-      Dialog        : GPS_Dialog;
+      Dialog : GPS_Dialog;
 
    begin
       --  Do not authorize saving a read-only file, unless we save it to
@@ -1235,12 +1260,15 @@ package body Src_Editor_Box is
             return;
          end if;
 
-         Gtk_New (Dialog,
-                  Title => -"Overwrite read-only file ?",
-                  Kernel => Editor.Kernel);
+         Gtk_New
+           (Dialog,
+            Title  => -"Overwrite read-only file ?",
+            Kernel => Editor.Kernel);
          Dialog.Add_Label
-           (-"File is read-only on disk: " & ASCII.LF
-            & File.Display_Full_Name & ASCII.LF
+           (-"File is read-only on disk: "
+            & ASCII.LF
+            & File.Display_Full_Name
+            & ASCII.LF
             & "Overwrite anyway ?");
          Dialog.Add_Button ("Overwrite", Gtk_Response_Yes);
          Dialog.Add_Button ("Do not save", Gtk_Response_No);
@@ -1268,8 +1296,8 @@ package body Src_Editor_Box is
             --  unit <-> file name mapping
 
             Buffer := Get_Text (Editor.Source_Buffer);
-            Parse_Constructs (Ada_Lang,
-                              Editor.Get_Filename, Buffer.all, Constructs);
+            Parse_Constructs
+              (Ada_Lang, Editor.Get_Filename, Buffer.all, Constructs);
             Free (Buffer);
 
             Info := Constructs.Last;
@@ -1292,27 +1320,29 @@ package body Src_Editor_Box is
                   Part := Unit_Body;
                end if;
 
-               New_Base_Name := new Filesystem_String'
-                 (Get_Project (Editor.Kernel).File_From_Unit
-                    (Unit_Name       => To_Lower (Get (Info.Info.Name).all),
-                     Part            => Part,
-                     File_Must_Exist => False,
-                     Language        => "ada"));
+               New_Base_Name :=
+                 new Filesystem_String'
+                   (Get_Project (Editor.Kernel).File_From_Unit
+                      (Unit_Name       => To_Lower (Get (Info.Info.Name).all),
+                       Part            => Part,
+                       File_Must_Exist => False,
+                       Language        => "ada"));
             end if;
 
             Free (Constructs);
 
             declare
-               Name : constant Virtual_File := Select_File
-                 (Title             => -"Save File As",
-                  Base_Directory    => Editor.Source_Buffer.Get_Initial_Dir,
-                  Parent            => Get_Current_Window (Editor.Kernel),
-                  Default_Name      => New_Base_Name.all,
-                  Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-                  Kind              => Save_File,
-                  File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-                  Pattern_Name      => -"All files;Ada files;C/C++ files",
-                  History           => Get_History (Editor.Kernel));
+               Name : constant Virtual_File :=
+                 Select_File
+                   (Title             => -"Save File As",
+                    Base_Directory    => Editor.Source_Buffer.Get_Initial_Dir,
+                    Parent            => Get_Current_Window (Editor.Kernel),
+                    Default_Name      => New_Base_Name.all,
+                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                    Kind              => Save_File,
+                    File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                    Pattern_Name      => -"All files;Ada files;C/C++ files",
+                    History           => Get_History (Editor.Kernel));
 
             begin
                Free (New_Base_Name);
@@ -1324,14 +1354,16 @@ package body Src_Editor_Box is
 
                if not Force
                  and then Is_Regular_File (Name)
-                 and then GPS_Message_Dialog
-                   (Msg => Display_Base_Name (Name)
-                    & (-" already exists. Do you want to overwrite ?"),
-                    Dialog_Type => Confirmation,
-                    Buttons     => Button_OK or Button_Cancel,
-                    Title       => "Confirm overwriting",
-                    Parent      =>
-                      Get_Current_Window (Editor.Kernel)) /= Button_OK
+                 and then
+                   GPS_Message_Dialog
+                     (Msg         =>
+                        Display_Base_Name (Name)
+                        & (-" already exists. Do you want to overwrite ?"),
+                      Dialog_Type => Confirmation,
+                      Buttons     => Button_OK or Button_Cancel,
+                      Title       => "Confirm overwriting",
+                      Parent      => Get_Current_Window (Editor.Kernel))
+                   /= Button_OK
                then
                   Success := False;
                end if;
@@ -1353,8 +1385,9 @@ package body Src_Editor_Box is
 
          else
             if not Force
-              and then Check_Monitored_Files
-                (Editor.Kernel, Interactive => True, Only_On_File => File)
+              and then
+                Check_Monitored_Files
+                  (Editor.Kernel, Interactive => True, Only_On_File => File)
             then
                Success := False;
             else
@@ -1366,13 +1399,16 @@ package body Src_Editor_Box is
       else
          if not Force
            and then Is_Regular_File (Filename)
-           and then GPS_Message_Dialog
-             (Msg => Display_Base_Name (Filename)
-              & (-" already exists. Do you want to overwrite ?"),
-              Dialog_Type => Confirmation,
-              Buttons     => Button_OK or Button_Cancel,
-              Title       => "Confirm overwriting",
-              Parent      => Get_Current_Window (Editor.Kernel)) /= Button_OK
+           and then
+             GPS_Message_Dialog
+               (Msg         =>
+                  Display_Base_Name (Filename)
+                  & (-" already exists. Do you want to overwrite ?"),
+                Dialog_Type => Confirmation,
+                Buttons     => Button_OK or Button_Cancel,
+                Title       => "Confirm overwriting",
+                Parent      => Get_Current_Window (Editor.Kernel))
+             /= Button_OK
          then
             Success := False;
          end if;
@@ -1416,8 +1452,8 @@ package body Src_Editor_Box is
          if C /= null then
             if Force_Focus then
                Set_Focus_Child (Get_MDI (Editor.Kernel), C);
-               Grab_Toplevel_Focus (Get_MDI (Editor.Kernel), Editor,
-                                    Present => True);
+               Grab_Toplevel_Focus
+                 (Get_MDI (Editor.Kernel), Editor, Present => True);
             end if;
 
             if Force_Focus or Raise_Child then
@@ -1433,8 +1469,10 @@ package body Src_Editor_Box is
          Raise_And_Focus;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, Column,
-            Internal  => False,
+           (Editor.Source_Buffer,
+            Editable_Line,
+            Column,
+            Internal         => False,
             Extend_Selection => Extend_Selection);
 
          if Centering /= Minimal then
@@ -1457,7 +1495,10 @@ package body Src_Editor_Box is
          Raise_And_Focus;
 
          Set_Cursor_Position
-           (Editor.Source_Buffer, Editable_Line, 1, False,
+           (Editor.Source_Buffer,
+            Editable_Line,
+            1,
+            False,
             Extend_Selection => Extend_Selection);
 
          if Centering /= Minimal then
@@ -1477,9 +1518,11 @@ package body Src_Editor_Box is
                Mode => Error);
          else
             Editor.Kernel.Insert
-              (-"Invalid source location: " &
-               String_Utils.Image (Integer (Line)) &
-               ':' & String_Utils.Image (Natural (Column)), Mode => Error);
+              (-"Invalid source location: "
+               & String_Utils.Image (Integer (Line))
+               & ':'
+               & String_Utils.Image (Natural (Column)),
+               Mode => Error);
          end if;
       end if;
    end Set_Cursor_Location;
@@ -1501,8 +1544,7 @@ package body Src_Editor_Box is
    ------------------------------------
 
    procedure Remove_Line_Information_Column
-     (Editor     : access Source_Editor_Box_Record;
-      Identifier : String) is
+     (Editor : access Source_Editor_Box_Record; Identifier : String) is
    begin
       Remove_Line_Information_Column (Editor.Source_Buffer, Identifier);
    end Remove_Line_Information_Column;
@@ -1525,8 +1567,7 @@ package body Src_Editor_Box is
    begin
       Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Mark);
       End_Action (Editor.Source_Buffer);
-      Ignore := Scroll_To_Iter
-        (Editor.Source_View, Iter, 0.0, True, 0.5, 0.5);
+      Ignore := Scroll_To_Iter (Editor.Source_View, Iter, 0.0, True, 0.5, 0.5);
 
       --  Ignore value of Success. We want to keep doing the code below
       --  even in case of failure, see e.g. bookmarks.[12] tests
@@ -1575,11 +1616,11 @@ package body Src_Editor_Box is
    ---------------------
 
    function Get_Block_Start
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return Natural
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return Natural
    is
-      Block : constant Block_Record := Get_Block
-        (Editor.Source_Buffer, Line, True);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.First_Line);
    end Get_Block_Start;
@@ -1589,11 +1630,11 @@ package body Src_Editor_Box is
    -------------------
 
    function Get_Block_End
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return Natural
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return Natural
    is
-      Block : constant Block_Record := Get_Block
-        (Editor.Source_Buffer, Line, True);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.Last_Line);
    end Get_Block_End;
@@ -1603,11 +1644,11 @@ package body Src_Editor_Box is
    --------------------
 
    function Get_Block_Name
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return String
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return String
    is
-      Block : constant Block_Record := Get_Block
-        (Editor.Source_Buffer, Line, True);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, Line, True);
    begin
       return Get (Block.Name).all;
    end Get_Block_Name;
@@ -1617,11 +1658,11 @@ package body Src_Editor_Box is
    --------------------
 
    function Get_Block_Type
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return String
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return String
    is
-      Block : constant Block_Record := Get_Block
-        (Editor.Source_Buffer, Line, True);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, Line, True);
    begin
       return Language_Category'Image (Block.Block_Type);
    end Get_Block_Type;
@@ -1631,11 +1672,11 @@ package body Src_Editor_Box is
    ---------------------
 
    function Get_Block_Level
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return Natural
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return Natural
    is
-      Block : constant Block_Record := Get_Block
-        (Editor.Source_Buffer, Line, True);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, Line, True);
    begin
       return Natural (Block.Indentation_Level);
    end Get_Block_Level;
@@ -1645,8 +1686,8 @@ package body Src_Editor_Box is
    -------------------------
 
    function Get_Subprogram_Name
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Editable_Line_Type) return String is
+     (Editor : access Source_Editor_Box_Record; Line : Editable_Line_Type)
+      return String is
    begin
       return Editor.Source_Buffer.Get_Subprogram_Name (Line);
    end Get_Subprogram_Name;
@@ -1655,8 +1696,7 @@ package body Src_Editor_Box is
    -- Get_Buffer --
    ----------------
 
-   function Get_Buffer
-     (Editor : access Source_Editor_Box_Record) return String
+   function Get_Buffer (Editor : access Source_Editor_Box_Record) return String
    is
       Begin_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
@@ -1681,8 +1721,8 @@ package body Src_Editor_Box is
    --------------------
 
    function Get_Status_Bar
-     (Editor : access Source_Editor_Box_Record)
-      return Source_Editor_Status_Bar is
+     (Editor : access Source_Editor_Box_Record) return Source_Editor_Status_Bar
+   is
    begin
       return Editor.Status_Bar;
    end Get_Status_Bar;
@@ -1692,8 +1732,7 @@ package body Src_Editor_Box is
    ------------------
 
    procedure Set_Writable
-     (Editor   : access Source_Editor_Box_Record;
-      Writable : Boolean)
+     (Editor : access Source_Editor_Box_Record; Writable : Boolean)
    is
       File : constant GNATCOLL.VFS.Virtual_File :=
         Editor.Source_Buffer.Get_Filename;
@@ -1737,7 +1776,8 @@ package body Src_Editor_Box is
    -- Get_View --
    --------------
 
-   function Get_View (Editor : access Source_Editor_Box_Record)
+   function Get_View
+     (Editor : access Source_Editor_Box_Record)
       return Src_Editor_View.Source_View is
    begin
       return Editor.Source_View;
@@ -1747,7 +1787,8 @@ package body Src_Editor_Box is
    -- Get_Buffer --
    ----------------
 
-   function Get_Buffer (Editor : access Source_Editor_Box_Record)
+   function Get_Buffer
+     (Editor : access Source_Editor_Box_Record)
       return Src_Editor_Buffer.Source_Buffer is
    begin
       return Editor.Source_Buffer;
@@ -1771,11 +1812,10 @@ package body Src_Editor_Box is
          Result : Views_Array (1 .. Count);
       begin
          Count := 1;
-         Iter  := First_Child (Get_MDI (Get_Kernel (Buffer)));
+         Iter := First_Child (Get_MDI (Get_Kernel (Buffer)));
 
          while Get (Iter) /= null loop
-            if Get_Widget (Get (Iter)).all in
-              Source_Editor_Box_Record'Class
+            if Get_Widget (Get (Iter)).all in Source_Editor_Box_Record'Class
             then
                Box := Source_Editor_Box (Get_Widget (Get (Iter)));
                if Get_Buffer (Box) = Buffer then
@@ -1794,8 +1834,8 @@ package body Src_Editor_Box is
    -----------------------
 
    function Needs_To_Be_Saved
-     (Box    : not null access Source_Editor_Box_Record;
-      Single : Boolean) return Boolean is
+     (Box : not null access Source_Editor_Box_Record; Single : Boolean)
+      return Boolean is
    begin
       if not Needs_To_Be_Saved (Box.Source_Buffer) then
          return False;
@@ -1804,10 +1844,10 @@ package body Src_Editor_Box is
          declare
             Views : constant Views_Array := Get_Views (Box.Source_Buffer);
          begin
-            return Views'Length = 1
-              or else (not Single
-                       and then Box = Views (Views'First));
+            return
+              Views'Length = 1
+              or else (not Single and then Box = Views (Views'First));
          end;
       end if;
-   end  Needs_To_Be_Saved;
+   end Needs_To_Be_Saved;
 end Src_Editor_Box;

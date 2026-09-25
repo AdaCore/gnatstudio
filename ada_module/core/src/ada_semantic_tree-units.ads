@@ -62,9 +62,8 @@ package Ada_Semantic_Tree.Units is
    --  Return the entity referenced by this unit.
 
    function Get_Units
-     (Db         : Construct_Database_Access;
-      Name       : String;
-      Is_Partial : Boolean) return Unit_Iterator;
+     (Db : Construct_Database_Access; Name : String; Is_Partial : Boolean)
+      return Unit_Iterator;
    --  Return an iterator iterating over all the units of a given name,
    --  project-wise. If Is_Partial is true, all units starting with the given
    --  name will be iterated over. The name of the unit is the name of the
@@ -75,16 +74,15 @@ package Ada_Semantic_Tree.Units is
    --  Return the unit of the given name - which may include dots if it's a
    --  child unit.
 
-   function Get_Units
-     (File : Structured_File_Access) return Unit_Iterator;
+   function Get_Units (File : Structured_File_Access) return Unit_Iterator;
    --  Return all the units contained in that file.
 
    function Get_Children (Unit : Unit_Access) return Unit_Iterator;
    --  Return all the children of the unit given in parameter.
 
    function Get_Owning_Unit
-     (File : Structured_File_Access;
-      Offset : String_Index_Type) return Unit_Access;
+     (File : Structured_File_Access; Offset : String_Index_Type)
+      return Unit_Access;
    --  Return the unit related to this location in the file.
 
    function Get_Owning_Unit (Entity : Entity_Access) return Unit_Access;
@@ -204,8 +202,7 @@ private
    use Construct_Unit_Tries;
    use Construct_Unit_Tries.Construct_Trie_Trees;
 
-   package Unit_Set_Pckg is new
-     Ada.Containers.Ordered_Sets (Unit_Access);
+   package Unit_Set_Pckg is new Ada.Containers.Ordered_Sets (Unit_Access);
 
    package Persistent_Entity_List is new
      Ada.Containers.Ordered_Sets (Entity_Persistent_Access);
@@ -216,43 +213,40 @@ private
    use Local_Construct_Trie;
    use Local_Construct_Trie.Construct_Trie_Trees;
 
-   type Unit_Access_Record is new
-     Construct_Annotations_Pckg.General_Annotation_Record
+   type Unit_Access_Record is
+     new Construct_Annotations_Pckg.General_Annotation_Record
    with record
-      Name             : Composite_Identifier_Access;
+      Name : Composite_Identifier_Access;
 
-      Entity           : Entity_Persistent_Access :=
+      Entity         : Entity_Persistent_Access :=
         Null_Entity_Persistent_Access;
-      Parent           : Entity_Persistent_Access :=
+      Parent         : Entity_Persistent_Access :=
         Null_Entity_Persistent_Access;
-      Parent_Is_Spec   : Boolean := False;
+      Parent_Is_Spec : Boolean := False;
 
-      Body_Unit        : Entity_Persistent_Access :=
-        Null_Entity_Persistent_Access;
-      Spec_Unit        : Entity_Persistent_Access :=
-        Null_Entity_Persistent_Access;
+      Body_Unit : Entity_Persistent_Access := Null_Entity_Persistent_Access;
+      Spec_Unit : Entity_Persistent_Access := Null_Entity_Persistent_Access;
 
-      Start_Entity     : Entity_Persistent_Access :=
-        Null_Entity_Persistent_Access;
-      End_Entity       : Entity_Persistent_Access :=
-        Null_Entity_Persistent_Access;
+      Start_Entity : Entity_Persistent_Access := Null_Entity_Persistent_Access;
+      End_Entity   : Entity_Persistent_Access := Null_Entity_Persistent_Access;
 
-      Unit_Key         : Construct_Annotations_Pckg.Annotation_Key;
+      Unit_Key : Construct_Annotations_Pckg.Annotation_Key;
 
-      This_Timestamp   : Integer := 0;
+      This_Timestamp : Integer := 0;
 
-      Dep_Timestamp    : Integer := 0;
-      Is_Up_To_Date    : Boolean := False;
+      Dep_Timestamp : Integer := 0;
+      Is_Up_To_Date : Boolean := False;
       --  These two fields are used by dependency analysis
 
-      Db_Index         : Construct_Unit_Tries.Construct_Trie_Index;
+      Db_Index : Construct_Unit_Tries.Construct_Trie_Index;
 
-      Children_Units   : Persistent_Entity_List.Set;
+      Children_Units : Persistent_Entity_List.Set;
 
       Parts_Up_To_Date : Boolean := False;
       --  This field is used by part analysis
 
-      Local_Constructs : aliased Local_Construct_Trie.Construct_Trie;
+      Local_Constructs            :
+        aliased Local_Construct_Trie.Construct_Trie;
       Local_Constructs_Up_To_Date : Boolean := False;
 
       Waiting_For_Parent_Index : Construct_Unit_Tries.Construct_Trie_Index :=

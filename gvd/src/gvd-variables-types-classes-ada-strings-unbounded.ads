@@ -29,17 +29,18 @@ package GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
    type GVD_Ada_Unbounded_String_Type_Access is
      access all GVD_Ada_Unbounded_String_Type'Class;
 
-   overriding function Get_Simple_Value
+   overriding
+   function Get_Simple_Value
      (Self : not null access GVD_Ada_Unbounded_String_Type) return String;
 
-   overriding function Get_Value_Command
-     (Self   : not null access GVD_Ada_Unbounded_String_Type;
-      Entity : String)
+   overriding
+   function Get_Value_Command
+     (Self : not null access GVD_Ada_Unbounded_String_Type; Entity : String)
       return String;
 
-   overriding procedure Set_Value
-     (Self  : not null access GVD_Ada_Unbounded_String_Type;
-      Value : String);
+   overriding
+   procedure Set_Value
+     (Self : not null access GVD_Ada_Unbounded_String_Type; Value : String);
 
 private
 
@@ -47,22 +48,26 @@ private
       Value : Standard.Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
-   overriding function Get_Type_Descr
-     (Self : not null access GVD_Ada_Unbounded_String_Type) return String is
-     ("Ada.Strings.Unbounded.Unbounded_String");
+   overriding
+   function Get_Type_Descr
+     (Self : not null access GVD_Ada_Unbounded_String_Type) return String
+   is ("Ada.Strings.Unbounded.Unbounded_String");
 
-   overriding procedure Set_Type_Name
-     (Self : not null access GVD_Ada_Unbounded_String_Type;
-      Name : String) is null;
+   overriding
+   procedure Set_Type_Name
+     (Self : not null access GVD_Ada_Unbounded_String_Type; Name : String)
+   is null;
 
-   overriding function Get_Type_Name
-     (Self : not null access GVD_Ada_Unbounded_String_Type)
-      return String is ("Ada.Strings.Unbounded.Unbounded_String");
+   overriding
+   function Get_Type_Name
+     (Self : not null access GVD_Ada_Unbounded_String_Type) return String
+   is ("Ada.Strings.Unbounded.Unbounded_String");
 
-   overriding procedure Clear
-     (Self : not null access GVD_Ada_Unbounded_String_Type);
+   overriding
+   procedure Clear (Self : not null access GVD_Ada_Unbounded_String_Type);
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Ada_Unbounded_String_Type;
       Item : not null GVD_Generic_Type_Access);
 

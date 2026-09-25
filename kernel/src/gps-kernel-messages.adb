@@ -17,36 +17,37 @@
 
 with Ada.Calendar;
 with Ada.Characters.Handling;
-with Ada.Containers;                use Ada.Containers;
-with Ada.Strings.Fixed.Hash;        use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
-with Ada.Tags;                      use Ada.Tags;
+with Ada.Containers;        use Ada.Containers;
+with Ada.Strings.Fixed.Hash;
+use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Tags;              use Ada.Tags;
 
 with VSS.Strings.Conversions;
 
-with GNATCOLL.Projects;             use GNATCOLL.Projects;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
-with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Glib.Convert;
 
-with Basic_Types;                   use Basic_Types;
-with Commands;                      use Commands;
-with GPS.Default_Styles;            use GPS.Default_Styles;
-with GPS.Editors;                   use GPS.Editors;
-with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
-with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
+with Basic_Types;                  use Basic_Types;
+with Commands;                     use Commands;
+with GPS.Default_Styles;           use GPS.Default_Styles;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Multilines;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Project;            use GPS.Kernel.Project;
-with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel.Style_Manager;     use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Task_Manager;
-with GPS.Intl;                      use GPS.Intl;
-with Projects;                      use Projects;
-with XML_Parsers;                   use XML_Parsers;
-with XML_Utils;                     use XML_Utils;
+with GPS.Intl;                     use GPS.Intl;
+with Projects;                     use Projects;
+with XML_Parsers;                  use XML_Parsers;
+with XML_Utils;                    use XML_Utils;
 
 package body GPS.Kernel.Messages is
 
@@ -62,28 +63,32 @@ package body GPS.Kernel.Messages is
    use Sort_Order_Hint_Maps;
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Reset Messages_Loaded flag
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Loads data for opened project.
 
    type On_Project_Changing is new File_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Save messages and clears messages container.
 
    type On_File_Renamed is new File2_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_File_Renamed;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self          : On_File_Renamed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
       File, Renamed : Virtual_File);
    --  React to a file renaming
 
@@ -92,15 +97,15 @@ package body GPS.Kernel.Messages is
    --  returns it.
 
    type Filter_Runner_Command
-     (Container : not null access Messages_Container'Class) is
-      new Commands.Root_Command with null record;
-   overriding function Execute
+     (Container : not null access Messages_Container'Class)
+   is new Commands.Root_Command with null record;
+   overriding
+   function Execute
      (Self : access Filter_Runner_Command) return Commands.Command_Return_Type;
    --  Execute filters.
 
    procedure Decrement_Counters
-     (Message : not null Message_Access;
-      Flags   : Message_Flags);
+     (Message : not null Message_Access; Flags : Message_Flags);
    --  Decrement counters of given kinds for category and file of the message.
    --  Send necessary Message_Removed, Category_Removed and File_Removed
    --  notifications.
@@ -128,10 +133,10 @@ package body GPS.Kernel.Messages is
    package Notifiers is
 
       procedure Notify_Listeners_About_Category_Added
-        (Self          : not null access Messages_Container'Class;
-         Category      : VSS.Strings.Virtual_String;
-         Initial_Flags : Message_Flags;
-         Current_Flags : Message_Flags;
+        (Self                     : not null access Messages_Container'Class;
+         Category                 : VSS.Strings.Virtual_String;
+         Initial_Flags            : Message_Flags;
+         Current_Flags            : Message_Flags;
          Allow_Auto_Jump_To_First : Boolean);
       --  Calls listeners to notify about add of the category when set of flags
       --  has been changed.
@@ -221,7 +226,7 @@ package body GPS.Kernel.Messages is
       return not null Messages_Container_Access;
 
    procedure Load
-     (Self : not null access Messages_Container'Class;
+     (Self                     : not null access Messages_Container'Class;
       Allow_Auto_Jump_To_First : Boolean);
    --  Loads all messages for the current project
 
@@ -230,17 +235,18 @@ package body GPS.Kernel.Messages is
       return GNATCOLL.VFS.Virtual_File;
    --  Return file where save messages for current project
 
-   procedure Free is
-     new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
 
-   procedure Free is
-     new Ada.Unchecked_Deallocation (Abstract_Note'Class, Note_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Abstract_Note'Class, Note_Access);
 
    ------------
    -- Adjust --
    ------------
 
-   overriding procedure Adjust (Self : in out Abstract_Reference) is
+   overriding
+   procedure Adjust (Self : in out Abstract_Reference) is
       Message : constant Message_Access := Self.Message;
 
    begin
@@ -274,7 +280,7 @@ package body GPS.Kernel.Messages is
       return not null GPS.Kernel.Messages_Container_Access
    is
       Result : constant not null Messages_Container_Access :=
-                 new Messages_Container (Kernel);
+        new Messages_Container (Kernel);
    begin
       GPS.Kernel.Messages.Simple.Register (Result);
       GPS.Kernel.Messages.Multilines.Register (Result);
@@ -303,11 +309,10 @@ package body GPS.Kernel.Messages is
    ------------------------
 
    procedure Decrement_Counters
-     (Message : not null Message_Access;
-      Flags   : Message_Flags)
+     (Message : not null Message_Access; Flags : Message_Flags)
    is
       Container          : constant Messages_Container_Access :=
-                             Message.Get_Container;
+        Message.Get_Container;
       Category_Node      : Node_Access;
       File_Node          : Node_Access;
       Old_Category_Flags : Message_Flags;
@@ -332,18 +337,17 @@ package body GPS.Kernel.Messages is
         (Container, Message, Flags);
 
       if Message.Level = Primary then
-         File_Node     := Message.Parent;
+         File_Node := Message.Parent;
          Category_Node := File_Node.Parent;
 
          Old_Category_Flags := Get_Flags (Category_Node);
-         Old_File_Flags     := Get_Flags (File_Node);
+         Old_File_Flags := Get_Flags (File_Node);
 
          for Kind in Message_Visibility_Kind loop
             if Flags (Kind) then
                Category_Node.Counters (Kind) :=
                  Category_Node.Counters (Kind) - 1;
-               File_Node.Counters (Kind) :=
-                 File_Node.Counters (Kind) - 1;
+               File_Node.Counters (Kind) := File_Node.Counters (Kind) - 1;
             end if;
          end loop;
 
@@ -413,7 +417,8 @@ package body GPS.Kernel.Messages is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Abstract_Reference) is
+   overriding
+   procedure Finalize (Self : in out Abstract_Reference) is
    begin
       Self.Unset;
    end Finalize;
@@ -426,9 +431,10 @@ package body GPS.Kernel.Messages is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
 
-      procedure Free is
-        new Ada.Unchecked_Deallocation
-          (Messages_Container'Class, Messages_Container_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation
+          (Messages_Container'Class,
+           Messages_Container_Access);
 
       Container : Messages_Container_Access := Get_Messages_Container (Kernel);
 
@@ -465,8 +471,7 @@ package body GPS.Kernel.Messages is
    --------------------------
 
    function Get_Background_Color
-     (Self : not null access Abstract_Message)
-      return Gdk.RGBA.Gdk_RGBA is
+     (Self : not null access Abstract_Message) return Gdk.RGBA.Gdk_RGBA is
    begin
       if Self.Style /= null then
          return Background (Self.Style);
@@ -526,7 +531,7 @@ package body GPS.Kernel.Messages is
                end loop;
             end return;
 
-         when Node_Message =>
+         when Node_Message              =>
             raise Program_Error;
       end case;
    end Get_Flags;
@@ -560,7 +565,7 @@ package body GPS.Kernel.Messages is
       return Message_Flags is
    begin
       case Self.Level is
-         when Primary =>
+         when Primary   =>
             return Self.Flags;
 
          when Secondary =>
@@ -580,7 +585,7 @@ package body GPS.Kernel.Messages is
       return VSS.Strings.Virtual_String is
    begin
       case Self.Level is
-         when Primary =>
+         when Primary   =>
             return Self.Parent.Parent.Name;
 
          when Secondary =>
@@ -608,7 +613,7 @@ package body GPS.Kernel.Messages is
       return not null Messages_Container_Access is
    begin
       case Self.Level is
-         when Primary =>
+         when Primary   =>
             return Self.Parent.Parent.Container;
 
          when Secondary =>
@@ -640,7 +645,7 @@ package body GPS.Kernel.Messages is
       return GNATCOLL.VFS.Virtual_File is
    begin
       case Self.Level is
-         when Primary =>
+         when Primary   =>
             return Self.Parent.File;
 
          when Secondary =>
@@ -665,8 +670,9 @@ package body GPS.Kernel.Messages is
          Category_Node := Element (Category_Position);
 
          declare
-            Result : Virtual_File_Array
-              (1 .. Natural (Category_Node.Children.Length));
+            Result :
+              Virtual_File_Array
+                (1 .. Natural (Category_Node.Children.Length));
 
          begin
             for J in Result'Range loop
@@ -697,8 +703,7 @@ package body GPS.Kernel.Messages is
    ------------------------------
 
    function Has_Multiline_Highlighting
-     (Self : not null access constant Abstract_Message)
-      return Boolean
+     (Self : not null access constant Abstract_Message) return Boolean
    is
       pragma Unreferenced (Self);
    begin
@@ -739,8 +744,7 @@ package body GPS.Kernel.Messages is
    --------------
 
    function Get_Line
-     (Self : not null access constant Abstract_Message'Class)
-      return Natural is
+     (Self : not null access constant Abstract_Message'Class) return Natural is
    begin
       return Self.Line;
    end Get_Line;
@@ -756,7 +760,7 @@ package body GPS.Kernel.Messages is
       return
         To_Unbounded_String
           (Glib.Convert.Escape_Text
-               (To_String (Abstract_Message'Class (Self.all).Get_Text)));
+             (To_String (Abstract_Message'Class (Self.all).Get_Text)));
    end Get_Markup;
 
    ------------------------
@@ -805,8 +809,8 @@ package body GPS.Kernel.Messages is
             File_Node := Element (File_Position);
 
             declare
-               Result : Message_Array
-                 (1 .. Natural (File_Node.Children.Length));
+               Result :
+                 Message_Array (1 .. Natural (File_Node.Children.Length));
 
             begin
                for J in Result'Range loop
@@ -875,9 +879,9 @@ package body GPS.Kernel.Messages is
    procedure For_All_Messages
      (Self     : not null access constant Messages_Container'Class;
       File     : GNATCOLL.VFS.Virtual_File;
-      Callback : not null access function
-        (Message : not null access Abstract_Message'Class)
-      return Boolean)
+      Callback :
+        not null access function
+          (Message : not null access Abstract_Message'Class) return Boolean)
    is
       Category_Position : Category_Maps.Cursor := Self.Category_Map.First;
       Category_Node     : Node_Access;
@@ -894,7 +898,7 @@ package body GPS.Kernel.Messages is
 
             for J in 1 .. Natural (File_Node.Children.Length) loop
                if not Callback
-                 (Message_Access (File_Node.Children.Element (J)))
+                        (Message_Access (File_Node.Children.Element (J)))
                then
                   return;
                end if;
@@ -914,9 +918,9 @@ package body GPS.Kernel.Messages is
       return GNATCOLL.VFS.Virtual_File
    is
       Root_Project : constant Project_Type :=
-                       Get_Registry (Self.Kernel).Tree.Root_Project;
+        Get_Registry (Self.Kernel).Tree.Root_Project;
       Project_Name : constant Filesystem_String :=
-                       Root_Project.Project_Path.Base_Name (".gpr");
+        Root_Project.Project_Path.Base_Name (".gpr");
    begin
       return Root_Project.Artifacts_Dir / (Project_Name & "-msg.xml");
    end Get_Message_File;
@@ -950,7 +954,7 @@ package body GPS.Kernel.Messages is
       return Message_Access is
    begin
       case Self.Level is
-         when Primary =>
+         when Primary   =>
             return null;
 
          when Secondary =>
@@ -963,18 +967,15 @@ package body GPS.Kernel.Messages is
    ------------------
 
    function Get_Children
-     (Self : not null access Abstract_Message'Class)
-      return Message_Array is
+     (Self : not null access Abstract_Message'Class) return Message_Array is
    begin
       case Self.Level is
-         when Primary =>
+         when Primary   =>
             declare
-               Result : Message_Array
-                 (1 .. Natural (Self.Children.Length));
+               Result : Message_Array (1 .. Natural (Self.Children.Length));
             begin
                for J in Result'Range loop
-                  Result (J) :=
-                    Message_Access (Self.Children.Element (J));
+                  Result (J) := Message_Access (Self.Children.Element (J));
                end loop;
                return Result;
             end;
@@ -1015,7 +1016,7 @@ package body GPS.Kernel.Messages is
       Allow_Auto_Jump_To_First : Boolean)
    is
       Container          : constant Messages_Container_Access :=
-                             Message.Get_Container;
+        Message.Get_Container;
       Category_Node      : Node_Access;
       File_Node          : Node_Access;
       Old_Category_Flags : Message_Flags;
@@ -1023,11 +1024,11 @@ package body GPS.Kernel.Messages is
 
    begin
       if Message.Level = Primary then
-         File_Node     := Message.Parent;
+         File_Node := Message.Parent;
          Category_Node := File_Node.Parent;
 
          Old_Category_Flags := Get_Flags (Category_Node);
-         Old_File_Flags     := Get_Flags (File_Node);
+         Old_File_Flags := Get_Flags (File_Node);
 
          --  Update counters.
 
@@ -1108,13 +1109,14 @@ package body GPS.Kernel.Messages is
       if not Container.Filter_Launched then
          Container.Filter_Launched := True;
          Self.Get_Container.In_Message_Init := True;
-         Command := new Filter_Runner_Command'
-              (Commands.Root_Command with Container => Container);
+         Command :=
+           new Filter_Runner_Command'
+             (Commands.Root_Command with Container => Container);
          GPS.Kernel.Task_Manager.Launch_Background_Command
-           (Kernel          => Container.Kernel,
-            Command         => Command,
-            Active          => True,
-            Show_Bar        => False);
+           (Kernel   => Container.Kernel,
+            Command  => Command,
+            Active   => True,
+            Show_Bar => False);
          Self.Get_Container.In_Message_Init := False;
       end if;
    end Initialize;
@@ -1124,16 +1126,16 @@ package body GPS.Kernel.Messages is
    ----------------
 
    procedure Initialize
-     (Self          : not null access Abstract_Message'Class;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance     : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (Self                     : not null access Abstract_Message'Class;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean) is
    begin
       Initialize_Internal
@@ -1167,9 +1169,9 @@ package body GPS.Kernel.Messages is
       Flags         : Message_Flags) is
    begin
       Self.Corresponding_File := File;
-      Self.Line               := Line;
-      Self.Column             := Column;
-      Self.Flags              := Flags;
+      Self.Line := Line;
+      Self.Column := Column;
+      Self.Flags := Flags;
 
       if File /= No_File then
          Self.Mark.Replace_Element
@@ -1212,7 +1214,7 @@ package body GPS.Kernel.Messages is
       Sort_Hint         : Sort_Order_Hint;
 
    begin
-      Self.Line   := Line;
+      Self.Line := Line;
       Self.Column := Column;
       Self.Importance := Importance;
 
@@ -1243,14 +1245,14 @@ package body GPS.Kernel.Messages is
 
          Category_Node :=
            new Node_Record'
-             (Kind          => Node_Category,
-              Parent        => null,
-              Children      => Node_Vectors.Empty_Vector,
-              Counters      => (others => 0),
-              Container     => Container,
-              Name          => Category,
-              File_Map      => File_Maps.Empty_Map,
-              Sort_Hint     => Sort_Hint);
+             (Kind      => Node_Category,
+              Parent    => null,
+              Children  => Node_Vectors.Empty_Vector,
+              Counters  => (others => 0),
+              Container => Container,
+              Name      => Category,
+              File_Map  => File_Maps.Empty_Map,
+              Sort_Hint => Sort_Hint);
          Container.Categories.Append (Category_Node);
          Container.Category_Map.Insert (Category, Category_Node);
       end if;
@@ -1285,7 +1287,7 @@ package body GPS.Kernel.Messages is
    ----------
 
    procedure Load
-     (Self : not null access Messages_Container'Class;
+     (Self                     : not null access Messages_Container'Class;
       Allow_Auto_Jump_To_First : Boolean)
    is
       procedure Load_Message
@@ -1295,8 +1297,7 @@ package body GPS.Kernel.Messages is
       --  Loads primary message and its secondary messages
 
       procedure Load_Message
-        (XML_Node : Node_Ptr;
-         Parent   : not null Message_Access);
+        (XML_Node : Node_Ptr; Parent : not null Message_Access);
       --  Loads secondary message
 
       ------------------
@@ -1319,29 +1320,31 @@ package body GPS.Kernel.Messages is
          ----------------------------
 
          function Get_Message_Importance return Message_Importance_Type is
-            Importance_Val : constant String := Get_Attribute_S
-              (XML_Node, "importance", "");
+            Importance_Val : constant String :=
+              Get_Attribute_S (XML_Node, "importance", "");
          begin
             if Importance_Val /= "" then
                return Message_Importance_Type'Value (Importance_Val);
             else
                declare
-                  Weight_Val : constant String := Get_Attribute_S
-                    (XML_Node, "weight", "");
+                  Weight_Val : constant String :=
+                    Get_Attribute_S (XML_Node, "weight", "");
                   Weight     : constant Integer :=
-                                 (if Weight_Val = "" then
-                                     -1
-                                  else
-                                     Natural'Value (Weight_Val));
+                    (if Weight_Val = ""
+                     then -1
+                     else Natural'Value (Weight_Val));
 
                begin
                   case Weight is
-                     when -1 =>
+                     when -1     =>
                         return Unspecified;
-                     when 0 =>
+
+                     when 0      =>
                         return Low;
-                     when 1 =>
+
+                     when 1      =>
                         return Medium;
+
                      when others =>
                         return High;
                   end case;
@@ -1350,39 +1353,33 @@ package body GPS.Kernel.Messages is
 
          end Get_Message_Importance;
 
-         Class         : constant Tag :=
-                           Internal_Tag
-                             (Get_Attribute_S (XML_Node, "class", ""));
-         Line          : constant Natural :=
-                           Natural'Value
-                             (Get_Attribute_S (XML_Node, "line", ""));
-         Column        : constant Visible_Column_Type :=
-                           Visible_Column_Type'Value
-                             (Get_Attribute_S (XML_Node, "column", ""));
-         Importance    : constant Message_Importance_Type :=
-                           Get_Message_Importance;
-         Flags         : constant Message_Flags :=
+         Class      : constant Tag :=
+           Internal_Tag (Get_Attribute_S (XML_Node, "class", ""));
+         Line       : constant Natural :=
+           Natural'Value (Get_Attribute_S (XML_Node, "line", ""));
+         Column     : constant Visible_Column_Type :=
+           Visible_Column_Type'Value
+             (Get_Attribute_S (XML_Node, "column", ""));
+         Importance : constant Message_Importance_Type :=
+           Get_Message_Importance;
+         Flags      : constant Message_Flags :=
            From_Int (Integer'Value (Get_Attribute_S (XML_Node, "flags", "0")));
 
          Actual_Line   : constant Integer :=
-                           Integer'Value
-                             (Get_Attribute_S
-                                (XML_Node,
-                                 "actual_line",
-                                 Natural'Image (Line)));
+           Integer'Value
+             (Get_Attribute_S (XML_Node, "actual_line", Natural'Image (Line)));
          Actual_Column : constant Integer :=
-                           Integer'Value
-                             (Get_Attribute_S
-                                (XML_Node,
-                                 "actual_column",
-                                 Visible_Column_Type'Image (Column)));
+           Integer'Value
+             (Get_Attribute_S
+                (XML_Node,
+                 "actual_column",
+                 Visible_Column_Type'Image (Column)));
          Style_Name    : constant String :=
            Get_Attribute_S (XML_Node, "highlighting_style", "");
          Length        : constant Highlight_Length :=
-                           Highlight_Length'Value
-                             (Get_Attribute_S
-                                (XML_Node, "highlighting_length",
-                                 Highlight_Whole_Line'Img));
+           Highlight_Length'Value
+             (Get_Attribute_S
+                (XML_Node, "highlighting_length", Highlight_Whole_Line'Img));
          Message       : Message_Access;
          XML_Child     : Node_Ptr := XML_Node.Child;
          Style         : Style_Access;
@@ -1390,21 +1387,22 @@ package body GPS.Kernel.Messages is
       begin
          Message :=
            Self.Primary_Loaders.Element (Class)
-           (XML_Node,
-            Messages_Container_Access (Self),
-            Category,
-            File,
-            Line,
-            Column,
-            Importance,
-            Actual_Line,
-            Actual_Column,
-            Flags,
-            Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
+             (XML_Node,
+              Messages_Container_Access (Self),
+              Category,
+              File,
+              Line,
+              Column,
+              Importance,
+              Actual_Line,
+              Actual_Column,
+              Flags,
+              Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
          if Style_Name /= "" then
-            Style := Get_Style_Manager
-              (Kernel_Handle (Self.Kernel)).Get_Or_Create (Style_Name);
+            Style :=
+              Get_Style_Manager (Kernel_Handle (Self.Kernel)).Get_Or_Create
+                (Style_Name);
             Set_Highlighting (Message, Style, Length);
          end if;
 
@@ -1422,46 +1420,45 @@ package body GPS.Kernel.Messages is
       ------------------
 
       procedure Load_Message
-        (XML_Node : Node_Ptr;
-         Parent   : not null Message_Access)
+        (XML_Node : Node_Ptr; Parent : not null Message_Access)
       is
-         Class         : constant Tag :=
-                           Internal_Tag
-                             (Get_Attribute_S (XML_Node, "class", ""));
-         File          : constant Virtual_File :=
-                           Get_File_Child (XML_Node, "file");
-         Line          : constant Natural :=
-                           Natural'Value
-                             (Get_Attribute_S (XML_Node, "line", ""));
-         Column        : constant Visible_Column_Type :=
-                           Visible_Column_Type'Value
+         Class  : constant Tag :=
+           Internal_Tag (Get_Attribute_S (XML_Node, "class", ""));
+         File   : constant Virtual_File := Get_File_Child (XML_Node, "file");
+         Line   : constant Natural :=
+           Natural'Value (Get_Attribute_S (XML_Node, "line", ""));
+         Column : constant Visible_Column_Type :=
+           Visible_Column_Type'Value
              (Get_Attribute_S (XML_Node, "column", ""));
 
          Flags : constant Message_Flags :=
            From_Int (Integer'Value (Get_Attribute_S (XML_Node, "flags", "0")));
 
          Actual_Line   : constant Integer :=
-                           Integer'Value
-                             (Get_Attribute_S
-                                (XML_Node,
-                                 "actual_line",
-                                 Natural'Image (Line)));
+           Integer'Value
+             (Get_Attribute_S (XML_Node, "actual_line", Natural'Image (Line)));
          Actual_Column : constant Integer :=
-                           Integer'Value
-                             (Get_Attribute_S
-                                (XML_Node,
-                                 "actual_column",
-                                 Visible_Column_Type'Image (Column)));
+           Integer'Value
+             (Get_Attribute_S
+                (XML_Node,
+                 "actual_column",
+                 Visible_Column_Type'Image (Column)));
 
       begin
          Self.Secondary_Loaders.Element (Class)
-           (XML_Node, Parent, File, Line, Column, Actual_Line, Actual_Column,
+           (XML_Node,
+            Parent,
+            File,
+            Line,
+            Column,
+            Actual_Line,
+            Actual_Column,
             Flags);
       end Load_Message;
 
       Messages_File     : constant Virtual_File := Self.Get_Message_File;
       Project_File      : constant Virtual_File :=
-                            Get_Project (Self.Kernel).Project_Path;
+        Get_Project (Self.Kernel).Project_Path;
       Root_XML_Node     : Node_Ptr;
       Project_XML_Node  : Node_Ptr;
       Category_XML_Node : Node_Ptr;
@@ -1486,8 +1483,10 @@ package body GPS.Kernel.Messages is
          Project_XML_Node := Root_XML_Node.Child;
 
          while Project_XML_Node /= null loop
-            exit when Project_XML_Node.Tag.all = "project" and then
-              Get_File_Child (Project_XML_Node, "file") = Project_File;
+            exit when
+              Project_XML_Node.Tag.all = "project"
+              and then
+                Get_File_Child (Project_XML_Node, "file") = Project_File;
 
             Project_XML_Node := Project_XML_Node.Next;
          end loop;
@@ -1578,7 +1577,7 @@ package body GPS.Kernel.Messages is
          use type Message_Lists.Cursor;
 
          Container : constant Messages_Container_Access :=
-                       Message_Access (Self).Get_Container;
+           Message_Access (Self).Get_Container;
 
       begin
          if Message_Lists.Has_Element (Self.Position) then
@@ -1598,15 +1597,16 @@ package body GPS.Kernel.Messages is
         (Self : in out Container'Class) return Message_Access is
       begin
          if Message_Lists.Has_Element (Self.Unprocessed) then
-            return Message : constant Message_Access :=
-              Message_Access (Message_Lists.Element (Self.Unprocessed))
+            return
+               Message : constant Message_Access :=
+                 Message_Access (Message_Lists.Element (Self.Unprocessed))
             do
                Message_Lists.Next (Self.Unprocessed);
             end return;
 
          else
             raise Program_Error with "there are no unprocessed messages";
-            --  Must never happen
+         --  Must never happen
          end if;
       end Get_Unprocessed;
 
@@ -1614,8 +1614,8 @@ package body GPS.Kernel.Messages is
       -- Has_Unprocessed --
       ---------------------
 
-      function Has_Unprocessed
-        (Self : in out Container'Class) return Boolean is
+      function Has_Unprocessed (Self : in out Container'Class) return Boolean
+      is
       begin
          return Message_Lists.Has_Element (Self.Unprocessed);
       end Has_Unprocessed;
@@ -1626,7 +1626,7 @@ package body GPS.Kernel.Messages is
 
       procedure Include (Self : not null access Abstract_Message_Node'Class) is
          Container : constant Messages_Container_Access :=
-                       Message_Access (Self).Get_Container;
+           Message_Access (Self).Get_Container;
 
       begin
          Container.Messages.Messages.Append (Abstract_Message_Access (Self));
@@ -1678,8 +1678,9 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then (Listener.Flags = Empty_Message_Flags
-                           or else Match (Listener.Flags, Message.Get_Flags))
+                 and then
+                   (Listener.Flags = Empty_Message_Flags
+                    or else Match (Listener.Flags, Message.Get_Flags))
                then
                   Result :=
                     Result and Listener.Message_Can_Be_Destroyed (Message);
@@ -1714,10 +1715,10 @@ package body GPS.Kernel.Messages is
       -------------------------------------------
 
       procedure Notify_Listeners_About_Category_Added
-        (Self          : not null access Messages_Container'Class;
-         Category      : VSS.Strings.Virtual_String;
-         Initial_Flags : Message_Flags;
-         Current_Flags : Message_Flags;
+        (Self                     : not null access Messages_Container'Class;
+         Category                 : VSS.Strings.Virtual_String;
+         Initial_Flags            : Message_Flags;
+         Current_Flags            : Message_Flags;
          Allow_Auto_Jump_To_First : Boolean)
       is
          Listeners : constant Listener_Vectors.Vector := Self.Listeners;
@@ -1734,11 +1735,12 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then ((Listener.Flags = Empty_Message_Flags
-                            and Initial_Flags = Empty_Message_Flags)
-                           or else ((Initial_Flags xor Current_Flags)
-                                     and Listener.Flags)
-                                    /= Empty_Message_Flags)
+                 and then
+                   ((Listener.Flags = Empty_Message_Flags
+                     and Initial_Flags = Empty_Message_Flags)
+                    or else
+                      ((Initial_Flags xor Current_Flags) and Listener.Flags)
+                      /= Empty_Message_Flags)
                then
                   Listener.Category_Added
                     (Category                 => Category,
@@ -1778,11 +1780,12 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then ((Listener.Flags = Empty_Message_Flags
-                            and Current_Flags = Empty_Message_Flags)
-                           or else ((Initial_Flags xor Current_Flags)
-                                     and Listener.Flags)
-                                    /= Empty_Message_Flags)
+                 and then
+                   ((Listener.Flags = Empty_Message_Flags
+                     and Current_Flags = Empty_Message_Flags)
+                    or else
+                      ((Initial_Flags xor Current_Flags) and Listener.Flags)
+                      /= Empty_Message_Flags)
                then
                   Listener.Category_Removed (Category);
                end if;
@@ -1821,11 +1824,12 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then ((Listener.Flags = Empty_Message_Flags
-                            and Initial_Flags = Empty_Message_Flags)
-                           or else ((Initial_Flags xor Current_Flags)
-                                     and Listener.Flags)
-                                    /= Empty_Message_Flags)
+                 and then
+                   ((Listener.Flags = Empty_Message_Flags
+                     and Initial_Flags = Empty_Message_Flags)
+                    or else
+                      ((Initial_Flags xor Current_Flags) and Listener.Flags)
+                      /= Empty_Message_Flags)
                then
                   Listener.File_Added (Category, File);
                end if;
@@ -1864,11 +1868,12 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then ((Listener.Flags = Empty_Message_Flags
-                            and Current_Flags = Empty_Message_Flags)
-                           or else ((Initial_Flags xor Current_Flags)
-                                     and Listener.Flags)
-                                    /= Empty_Message_Flags)
+                 and then
+                   ((Listener.Flags = Empty_Message_Flags
+                     and Current_Flags = Empty_Message_Flags)
+                    or else
+                      ((Initial_Flags xor Current_Flags) and Listener.Flags)
+                      /= Empty_Message_Flags)
                then
                   Listener.File_Removed (Category, File);
                end if;
@@ -1899,9 +1904,9 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then (Listener.Flags = Empty_Message_Flags
-                           or else (Flags and Listener.Flags)
-                           /= Empty_Message_Flags)
+                 and then
+                   (Listener.Flags = Empty_Message_Flags
+                    or else (Flags and Listener.Flags) /= Empty_Message_Flags)
                then
                   Listener.Message_Added (Message);
                end if;
@@ -1934,8 +1939,9 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then (Listener.Flags = Empty_Message_Flags
-                           or else Match (Listener.Flags, Message.Get_Flags))
+                 and then
+                   (Listener.Flags = Empty_Message_Flags
+                    or else Match (Listener.Flags, Message.Get_Flags))
                then
                   Listener.Message_Property_Changed (Message, Property);
                end if;
@@ -1966,9 +1972,9 @@ package body GPS.Kernel.Messages is
          for Listener of Listeners loop
             begin
                if not Self.Removed_Listeners.Contains (Listener)
-                 and then (Listener.Flags = Empty_Message_Flags
-                           or else (Flags and Listener.Flags)
-                           /= Empty_Message_Flags)
+                 and then
+                   (Listener.Flags = Empty_Message_Flags
+                    or else (Flags and Listener.Flags) /= Empty_Message_Flags)
                then
                   Listener.Message_Removed (Message);
                end if;
@@ -2002,7 +2008,8 @@ package body GPS.Kernel.Messages is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Filter_Runner_Command) return Commands.Command_Return_Type
    is
       use type Ada.Calendar.Time;
@@ -2060,13 +2067,14 @@ package body GPS.Kernel.Messages is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
       Container : constant Messages_Container_Access :=
-                    Get_Messages_Container (Kernel);
+        Get_Messages_Container (Kernel);
    begin
       Container.Messages_Loaded := False;
    end Execute;
@@ -2075,13 +2083,14 @@ package body GPS.Kernel.Messages is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
       Container : constant Messages_Container_Access :=
-                    Get_Messages_Container (Kernel);
+        Get_Messages_Container (Kernel);
 
    begin
       if not Container.Messages_Loaded then
@@ -2097,14 +2106,15 @@ package body GPS.Kernel.Messages is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changing;
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File)
    is
       pragma Unreferenced (Self, File);
       Container : constant Messages_Container_Access :=
-                    Get_Messages_Container (Kernel);
+        Get_Messages_Container (Kernel);
    begin
       Save (Container);
       Clear (Container);
@@ -2114,9 +2124,10 @@ package body GPS.Kernel.Messages is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_File_Renamed;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self          : On_File_Renamed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
       File, Renamed : Virtual_File)
    is
       pragma Unreferenced (Self, Renamed);
@@ -2147,7 +2158,10 @@ package body GPS.Kernel.Messages is
                Remove_File
                  (Container,
                   File_Position,
-                  File_Index, File_Node, (others => True), True);
+                  File_Index,
+                  File_Node,
+                  (others => True),
+                  True);
             end if;
          end if;
       end loop;
@@ -2165,8 +2179,9 @@ package body GPS.Kernel.Messages is
 
       if not Self.Filter_Launched then
          Self.Filter_Launched := True;
-         Command := new Filter_Runner_Command'
-           (Commands.Root_Command with Container => Self);
+         Command :=
+           new Filter_Runner_Command'
+             (Commands.Root_Command with Container => Self);
          GPS.Kernel.Task_Manager.Launch_Background_Command
            (Kernel   => Self.Kernel,
             Command  => Command,
@@ -2215,7 +2230,7 @@ package body GPS.Kernel.Messages is
       Flags    : Message_Flags)
    is
       Listener_Position : constant Listener_Vectors.Cursor :=
-                            Self.Listeners.Find (Listener);
+        Self.Listeners.Find (Listener);
 
    begin
       Listener.Flags := Flags;
@@ -2262,8 +2277,7 @@ package body GPS.Kernel.Messages is
    -------------------------
 
    procedure Remove_All_Messages
-     (Self  : not null access Messages_Container'Class;
-      Flags : Message_Flags)
+     (Self : not null access Messages_Container'Class; Flags : Message_Flags)
    is
       Category_Position : Category_Maps.Cursor;
       Category_Node     : Node_Access;
@@ -2297,7 +2311,7 @@ package body GPS.Kernel.Messages is
          declare
             File_Node     : Node_Access := Category_Node.Children.Element (J);
             File_Position : File_Maps.Cursor :=
-                              Category_Node.File_Map.Find (File_Node.File);
+              Category_Node.File_Map.Find (File_Node.File);
 
          begin
             Self.Remove_File (File_Position, J, File_Node, Flags, False);
@@ -2374,9 +2388,7 @@ package body GPS.Kernel.Messages is
 
          --  Remove category when there are no files for it
 
-         if Recursive
-           and then Category_Node.Children.Is_Empty
-         then
+         if Recursive and then Category_Node.Children.Is_Empty then
             declare
                Category_Position : Category_Maps.Cursor :=
                  Self.Category_Map.Find (Category_Node.Name);
@@ -2415,7 +2427,7 @@ package body GPS.Kernel.Messages is
          File_Position := Category_Node.File_Map.Find (File);
 
          if Has_Element (File_Position) then
-            File_Node  := Element (File_Position);
+            File_Node := Element (File_Position);
             File_Index := Category_Node.Children.Find_Index (File_Node);
             Self.Remove_File
               (File_Position, File_Index, File_Node, Flags, True);
@@ -2434,15 +2446,15 @@ package body GPS.Kernel.Messages is
       Recursive : Boolean)
    is
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Abstract_Message'Class, Message_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Abstract_Message'Class, Message_Access);
 
       Parent         : Node_Access := Message.Parent;
       Index          : constant Positive :=
         Parent.Children.Find_Index (Node_Access (Message));
       Destroy        : constant Boolean :=
         Self.Cleanup_Mode
-          or else Notifiers.Ask_About_Message_Destroy (Self, Message);
+        or else Notifiers.Ask_About_Message_Destroy (Self, Message);
       Category_Node  : Node_Access;
       Category       : constant VSS.Strings.Virtual_String :=
         Message.Get_Category;
@@ -2452,8 +2464,7 @@ package body GPS.Kernel.Messages is
       File_Flags     : Message_Flags;
 
    begin
-      if Flags = Empty_Message_Flags
-        or else Match (Message.Get_Flags, Flags)
+      if Flags = Empty_Message_Flags or else Match (Message.Get_Flags, Flags)
       then
          for J in reverse 1 .. Message.Children.Last_Index loop
             declare
@@ -2493,16 +2504,9 @@ package body GPS.Kernel.Messages is
             --  Notify listeners
 
             Notifiers.Notify_Listeners_About_File_Removed
-              (Self,
-               Category,
-               File,
-               File_Flags,
-               Get_Flags (File_Node));
+              (Self, Category, File, File_Flags, Get_Flags (File_Node));
             Notifiers.Notify_Listeners_About_Category_Removed
-              (Self,
-               Category,
-               Category_Flags,
-               Get_Flags (Category_Node));
+              (Self, Category, Category_Flags, Get_Flags (Category_Node));
          end if;
 
          if Destroy then
@@ -2541,7 +2545,7 @@ package body GPS.Kernel.Messages is
    ----------
 
    procedure Save (Self : not null access Messages_Container'Class) is
-      F : constant Virtual_File := Self.Get_Message_File;
+      F       : constant Virtual_File := Self.Get_Message_File;
       Success : Boolean;
 
    begin
@@ -2551,10 +2555,10 @@ package body GPS.Kernel.Messages is
         = GNATCOLL.Projects.From_File
       then
          if Locations_Save_In_Desktop.Get_Pref then
-            Self.Save (F,
-                       (Editor_Side => True,
-                        Locations   => True,
-                        Editor_Line => False), False);
+            Self.Save
+              (F,
+               (Editor_Side => True, Locations => True, Editor_Line => False),
+               False);
          elsif F.Is_Regular_File then
             F.Delete (Success);
          end if;
@@ -2596,11 +2600,10 @@ package body GPS.Kernel.Messages is
                XML_Node :=
                  new Node'(Tag => new String'("category"), others => <>);
 
-            when Node_File =>
-               XML_Node :=
-                 new Node'(Tag => new String'("file"), others => <>);
+            when Node_File     =>
+               XML_Node := new Node'(Tag => new String'("file"), others => <>);
 
-            when Node_Message =>
+            when Node_Message  =>
                XML_Node :=
                  new Node'(Tag => new String'("message"), others => <>);
          end case;
@@ -2611,10 +2614,10 @@ package body GPS.Kernel.Messages is
             when Node_Category =>
                Set_Attribute (XML_Node, "name", Current_Node.Name);
 
-            when Node_File =>
+            when Node_File     =>
                Add_File_Child (XML_Node, "name", Current_Node.File);
 
-            when Node_Message =>
+            when Node_Message  =>
                Set_Attribute_S
                  (XML_Node, "class", External_Tag (Current_Node'Tag));
                Set_Attribute_S
@@ -2635,7 +2638,8 @@ package body GPS.Kernel.Messages is
                   if Flags_Int /= 0 then
                      Set_Attribute_S
                        (XML_Node,
-                        "flags", Trim (Integer'Image (Flags_Int), Both));
+                        "flags",
+                        Trim (Integer'Image (Flags_Int), Both));
                   end if;
                end;
 
@@ -2650,14 +2654,16 @@ package body GPS.Kernel.Messages is
                end if;
 
                if not Current_Node.Mark.Is_Empty
-                 and then Current_Node.Mark.Element.Column
-                   /= Current_Node.Column
+                 and then
+                   Current_Node.Mark.Element.Column /= Current_Node.Column
                then
                   Set_Attribute_S
                     (XML_Node,
                      "actual_column",
-                     Trim (Visible_Column_Type'Image
-                       (Current_Node.Mark.Element.Column), Both));
+                     Trim
+                       (Visible_Column_Type'Image
+                          (Current_Node.Mark.Element.Column),
+                        Both));
                end if;
 
                if Current_Node.Style /= null then
@@ -2681,11 +2687,12 @@ package body GPS.Kernel.Messages is
                   "importance",
                   Trim
                     (Ada.Characters.Handling.To_Lower
-                         (Message_Importance_Type'Image
-                              (Current_Node.Importance)), Both));
+                       (Message_Importance_Type'Image
+                          (Current_Node.Importance)),
+                     Both));
 
                case Message_Access (Current_Node).Level is
-                  when Primary =>
+                  when Primary   =>
                      null;
 
                   when Secondary =>
@@ -2699,8 +2706,7 @@ package body GPS.Kernel.Messages is
                --  Free the corresponding XML node otherwise.
 
                if Self.Savers.Contains (Current_Node'Tag) then
-                  Self.Savers.Element
-                    (Current_Node'Tag)
+                  Self.Savers.Element (Current_Node'Tag)
                     (Message_Access (Current_Node), XML_Node);
                else
                   Free (XML_Node);
@@ -2726,15 +2732,18 @@ package body GPS.Kernel.Messages is
 
       Project_File     : constant Virtual_File := Self.Project_File;
       Sort_Position    : Sort_Order_Hint_Maps.Cursor :=
-                           Self.Sort_Order_Hints.First;
+        Self.Sort_Order_Hints.First;
       Root_XML_Node    : Node_Ptr;
       Project_XML_Node : Node_Ptr;
       Sort_XML_Node    : Node_Ptr;
       Error            : GNAT.Strings.String_Access;
 
    begin
-      if File.Base_Name /= File.Full_Name and  --  If File has directory
-        not File.Get_Parent.Is_Directory       --  and directory doesn't exist
+      if File.Base_Name /= File.Full_Name
+        and  --  If File has directory
+          not File
+                .Get_Parent
+                .Is_Directory       --  and directory doesn't exist
       then
          --  Don't try to write to unexisted directory
          return;
@@ -2812,8 +2821,7 @@ package body GPS.Kernel.Messages is
    ---------
 
    procedure Set
-     (Self    : in out Abstract_Reference;
-      Message : not null Message_Access) is
+     (Self : in out Abstract_Reference; Message : not null Message_Access) is
    begin
       Self.Unset;
 
@@ -2852,9 +2860,7 @@ package body GPS.Kernel.Messages is
    -- Cancel_Action --
    -------------------
 
-   procedure Cancel_Action
-     (Self : not null access Abstract_Message'Class)
-   is
+   procedure Cancel_Action (Self : not null access Abstract_Message'Class) is
    begin
       Self.Set_Action (null);
    end Cancel_Action;
@@ -2925,8 +2931,7 @@ package body GPS.Kernel.Messages is
    -----------------
 
    procedure Remove_Note
-     (Self : not null access Abstract_Message'Class;
-      Tag  : Ada.Tags.Tag)
+     (Self : not null access Abstract_Message'Class; Tag : Ada.Tags.Tag)
    is
       Position : Note_Maps.Cursor := Self.Notes.Find (Tag);
       Aux      : Note_Access;
@@ -2989,7 +2994,7 @@ package body GPS.Kernel.Messages is
       Listener : not null Listener_Access)
    is
       Listener_Position : Listener_Vectors.Cursor :=
-                            Self.Listeners.Find (Listener);
+        Self.Listeners.Find (Listener);
 
    begin
       if Has_Element (Listener_Position) then
@@ -3040,7 +3045,7 @@ package body GPS.Kernel.Messages is
    begin
       for K in Message_Visibility_Kind loop
          if Flags (K) then
-            Int := Int + 2**(Message_Visibility_Kind'Pos (K));
+            Int := Int + 2 ** (Message_Visibility_Kind'Pos (K));
          end if;
       end loop;
 
@@ -3053,11 +3058,11 @@ package body GPS.Kernel.Messages is
 
    function From_Int (Int : Integer) return Message_Flags is
       Flags : Message_Flags;
-      type T is mod 2**32;
-      B : constant T := T (Int);
+      type T is mod 2 ** 32;
+      B     : constant T := T (Int);
    begin
       for K in Message_Visibility_Kind loop
-         Flags (K) := (B and 2**Message_Visibility_Kind'Pos (K)) /= 0;
+         Flags (K) := (B and 2 ** Message_Visibility_Kind'Pos (K)) /= 0;
       end loop;
 
       return Flags;
@@ -3068,13 +3073,14 @@ package body GPS.Kernel.Messages is
    ---------------------
 
    procedure Register_Module
-     (Kernel : not null access Kernel_Handle_Record'Class)
-   is
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
-      Locations_Save_In_Desktop := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("locations-save-in-desktop", False,
-         Label => -"Save locations on exit",
-         Doc   => -"Restore contents of Locations on restart.");
+      Locations_Save_In_Desktop :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("locations-save-in-desktop",
+           False,
+           Label => -"Save locations on exit",
+           Doc   => -"Restore contents of Locations on restart.");
    end Register_Module;
 
 end GPS.Kernel.Messages;

@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with Gtkada.Handlers;         use Gtkada.Handlers;
-with Gtk.Widget;              use Gtk.Widget;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with Gtkada.Handlers;       use Gtkada.Handlers;
+with Gtk.Widget;            use Gtk.Widget;
 
 package body Gtkada.Action_Combo_Tool is
 
-   type Action_User_Data is new Gtkada.Combo_Tool_Button.User_Data_Record with
-      record
-         Action : Unbounded_String;
-      end record;
+   type Action_User_Data is new Gtkada.Combo_Tool_Button.User_Data_Record
+   with record
+      Action : Unbounded_String;
+   end record;
    type Action_User_Data_Access is access all Action_User_Data'Class;
 
    procedure On_Selection (Widget : access Gtk_Widget_Record'Class);
@@ -56,15 +56,14 @@ package body Gtkada.Action_Combo_Tool is
    ----------------
 
    procedure On_Clicked (Widget : access Gtk_Widget_Record'Class) is
-      Combo : constant Action_Combo_Tool := Action_Combo_Tool (Widget);
-      Data  : constant Action_User_Data_Access :=
+      Combo   : constant Action_Combo_Tool := Action_Combo_Tool (Widget);
+      Data    : constant Action_User_Data_Access :=
         Action_User_Data_Access (Get_Selected_Item_Data (Combo));
       Success : Boolean;
       pragma Unreferenced (Success);
    begin
-      Success := Execute_Action
-        (Combo.Kernel,
-         Action => To_String (Data.Action));
+      Success :=
+        Execute_Action (Combo.Kernel, Action => To_String (Data.Action));
    end On_Clicked;
 
    -------------
@@ -72,13 +71,12 @@ package body Gtkada.Action_Combo_Tool is
    -------------
 
    procedure Gtk_New
-     (Self   : out Action_Combo_Tool;
-      Kernel : not null access Kernel_Handle_Record'Class;
+     (Self           : out Action_Combo_Tool;
+      Kernel         : not null access Kernel_Handle_Record'Class;
       Initial_Label  : String;
       Initial_Action : String)
    is
-      Act   : constant Action_Access :=
-        Lookup_Action (Kernel, Initial_Action);
+      Act : constant Action_Access := Lookup_Action (Kernel, Initial_Action);
    begin
       Self := new Action_Combo_Tool_Record;
       Self.Kernel := Kernel;
@@ -110,8 +108,7 @@ package body Gtkada.Action_Combo_Tool is
       Data : constant Gtkada.Combo_Tool_Button.User_Data :=
         new Action_User_Data'
           (User_Data_Record with Action => To_Unbounded_String (Action));
-      Act   : constant Action_Access :=
-        Lookup_Action (Self.Kernel, Action);
+      Act  : constant Action_Access := Lookup_Action (Self.Kernel, Action);
    begin
       Self.Add_Item
         (Item      => (if Label = "" then Action else Label),
@@ -124,12 +121,10 @@ package body Gtkada.Action_Combo_Tool is
    -------------------
 
    procedure Remove_Action
-     (Self    : not null access Action_Combo_Tool_Record'Class;
-      Action  : String)
+     (Self : not null access Action_Combo_Tool_Record'Class; Action : String)
    is
-      function Predicate
-        (Dummy_Item : String; Data : User_Data) return Boolean
-         is (Action_User_Data_Access (Data).Action = Action);
+      function Predicate (Dummy_Item : String; Data : User_Data) return Boolean
+      is (Action_User_Data_Access (Data).Action = Action);
    begin
       Self.Remove_If (Predicate'Access);
    end Remove_Action;

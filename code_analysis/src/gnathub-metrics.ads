@@ -31,11 +31,11 @@ package GNAThub.Metrics is
 
    function Less (L, R : Metric_Access) return Boolean;
 
-   package Metrics_Ordered_Sets is new Ada.Containers.Ordered_Sets
-     (Metric_Access, Less, "=");
+   package Metrics_Ordered_Sets is new
+     Ada.Containers.Ordered_Sets (Metric_Access, Less, "=");
 
-   package Metric_Tool_Maps is
-     new Ada.Containers.Hashed_Maps
+   package Metric_Tool_Maps is new
+     Ada.Containers.Hashed_Maps
        (Key_Type        => Unbounded_String,
         Element_Type    => Metrics_Ordered_Sets.Set,
         Hash            => Ada.Strings.Unbounded.Hash,
@@ -56,17 +56,14 @@ package GNAThub.Metrics is
      (Self : not null access Metric_Record) return Severity_Access;
    --  Return the metric's severity.
 
-   function Get_Value
-     (Self : not null access Metric_Record) return Float;
+   function Get_Value (Self : not null access Metric_Record) return Float;
    --  Return the metric's value.
 
-   function Get_Rule
-     (Self : not null access Metric_Record) return Rule_Access;
+   function Get_Rule (Self : not null access Metric_Record) return Rule_Access;
    --  Return the metric's rule.
 
    function Get_File
-     (Self : not null access Metric_Record)
-      return GNATCOLL.VFS.Virtual_File;
+     (Self : not null access Metric_Record) return GNATCOLL.VFS.Virtual_File;
    --  return the metric's file.
 
    function Get_Entity
@@ -81,19 +78,22 @@ package GNAThub.Metrics is
    type Metrics_Listener is access all Metrics_Listener_Interface'Class;
    --  Interface used to react to changes made regarding metrics.
 
-   package Metrics_Listener_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Metrics_Listener,
-      "="          => "=");
+   package Metrics_Listener_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Metrics_Listener,
+        "="          => "=");
 
    procedure Metric_Added
      (Self   : not null access Metrics_Listener_Interface;
-      Metric : not null access Metric_Record'Class) is abstract;
+      Metric : not null access Metric_Record'Class)
+   is abstract;
    --  Called each time a new metric is added.
 
    procedure Metrics_Visibility_Changed
      (Self    : not null access Metrics_Listener_Interface;
-      Metrics : Rule_Sets.Set) is abstract;
+      Metrics : Rule_Sets.Set)
+   is abstract;
    --  Called when the metrics visibility has changed.
 
    procedure Register_Listener

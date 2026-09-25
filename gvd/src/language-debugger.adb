@@ -21,8 +21,10 @@ package body Language.Debugger is
    -- Keywords --
    --------------
 
-   overriding function Keywords
-     (Lang : access Language_Debugger) return Strings.String_Access is
+   overriding
+   function Keywords
+     (Lang : access Language_Debugger) return Strings.String_Access
+   is
       pragma Unreferenced (Lang);
    begin
       return null;
@@ -33,8 +35,8 @@ package body Language.Debugger is
    ------------------
 
    procedure Set_Debugger
-     (The_Language : access Language_Debugger;
-      The_Debugger : Debugger_Access) is
+     (The_Language : access Language_Debugger; The_Debugger : Debugger_Access)
+   is
    begin
       The_Language.The_Debugger := The_Debugger;
    end Set_Debugger;

@@ -33,26 +33,25 @@ package Gexpect.Db is
    type Machine_Db_Interface is interface;
 
    function Is_Configured
-     (Db       : Machine_Db_Interface;
-      Nickname : String) return Boolean is abstract;
+     (Db : Machine_Db_Interface; Nickname : String) return Boolean
+   is abstract;
    --  Tell if Machine is configured.
 
-   function Get_Servers
-     (Db       : Machine_Db_Interface) return String_List is abstract;
+   function Get_Servers (Db : Machine_Db_Interface) return String_List
+   is abstract;
    --  Get the list of all configured machines.
    --  DO NOT FREE THE STRINGS IN THIS LIST.
 
    function Get_Server
-     (Db       : Machine_Db_Interface;
-      Nickname : String) return Machine_Access is abstract;
+     (Db : Machine_Db_Interface; Nickname : String) return Machine_Access
+   is abstract;
    --  Get the Machine according to its nickname.
 
    ----------------------
    -- DB configuration --
    ----------------------
 
-   procedure Define_Machine_Db
-     (Db : access Machine_Db_Interface'Class);
+   procedure Define_Machine_Db (Db : access Machine_Db_Interface'Class);
    --  Defines Db as the main repository for machines. This Db will be used
    --  by GNAT.Expect.TTY.Remote to access the machines configuration.
 

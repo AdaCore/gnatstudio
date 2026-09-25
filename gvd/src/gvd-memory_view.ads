@@ -24,8 +24,7 @@ package GVD.Memory_View is
    --  Register menus and other functions to support the breakpoint editor
 
    procedure Display_Memory
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Address : String);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Address : String);
    --  Open (if needed) a memory view, and display the memory at the given
    --  address
 

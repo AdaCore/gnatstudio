@@ -16,13 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Exceptions;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 pragma Warnings (Off, ".*is an internal GNAT unit");
 with Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
 
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -30,29 +30,30 @@ with GNAT.Regexp;               use GNAT.Regexp;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 
-with Glib.Convert;              use Glib.Convert;
-with Gtkada.Dialogs;            use Gtkada.Dialogs;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Glib.Convert;         use Glib.Convert;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Types;
 
-with GPS.Editors;               use GPS.Editors;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Intl;                  use GPS.Intl;
-with GUI_Utils;                 use GUI_Utils;
-with Projects;                  use Projects;
-with Remote;                    use Remote;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with GPS.Editors;            use GPS.Editors;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Intl;               use GPS.Intl;
+with GUI_Utils;              use GUI_Utils;
+with Projects;               use Projects;
+with Remote;                 use Remote;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS_Utils;     use GNATCOLL.VFS_Utils;
 with OS_Utils;
-with Commands.Interactive;      use Commands, Commands.Interactive;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
 
 package body VFS_Module is
 
@@ -65,44 +66,47 @@ package body VFS_Module is
    Pattern_Cst           : aliased constant String := "pattern";
    Cd_Cmd_Parameters     : constant Cst_Argument_List := (1 => Dir_Cst'Access);
    Delete_Cmd_Parameters : constant Cst_Argument_List :=
-                             (1 => Name_Cst'Access);
+     (1 => Name_Cst'Access);
    Dir_Cmd_Parameters    : constant Cst_Argument_List :=
-                             (1 => Pattern_Cst'Access);
+     (1 => Pattern_Cst'Access);
 
    -----------------
    -- Subprograms --
    -----------------
 
    procedure VFS_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the vfs module
 
    type Delete_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Delete_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Delete_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  See doc from inherited subprogram
 
    type Rename_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Rename_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Rename_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  See doc from inherited subprogram
 
    type Create_Command is new Interactive_Command with record
       Create_Dir : Boolean;
    end record;
-   overriding function Execute
-     (Command : access Create_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Create_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  See doc from inherited subprogram
 
    Open_Command_Name : constant String := "open file";
    type Open_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Open_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Open_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Open a file selector dialog allowing the user to open a file from
    --  the current context's directory
 
@@ -111,14 +115,16 @@ package body VFS_Module is
    -------------
 
    type File_Filter_Record is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Context : access File_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access File_Filter_Record; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean;
 
    type Dir_Filter_Record is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Context : access Dir_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Dir_Filter_Record; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean;
 
    --------------------------
    -- VFS_Command_Handler --
@@ -415,9 +421,10 @@ package body VFS_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Delete_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Delete_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Kernel        : constant Kernel_Handle := Get_Kernel (Context.Context);
@@ -429,18 +436,20 @@ package body VFS_Module is
       File          : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Files         : GNATCOLL.VFS.File_Array_Access;
    begin
-      Trace (Me, "deleting "
-             & File_Information (Context.Context).Display_Full_Name);
+      Trace
+        (Me,
+         "deleting " & File_Information (Context.Context).Display_Full_Name);
 
       if Has_File_Information (Context.Context) then
          for File of File_Information (Context.Context) loop
-            Res := GPS_Message_Dialog
-              (-"Are you sure you want to delete " &
-                 Display_Full_Name (File) &
-                 " ?",
-               Gtkada.Dialogs.Confirmation,
-               Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
-               Parent => Kernel.Get_Main_Window);
+            Res :=
+              GPS_Message_Dialog
+                (-"Are you sure you want to delete "
+                 & Display_Full_Name (File)
+                 & " ?",
+                 Gtkada.Dialogs.Confirmation,
+                 Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
+                 Parent => Kernel.Get_Main_Window);
 
             if Res = Gtkada.Dialogs.Button_Yes then
                --  inform before deleting
@@ -456,12 +465,14 @@ package body VFS_Module is
          --  Assign for further use
          File := Dir;
 
-         Res := GPS_Message_Dialog
-           (-"Are you sure you want to delete the directory " &
-            Dir.Display_Full_Name & (-" and all its subdirectories ?"),
-            Gtkada.Dialogs.Confirmation,
-            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
-            Parent => Kernel.Get_Main_Window);
+         Res :=
+           GPS_Message_Dialog
+             (-"Are you sure you want to delete the directory "
+              & Dir.Display_Full_Name
+              & (-" and all its subdirectories ?"),
+              Gtkada.Dialogs.Confirmation,
+              Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
+              Parent => Kernel.Get_Main_Window);
 
          if Res = Gtkada.Dialogs.Button_Yes then
             --  Is_Directory marks File as directory. This is important
@@ -511,13 +522,14 @@ package body VFS_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Rename_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Rename_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       Dir     : constant Virtual_File :=
-                  Directory_Information (Context.Context);
+        Directory_Information (Context.Context);
       Success : Boolean;
       Is_Dir  : Boolean;
 
@@ -543,12 +555,12 @@ package body VFS_Module is
          if Is_Directory (File) then
             declare
                Res : constant String :=
-                       GUI_Utils.Query_User
-                         (Get_Kernel (Context.Context).Get_Main_Window,
-                          (-"Please enter the directory's new name:"),
-                          Password_Mode => False,
-                          Urgent        => False,
-                          Default       => +File.Base_Dir_Name);
+                 GUI_Utils.Query_User
+                   (Get_Kernel (Context.Context).Get_Main_Window,
+                    (-"Please enter the directory's new name:"),
+                    Password_Mode => False,
+                    Urgent        => False,
+                    Default       => +File.Base_Dir_Name);
             begin
                if Res /= "" then
                   New_File := Create_From_Dir (Get_Parent (File), +Res);
@@ -558,12 +570,12 @@ package body VFS_Module is
          else
             declare
                Res : constant String :=
-                       GUI_Utils.Query_User
-                         (Get_Kernel (Context.Context).Get_Main_Window,
-                          (-"Please enter the file's new name:"),
-                          Password_Mode => False,
-                          Urgent        => False,
-                          Default       => +File.Base_Name);
+                 GUI_Utils.Query_User
+                   (Get_Kernel (Context.Context).Get_Main_Window,
+                    (-"Please enter the file's new name:"),
+                    Password_Mode => False,
+                    Urgent        => False,
+                    Default       => +File.Base_Name);
             begin
                if Res /= "" then
                   New_File := Create_From_Dir (File.Dir, +Res);
@@ -582,8 +594,9 @@ package body VFS_Module is
       Prj_Changed : Boolean;
 
    begin
-      Trace (Me, "renaming " &
-             File_Information (Context.Context).Display_Full_Name);
+      Trace
+        (Me,
+         "renaming " & File_Information (Context.Context).Display_Full_Name);
 
       Is_Dir := not Has_File_Information (Context.Context);
 
@@ -608,9 +621,10 @@ package body VFS_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Create_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Create_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dir     : constant Virtual_File :=
@@ -637,21 +651,20 @@ package body VFS_Module is
          exception
             when Directory_Error =>
                Kernel.Insert
-                 ((-"Cannot create dir ") &
-                  Display_Full_Name (File),
+                 ((-"Cannot create dir ") & Display_Full_Name (File),
                   Mode => Error);
                return Commands.Failure;
          end;
 
       else
          declare
-            Res : constant String :=
-                    GUI_Utils.Query_User
-                      (Kernel.Get_Main_Window,
-                       (-"Please enter the new file's name:"),
-                       Password_Mode => False,
-                       Urgent        => False,
-                       Default       => "");
+            Res    : constant String :=
+              GUI_Utils.Query_User
+                (Kernel.Get_Main_Window,
+                 (-"Please enter the new file's name:"),
+                 Password_Mode => False,
+                 Urgent        => False,
+                 Default       => "");
             W_File : GNATCOLL.VFS.Writable_File;
          begin
             if Res /= "" then
@@ -663,16 +676,14 @@ package body VFS_Module is
          exception
             when others =>
                Kernel.Insert
-                 ((-"Cannot create file ") &
-                  Display_Full_Name (File),
+                 ((-"Cannot create file ") & Display_Full_Name (File),
                   Mode => Error);
                return Commands.Failure;
          end;
       end if;
 
       File_Saved_Hook.Run (Kernel, File);
-      Project := Get_Project_For_File
-        (Get_Registry (Kernel).Tree, Dir);
+      Project := Get_Project_For_File (Get_Registry (Kernel).Tree, Dir);
 
       if Project /= No_Project then
          Recompute_View (Kernel);
@@ -686,8 +697,7 @@ package body VFS_Module is
       if not Command.Create_Dir then
          declare
             Buf : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (Kernel).Get
-                (File => File);
+              Get_Buffer_Factory (Kernel).Get (File => File);
             pragma Unreferenced (Buf);
          begin
             null;
@@ -701,12 +711,13 @@ package body VFS_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Open_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Open_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle    := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dir    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
    begin
       if Has_Directory_Information (Context.Context) then
@@ -729,7 +740,7 @@ package body VFS_Module is
             --  Open with the first possible project, the user cannot choose
             --  which specific project to use (in the case of aggregates)
             Open_File_Action_Hook.Run
-               (Kernel, Filename, Project => No_Project);
+              (Kernel, Filename, Project => No_Project);
          end if;
       end;
       return Standard.Commands.Success;
@@ -739,13 +750,15 @@ package body VFS_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Context : access File_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access File_Filter_Record; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Context);
    begin
-      return Has_File_Information (Ctxt)
+      return
+        Has_File_Information (Ctxt)
         and then not Has_Entity_Name_Information (Ctxt);
    end Filter_Matches_Primitive;
 
@@ -753,13 +766,15 @@ package body VFS_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Context : access Dir_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Context : access Dir_Filter_Record; Ctxt : GPS.Kernel.Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Context);
    begin
-      return Has_Directory_Information (Ctxt)
+      return
+        Has_Directory_Information (Ctxt)
         and then not Has_File_Information (Ctxt);
    end Filter_Matches_Primitive;
 
@@ -776,7 +791,8 @@ package body VFS_Module is
       Display_Confirm_Dialogs : Boolean := True)
    is
       Project : Project_Type;
-      Button  : Gtkada.Dialogs.Message_Dialog_Buttons with Unreferenced;
+      Button  : Gtkada.Dialogs.Message_Dialog_Buttons
+      with Unreferenced;
    begin
       if New_File = File or else New_File = No_File then
          Success := True;
@@ -787,10 +803,10 @@ package body VFS_Module is
 
       if not Success then
          Kernel.Insert
-           ((-"Cannot rename ") &
-              Display_Full_Name (File) &
-            (-" into ") &
-              Display_Full_Name (New_File),
+           ((-"Cannot rename ")
+            & Display_Full_Name (File)
+            & (-" into ")
+            & Display_Full_Name (New_File),
             Mode => Error);
          return;
       end if;
@@ -801,24 +817,24 @@ package body VFS_Module is
          Ensure_Directory (New_File);
       end if;
 
-      File_Renamed_Hook.Run
-        (Kernel, File, New_File);
+      File_Renamed_Hook.Run (Kernel, File, New_File);
 
       --  First check if file_in is defined in the projects
-      Project := Get_Project_For_File
-        (Get_Registry (Kernel).Tree, File);
+      Project := Get_Project_For_File (Get_Registry (Kernel).Tree, File);
 
       if Project /= No_Project then
          if Display_Confirm_Dialogs then
-            Button := GPS_Message_Dialog
-              ((if File.Is_Directory
-                then -("The directory is referenced in the loaded project: ")
-                else -("The file is referenced in the loaded project: "))
-               & Project.Name & ASCII.LF &
-               (-"the project files might require manual modifications."),
-               Gtkada.Dialogs.Warning,
-               Button_OK,
-               Parent => Kernel.Get_Main_Window);
+            Button :=
+              GPS_Message_Dialog
+                ((if File.Is_Directory
+                  then -("The directory is referenced in the loaded project: ")
+                  else -("The file is referenced in the loaded project: "))
+                 & Project.Name
+                 & ASCII.LF
+                 & (-"the project files might require manual modifications."),
+                 Gtkada.Dialogs.Warning,
+                 Button_OK,
+                 Parent => Kernel.Get_Main_Window);
          end if;
 
          Prj_Changed := True;
@@ -834,16 +850,17 @@ package body VFS_Module is
    is
       File_Explorer_Filter : constant Action_Filter :=
         Lookup_Filter (Kernel, "File_View")
-        or (Lookup_Filter (Kernel, "Explorer_View")
-            and not Lookup_Filter (Kernel, "Explorer_Toolbar_Filter"));
+        or
+          (Lookup_Filter (Kernel, "Explorer_View")
+           and not Lookup_Filter (Kernel, "Explorer_Toolbar_Filter"));
       --  The backspace key should go in the toolbar of the editor if focused
-      File_Filter      : constant Action_Filter := new File_Filter_Record;
-      Dir_Filter       : constant Action_Filter := new Dir_Filter_Record;
-      Is_Dir           : constant Action_Filter :=
+      File_Filter          : constant Action_Filter := new File_Filter_Record;
+      Dir_Filter           : constant Action_Filter := new Dir_Filter_Record;
+      Is_Dir               : constant Action_Filter :=
         File_Explorer_Filter and Dir_Filter;
-      Is_File          : constant Action_Filter :=
+      Is_File              : constant Action_Filter :=
         File_Explorer_Filter and File_Filter;
-      Command          : Interactive_Command_Access;
+      Command              : Interactive_Command_Access;
    begin
       VFS_Module_Id := new Module_ID_Record;
 
@@ -854,17 +871,13 @@ package body VFS_Module is
          Priority    => Default_Priority);
 
       --  Register these filters to make them accessible from other modules
-      Register_Filter
-        (Kernel,
-         Filter => File_Filter,
-         Name   => "File_Filter");
-      Register_Filter
-        (Kernel,
-         Filter => Dir_Filter,
-         Name   => "Dir_Filter");
+      Register_Filter (Kernel, Filter => File_Filter, Name => "File_Filter");
+      Register_Filter (Kernel, Filter => Dir_Filter, Name => "Dir_Filter");
 
       Register_Action
-        (Kernel, Open_Command_Name, new Open_Command,
+        (Kernel,
+         Open_Command_Name,
+         new Open_Command,
          Description => -"Open an existing file",
          Icon_Name   => "gps-open-file-symbolic");
       Register_Contextual_Menu
@@ -888,7 +901,8 @@ package body VFS_Module is
       Command := new Create_Command;
       Create_Command (Command.all).Create_Dir := False;
       Register_Action
-        (Kernel, "create new file",
+        (Kernel,
+         "create new file",
          Command     => Command,
          Description => "Create a new file in the selected directory",
          Filter      => Is_Dir);
@@ -900,7 +914,8 @@ package body VFS_Module is
       Command := new Create_Command;
       Create_Command (Command.all).Create_Dir := True;
       Register_Action
-        (Kernel, "create new directory",
+        (Kernel,
+         "create new directory",
          Command     => Command,
          Description => "Create a new subdirectory in the selected directory",
          Filter      => Is_Dir);
@@ -910,7 +925,8 @@ package body VFS_Module is
          Label  => "File operations/Create a subdirectory");
 
       Register_Action
-        (Kernel, "rename file",
+        (Kernel,
+         "rename file",
          Command     => new Rename_Command,
          Description => "Rename the selected file",
          Filter      => Is_File);
@@ -920,7 +936,8 @@ package body VFS_Module is
          Label  => "File operations/Rename file %f");
 
       Register_Action
-        (Kernel, "rename directory",
+        (Kernel,
+         "rename directory",
          Command     => new Rename_Command,
          Description => "Rename the selected directory",
          Filter      => Is_Dir);
@@ -930,7 +947,8 @@ package body VFS_Module is
          Label  => "File operations/Rename directory");
 
       Register_Action
-        (Kernel, "delete file",
+        (Kernel,
+         "delete file",
          Command     => new Delete_Command,
          Description => "Delete the selected file",
          Filter      => Is_File);
@@ -940,7 +958,8 @@ package body VFS_Module is
          Label  => "File operations/Delete selected files");
 
       Register_Action
-        (Kernel, "delete directory",
+        (Kernel,
+         "delete directory",
          Command     => new Delete_Command,
          Description => "Delete the selected directory and its subdirectories",
          Filter      => Is_Dir);
@@ -950,8 +969,7 @@ package body VFS_Module is
          Label  => "File operations/Delete directory recursively");
 
       Kernel.Scripts.Register_Command
-        ("pwd",
-         Handler      => VFS_Command_Handler'Access);
+        ("pwd", Handler => VFS_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("cd",
          Minimum_Args => 1,
@@ -963,13 +981,9 @@ package body VFS_Module is
          Maximum_Args => 1,
          Handler      => VFS_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("dir",
-         Maximum_Args => 1,
-         Handler      => VFS_Command_Handler'Access);
+        ("dir", Maximum_Args => 1, Handler => VFS_Command_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("ls",
-         Maximum_Args => 1,
-         Handler      => VFS_Command_Handler'Access);
+        ("ls", Maximum_Args => 1, Handler => VFS_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("dump",
          Minimum_Args => 1,

@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                           use Glib;
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.Image;                      use Gtk.Image;
-with Gtkada.Handlers;                use Gtkada.Handlers;
+with Glib;            use Glib;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Image;       use Gtk.Image;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Files_Extra_Info_Pkg.Callbacks; use Files_Extra_Info_Pkg.Callbacks;
 
-with GPS.Intl;                       use GPS.Intl;
+with GPS.Intl; use GPS.Intl;
 
 package body Files_Extra_Info_Pkg is
 
@@ -49,9 +49,9 @@ package body Files_Extra_Info_Pkg is
    is
       pragma Unreferenced (Handle);
 
-      Icon     : Gtk_Image;
-      Hbox     : Gtk_Hbox;
-      Start    : Guint renames Start_Row_Number;
+      Icon  : Gtk_Image;
+      Hbox  : Gtk_Hbox;
+      Start : Guint renames Start_Row_Number;
 
    begin
       Gtk.Box.Initialize_Vbox (Files_Extra_Info);
@@ -68,15 +68,33 @@ package body Files_Extra_Info_Pkg is
       Set_Padding (Files_Extra_Info.Files_Label, 0, 0);
       Set_Justify (Files_Extra_Info.Files_Label, Justify_Center);
       Set_Line_Wrap (Files_Extra_Info.Files_Label, False);
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Label,
-              0, 1, Start, Start + 1, Fill, 0, 0, 0);
+      Attach
+        (Files_Extra_Info.Files_Table,
+         Files_Extra_Info.Files_Label,
+         0,
+         1,
+         Start,
+         Start + 1,
+         Fill,
+         0,
+         0,
+         0);
 
       Gtk_New (Files_Extra_Info.Files_Entry);
       Set_Editable (Files_Extra_Info.Files_Entry, True);
       Set_Max_Length (Files_Extra_Info.Files_Entry, 0);
       Set_Text (Files_Extra_Info.Files_Entry, "*");
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Files_Entry,
-              1, 2, Start, Start + 1, Fill, 0, 0, 0);
+      Attach
+        (Files_Extra_Info.Files_Table,
+         Files_Extra_Info.Files_Entry,
+         1,
+         2,
+         Start,
+         Start + 1,
+         Fill,
+         0,
+         0,
+         0);
       Set_Tooltip_Text (Files_Extra_Info.Files_Entry, -"File(s) to scan");
 
       Gtk_New (Files_Extra_Info.Directory_Label, -("Directory:"));
@@ -84,12 +102,30 @@ package body Files_Extra_Info_Pkg is
       Set_Padding (Files_Extra_Info.Directory_Label, 0, 0);
       Set_Justify (Files_Extra_Info.Directory_Label, Justify_Center);
       Set_Line_Wrap (Files_Extra_Info.Directory_Label, False);
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Directory_Label,
-              0, 1, Start + 1, Start + 2, Fill, 0, 0, 0);
+      Attach
+        (Files_Extra_Info.Files_Table,
+         Files_Extra_Info.Directory_Label,
+         0,
+         1,
+         Start + 1,
+         Start + 2,
+         Fill,
+         0,
+         0,
+         0);
 
       Gtk_New_Hbox (Hbox);
-      Attach (Files_Extra_Info.Files_Table, Hbox,
-              1, 2, Start + 1, Start + 2, Fill, 0, 0, 0);
+      Attach
+        (Files_Extra_Info.Files_Table,
+         Hbox,
+         1,
+         2,
+         Start + 1,
+         Start + 2,
+         Fill,
+         0,
+         0,
+         0);
 
       Gtk_New (Files_Extra_Info.Directory_Entry);
       Set_Editable (Files_Extra_Info.Directory_Entry, True);
@@ -100,21 +136,30 @@ package body Files_Extra_Info_Pkg is
       Pack_Start (Hbox, Files_Extra_Info.Directory_Entry, True, True);
 
       Gtk_New_From_Icon_Name
-        (Icon, "gps-emblem-directory-symbolic",
-         Icon_Size_Button);
+        (Icon, "gps-emblem-directory-symbolic", Icon_Size_Button);
       Gtk.Button.Gtk_New (Files_Extra_Info.Browse_Button);
       Files_Extra_Info.Browse_Button.Add (Icon);
       Pack_Start (Hbox, Files_Extra_Info.Browse_Button, False, False);
-      Set_Tooltip_Text
-        (Files_Extra_Info.Browse_Button, -"Select a directory");
+      Set_Tooltip_Text (Files_Extra_Info.Browse_Button, -"Select a directory");
       Widget_Callback.Object_Connect
-        (Files_Extra_Info.Browse_Button, Signal_Clicked,
-         On_Browse_Button_Clicked'Access, Files_Extra_Info);
+        (Files_Extra_Info.Browse_Button,
+         Signal_Clicked,
+         On_Browse_Button_Clicked'Access,
+         Files_Extra_Info);
 
       Gtk_New (Files_Extra_Info.Subdirs_Check, -"Recursive Search");
       Set_Active (Files_Extra_Info.Subdirs_Check, False);
-      Attach (Files_Extra_Info.Files_Table, Files_Extra_Info.Subdirs_Check,
-              1, 2, Start + 2, Start + 3, Expand or Fill, 0, 0, 0);
+      Attach
+        (Files_Extra_Info.Files_Table,
+         Files_Extra_Info.Subdirs_Check,
+         1,
+         2,
+         Start + 2,
+         Start + 3,
+         Expand or Fill,
+         0,
+         0,
+         0);
    end Initialize;
 
 end Files_Extra_Info_Pkg;

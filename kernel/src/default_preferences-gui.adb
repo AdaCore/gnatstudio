@@ -34,8 +34,8 @@ package body Default_Preferences.GUI is
       Pref      : not null access Preference_Record'Class;
       Highlight : Boolean) is
    begin
-      Self.Set_Child_Highlighted (Child_Key => Pref.Get_Name,
-                                  Highlight => Highlight);
+      Self.Set_Child_Highlighted
+        (Child_Key => Pref.Get_Name, Highlight => Highlight);
    end Set_Pref_Highlighted;
 
    ---------------------
@@ -43,21 +43,20 @@ package body Default_Preferences.GUI is
    ---------------------
 
    procedure Create_Pref_Row
-     (Self      : not null access Preferences_Group_Widget_Record'Class;
-      Pref      : not null access Preference_Record'Class;
-      Manager   : not null access Preferences_Manager_Record'Class)
+     (Self    : not null access Preferences_Group_Widget_Record'Class;
+      Pref    : not null access Preference_Record'Class;
+      Manager : not null access Preferences_Manager_Record'Class)
    is
-      Doc         : constant String := Pref.Get_Doc;
-      Label       : constant String := (if Pref.Editor_Needs_Label then
-                                           Pref.Get_Label
-                                        else
-                                           "");
+      Doc   : constant String := Pref.Get_Doc;
+      Label : constant String :=
+        (if Pref.Editor_Needs_Label then Pref.Get_Label else "");
    begin
-      Self.Create_Child (Widget    => Pref.Edit (Manager),
-                         Label     => Label,
-                         Doc       => Doc,
-                         Child_Key => Pref.Get_Name,
-                         Expand    => False);
+      Self.Create_Child
+        (Widget    => Pref.Edit (Manager),
+         Label     => Label,
+         Doc       => Doc,
+         Child_Key => Pref.Get_Name,
+         Expand    => False);
    end Create_Pref_Row;
 
    -----------
@@ -69,7 +68,7 @@ package body Default_Preferences.GUI is
       Page    : not null access Preferences_Page_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class)
    is
-      Group      : Preferences_Group;
+      Group : Preferences_Group;
 
       procedure Add_Group_Widget;
       --  Create and add the widget for Group
@@ -110,9 +109,7 @@ package body Default_Preferences.GUI is
 
             --  Create the row in the group widget for Pref
             Create_Pref_Row
-              (Self    => Group_Widget,
-               Pref    => Pref,
-               Manager => Manager);
+              (Self => Group_Widget, Pref => Pref, Manager => Manager);
          end loop;
       end Add_Group_Widget;
 

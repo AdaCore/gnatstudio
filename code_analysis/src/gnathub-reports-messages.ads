@@ -21,16 +21,16 @@ with Ada.Strings.Unbounded.Hash;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Unchecked_Deallocation;
 
-with Glib;                    use Glib;
+with Glib; use Glib;
 
 with Gtkada.Tree_View;        use Gtkada.Tree_View;
 with Gtk.Paned;               use Gtk.Paned;
 with Gtk.Tree_Model;          use Gtk.Tree_Model;
 with Gtk.Gesture_Multi_Press; use Gtk.Gesture_Multi_Press;
 
-with GPS.Kernel;              use GPS.Kernel;
-with GNAThub.Metrics;         use GNAThub.Metrics;
-with GUI_Utils;               use GUI_Utils;
+with GPS.Kernel;      use GPS.Kernel;
+with GNAThub.Metrics; use GNAThub.Metrics;
+with GUI_Utils;       use GUI_Utils;
 
 package GNAThub.Reports.Messages is
 
@@ -55,47 +55,53 @@ private
 
    type Messages_And_Metrics_Listener (View : GNAThub_Report_Messages) is
      new GPS.Kernel.Messages.Abstract_Listener
-     and Metrics_Listener_Interface with null record;
+     and Metrics_Listener_Interface
+   with null record;
    type Messages_And_Metrics_Listener_Access is
      access all Messages_And_Metrics_Listener'Class;
    --  listeners used to update the messages report according to
    --  the messages/metrics being added/removed.
 
-   overriding procedure Message_Added
+   overriding
+   procedure Message_Added
      (Self    : not null access Messages_And_Metrics_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
 
-   overriding procedure Message_Removed
+   overriding
+   procedure Message_Removed
      (Self    : not null access Messages_And_Metrics_Listener;
       Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
 
-   overriding procedure Metric_Added
+   overriding
+   procedure Metric_Added
      (Self   : not null access Messages_And_Metrics_Listener;
       Metric : not null access Metric_Record'Class);
 
-   overriding procedure Metrics_Visibility_Changed
+   overriding
+   procedure Metrics_Visibility_Changed
      (Self    : not null access Messages_And_Metrics_Listener;
       Metrics : Rule_Sets.Set);
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Messages_And_Metrics_Listener'Class,
-      Messages_And_Metrics_Listener_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Messages_And_Metrics_Listener'Class,
+        Messages_And_Metrics_Listener_Access);
 
-   type GNAThub_Report_Tree_View_Record is new Tree_View_Record
-   with record
-      Kernel     : Kernel_Handle;
+   type GNAThub_Report_Tree_View_Record is new Tree_View_Record with record
+      Kernel : Kernel_Handle;
 
       Multipress : Gtk_Gesture_Multi_Press;
       --  Used to handle double-clicks.
 
-      Locked     : Boolean := False;
+      Locked : Boolean := False;
       --  Used to avoid recursion when synchronizing selection between
       --  the tree that lists entities and the report tree.
    end record;
    type GNAThub_Report_Tree_View is
      access all GNAThub_Report_Tree_View_Record'Class;
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self       : not null access GNAThub_Report_Tree_View_Record;
       Store_Iter : Gtk_Tree_Iter) return Boolean;
    --  Return True if the row contains messages, False othwerwise.
@@ -107,29 +113,30 @@ private
       Color_Col : Gint;
       --  The severity's color column ID in the model
 
-      Tree_Col  : Gint;
+      Tree_Col : Gint;
       --  The severity's column ID in the tree
    end record;
-   package Severity_To_Column_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Unbounded_String,
-      Element_Type    => Severity_Columns_Info_Type,
-      Hash            => Ada.Strings.Unbounded.Hash,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package Severity_To_Column_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => Unbounded_String,
+        Element_Type    => Severity_Columns_Info_Type,
+        Hash            => Ada.Strings.Unbounded.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
    --  Used to store information about the indexes of the severities columns.
 
    type Metric_Columns_Info_Type is record
       Has_Metrics : Boolean := False;
       --  True if the column actually contains metrics to be shown.
 
-      Model_Col   : Gint;
+      Model_Col : Gint;
       --  The metric's column ID in the model
 
-      Tree_Col    : Gint;
+      Tree_Col : Gint;
       --  The metric's column ID in the tree view
    end record;
-   package Metric_Rules_To_Column_ID_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
+   package Metric_Rules_To_Column_ID_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
        (Key_Type        => Unbounded_String,
         Element_Type    => Metric_Columns_Info_Type,
         Hash            => Ada.Strings.Unbounded.Hash,

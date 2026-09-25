@@ -15,64 +15,65 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Directory_Operations;             use GNAT.Directory_Operations;
-with GNATCOLL.Utils;                        use GNATCOLL.Utils;
-with GNATCOLL.VFS;                          use GNATCOLL.VFS;
-with GUI_Utils;                             use GUI_Utils;
-with String_Utils;                          use String_Utils;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GUI_Utils;                 use GUI_Utils;
+with String_Utils;              use String_Utils;
 
-with Glib.Object;                           use Glib, Glib.Object;
-with Glib.Values;                           use Glib.Values;
-with Glib_Values_Utils;                     use Glib_Values_Utils;
+with Glib.Object;
+use Glib, Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gtk.Box;                               use Gtk.Box;
-with Gtk.Cell_Renderer;                     use Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Toggle;              use Gtk.Cell_Renderer_Toggle;
-with Gtk.Dialog;                            use Gtk.Dialog;
-with Gtk.Enums;                             use Gtk.Enums;
-with Gtk.Label;                             use Gtk.Label;
-with Gtk.List_Box_Row;                      use Gtk.List_Box_Row;
-with Gtk.Notebook;                          use Gtk.Notebook;
-with Gtk.Paned;                             use Gtk.Paned;
-with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
-with Gtk.Text_Tag;                          use Gtk.Text_Tag;
-with Gtk.Tree_Model;                        use Gtk.Tree_Model;
-with Gtk.Tree_Selection;                    use Gtk.Tree_Selection;
-with Gtk.Tree_Store;                        use Gtk.Tree_Store;
-with Gtk.Tree_View;                         use Gtk.Tree_View;
-with Gtk.Tree_View_Column;                  use Gtk.Tree_View_Column;
-with Gtk.Widget;                            use Gtk.Widget;
-with Gtkada.Handlers;                       use Gtkada.Handlers;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer;        use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.List_Box_Row;         use Gtk.List_Box_Row;
+with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Paned;                use Gtk.Paned;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with Dialog_Utils;                          use Dialog_Utils;
-with GPS.Intl;                              use GPS.Intl;
-with GPS.Main_Window;                       use GPS.Main_Window;
+with Dialog_Utils;    use Dialog_Utils;
+with GPS.Intl;        use GPS.Intl;
+with GPS.Main_Window; use GPS.Main_Window;
 
 package body GPS.Kernel.Custom.GUI is
 
    Startup_Module : Startup_Module_ID;
 
-   Column_Load_Name   : aliased String := "Load";
-   Column_Name_Name   : aliased String := "Name";
+   Column_Load_Name : aliased String := "Load";
+   Column_Name_Name : aliased String := "Name";
 
-   Column_Load          : constant := 0;
-   Column_Name          : constant := 1;
-   Column_Explicit      : constant := 2;
-   Column_Modified      : constant := 3;
-   Column_Background    : constant := 4;
-   Column_Plugin_Name   : constant := 5;
-   Column_Subpage_Name  : constant := 6;
-   Column_Page          : constant := 7;
+   Column_Load         : constant := 0;
+   Column_Name         : constant := 1;
+   Column_Explicit     : constant := 2;
+   Column_Modified     : constant := 3;
+   Column_Background   : constant := 4;
+   Column_Plugin_Name  : constant := 5;
+   Column_Subpage_Name : constant := 6;
+   Column_Page         : constant := 7;
 
    Column_Types : constant GType_Array :=
-     (Column_Load          => GType_Boolean,
-      Column_Name          => GType_String,
-      Column_Explicit      => GType_Boolean,
-      Column_Modified      => GType_Boolean,
-      Column_Background    => GType_String,
-      Column_Plugin_Name   => GType_String,
-      Column_Subpage_Name  => GType_String,
-      Column_Page          => GType_Int);
+     (Column_Load         => GType_Boolean,
+      Column_Name         => GType_String,
+      Column_Explicit     => GType_Boolean,
+      Column_Modified     => GType_Boolean,
+      Column_Background   => GType_String,
+      Column_Plugin_Name  => GType_String,
+      Column_Subpage_Name => GType_String,
+      Column_Page         => GType_Int);
 
    procedure Register_All_Plugins_Preferences_Pages
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -84,8 +85,7 @@ package body GPS.Kernel.Custom.GUI is
    --  of the given plugin file.
 
    procedure On_Load_Toggled
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues);
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues);
    --  Toggled when the loading status of a script is changed.
 
    procedure Set_Modified
@@ -93,8 +93,9 @@ package body GPS.Kernel.Custom.GUI is
       Iter   : Gtk_Tree_Iter);
    --  Set the given iter as modified in the model.
 
-   procedure Save (Editor : access Startup_Editor_Page_View_Record'Class;
-                   Iter   : Gtk_Tree_Iter);
+   procedure Save
+     (Editor : access Startup_Editor_Page_View_Record'Class;
+      Iter   : Gtk_Tree_Iter);
    --  Save the changes done for this plugin page.
 
    procedure On_Selection_Changed (Widget : access Gtk_Widget_Record'Class);
@@ -119,13 +120,13 @@ package body GPS.Kernel.Custom.GUI is
      (Editor       : not null access Startup_Editor_Page_View_Record'Class;
       Subpage_Name : String) return Gtk_Tree_Iter
    is
-      Iter        : Gtk_Tree_Iter;
+      Iter : Gtk_Tree_Iter;
    begin
       Iter := Get_Iter_First (Editor.Model);
 
       while Iter /= Null_Iter loop
-         exit when Get_String
-           (Editor.Model, Iter, Column_Subpage_Name) = Subpage_Name;
+         exit when
+           Get_String (Editor.Model, Iter, Column_Subpage_Name) = Subpage_Name;
 
          Next (Editor.Model, Iter);
       end loop;
@@ -137,7 +138,8 @@ package body GPS.Kernel.Custom.GUI is
    -- Display_Subpage --
    ---------------------
 
-   overriding procedure Display_Subpage
+   overriding
+   procedure Display_Subpage
      (Self         : not null access Startup_Editor_Page_View_Record;
       Subpage_Name : String)
    is
@@ -153,20 +155,19 @@ package body GPS.Kernel.Custom.GUI is
    -- Set_Pref_Highlighted --
    --------------------------
 
-   overriding procedure Set_Pref_Highlighted
+   overriding
+   procedure Set_Pref_Highlighted
      (Self      : not null access Startup_Editor_Page_View_Record;
       Pref      : not null access Preference_Record'Class;
       Highlight : Boolean)
    is
       Subpage_Iter  : constant Gtk_Tree_Iter :=
-                       Get_Subpage_Iter (Editor       => Self,
-                                         Subpage_Name => Pref.Get_Page_Name);
+        Get_Subpage_Iter (Editor => Self, Subpage_Name => Pref.Get_Page_Name);
       Subpage_Index : constant Gint :=
-                          Get_Int (Self.Model, Subpage_Iter, Column_Page);
+        Get_Int (Self.Model, Subpage_Iter, Column_Page);
       Subpage_View  : constant Preferences_Page_View :=
-                        Preferences_Page_View
-                          (Self.Plugins_Notebook.Get_Nth_Page
-                             (Subpage_Index));
+        Preferences_Page_View
+          (Self.Plugins_Notebook.Get_Nth_Page (Subpage_Index));
 
    begin
       Subpage_View.Set_Pref_Highlighted (Pref, Highlight);
@@ -176,8 +177,7 @@ package body GPS.Kernel.Custom.GUI is
    -- On_Selection_Changed --
    --------------------------
 
-   procedure On_Selection_Changed (Widget : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Selection_Changed (Widget : access Gtk_Widget_Record'Class) is
       Editor     : constant Startup_Editor := Startup_Editor (Widget);
       Iter       : Gtk_Tree_Iter;
       M          : Gtk_Tree_Model;
@@ -198,8 +198,7 @@ package body GPS.Kernel.Custom.GUI is
    ---------------------
 
    procedure On_Load_Toggled
-     (Widget : access Gtk_Widget_Record'Class;
-      Params : Glib.Values.GValues)
+     (Widget : access Gtk_Widget_Record'Class; Params : Glib.Values.GValues)
    is
       Editor      : constant Startup_Editor := Startup_Editor (Widget);
       Path_String : constant String := Get_String (Nth (Params, 1));
@@ -218,7 +217,7 @@ package body GPS.Kernel.Custom.GUI is
       Iter   : Gtk_Tree_Iter)
    is
       Modified : constant Boolean :=
-                   Get_Boolean (Editor.Model, Iter, Column_Modified);
+        Get_Boolean (Editor.Model, Iter, Column_Modified);
    begin
       Set (Editor.Model, Iter, Column_Modified, not Modified);
 
@@ -269,10 +268,10 @@ package body GPS.Kernel.Custom.GUI is
    -- Get_Widget --
    ----------------
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Root_Plugins_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
    is
       Editor       : Startup_Editor;
       Scrolled     : Gtk_Scrolled_Window;
@@ -292,29 +291,36 @@ package body GPS.Kernel.Custom.GUI is
          if Subpage.all in Plugin_Preferences_Page_Record'Class then
             declare
                Plugin_Subpage : constant Plugin_Preferences_Page :=
-                                  Plugin_Preferences_Page (Subpage);
+                 Plugin_Preferences_Page (Subpage);
                Plugin_Name    : constant String :=
-                                  Plugin_Subpage.Get_Plugin_Name;
+                 Plugin_Subpage.Get_Plugin_Name;
                Script         : constant Script_Description_Access :=
-                                  Get_Script_From_Base_Name
-                                    (Kernel    => Startup_Module.Get_Kernel,
-                                     Base_Name => Plugin_Name);
+                 Get_Script_From_Base_Name
+                   (Kernel    => Startup_Module.Get_Kernel,
+                    Base_Name => Plugin_Name);
             begin
                --  Append a node to the model
                Append (Editor.Model, Iter, Null_Iter);
 
                Set_And_Clear
-                 (Editor.Model, Iter,
-                  (Column_Load, Column_Name, Column_Explicit, Column_Modified,
-                   Column_Plugin_Name, Column_Subpage_Name, Column_Page),
-                  (1 => As_Boolean
+                 (Editor.Model,
+                  Iter,
+                  (Column_Load,
+                   Column_Name,
+                   Column_Explicit,
+                   Column_Modified,
+                   Column_Plugin_Name,
+                   Column_Subpage_Name,
+                   Column_Page),
+                  (1 =>
+                     As_Boolean
                        (Script.Loaded or else Script.Mode = Explicit_On),
-                   2 => As_String  (Plugin_Subpage.Get_Plugin_Label),
+                   2 => As_String (Plugin_Subpage.Get_Plugin_Label),
                    3 => As_Boolean (Plugin_Subpage.Explicit),
                    4 => As_Boolean (False),
-                   5 => As_String  (Plugin_Name),
-                   6 => As_String  (Plugin_Subpage.Get_Name),
-                   7 => As_Int     (Editor.Plugins_Notebook.Get_N_Pages)));
+                   5 => As_String (Plugin_Name),
+                   6 => As_String (Plugin_Subpage.Get_Name),
+                   7 => As_Int (Editor.Plugins_Notebook.Get_N_Pages)));
 
                --  Append the plugin page widget to the notebook
                W := Plugin_Subpage.Get_Widget (Manager);
@@ -339,27 +345,31 @@ package body GPS.Kernel.Custom.GUI is
       --  Create the list tree view which list all the registered plugins
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
-      Editor.Tree := Create_Tree_View
-        (Column_Types       => Column_Types,
-         Column_Names       => (Column_Name + 1   =>
-                                    Column_Name_Name'Unchecked_Access,
-                                Column_Load + 1   =>
-                                  Column_Load_Name'Unchecked_Access),
-         Show_Column_Titles => True,
-         Initial_Sort_On    => Column_Name + 1);
+      Editor.Tree :=
+        Create_Tree_View
+          (Column_Types       => Column_Types,
+           Column_Names       =>
+             (Column_Name + 1 => Column_Name_Name'Unchecked_Access,
+              Column_Load + 1 => Column_Load_Name'Unchecked_Access),
+           Show_Column_Titles => True,
+           Initial_Sort_On    => Column_Name + 1);
       Editor.Model := -Get_Model (Editor.Tree);
       Set_Search_Column (Editor.Tree, Column_Name);
       Scrolled.Add (Editor.Tree);
 
       --  Set the different callbacks for the events triggered by the tree
       Widget_Callback.Object_Connect
-        (Get_Selection (Editor.Tree), Gtk.Tree_Selection.Signal_Changed,
-         On_Selection_Changed'Access, Editor);
+        (Get_Selection (Editor.Tree),
+         Gtk.Tree_Selection.Signal_Changed,
+         On_Selection_Changed'Access,
+         Editor);
       List := Get_Cells (Get_Column (Editor.Tree, Column_Load));
       Widget_Callback.Object_Connect
         (Cell_Renderer_List.Get_Data (List),
          Gtk.Cell_Renderer_Toggle.Signal_Toggled,
-         On_Load_Toggled'Access, Editor, After => True);
+         On_Load_Toggled'Access,
+         Editor,
+         After => True);
       Cell_Renderer_List.Free (List);
 
       --  Create the notebook which will contain all plugin pages
@@ -395,14 +405,15 @@ package body GPS.Kernel.Custom.GUI is
    -- Get_Widget --
    ----------------
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Plugins_Preferences_Assistant_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
    is
-      Editor : constant Startup_Editor := Startup_Editor
-        (Root_Plugins_Preferences_Page_Record
-           (Self.all).Get_Widget (Manager));
+      Editor : constant Startup_Editor :=
+        Startup_Editor
+          (Root_Plugins_Preferences_Page_Record (Self.all).Get_Widget
+             (Manager));
    begin
       Editor.Show_Restart_Dialog := False;
 
@@ -413,7 +424,8 @@ package body GPS.Kernel.Custom.GUI is
    -- Register_Group --
    --------------------
 
-   overriding procedure Register_Group
+   overriding
+   procedure Register_Group
      (Self             : not null access Plugin_Preferences_Page_Record;
       Name             : String;
       Group            : not null Preferences_Group;
@@ -434,7 +446,7 @@ package body GPS.Kernel.Custom.GUI is
             Group            => Group,
             Priority         => Priority,
             Replace_If_Exist => Replace_If_Exist,
-            Description      =>  Description);
+            Description      => Description);
       end if;
    end Register_Group;
 
@@ -442,10 +454,10 @@ package body GPS.Kernel.Custom.GUI is
    -- Get_Widget --
    ----------------
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Plugin_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
    is
       Page_View        : Preferences_Page_View;
       Doc_Group_Widget : Preferences_Group_Widget;
@@ -462,8 +474,7 @@ package body GPS.Kernel.Custom.GUI is
       --  documentation
       Doc_Group_Widget := new Preferences_Group_Widget_Record;
       Doc_Group_Widget.Initialize
-        (Group_Name  => "Documentation",
-         Parent_View => Page_View);
+        (Group_Name => "Documentation", Parent_View => Page_View);
       Gtk_New (Doc_Label, Self.Get_Documentation);
       Doc_Label.Set_Alignment (0.0, 0.0);
       Doc_Group_Widget.Append_Child (Doc_Label);
@@ -475,7 +486,8 @@ package body GPS.Kernel.Custom.GUI is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Plugin_Preferences_Page_Record) is
+   overriding
+   procedure Free (Self : in out Plugin_Preferences_Page_Record) is
    begin
       Free (Preferences_Page_Record (Self));
 
@@ -489,8 +501,7 @@ package body GPS.Kernel.Custom.GUI is
 
    function Get_Documentation
      (Self : not null access Plugin_Preferences_Page_Record) return String
-   is
-     (if Self.Doc = null then "" else Self.Doc.all);
+   is (if Self.Doc = null then "" else Self.Doc.all);
 
    ---------------------
    -- Get_Plugin_Name --
@@ -498,18 +509,15 @@ package body GPS.Kernel.Custom.GUI is
 
    function Get_Plugin_Name
      (Self : not null access Plugin_Preferences_Page_Record) return String
-   is
-     (if Self.Plugin_Name /= null then Self.Plugin_Name.all else "");
+   is (if Self.Plugin_Name /= null then Self.Plugin_Name.all else "");
 
    ----------------------
    -- Get_Plugin_Label --
    ----------------------
 
    function Get_Plugin_Label
-     (Self : not null access Plugin_Preferences_Page_Record)
-      return String
-   is
-     (if Self.Plugin_Label /= null then Self.Plugin_Label.all else "");
+     (Self : not null access Plugin_Preferences_Page_Record) return String
+   is (if Self.Plugin_Label /= null then Self.Plugin_Label.all else "");
 
    --------------------------------------------
    -- Register_All_Plugins_Preferences_Pages --
@@ -520,7 +528,7 @@ package body GPS.Kernel.Custom.GUI is
    is
       Manager   : constant Preferences_Manager := Kernel.Get_Preferences;
       Root_Page : Root_Plugins_Preferences_Page :=
-                    new Root_Plugins_Preferences_Page_Record;
+        new Root_Plugins_Preferences_Page_Record;
 
       procedure Register_Plugin_Page
         (Name      : String;
@@ -532,10 +540,10 @@ package body GPS.Kernel.Custom.GUI is
       --  Preferences Assistant.
 
       procedure Register_Plugin_Preferences_Page
-        (Name      : String;
-         File      : GNATCOLL.VFS.Virtual_File;
-         Loaded    : Boolean;
-         Explicit  : Boolean);
+        (Name     : String;
+         File     : GNATCOLL.VFS.Virtual_File;
+         Loaded   : Boolean;
+         Explicit : Boolean);
       --  Register a plugin page in the Preferences editor
 
       procedure Register_Plugin_Preferences_Assistant_Page
@@ -555,11 +563,11 @@ package body GPS.Kernel.Custom.GUI is
       is
          pragma Unreferenced (Loaded);
          Plugin_Page      : constant Plugin_Preferences_Page :=
-                              new Plugin_Preferences_Page_Record;
+           new Plugin_Preferences_Page_Record;
          Name_Without_Ext : constant String :=
-                              Base_Name (Name, File_Extension (Name));
+           Base_Name (Name, File_Extension (Name));
          Page_Name        : constant String :=
-                              Root_Page.Get_Name & Name_Without_Ext & '/';
+           Root_Page.Get_Name & Name_Without_Ext & '/';
          Label            : constant String := Format_Title (Name_Without_Ext);
       begin
          --  Set the plugin page attributes
@@ -583,11 +591,10 @@ package body GPS.Kernel.Custom.GUI is
       --------------------------------------
 
       procedure Register_Plugin_Preferences_Page
-        (Name      : String;
-         File      : GNATCOLL.VFS.Virtual_File;
-         Loaded    : Boolean;
-         Explicit  : Boolean)
-      is
+        (Name     : String;
+         File     : GNATCOLL.VFS.Virtual_File;
+         Loaded   : Boolean;
+         Explicit : Boolean) is
       begin
          Register_Plugin_Page
            (Name      => Name,
@@ -601,13 +608,11 @@ package body GPS.Kernel.Custom.GUI is
       -- Register_Plugin_Preferences_Assistant_Page --
       ------------------------------------------------
 
-      procedure Register_Plugin_Preferences_Assistant_Page
-        (Base_Name : String)
+      procedure Register_Plugin_Preferences_Assistant_Page (Base_Name : String)
       is
          Script : constant Script_Description_Access :=
-                    Get_Script_From_Base_Name
-                      (Kernel    => Kernel,
-                       Base_Name => Base_Name);
+           Get_Script_From_Base_Name
+             (Kernel => Kernel, Base_Name => Base_Name);
       begin
          if Script = null then
             return;
@@ -638,9 +643,9 @@ package body GPS.Kernel.Custom.GUI is
 
       Root_Page := new Plugins_Preferences_Assistant_Page_Record;
       Manager.Register_Page
-        (Name             => "Preferences Assistant Plugins/",
-         Page             => Preferences_Page (Root_Page),
-         Page_Type        => Assistant_Page);
+        (Name      => "Preferences Assistant Plugins/",
+         Page      => Preferences_Page (Root_Page),
+         Page_Type => Assistant_Page);
 
       Register_Plugin_Preferences_Assistant_Page ("copy_paste.py");
       Register_Plugin_Preferences_Assistant_Page ("copy_paste_toolbar.py");
@@ -652,15 +657,15 @@ package body GPS.Kernel.Custom.GUI is
    -- Save --
    ----------
 
-   procedure Save (Editor : access Startup_Editor_Page_View_Record'Class;
-                   Iter   : Gtk_Tree_Iter)
+   procedure Save
+     (Editor : access Startup_Editor_Page_View_Record'Class;
+      Iter   : Gtk_Tree_Iter)
    is
       Kernel : constant Kernel_Handle := Startup_Module.Get_Kernel;
    begin
       Override_Startup_Script
         (Kernel    => Kernel,
-         Base_Name =>
-           Get_String (Editor.Model, Iter, Column_Plugin_Name),
+         Base_Name => Get_String (Editor.Model, Iter, Column_Plugin_Name),
          Load      => Get_Boolean (Editor.Model, Iter, Column_Load));
    end Save;
 
@@ -671,16 +676,15 @@ package body GPS.Kernel.Custom.GUI is
    procedure On_Destroy_Preferences_Dialog
      (Widget : access Gtk_Widget_Record'Class)
    is
-      Kernel         : constant Kernel_Handle := Startup_Module.Get_Kernel;
-      Editor         : constant Startup_Editor := Startup_Editor (Widget);
+      Kernel : constant Kernel_Handle := Startup_Module.Get_Kernel;
+      Editor : constant Startup_Editor := Startup_Editor (Widget);
 
       function Is_Modified return Boolean;
       --  Return True if the set of startup scripts to load has been modified,
       --  False otherwise.
 
-      function Is_Modified return Boolean
-      is
-         Iter         : Gtk_Tree_Iter;
+      function Is_Modified return Boolean is
+         Iter : Gtk_Tree_Iter;
       begin
          Iter := Get_Iter_First (Editor.Model);
 
@@ -702,30 +706,31 @@ package body GPS.Kernel.Custom.GUI is
 
       if Editor.Show_Restart_Dialog and then Is_Modified then
          declare
-            Dialog       : Gtk_Dialog;
-            Button       : Gtk_Widget;
-            Label        : Gtk_Label;
-            Response     : Gtk_Response_Type;
+            Dialog   : Gtk_Dialog;
+            Button   : Gtk_Widget;
+            Label    : Gtk_Label;
+            Response : Gtk_Response_Type;
          begin
-            Gtk_New (Dialog,
-                     Title  => -"Restart GNAT Studio ?",
-                     Parent => Get_Main_Window (Kernel),
-                     Flags  => Modal);
+            Gtk_New
+              (Dialog,
+               Title  => -"Restart GNAT Studio ?",
+               Parent => Get_Main_Window (Kernel),
+               Flags  => Modal);
             Gtk_New
               (Label,
                -("You have changed the status of some scripts. You will"
                  & ASCII.LF
                  & "need to restart GNAT Studio to take this change into"
                  & " account."
-                 & ASCII.LF & ASCII.LF
+                 & ASCII.LF
+                 & ASCII.LF
                  & "Do you want to exit GNAT Studio now ?"));
             Pack_Start
-              (Get_Content_Area (Dialog),
-               Label, Expand => True, Fill => True);
-            Button := Add_Button
-              (Dialog, -"Exit GNAT Studio", Gtk_Response_OK);
-            Button := Add_Button
-              (Dialog, -"Will restart later", Gtk_Response_Cancel);
+              (Get_Content_Area (Dialog), Label, Expand => True, Fill => True);
+            Button :=
+              Add_Button (Dialog, -"Exit GNAT Studio", Gtk_Response_OK);
+            Button :=
+              Add_Button (Dialog, -"Will restart later", Gtk_Response_Cancel);
             Grab_Default (Button);
 
             Dialog.Show_All;
@@ -736,8 +741,7 @@ package body GPS.Kernel.Custom.GUI is
 
             --  Quit GNAT Studio if the user wants to restart imediately
             if Response = Gtk_Response_OK then
-               Quit (GPS_Window (Get_Main_Window (Kernel)),
-                     Status => 100);
+               Quit (GPS_Window (Get_Main_Window (Kernel)), Status => 100);
             end if;
          end;
       else

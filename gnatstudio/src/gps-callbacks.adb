@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Main_Window; use GPS.Main_Window;
 
 package body GPS.Callbacks is
 
@@ -28,9 +28,7 @@ package body GPS.Callbacks is
    -------------
 
    procedure Gtk_Log
-     (Log_Domain : String;
-      Log_Level  : Log_Level_Flags;
-      Message    : String) is
+     (Log_Domain : String; Log_Level : Log_Level_Flags; Message : String) is
    begin
       if Log_Domain = "" then
          --  Ignore this message, to avoid generating too much noise
@@ -65,8 +63,7 @@ package body GPS.Callbacks is
    -------------------
 
    procedure Title_Changed
-     (MDI    : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+     (MDI : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (MDI);
    begin
@@ -78,8 +75,7 @@ package body GPS.Callbacks is
    --------------------
 
    procedure Child_Selected
-     (Mdi    : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
+     (Mdi : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Mdi);
    begin

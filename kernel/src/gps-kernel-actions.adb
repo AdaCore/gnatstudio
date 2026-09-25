@@ -19,7 +19,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with VSS.Strings;             use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 
 with Commands;                use Commands;
 with Gdk.Event;               use Gdk.Event;
@@ -46,15 +46,16 @@ package body GPS.Kernel.Actions is
 
    use Actions_Htable.String_Hash_Table;
 
-   Future            : constant String := ASCII.LF &
-     (-("Future references to this action will execute the last"
-        & " definition encountered"));
+   Future            : constant String :=
+     ASCII.LF
+     & (-("Future references to this action will execute the last"
+          & " definition encountered"));
    Overrides_Builtin : constant String :=
      -"Action overrides a builtin action" & ASCII.LF;
 
    procedure Launch_Foreground_Command
-     (Kernel          : not null access Kernel_Handle_Record'Class;
-      Command         : not null access Root_Command'Class);
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Command : not null access Root_Command'Class);
    --  Executes a command, blocking the whole GNAT Studio interface while
    --  doing so. It is recommended instead to use Launch_Background_Command,
    --  but this one is sometimes used in user's python scripts.
@@ -67,10 +68,10 @@ package body GPS.Kernel.Actions is
       Kernel : Kernel_Handle;
    end record;
 
-   overriding function Get_Name
+   overriding
+   function Get_Name
      (Self : not null access Actions_Learn_Provider_Type) return String
-   is
-     ("Actions");
+   is ("Actions");
 
    Provider : Learn_Provider;
 
@@ -84,25 +85,29 @@ package body GPS.Kernel.Actions is
       Action_Name : Unbounded_String;
    end record;
 
-   overriding function Get_ID
+   overriding
+   function Get_ID
      (Self : not null access Action_Learn_Item_Type) return String
-   is
-     (To_String (Self.Action_Name));
+   is (To_String (Self.Action_Name));
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self : not null access Action_Learn_Item_Type) return Gtk_Widget;
 
-   overriding function Get_Help
+   overriding
+   function Get_Help
      (Self : not null access Action_Learn_Item_Type) return String;
    --  Return the associated action's help
 
-   overriding function Is_Visible
+   overriding
+   function Is_Visible
      (Self        : not null access Action_Learn_Item_Type;
       Context     : Selection_Context;
       Filter_Text : String) return Boolean;
    --  Return True if the associated action is visible in the given context
 
-   overriding procedure On_Double_Click
+   overriding
+   procedure On_Double_Click
      (Self    : not null access Action_Learn_Item_Type;
       Context : Selection_Context);
    --  Execute the action associated with the given learn item when the user
@@ -112,13 +117,15 @@ package body GPS.Kernel.Actions is
    -- Get_Widget --
    ----------------
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self : not null access Action_Learn_Item_Type) return Gtk_Widget
    is
       Action_Name    : constant String := To_String (Self.Action_Name);
-      Action         : constant Action_Access := Lookup_Action
-        (Kernel => Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
-         Name   => Action_Name);
+      Action         : constant Action_Access :=
+        Lookup_Action
+          (Kernel => Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+           Name   => Action_Name);
       Action_Hbox    : Gtk_Hbox;
       Name_Label     : Gtk_Label;
       Shortcut_Label : Gtk_Label;
@@ -129,7 +136,7 @@ package body GPS.Kernel.Actions is
 
       Gtk_New_Hbox (Action_Hbox, Homogeneous => False);
 
-      Gtk_New (Name_Label,  Get_Label (Action));
+      Gtk_New (Name_Label, Get_Label (Action));
       Action_Hbox.Pack_Start (Name_Label, Expand => False);
 
       if Actions_Size_Group = null then
@@ -147,10 +154,7 @@ package body GPS.Kernel.Actions is
             Use_Markup      => True,
             Return_Multiple => True));
       Shortcut_Label.Set_Use_Markup (True);
-      Action_Hbox.Pack_Start
-        (Shortcut_Label,
-         Expand => True,
-         Fill   => False);
+      Action_Hbox.Pack_Start (Shortcut_Label, Expand => True, Fill => False);
 
       return Gtk_Widget (Action_Hbox);
    end Get_Widget;
@@ -159,13 +163,14 @@ package body GPS.Kernel.Actions is
    -- Get_Help --
    --------------
 
-   overriding function Get_Help
+   overriding
+   function Get_Help
      (Self : not null access Action_Learn_Item_Type) return String
    is
       Action : constant Action_Access :=
-                 Lookup_Action
-                   (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
-                    To_String (Self.Action_Name));
+        Lookup_Action
+          (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+           To_String (Self.Action_Name));
 
    begin
       if Action = null then
@@ -179,17 +184,18 @@ package body GPS.Kernel.Actions is
    -- Is_Visible --
    ----------------
 
-   overriding function Is_Visible
-        (Self        : not null access Action_Learn_Item_Type;
-         Context     : Selection_Context;
-         Filter_Text : String) return Boolean
+   overriding
+   function Is_Visible
+     (Self        : not null access Action_Learn_Item_Type;
+      Context     : Selection_Context;
+      Filter_Text : String) return Boolean
    is
       pragma Unreferenced (Filter_Text);
 
       Action : constant Action_Access :=
-                 Lookup_Action
-                   (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
-                    To_String (Self.Action_Name));
+        Lookup_Action
+          (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+           To_String (Self.Action_Name));
    begin
       return Filter_Matches (Action, Context);
    end Is_Visible;
@@ -198,16 +204,19 @@ package body GPS.Kernel.Actions is
    -- On_Double_Click --
    ---------------------
 
-   overriding procedure On_Double_Click
+   overriding
+   procedure On_Double_Click
      (Self    : not null access Action_Learn_Item_Type;
       Context : Selection_Context)
    is
-      Success : Boolean with Unreferenced;
+      Success : Boolean
+      with Unreferenced;
    begin
-      Success := Execute_Action
-        (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
-         Action  => To_String (Self.Action_Name),
-         Context => Context);
+      Success :=
+        Execute_Action
+          (Actions_Learn_Provider_Type'Class (Provider.all).Kernel,
+           Action  => To_String (Self.Action_Name),
+           Context => Context);
    end On_Double_Click;
 
    ----------
@@ -215,8 +224,8 @@ package body GPS.Kernel.Actions is
    ----------
 
    procedure Free (Action : in out Action_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Action_Record, Action_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Action_Record, Action_Access);
    begin
       --  In the past, we did not free the command explictly, since menus might
       --  have referenced directly, But since now they also keep the name of
@@ -247,8 +256,7 @@ package body GPS.Kernel.Actions is
       Shortcut_Active_For_View : Ada.Tags.Tag := Ada.Tags.No_Tag;
       Log_On_Execute           : Boolean := True)
    is
-      Old            : constant Action_Access :=
-        Lookup_Action (Kernel, Name);
+      Old            : constant Action_Access := Lookup_Action (Kernel, Name);
       Overridden     : Boolean := False;
       Cat            : Virtual_String;
       Action         : Action_Access;
@@ -269,8 +277,10 @@ package body GPS.Kernel.Actions is
 
             null;
          else
-            Insert (Kernel, '"' & Name & """: " & Overrides_Builtin
-                    & Future, Mode => Error);
+            Insert
+              (Kernel,
+               '"' & Name & """: " & Overrides_Builtin & Future,
+               Mode => Error);
             Status_Changed := True;
          end if;
 
@@ -293,22 +303,25 @@ package body GPS.Kernel.Actions is
 
       --  Create the action
 
-      Action := new Action_Record'
-        (Command,
-         Filter,
-         VSS.Strings.Conversions.To_Virtual_String (Description),
-         Name                         =>
-           VSS.Strings.Conversions.To_Virtual_String (Name),
-         Modified                     => False,
-         Category                     => Cat,
-         Overridden                   => Overridden,
-         Disabled                     => False,
-         Icon_Name                    => Stock,
-         Shortcut_Active_For_View     => Shortcut_Active_For_View,
-         Log_On_Execute               => Log_On_Execute);
+      Action :=
+        new Action_Record'
+          (Command,
+           Filter,
+           VSS.Strings.Conversions.To_Virtual_String (Description),
+           Name                     =>
+             VSS.Strings.Conversions.To_Virtual_String (Name),
+           Modified                 => False,
+           Category                 => Cat,
+           Overridden               => Overridden,
+           Disabled                 => False,
+           Icon_Name                => Stock,
+           Shortcut_Active_For_View => Shortcut_Active_For_View,
+           Log_On_Execute           => Log_On_Execute);
 
-      Set (Actions_Htable_Access (Kernel.Actions).Table,
-           To_Lower (Name), Action);
+      Set
+        (Actions_Htable_Access (Kernel.Actions).Table,
+         To_Lower (Name),
+         Action);
 
       if Status_Changed then
          Action_Status_Changed (Kernel, Name);
@@ -317,9 +330,9 @@ package body GPS.Kernel.Actions is
       if For_Learning then
          declare
             Item : constant not null Learn_Item :=
-                     new Action_Learn_Item_Type'(Learn_Item_Type with
-                                                 Action_Name =>
-                                                   To_Unbounded_String (Name));
+              new Action_Learn_Item_Type'
+                (Learn_Item_Type
+                 with Action_Name => To_Unbounded_String (Name));
          begin
             Initialize (Item, Group_Name => Category);
             Provider.Add_Item (Item, Name);
@@ -332,20 +345,20 @@ package body GPS.Kernel.Actions is
    -----------------------
 
    procedure Unregister_Action
-     (Kernel       : access Kernel_Handle_Record'Class;
-      Name         : String;
+     (Kernel                    : access Kernel_Handle_Record'Class;
+      Name                      : String;
       Remove_Menus_And_Toolbars : Boolean := True)
    is
       A : Action_Access;
 
    begin
       loop
-         A := Get
-           (Actions_Htable_Access (Kernel.Actions).Table, To_Lower (Name));
+         A :=
+           Get (Actions_Htable_Access (Kernel.Actions).Table, To_Lower (Name));
          exit when A = null;
 
-         Remove (Actions_Htable_Access (Kernel.Actions).Table,
-                 To_Lower (Name));
+         Remove
+           (Actions_Htable_Access (Kernel.Actions).Table, To_Lower (Name));
       end loop;
 
       if Remove_Menus_And_Toolbars then
@@ -362,8 +375,8 @@ package body GPS.Kernel.Actions is
    -- Start --
    -----------
 
-   function Start (Kernel : access Kernel_Handle_Record'Class)
-      return Action_Iterator
+   function Start
+     (Kernel : access Kernel_Handle_Record'Class) return Action_Iterator
    is
       Iter : Action_Iterator;
    begin
@@ -405,10 +418,10 @@ package body GPS.Kernel.Actions is
    -------------------
 
    function Lookup_Action
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Action_Access
+     (Kernel : access Kernel_Handle_Record'Class; Name : String)
+      return Action_Access
    is
-      Action  : Action_Access;
+      Action : Action_Access;
 
    begin
       if Kernel.Actions = null then
@@ -437,7 +450,7 @@ package body GPS.Kernel.Actions is
       Name     : String;
       Disabled : Boolean)
    is
-      Action  : Action_Access;
+      Action : Action_Access;
 
    begin
       if Kernel.Actions /= null then
@@ -453,7 +466,8 @@ package body GPS.Kernel.Actions is
    -- Reset --
    -----------
 
-   overriding procedure Reset (X : access Actions_Htable_Record) is
+   overriding
+   procedure Reset (X : access Actions_Htable_Record) is
    begin
       --  Free the actions and their filters
       Reset (X.Table);
@@ -464,10 +478,11 @@ package body GPS.Kernel.Actions is
    --------------------
 
    function Filter_Matches
-     (Self    : access Action_Record;
-      Context : Selection_Context) return Boolean is
+     (Self : access Action_Record; Context : Selection_Context) return Boolean
+   is
    begin
-      return Self /= null
+      return
+        Self /= null
         and then not Self.Disabled
         and then
           (Context = No_Context or else Filter_Matches (Self.Filter, Context));
@@ -478,8 +493,8 @@ package body GPS.Kernel.Actions is
    -----------
 
    function "and"
-     (Action : access Action_Record;
-      Filter : Action_Filter) return Action_Filter is
+     (Action : access Action_Record; Filter : Action_Filter)
+      return Action_Filter is
    begin
       if Action = null then
          return Filter;
@@ -497,8 +512,7 @@ package body GPS.Kernel.Actions is
    ----------------------
 
    function Get_Filter_Error
-     (Self : access Action_Record) return Unbounded_String
-   is
+     (Self : access Action_Record) return Unbounded_String is
    begin
       return Get_Error_Message (Self.Filter);
    end Get_Filter_Error;
@@ -508,7 +522,7 @@ package body GPS.Kernel.Actions is
    -----------------
 
    function Get_Command
-     (Self    : not null access Action_Record)
+     (Self : not null access Action_Record)
       return not null access Interactive_Command'Class is
    begin
       return Self.Command;
@@ -519,11 +533,11 @@ package body GPS.Kernel.Actions is
    -------------------------------
 
    procedure Launch_Foreground_Command
-     (Kernel          : not null access Kernel_Handle_Record'Class;
-      Command         : not null access Root_Command'Class)
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Command : not null access Root_Command'Class)
    is
-      Result  : Command_Return_Type;
-      C : Command_Access;
+      Result : Command_Return_Type;
+      C      : Command_Access;
    begin
       loop
          begin
@@ -534,8 +548,9 @@ package body GPS.Kernel.Actions is
             if Command.all in Interactive_Command'Class then
                --  We want to make sure that the context provides access to
                --  the kernel.
-               Result := Interactive_Command_Access (Command).Execute
-                 (Create_Null_Context (New_Context (Kernel => Kernel)));
+               Result :=
+                 Interactive_Command_Access (Command).Execute
+                   (Create_Null_Context (New_Context (Kernel => Kernel)));
             else
                Result := Command.Execute;
             end if;
@@ -558,23 +573,23 @@ package body GPS.Kernel.Actions is
    --------------------
 
    function Execute_Action
-     (Kernel      : not null access Kernel_Handle_Record'Class;
-      Action      : String;
-      Context     : Selection_Context := No_Context;
-      Event       : Gdk.Event.Gdk_Event := null;
-      Repeat      : Positive := 1;
-      Args        : access String_List := null;
-      Synchronous : Boolean := False;
-      Show_Bar    : Boolean := False;
-      Via_Menu    : Boolean := False;
-      Block_Exit  : Boolean := False;
+     (Kernel               : not null access Kernel_Handle_Record'Class;
+      Action               : String;
+      Context              : Selection_Context := No_Context;
+      Event                : Gdk.Event.Gdk_Event := null;
+      Repeat               : Positive := 1;
+      Args                 : access String_List := null;
+      Synchronous          : Boolean := False;
+      Show_Bar             : Boolean := False;
+      Via_Menu             : Boolean := False;
+      Block_Exit           : Boolean := False;
       Error_Msg_In_Console : Boolean := True) return Boolean
    is
-      Child       : GPS_MDI_Child;
+      Child : GPS_MDI_Child;
       --  The child that currently has the focus
 
-      Act            : constant Action_Access := Lookup_Action
-        (Kernel, Action);
+      Act            : constant Action_Access :=
+        Lookup_Action (Kernel, Action);
       Args_In_Out    : String_List_Access := String_List_Access (Args);
       Actual_Context : Selection_Context := Context;
 
@@ -594,9 +609,7 @@ package body GPS.Kernel.Actions is
          if Start then
             if Repeat >= 2 then
                C := Get_Focus_Child (Get_MDI (Kernel));
-               if C /= null
-                  and then C.all in GPS_MDI_Child_Record'Class
-               then
+               if C /= null and then C.all in GPS_MDI_Child_Record'Class then
                   Child := GPS_MDI_Child (C);
                end if;
 
@@ -624,23 +637,26 @@ package body GPS.Kernel.Actions is
          end if;
 
          for R in 1 .. Repeat loop
-            Custom := Create_Proxy
-              (Act.Command,
-               (Event            => Event,
-                Context          => Actual_Context,
-                Synchronous      => Synchronous,
-                Dir              => No_File,
-                Args             => Args_In_Out,
-                Via_Menu         =>
-                  Via_Menu or else
-                    (Event /= null and then
-                       (Get_Event_Type (Event) = Button_Press or else
-                        Get_Event_Type (Event) = Button_Release or else
-                        Get_Event_Type (Event) = Key_Press or else
-                        Get_Event_Type (Event) = Key_Release)),
-                Label            => new String'(Action),
-                Repeat_Count     => R,
-                Remaining_Repeat => Repeat - R));
+            Custom :=
+              Create_Proxy
+                (Act.Command,
+                 (Event            => Event,
+                  Context          => Actual_Context,
+                  Synchronous      => Synchronous,
+                  Dir              => No_File,
+                  Args             => Args_In_Out,
+                  Via_Menu         =>
+                    Via_Menu
+                    or else
+                      (Event /= null
+                       and then
+                         (Get_Event_Type (Event) = Button_Press
+                          or else Get_Event_Type (Event) = Button_Release
+                          or else Get_Event_Type (Event) = Key_Press
+                          or else Get_Event_Type (Event) = Key_Release)),
+                  Label            => new String'(Action),
+                  Repeat_Count     => R,
+                  Remaining_Repeat => Repeat - R));
 
             if Synchronous then
                Launch_Foreground_Command (Kernel, Custom);
@@ -648,13 +664,13 @@ package body GPS.Kernel.Actions is
                Launch_Background_Command
                  (Kernel,
                   Custom,
-                  Block_Exit      => Block_Exit,
-                  Active          =>
+                  Block_Exit => Block_Exit,
+                  Active     =>
                     (if Act.Command /= null
                      then Act.Command.Is_Active_Command
                      else True),
-                  Show_Bar        => Show_Bar,
-                  Queue_Id        => "");
+                  Show_Bar   => Show_Bar,
+                  Queue_Id   => "");
             end if;
          end loop;
 
@@ -669,10 +685,10 @@ package body GPS.Kernel.Actions is
          if Action (Action'First) = '/' then
             declare
                B : constant Block_Trace_Handle :=
-                  Create (Me, "Execute menu action " & Action);
+                 Create (Me, "Execute menu action " & Action);
             begin
                GPS.Kernel.Modules.UI.Execute_Menu
-                  (Kernel_Handle (Kernel), Action);
+                 (Kernel_Handle (Kernel), Action);
             end;
             return True;
          else
@@ -689,8 +705,13 @@ package body GPS.Kernel.Actions is
          if Act.Log_On_Execute then
             declare
                B : constant Block_Trace_Handle :=
-                     Create (Me, "Execute action " & Action & Repeat'Img
-                             & " times synchronous=" & Synchronous'Img);
+                 Create
+                   (Me,
+                    "Execute action "
+                    & Action
+                    & Repeat'Img
+                    & " times synchronous="
+                    & Synchronous'Img);
             begin
                Launch_Action_Command;
             end;
@@ -702,10 +723,12 @@ package body GPS.Kernel.Actions is
 
       else
          declare
-            M : constant Unbounded_String := Get_Filter_Error (Act);
+            M   : constant Unbounded_String := Get_Filter_Error (Act);
             Msg : constant String :=
-               "Could not execute """ & Action & """"
-               & (if M = "" then "" else ": " & To_String (M));
+              "Could not execute """
+              & Action
+              & """"
+              & (if M = "" then "" else ": " & To_String (M));
          begin
             if Error_Msg_In_Console then
                Trace (Me, Msg);
@@ -743,8 +766,7 @@ package body GPS.Kernel.Actions is
       Child  : access MDI_Child_Record'Class;
       Key    : Gdk_Key_Type;
       Button : Guint;
-      Modif  : Gdk_Modifier_Type)
-      return Boolean
+      Modif  : Gdk_Modifier_Type) return Boolean
    is
       use Ada.Tags;
    begin
@@ -764,8 +786,7 @@ package body GPS.Kernel.Actions is
       --  If no child if focused, if there is no key modifier, or if the key
       --  shortcut is active from all the views, return True.
 
-      if Modif /= 0
-        or else Self.Shortcut_Active_For_View = Ada.Tags.No_Tag
+      if Modif /= 0 or else Self.Shortcut_Active_For_View = Ada.Tags.No_Tag
       then
          return True;
       end if;
@@ -774,10 +795,8 @@ package body GPS.Kernel.Actions is
       --  the Shortcut_Active_For_View tag's hierarchy.
 
       declare
-         Child_Tag : constant Ada.Tags.Tag := (if Child /= null then
-                                                  Child.all'Tag
-                                               else
-                                                  Ada.Tags.No_Tag);
+         Child_Tag  : constant Ada.Tags.Tag :=
+           (if Child /= null then Child.all'Tag else Ada.Tags.No_Tag);
          Parent_Tag : Ada.Tags.Tag;
       begin
          if Child_Tag = Ada.Tags.No_Tag then
@@ -808,53 +827,60 @@ package body GPS.Kernel.Actions is
       Use_Markup       : Boolean := True;
       Include_Name     : Boolean := True;
       Include_Category : Boolean := True;
-      Include_Menus    : Boolean := True)
-     return String
+      Include_Menus    : Boolean := True) return String
    is
       use Ada.Strings.Unbounded;
 
-      function Tag (T : String) return String is
-        (if Use_Markup then "<b>" & T & "</b>" else T);
+      function Tag (T : String) return String
+      is (if Use_Markup then "<b>" & T & "</b>" else T);
       --  Utility function, to highlight a bit of text
 
-      function Escape (T : Virtual_String) return String is
-        (if Use_Markup
-         then Escape_Text (VSS.Strings.Conversions.To_UTF_8_String (T))
-         else VSS.Strings.Conversions.To_UTF_8_String (T));
+      function Escape (T : Virtual_String) return String
+      is (if Use_Markup
+          then Escape_Text (VSS.Strings.Conversions.To_UTF_8_String (T))
+          else VSS.Strings.Conversions.To_UTF_8_String (T));
       --  Utility function, to escape a bit of text
 
       Shortcut : constant String :=
         (if Kernel = null
          then ""
-         else Kernel.Get_Shortcut
-           (Action          =>
+         else
+           Kernel.Get_Shortcut
+             (Action          =>
                 VSS.Strings.Conversions.To_UTF_8_String (Action.Name),
-            Use_Markup      => Use_Markup,
-            Return_Multiple => True));
-      Menus : Unbounded_String :=
+              Use_Markup      => Use_Markup,
+              Return_Multiple => True));
+      Menus    : Unbounded_String :=
         (if Include_Menus
-         then Menu_List_For_Action
-           (VSS.Strings.Conversions.To_UTF_8_String (Action.Name))
+         then
+           Menu_List_For_Action
+             (VSS.Strings.Conversions.To_UTF_8_String (Action.Name))
          else Null_Unbounded_String);
 
    begin
       if Menus /= Null_Unbounded_String then
-         Menus := Tag ("Menu: ") & To_Unbounded_String
-           (Escape (VSS.Strings.Conversions.To_Virtual_String (Menus)));
+         Menus :=
+           Tag ("Menu: ")
+           & To_Unbounded_String
+               (Escape (VSS.Strings.Conversions.To_Virtual_String (Menus)));
       end if;
 
       return
-        (if Action.Description.Is_Empty then ""
+        (if Action.Description.Is_Empty
+         then ""
          else Escape (Action.Description) & ASCII.LF & ASCII.LF)
-        & (if Include_Name then Tag ("Action: ")
-           & Escape (Action.Name)
-           & ASCII.LF else "")
-        & (if Include_Category then Tag ("Category: ")
-           & Escape
-             ((if Action.Category.Is_Empty then "" else Action.Category))
-           & ASCII.LF
+        & (if Include_Name
+           then Tag ("Action: ") & Escape (Action.Name) & ASCII.LF
            else "")
-        & (if Shortcut = "" then ""
+        & (if Include_Category
+           then
+             Tag ("Category: ")
+             & Escape
+                 ((if Action.Category.Is_Empty then "" else Action.Category))
+             & ASCII.LF
+           else "")
+        & (if Shortcut = ""
+           then ""
            else Tag ("Shortcut: ") & Shortcut & ASCII.LF)
         & (To_String (Menus));
    end Get_Full_Description;
@@ -863,8 +889,8 @@ package body GPS.Kernel.Actions is
    -- Get_Category --
    ------------------
 
-   function Get_Category
-     (Action : not null access Action_Record) return String is
+   function Get_Category (Action : not null access Action_Record) return String
+   is
    begin
       return VSS.Strings.Conversions.To_UTF_8_String (Action.Category);
    end Get_Category;
@@ -873,8 +899,7 @@ package body GPS.Kernel.Actions is
    -- Has_Filter --
    ----------------
 
-   function Has_Filter
-      (Self : not null access Action_Record) return Boolean is
+   function Has_Filter (Self : not null access Action_Record) return Boolean is
    begin
       return Self.Filter /= null;
    end Has_Filter;
@@ -896,7 +921,8 @@ package body GPS.Kernel.Actions is
       Name : constant String := Get_Name (Self);
    begin
       if Name'Length > 1 then
-         return To_Upper (Name (Name'First))
+         return
+           To_Upper (Name (Name'First))
            & To_Lower (Name (Name'First + 1 .. Name'Last));
       else
          return To_Upper (Name);
@@ -910,9 +936,9 @@ package body GPS.Kernel.Actions is
    procedure Register_Actions_Learn_Provider
      (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
-      Provider := new Actions_Learn_Provider_Type'
-        (Learn_Provider_Type with
-           Kernel => Kernel_Handle (Kernel));
+      Provider :=
+        new Actions_Learn_Provider_Type'
+          (Learn_Provider_Type with Kernel => Kernel_Handle (Kernel));
       Learn.Register_Provider (Provider);
    end Register_Actions_Learn_Provider;
 

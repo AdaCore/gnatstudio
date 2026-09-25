@@ -50,14 +50,14 @@
 --  </description>
 
 with Ada.Containers.Doubly_Linked_Lists;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with VSS.Strings;
 
-with Glib.Main;           use Glib.Main;
+with Glib.Main; use Glib.Main;
 
-with Gdk.RGBA;            use Gdk.RGBA;
-with Gdk.Pixbuf;          use Gdk.Pixbuf;
+with Gdk.RGBA;   use Gdk.RGBA;
+with Gdk.Pixbuf; use Gdk.Pixbuf;
 
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo_Box_Text;  use Gtk.Combo_Box_Text;
@@ -71,7 +71,7 @@ with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Window;          use Gtk.Window;
 
-with Directory_Tree;      use Directory_Tree;
+with Directory_Tree; use Directory_Tree;
 with Generic_Stack;
 with Histories;
 with GNATCOLL.VFS;
@@ -84,17 +84,17 @@ package Gtkada.File_Selector is
      (Open_File, Save_File, Open_Directory, Unspecified);
 
    function Select_File
-     (Title             : String  := "Select a file";
+     (Title             : String := "Select a file";
       Base_Directory    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      File_Pattern      : GNATCOLL.VFS.Filesystem_String  := "";
-      Pattern_Name      : String  := "";
-      Default_Name      : GNATCOLL.VFS.Filesystem_String  := "";
+      File_Pattern      : GNATCOLL.VFS.Filesystem_String := "";
+      Pattern_Name      : String := "";
+      Default_Name      : GNATCOLL.VFS.Filesystem_String := "";
       Parent            : Gtk_Window := null;
       Remote_Browsing   : Boolean := False;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
-      History           : Histories.History  := null;
-      Except_Pattern    : GNATCOLL.VFS.Filesystem_String  := "")
+      History           : Histories.History := null;
+      Except_Pattern    : GNATCOLL.VFS.Filesystem_String := "")
       return GNATCOLL.VFS.Virtual_File;
    --  Create a file selection dialog, display it, and return the selected file
    --  if any, or return a VFS.No_File if the user cancelled the dialog.
@@ -119,7 +119,7 @@ package Gtkada.File_Selector is
    --  ??? What if the filesystem path is non-UTF8?
 
    function Select_Directory
-     (Title             : String  := "Select a directory";
+     (Title             : String := "Select a directory";
       Base_Directory    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
@@ -147,16 +147,16 @@ package Gtkada.File_Selector is
    --  A file selector window
 
    function Select_File
-     (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return GNATCOLL.VFS.Virtual_File;
+     (File_Selector : File_Selector_Window_Access; Parent : Gtk_Window := null)
+      return GNATCOLL.VFS.Virtual_File;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. VFS.No_File is returned if the user cancelled the dialog.
    --  As opposed to the first version of Select_File above, this one gives
    --  the opportunity to register filters before displaying the dialog.
 
    function Select_Directory
-     (File_Selector : File_Selector_Window_Access;
-      Parent        : Gtk_Window := null) return GNATCOLL.VFS.Virtual_File;
+     (File_Selector : File_Selector_Window_Access; Parent : Gtk_Window := null)
+      return GNATCOLL.VFS.Virtual_File;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute dir name is returned, or the empty string if the
    --  user cancelled the dialog.
@@ -198,7 +198,8 @@ package Gtkada.File_Selector is
       File   : GNATCOLL.VFS.Virtual_File;
       State  : out File_State;
       Pixbuf : out Gdk_Pixbuf;
-      Text   : out String_Access) is abstract;
+      Text   : out String_Access)
+   is abstract;
    --  This is the function that is called every time that a file could
    --  be shown in the file explorer.
    --  File is the considered file.
@@ -245,19 +246,21 @@ package Gtkada.File_Selector is
    --  list of files.
 
    procedure Initialize
-     (Self                 : access File_Selector_Window_Record'Class;
-      Root                 : GNATCOLL.VFS.Virtual_File;
-      Initial_Directory    : GNATCOLL.VFS.Virtual_File;
-      Dialog_Title         : String;
-      Show_Files           : Boolean := True;
-      History              : Histories.History;
-      Remote_Browsing      : Boolean := False);
+     (Self              : access File_Selector_Window_Record'Class;
+      Root              : GNATCOLL.VFS.Virtual_File;
+      Initial_Directory : GNATCOLL.VFS.Virtual_File;
+      Dialog_Title      : String;
+      Show_Files        : Boolean := True;
+      History           : Histories.History;
+      Remote_Browsing   : Boolean := False);
    --  Internal initialization function
 
 private
 
-   package File_List is new Ada.Containers.Doubly_Linked_Lists
-     (GNATCOLL.VFS.Virtual_File, GNATCOLL.VFS."=");
+   package File_List is new
+     Ada.Containers.Doubly_Linked_Lists
+       (GNATCOLL.VFS.Virtual_File,
+        GNATCOLL.VFS."=");
    use File_List;
 
    procedure Free (Filter : in out File_Filter);
@@ -265,14 +268,15 @@ private
    package Filter_List is new GPS_Vectors (File_Filter);
    use Filter_List;
 
-   package File_Selector_Idle is new Glib.Main.Generic_Sources
-     (File_Selector_Window_Access);
+   package File_Selector_Idle is new
+     Glib.Main.Generic_Sources (File_Selector_Window_Access);
    use File_Selector_Idle;
 
    package Dir_Stack is new Generic_Stack (GNATCOLL.VFS.Virtual_File);
    use Dir_Stack;
 
-   overriding procedure Use_File_Filter
+   overriding
+   procedure Use_File_Filter
      (Filter : access Filter_Show_All;
       Win    : access File_Selector_Window_Record'Class;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -283,72 +287,71 @@ private
    --  the Filter_Show_All filter.
 
    type File_Selector_Window_Record is new Gtk_Dialog_Record with record
-      Current_Directory      : GNATCOLL.VFS.Virtual_File :=
-                                 GNATCOLL.VFS.No_File;
+      Current_Directory : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       --  The directory that is currently being explored.
       --  Current_Directory must always be a Normalized path, ending with
       --  a directory separator.
 
-      Current_Host           : String_Access;
+      Current_Host : String_Access;
 
-      Files                  : File_List.List;
+      Files : File_List.List;
       --  The list of files in the current directory
 
-      Remaining_Files        : File_List.Cursor;
+      Remaining_Files : File_List.Cursor;
       --  The list of files that are in the current directory but not yet
       --  filtered nor shown in the file list.
       --  This list should never be allocated any memory explicitly, but
       --  should be a subset of Files.
 
-      Current_Filter         : File_Filter;
+      Current_Filter : File_Filter;
       --  The filter that is currently used for displaying files
 
-      Filters                : Filter_List.Vector;
+      Filters : Filter_List.Vector;
       --  A list of all registered filters
 
-      Highlighted_Color      : Gdk_RGBA := Null_RGBA;
-      Insensitive_Color      : Gdk_RGBA := Null_RGBA;
+      Highlighted_Color : Gdk_RGBA := Null_RGBA;
+      Insensitive_Color : Gdk_RGBA := Null_RGBA;
 
       Moving_Through_History : Boolean := True;
       --  Set to true in case we are navigating using the back/forward buttons
 
-      Display_Idle_Handler   : G_Source_Id := 0;
+      Display_Idle_Handler : G_Source_Id := 0;
       --  Identifier for display idle loops
 
-      Home_Directory         : GNATCOLL.VFS.Virtual_File :=
-                                 GNATCOLL.VFS.Get_Current_Dir;
+      Home_Directory : GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.Get_Current_Dir;
 
-      Past_History           : Simple_Stack;
-      Future_History         : Simple_Stack;
-      Back_Button            : Gtk_Tool_Button;
-      Forward_Button         : Gtk_Tool_Button;
-      Home_Button            : Gtk_Tool_Button;
-      Up_Button              : Gtk_Tool_Button;
-      Refresh_Button         : Gtk_Tool_Button;
+      Past_History   : Simple_Stack;
+      Future_History : Simple_Stack;
+      Back_Button    : Gtk_Tool_Button;
+      Forward_Button : Gtk_Tool_Button;
+      Home_Button    : Gtk_Tool_Button;
+      Up_Button      : Gtk_Tool_Button;
+      Refresh_Button : Gtk_Tool_Button;
 
-      Hosts_Combo            : Gtk_Combo_Box_Text;
+      Hosts_Combo : Gtk_Combo_Box_Text;
 
-      Location_Combo         : Gtk_Combo_Box_Text;
+      Location_Combo : Gtk_Combo_Box_Text;
 
-      Explorer_Tree          : Dir_Tree;
+      Explorer_Tree : Dir_Tree;
 
-      Files_Scrolledwindow   : Gtk_Scrolled_Window;
+      Files_Scrolledwindow : Gtk_Scrolled_Window;
 
-      File_Tree              : Gtk_Tree_View;
-      File_Model             : Gtk_Tree_Store;
+      File_Tree  : Gtk_Tree_View;
+      File_Model : Gtk_Tree_Store;
 
-      File_Icon_Label        : Gtk_Label;
-      File_Name_Label        : Gtk_Label;
-      File_Text_Label        : Gtk_Label;
+      File_Icon_Label : Gtk_Label;
+      File_Name_Label : Gtk_Label;
+      File_Text_Label : Gtk_Label;
 
-      Filter_Combo           : Gtk_Combo_Box_Text;
-      Selection_Entry        : Gtk_Entry;
+      Filter_Combo    : Gtk_Combo_Box_Text;
+      Selection_Entry : Gtk_Entry;
 
-      OK_Button              : Gtk_Button;
+      OK_Button : Gtk_Button;
 
-      History                : Histories.History;
+      History : Histories.History;
 
-      Display_Remote         : Boolean;
+      Display_Remote : Boolean;
    end record;
 
 end Gtkada.File_Selector;

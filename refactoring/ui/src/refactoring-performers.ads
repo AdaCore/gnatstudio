@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types;               use Basic_Types;
+with Basic_Types;    use Basic_Types;
 with GNATCOLL.VFS;
 with GPS.Kernel;
-with Refactoring.UI;            use Refactoring.UI;
-with Xref;                      use Xref;
+with Refactoring.UI; use Refactoring.UI;
+with Xref;           use Xref;
 
 package Refactoring.Performers is
 
@@ -32,7 +32,8 @@ package Refactoring.Performers is
       Entity        : Root_Entity'Class;
       Refs          : Location_Arrays.List;
       No_LI_List    : Source_File_Set;
-      Stale_LI_List : Source_File_Set) is abstract;
+      Stale_LI_List : Source_File_Set)
+   is abstract;
    --  Called after we have found all the references to an entity, to perform
    --  some actual refactoring. Refs is the list of all known references to the
    --  entity. No_LI_List is the list of source files for which no LI file
@@ -47,13 +48,13 @@ package Refactoring.Performers is
    --  Free the memory occupied by Factor.
 
    procedure Get_All_Locations
-     (Kernel                : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Entity                : Root_Entity'Class;
-      On_Completion         : access Refactor_Performer_Record'Class;
-      Auto_Compile          : Boolean := False;
-      Overridden            : Boolean := True;
-      Make_Writable         : Boolean := False;
-      Background_Mode       : Boolean := True);
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Entity          : Root_Entity'Class;
+      On_Completion   : access Refactor_Performer_Record'Class;
+      Auto_Compile    : Boolean := False;
+      Overridden      : Boolean := True;
+      Make_Writable   : Boolean := False;
+      Background_Mode : Boolean := True);
    --  Get all the locations in which Entity is referenced.
    --  In Errors, this procedure returns the list of files that are not
    --  up-to-date in the LI structure. References inside these files are still
@@ -78,11 +79,11 @@ package Refactoring.Performers is
    --  Delete a range of text
 
    function Get_Text
-     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      From_File  : GNATCOLL.VFS.Virtual_File;
-      Line       : Integer;
-      Column     : Visible_Column_Type;
-      Length     : Integer) return String;
+     (Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+      From_File : GNATCOLL.VFS.Virtual_File;
+      Line      : Integer;
+      Column    : Visible_Column_Type;
+      Length    : Integer) return String;
    --  Get the contents of From_File
 
 end Refactoring.Performers;

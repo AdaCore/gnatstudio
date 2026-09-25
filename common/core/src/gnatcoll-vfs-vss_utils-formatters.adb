@@ -23,9 +23,9 @@ package body GNATCOLL.VFS.VSS_Utils.Formatters is
    -- Format --
    ------------
 
-   overriding function Format
-     (Self   : Formatter;
-      Format : VSS.Strings.Formatters.Format_Information)
+   overriding
+   function Format
+     (Self : Formatter; Format : VSS.Strings.Formatters.Format_Information)
       return VSS.Strings.Virtual_String
    is
       use type VSS.Strings.Virtual_String;
@@ -47,8 +47,7 @@ package body GNATCOLL.VFS.VSS_Utils.Formatters is
    -- Image --
    -----------
 
-   function Image
-     (Item : GNATCOLL.VFS.Virtual_File) return Formatter is
+   function Image (Item : GNATCOLL.VFS.Virtual_File) return Formatter is
    begin
       return (Name => <>, Value => Item);
    end Image;
@@ -58,8 +57,8 @@ package body GNATCOLL.VFS.VSS_Utils.Formatters is
    -----------
 
    function Image
-     (Name : VSS.Strings.Virtual_String;
-      Item : GNATCOLL.VFS.Virtual_File) return Formatter is
+     (Name : VSS.Strings.Virtual_String; Item : GNATCOLL.VFS.Virtual_File)
+      return Formatter is
    begin
       return (Name => Name, Value => Item);
    end Image;
@@ -68,8 +67,8 @@ package body GNATCOLL.VFS.VSS_Utils.Formatters is
    -- Name --
    ----------
 
-   overriding function Name
-     (Self : Formatter) return VSS.Strings.Virtual_String is
+   overriding
+   function Name (Self : Formatter) return VSS.Strings.Virtual_String is
    begin
       return Self.Name;
    end Name;

@@ -26,17 +26,16 @@ with Gtk.Search_Entry; use Gtk.Search_Entry;
 package Gtkada.Search_Entry is
 
    type Gtkada_Search_Entry_Record is new Gtk_Search_Entry_Record
-      with null record;
+   with null record;
    type Gtkada_Search_Entry is access all Gtkada_Search_Entry_Record'Class;
 
    procedure Gtk_New
-      (Self        : out Gtkada_Search_Entry;
-       Placeholder : String := "");
+     (Self : out Gtkada_Search_Entry; Placeholder : String := "");
    --  Create a new search entry
 
    function Get_Icon_Position
-     (Self   : access Gtkada_Search_Entry_Record'Class;
-      Event  : Gdk_Event) return Gtk_Entry_Icon_Position;
+     (Self : access Gtkada_Search_Entry_Record'Class; Event : Gdk_Event)
+      return Gtk_Entry_Icon_Position;
    --  Returns the icon which was clicked on.
    --  For some reason, gtk+ always seems to return the primary icon otherwise.
 

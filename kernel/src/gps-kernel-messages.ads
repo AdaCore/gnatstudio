@@ -42,7 +42,7 @@ with VSS.String_Vectors;
 
 with Gdk.RGBA;
 
-with Default_Preferences;                  use Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 with GNATCOLL.VFS;
 limited with GPS.Editors.Line_Information;
 with GPS.Kernel.Style_Manager;
@@ -67,12 +67,7 @@ package GPS.Kernel.Messages is
      );
 
    type Message_Importance_Type is
-     (Annotation,
-      Unspecified,
-      Informational,
-      Low,
-      Medium,
-      High);
+     (Annotation, Unspecified, Informational, Low, Medium, High);
    --  Used to represent the messages importance (e.g: High should
    --  be used for errors).
 
@@ -81,11 +76,11 @@ package GPS.Kernel.Messages is
    Side_And_Locations  : constant Message_Flags :=
      (Editor_Side => True, Locations => True, others => False);
    Sides_Only          : constant Message_Flags :=
-                           (Editor_Side => True, others => False);
+     (Editor_Side => True, others => False);
    Locations_Only      : constant Message_Flags :=
-                           (Locations => True, others => False);
+     (Locations => True, others => False);
    Line_Numbers_Only   : constant Message_Flags :=
-                           (Editor_Line => True, others => False);
+     (Editor_Line => True, others => False);
    --  A list of potential locations where a message should be shown.
 
    function To_Int (Flags : Message_Flags) return Integer;
@@ -135,8 +130,7 @@ package GPS.Kernel.Messages is
       return GNATCOLL.VFS.Virtual_File;
 
    function Get_Line
-     (Self : not null access constant Abstract_Message'Class)
-      return Natural;
+     (Self : not null access constant Abstract_Message'Class) return Natural;
    --  Returns the line number of the original location of the message
 
    function Get_Column
@@ -146,7 +140,8 @@ package GPS.Kernel.Messages is
 
    function Get_Text
      (Self : not null access constant Abstract_Message)
-      return Ada.Strings.Unbounded.Unbounded_String is abstract;
+      return Ada.Strings.Unbounded.Unbounded_String
+   is abstract;
    --  Returns plain text of the message
 
    function Get_Markup
@@ -174,8 +169,7 @@ package GPS.Kernel.Messages is
    --  returns null.
 
    function Get_Children
-     (Self : not null access Abstract_Message'Class)
-      return Message_Array;
+     (Self : not null access Abstract_Message'Class) return Message_Array;
    --  For primary message it returns the children, for secondary message it
    --  returns an empty array.
 
@@ -187,8 +181,7 @@ package GPS.Kernel.Messages is
    --  This also sets the icon to use for the message on the side of the
    --  editor.
 
-   procedure Cancel_Action
-     (Self : not null access Abstract_Message'Class);
+   procedure Cancel_Action (Self : not null access Abstract_Message'Class);
    --  Cancel the action associated to the given message.
 
    function Get_Action
@@ -228,8 +221,7 @@ package GPS.Kernel.Messages is
    --  be highlighted.
 
    function Has_Multiline_Highlighting
-     (Self : not null access constant Abstract_Message)
-      return Boolean;
+     (Self : not null access constant Abstract_Message) return Boolean;
    --  True if the message is covering multiple lines.
 
    procedure Get_Multiline_Highlighting_Range
@@ -274,13 +266,11 @@ package GPS.Kernel.Messages is
    --  and replaced by given one.
 
    procedure Remove_Note
-     (Self : not null access Abstract_Message'Class;
-      Tag  : Ada.Tags.Tag);
+     (Self : not null access Abstract_Message'Class; Tag : Ada.Tags.Tag);
    --  Remove the note associated with Self
 
    function Get_Background_Color
-     (Self : not null access Abstract_Message)
-      return Gdk.RGBA.Gdk_RGBA;
+     (Self : not null access Abstract_Message) return Gdk.RGBA.Gdk_RGBA;
    --  Return message's background color for mark this message,
    --  for example in Locations view
 
@@ -303,16 +293,16 @@ package GPS.Kernel.Messages is
    --  the message.
 
    procedure Initialize
-     (Self          : not null access Abstract_Message'Class;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (Self                     : not null access Abstract_Message'Class;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean);
    --  Initialize message and connect it to container.
    --  If Allow_Auto_Jump_To_First is True and the user preference is also true
@@ -349,7 +339,7 @@ package GPS.Kernel.Messages is
          when True =>
             null;
 
-         when False  =>
+         when False =>
             Flags : Message_Flags;
       end case;
    end record;
@@ -359,9 +349,9 @@ package GPS.Kernel.Messages is
    type Message_Filter_Access is access all Abstract_Message_Filter'Class;
 
    function Apply
-     (Self    : in out Abstract_Message_Filter;
-      Message : Abstract_Message'Class)
-      return Filter_Result is abstract;
+     (Self : in out Abstract_Message_Filter; Message : Abstract_Message'Class)
+      return Filter_Result
+   is abstract;
    --  Called to obtain status of message. Filter's implementation can return
    --  (Non_Applicable => True) to report that it doesn't make decision. In
    --  this case other registered filters will be used. Once filter returns
@@ -415,17 +405,16 @@ package GPS.Kernel.Messages is
    function Get_Messages
      (Self     : not null access constant Messages_Container'Class;
       Category : VSS.Strings.Virtual_String;
-      File     : GNATCOLL.VFS.Virtual_File)
-      return Message_Array;
+      File     : GNATCOLL.VFS.Virtual_File) return Message_Array;
    --  Returns list of messages for the specified file in the specified
    --  category. Returns empty list when there is no file or category.
 
    procedure For_All_Messages
      (Self     : not null access constant Messages_Container'Class;
       File     : GNATCOLL.VFS.Virtual_File;
-      Callback : not null access function
-        (Message : not null access Abstract_Message'Class)
-      return Boolean);
+      Callback :
+        not null access function
+          (Message : not null access Abstract_Message'Class) return Boolean);
    --  Calls Callback for all messages for the given File. Stops when Callback
    --  returns False.
 
@@ -442,8 +431,7 @@ package GPS.Kernel.Messages is
    --  Removes all messages, clear all internal structures.
 
    procedure Remove_All_Messages
-     (Self  : not null access Messages_Container'Class;
-      Flags : Message_Flags);
+     (Self : not null access Messages_Container'Class; Flags : Message_Flags);
    --  Removes all messages that match Flags
 
    procedure Remove_Category
@@ -510,39 +498,46 @@ package GPS.Kernel.Messages is
    --  react.
 
    procedure Category_Added
-     (Self     : not null access Abstract_Listener;
-      Category : VSS.Strings.Virtual_String;
-      Allow_Auto_Jump_To_First : Boolean) is null;
+     (Self                     : not null access Abstract_Listener;
+      Category                 : VSS.Strings.Virtual_String;
+      Allow_Auto_Jump_To_First : Boolean)
+   is null;
    --  If Allow_Auto_Jump_To_First is True and the user preference is also true
    --  then the locations window will automatically jump to the first message.
 
    procedure Category_Removed
      (Self     : not null access Abstract_Listener;
-      Category : VSS.Strings.Virtual_String) is null;
+      Category : VSS.Strings.Virtual_String)
+   is null;
    --  Called on remove of category
 
    procedure File_Added
      (Self     : not null access Abstract_Listener;
       Category : VSS.Strings.Virtual_String;
-      File     : GNATCOLL.VFS.Virtual_File) is null;
+      File     : GNATCOLL.VFS.Virtual_File)
+   is null;
 
    procedure File_Removed
      (Self     : not null access Abstract_Listener;
       Category : VSS.Strings.Virtual_String;
-      File     : GNATCOLL.VFS.Virtual_File) is null;
+      File     : GNATCOLL.VFS.Virtual_File)
+   is null;
 
    procedure Message_Added
      (Self    : not null access Abstract_Listener;
-      Message : not null access Abstract_Message'Class) is null;
+      Message : not null access Abstract_Message'Class)
+   is null;
 
    procedure Message_Property_Changed
      (Self     : not null access Abstract_Listener;
       Message  : not null access Abstract_Message'Class;
-      Property : Message_Property_Type) is null;
+      Property : Message_Property_Type)
+   is null;
 
    procedure Message_Removed
      (Self    : not null access Abstract_Listener;
-      Message : not null access Abstract_Message'Class) is null;
+      Message : not null access Abstract_Message'Class)
+   is null;
    --  Called when messages is no longer visible for listener.
    --
    --  Note, it doesn't mean that messages will be destroyed immediately. Also,
@@ -570,18 +565,17 @@ package GPS.Kernel.Messages is
 
    type Primary_Message_Load_Procedure is
      access function
-       (XML_Node      : not null XML_Utils.Node_Ptr;
-        Container     : not null Messages_Container_Access;
-        Category      : VSS.Strings.Virtual_String;
-        File          : GNATCOLL.VFS.Virtual_File;
-        Line          : Natural;
-        Column        : Basic_Types.Visible_Column_Type;
-        Importance    : Message_Importance_Type;
-        Actual_Line   : Integer;
-        Actual_Column : Integer;
-        Flags         : Message_Flags;
-        Allow_Auto_Jump_To_First : Boolean)
-        return not null Message_Access;
+       (XML_Node                 : not null XML_Utils.Node_Ptr;
+        Container                : not null Messages_Container_Access;
+        Category                 : VSS.Strings.Virtual_String;
+        File                     : GNATCOLL.VFS.Virtual_File;
+        Line                     : Natural;
+        Column                   : Basic_Types.Visible_Column_Type;
+        Importance               : Message_Importance_Type;
+        Actual_Line              : Integer;
+        Actual_Column            : Integer;
+        Flags                    : Message_Flags;
+        Allow_Auto_Jump_To_First : Boolean) return not null Message_Access;
 
    type Secondary_Message_Load_Procedure is
      access procedure
@@ -643,18 +637,17 @@ private
    type Node_Record is tagged;
    type Node_Access is access all Node_Record'Class;
 
-   package Node_Vectors is
-     new Ada.Containers.Vectors (Positive, Node_Access);
+   package Node_Vectors is new Ada.Containers.Vectors (Positive, Node_Access);
 
-   package Category_Maps is
-     new Ada.Containers.Hashed_Maps
+   package Category_Maps is new
+     Ada.Containers.Hashed_Maps
        (VSS.Strings.Virtual_String,
         Node_Access,
         VSS.Strings.Hash,
         VSS.Strings."=");
 
-   package File_Maps is
-     new Ada.Containers.Hashed_Maps
+   package File_Maps is new
+     Ada.Containers.Hashed_Maps
        (GNATCOLL.VFS.Virtual_File,
         Node_Access,
         GNATCOLL.VFS.Full_Name_Hash,
@@ -663,8 +656,8 @@ private
    function Hash (Item : Ada.Tags.Tag) return Ada.Containers.Hash_Type;
    --  Hash function.
 
-   package Note_Maps is
-     new Ada.Containers.Hashed_Maps
+   package Note_Maps is new
+     Ada.Containers.Hashed_Maps
        (Ada.Tags.Tag,
         Note_Access,
         Hash,
@@ -707,8 +700,8 @@ private
             Line       : Natural;
             Column     : Basic_Types.Visible_Column_Type;
             Mark       : GPS.Editors.Editor_Mark_Holders.Holder;
-            Action     : access GPS.Editors.Line_Information.
-              Line_Information_Record;
+            Action     :
+              access GPS.Editors.Line_Information.Line_Information_Record;
             Importance : Message_Importance_Type := Unspecified;
             Style      : GPS.Kernel.Style_Manager.Style_Access;
             Length     : Highlight_Length := Highlight_Whole_Line;
@@ -727,8 +720,8 @@ private
 
       type Container is tagged limited private;
 
-      type Abstract_Message_Node is
-        abstract new Node_Record (Node_Message) with private;
+      type Abstract_Message_Node is abstract
+        new Node_Record (Node_Message) with private;
 
       procedure Unfilter_All (Self : in out Container'Class);
       --  Change state of all messages to 'unfiltered'.
@@ -750,8 +743,8 @@ private
 
       type Abstract_Message_Access is access all Abstract_Message_Node'Class;
 
-      package Message_Lists is
-         new Ada.Containers.Doubly_Linked_Lists (Abstract_Message_Access);
+      package Message_Lists is new
+        Ada.Containers.Doubly_Linked_Lists (Abstract_Message_Access);
 
       type Container is tagged limited record
          Messages    : Message_Lists.List;
@@ -759,15 +752,15 @@ private
          --  Points to first message to be processed
       end record;
 
-      type Abstract_Message_Node is
-        abstract new Node_Record (Node_Message) with record
+      type Abstract_Message_Node is abstract new Node_Record (Node_Message)
+      with record
          Position : Message_Lists.Cursor;
       end record;
 
    end Message_Collections;
 
-   type Abstract_Message (Level : Message_Levels) is
-     abstract new Message_Collections.Abstract_Message_Node
+   type Abstract_Message (Level : Message_Levels) is abstract
+     new Message_Collections.Abstract_Message_Node
    with record
       Head : Reference_Access;
       Tail : Reference_Access;
@@ -782,26 +775,35 @@ private
       end case;
    end record;
 
-   package Listener_Vectors is
-     new Ada.Containers.Vectors (Positive, Listener_Access);
+   package Listener_Vectors is new
+     Ada.Containers.Vectors (Positive, Listener_Access);
 
-   package Filter_Vectors is
-     new Ada.Containers.Vectors (Positive, Message_Filter_Access);
+   package Filter_Vectors is new
+     Ada.Containers.Vectors (Positive, Message_Filter_Access);
 
-   package Primary_Message_Load_Maps is
-     new Ada.Containers.Hashed_Maps
-       (Ada.Tags.Tag, Primary_Message_Load_Procedure, Hash, Ada.Tags."=");
+   package Primary_Message_Load_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Ada.Tags.Tag,
+        Primary_Message_Load_Procedure,
+        Hash,
+        Ada.Tags."=");
 
-   package Secondary_Message_Load_Maps is
-     new Ada.Containers.Hashed_Maps
-       (Ada.Tags.Tag, Secondary_Message_Load_Procedure, Hash, Ada.Tags."=");
+   package Secondary_Message_Load_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Ada.Tags.Tag,
+        Secondary_Message_Load_Procedure,
+        Hash,
+        Ada.Tags."=");
 
-   package Message_Save_Maps is
-     new Ada.Containers.Hashed_Maps
-       (Ada.Tags.Tag, Message_Save_Procedure, Hash, Ada.Tags."=");
+   package Message_Save_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Ada.Tags.Tag,
+        Message_Save_Procedure,
+        Hash,
+        Ada.Tags."=");
 
-   package Sort_Order_Hint_Maps is
-     new Ada.Containers.Hashed_Maps
+   package Sort_Order_Hint_Maps is new
+     Ada.Containers.Hashed_Maps
        (VSS.Strings.Virtual_String,
         Sort_Order_Hint,
         VSS.Strings.Hash,
@@ -810,9 +812,9 @@ private
    type Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
    is tagged limited record
-      Project_File      : GNATCOLL.VFS.Virtual_File;
-      Category_Map      : Category_Maps.Map;
-      Categories        : Node_Vectors.Vector;
+      Project_File : GNATCOLL.VFS.Virtual_File;
+      Category_Map : Category_Maps.Map;
+      Categories   : Node_Vectors.Vector;
 
       Listeners         : Listener_Vectors.Vector;
       Removed_Listeners : Listener_Vectors.Vector;
@@ -852,20 +854,21 @@ private
    -- Abstract_Reference --
    ------------------------
 
-   type Abstract_Reference is
-     abstract new Ada.Finalization.Controlled with record
+   type Abstract_Reference is abstract new Ada.Finalization.Controlled
+   with record
       Message  : Message_Access;
       Previous : Reference_Access;
       Next     : Reference_Access;
    end record;
 
-   overriding procedure Adjust (Self : in out Abstract_Reference);
+   overriding
+   procedure Adjust (Self : in out Abstract_Reference);
 
-   overriding procedure Finalize (Self : in out Abstract_Reference);
+   overriding
+   procedure Finalize (Self : in out Abstract_Reference);
 
    procedure Set
-     (Self    : in out Abstract_Reference;
-      Message : not null Message_Access);
+     (Self : in out Abstract_Reference; Message : not null Message_Access);
    --  Sets reference to the given message.
 
    procedure Unset (Self : in out Abstract_Reference);

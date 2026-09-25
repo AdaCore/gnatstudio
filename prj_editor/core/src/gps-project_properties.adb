@@ -17,15 +17,15 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Case_Util; use GNAT.Case_Util;
 
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GNATCOLL.VFS_Utils; use GNATCOLL.VFS_Utils;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Messages_Windows;      use GPS.Messages_Windows;
+with GPS.Intl;             use GPS.Intl;
+with GPS.Messages_Windows; use GPS.Messages_Windows;
 
 package body GPS.Project_Properties is
 
@@ -48,8 +48,8 @@ package body GPS.Project_Properties is
    --  Register a new attribute in the project parser
 
    function Find_Editor_Page_By_Name
-     (Module : access Base_Properties_Module;
-      Name   : String) return Attribute_Page;
+     (Module : access Base_Properties_Module; Name : String)
+      return Attribute_Page;
    --  Find the page assiciated with the given name.
    --  If this page doesn't exist yet, create it.
 
@@ -85,8 +85,10 @@ package body GPS.Project_Properties is
    procedure Free (Page : in out Attribute_Page);
    --  Free the memory occupied by Page
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Indexed_Attribute_Type_Array, Indexed_Attribute_Type_List);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation
+       (Indexed_Attribute_Type_Array,
+        Indexed_Attribute_Type_List);
 
    --------------
    -- Get_Name --
@@ -95,8 +97,7 @@ package body GPS.Project_Properties is
    function Get_Name
      (Section : not null access Attribute_Page_Section_Record'Class)
       return String
-   is
-     (if Section.Name /= null then Section.Name.all else "");
+   is (if Section.Name /= null then Section.Name.all else "");
 
    ---------------------
    -- Get_Description --
@@ -105,12 +106,9 @@ package body GPS.Project_Properties is
    function Get_Description
      (Section : not null access Attribute_Page_Section_Record'Class)
       return String
-   is
-     (if not Section.Mutually_Exclusive or else Section.Description = null
-      then
-         ""
-      else
-         Section.Description.all);
+   is (if not Section.Mutually_Exclusive or else Section.Description = null
+       then ""
+       else Section.Description.all);
 
    --------------
    -- Get_Name --
@@ -118,8 +116,7 @@ package body GPS.Project_Properties is
 
    function Get_Name
      (Page : not null access Attribute_Page_Record'Class) return String
-   is
-      (if Page.Name /= null then Page.Name.all else "");
+   is (if Page.Name /= null then Page.Name.all else "");
 
    ----------------------
    -- Attribute_Exists --
@@ -136,11 +133,13 @@ package body GPS.Project_Properties is
          To_Lower (Lower_Attribute_Index);
       end if;
 
-      return Project.Has_Attribute
-        (Attribute_Pkg_String'
-           (Build (Package_Name   => Attr.Pkg.all,
-                   Attribute_Name => Attr.Name.all)),
-         Index => Lower_Attribute_Index);
+      return
+        Project.Has_Attribute
+          (Attribute_Pkg_String'
+             (Build
+                (Package_Name   => Attr.Pkg.all,
+                 Attribute_Name => Attr.Name.all)),
+           Index => Lower_Attribute_Index);
    end Attribute_Exists;
 
    --------------
@@ -148,23 +147,20 @@ package body GPS.Project_Properties is
    --------------
 
    function Get_Name (Attr : Attribute_Description) return String
-   is
-     (if Attr.Name /= null then Attr.Name.all else "");
+   is (if Attr.Name /= null then Attr.Name.all else "");
 
    -------------
    -- Get_Pkg --
    -------------
 
    function Get_Pkg (Attr : Attribute_Description) return String
-   is
-      (if Attr.Pkg /= null then Attr.Pkg.all else "");
+   is (if Attr.Pkg /= null then Attr.Pkg.all else "");
 
    -------------------
    -- Get_Full_Name --
    -------------------
 
-   function Get_Full_Name (Attr : Attribute_Description) return String
-   is
+   function Get_Full_Name (Attr : Attribute_Description) return String is
       Pkg : constant String := Attr.Get_Pkg;
    begin
       if Pkg /= "" then
@@ -179,22 +175,21 @@ package body GPS.Project_Properties is
    ---------------
 
    function Get_Label (Attr : Attribute_Description) return String
-   is
-     (if Attr.Label /= null then Attr.Label.all else "");
+   is (if Attr.Label /= null then Attr.Label.all else "");
 
    ---------------------
    -- Get_Description --
    ---------------------
 
    function Get_Description (Attr : Attribute_Description) return String
-   is
-     (if Attr.Description /= null then Attr.Description.all else "");
+   is (if Attr.Description /= null then Attr.Description.all else "");
 
    ---------------
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Base_Properties_Module;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
@@ -221,7 +216,7 @@ package body GPS.Project_Properties is
          Page_Name : constant String :=
            Get_Attribute_S (Parent, "editor_page");
          Page      : constant Attribute_Page :=
-                       Find_Editor_Page_By_Name (Module, Page_Name);
+           Find_Editor_Page_By_Name (Module, Page_Name);
          Section   : Attribute_Page_Section;
          Child     : Node_Ptr := Parent.Child;
          Attr      : Attribute_Description_Access;
@@ -247,7 +242,7 @@ package body GPS.Project_Properties is
                Module.Kernel.Messages_Window.Insert
                  (-("<mutually_exclusive> children ""editor_page"" attribute "
                     & "should be equal to their parent's one"),
-                 Mode => Error);
+                  Mode => Error);
 
                return False;
             end if;
@@ -262,10 +257,9 @@ package body GPS.Project_Properties is
                Mode => Error);
          end if;
 
-         Section := Find_Editor_Section_By_Name
-           (Page               => Page,
-            Name               => Name,
-            Mutually_Exclusive => True);
+         Section :=
+           Find_Editor_Section_By_Name
+             (Page => Page, Name => Name, Mutually_Exclusive => True);
 
          --  Set the mutually exclusive section documentation
          if Desc /= "" then
@@ -287,7 +281,7 @@ package body GPS.Project_Properties is
          if Child /= null then
             declare
                Section_Pos : Attribute_Page_Section_Lists.Cursor :=
-                              Page.Sections.Find (Section);
+                 Page.Sections.Find (Section);
             begin
                Page.Sections.Delete (Section_Pos);
             end;
@@ -302,18 +296,19 @@ package body GPS.Project_Properties is
         (Parent : Node_Ptr) return Attribute_Description_Access
       is
          Page      : constant Attribute_Page :=
-                       Find_Editor_Page_By_Name
-                         (Module,
-                          Name => Get_Attribute_S (Parent, "editor_page"));
+           Find_Editor_Page_By_Name
+             (Module, Name => Get_Attribute_S (Parent, "editor_page"));
          Section   : constant Attribute_Page_Section :=
-                       Find_Editor_Section_By_Name
-                         (Page => Page,
-                          Name => Get_Attribute_S (Parent, "editor_section"));
+           Find_Editor_Section_By_Name
+             (Page => Page,
+              Name => Get_Attribute_S (Parent, "editor_section"));
          Name      : String := Get_Attribute_S (Parent, "name");
          Pkg       : String := Get_Attribute_S (Parent, "package");
-         Indexed   : constant Boolean := Parent.Child /= null
-           and then (Parent.Child.Tag.all = "index"
-                     or else Parent.Child.Tag.all = "specialized_index");
+         Indexed   : constant Boolean :=
+           Parent.Child /= null
+           and then
+             (Parent.Child.Tag.all = "index"
+              or else Parent.Child.Tag.all = "specialized_index");
          Attribute : Attribute_Description_Access;
       begin
          To_Lower (Pkg);
@@ -325,10 +320,9 @@ package body GPS.Project_Properties is
                Mode => Error);
          end if;
 
-         Attribute := Find_Attribute_By_Name
-           (Module, Section, Name, Pkg, Indexed);
-         Parse_Attribute_Description
-           (Module.Kernel, Parent, Attribute);
+         Attribute :=
+           Find_Attribute_By_Name (Module, Section, Name, Pkg, Indexed);
+         Parse_Attribute_Description (Module.Kernel, Parent, Attribute);
 
          return Attribute;
       end Parse_Project_Attribute_Node;
@@ -339,7 +333,7 @@ package body GPS.Project_Properties is
 
       procedure Parse_Project_Attribute_Node (Parent : Node_Ptr) is
          Attr : constant Attribute_Description_Access :=
-                  Parse_Project_Attribute_Node (Parent);
+           Parse_Project_Attribute_Node (Parent);
          pragma Unreferenced (Attr);
       begin
          null;
@@ -357,8 +351,8 @@ package body GPS.Project_Properties is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy
-     (Module : in out Base_Properties_Module) is
+   overriding
+   procedure Destroy (Module : in out Base_Properties_Module) is
    begin
       for Page of Module.Pages loop
          Free (Page);
@@ -371,8 +365,10 @@ package body GPS.Project_Properties is
    -- Find_Editor_Page_By_Name --
    ------------------------------
 
-   function Find_Editor_Page_By_Name (Module : access Base_Properties_Module;
-                                      Name   : String) return Attribute_Page is
+   function Find_Editor_Page_By_Name
+     (Module : access Base_Properties_Module; Name : String)
+      return Attribute_Page
+   is
       New_Page : Attribute_Page;
    begin
       for Page of Module.Pages loop
@@ -381,9 +377,8 @@ package body GPS.Project_Properties is
          end if;
       end loop;
 
-      New_Page := new Attribute_Page_Record'
-        (Name     => new String'(Name),
-         Sections => <>);
+      New_Page :=
+        new Attribute_Page_Record'(Name => new String'(Name), Sections => <>);
       Module.Pages.Append (New_Page);
 
       return New_Page;
@@ -406,7 +401,7 @@ package body GPS.Project_Properties is
          end if;
       end loop;
 
-      New_Section  := new Attribute_Page_Section_Record (Mutually_Exclusive);
+      New_Section := new Attribute_Page_Section_Record (Mutually_Exclusive);
       New_Section.Name := new String'(Name);
 
       Page.Sections.Append (New_Section);
@@ -428,7 +423,7 @@ package body GPS.Project_Properties is
    is
 
       Self     : Base_Properties_Module'Class renames
-                   Base_Properties_Module'Class (Module.all);
+        Base_Properties_Module'Class (Module.all);
       New_Attr : Attribute_Description_Access;
    begin
       for Attr of Section.Attributes loop
@@ -439,7 +434,7 @@ package body GPS.Project_Properties is
 
       New_Attr := Self.New_Attribute_Description (Indexed);
       New_Attr.Name := new String'(Name);
-      New_Attr.Pkg  := new String'(Pkg);
+      New_Attr.Pkg := new String'(Pkg);
       New_Attr.Mutually_Exclusive := Mutually_Exclusive;
       Section.Attributes.Append (New_Attr);
 
@@ -460,8 +455,9 @@ package body GPS.Project_Properties is
       Start, Index : Natural;
    begin
       if Attr.Typ = Attribute_As_Dynamic_List then
-         Script := Lookup_Scripting_Language
-           (Kernel.Scripts, Attr.Dynamic_List_Lang.all);
+         Script :=
+           Lookup_Scripting_Language
+             (Kernel.Scripts, Attr.Dynamic_List_Lang.all);
 
          if Script = null then
             Kernel.Messages_Window.Insert
@@ -473,17 +469,21 @@ package body GPS.Project_Properties is
          end if;
 
          declare
-            List : constant String := GNATCOLL.Scripts.Execute_Command
-              (Script,
-               CL          => Parse_String
-                 (Attr.Dynamic_List_Cmd.all, Command_Line_Treatment (Script)),
-               Hide_Output => True,
-               Errors      => Errors'Access);
+            List : constant String :=
+              GNATCOLL.Scripts.Execute_Command
+                (Script,
+                 CL          =>
+                   Parse_String
+                     (Attr.Dynamic_List_Cmd.all,
+                      Command_Line_Treatment (Script)),
+                 Hide_Output => True,
+                 Errors      => Errors'Access);
          begin
             if Errors then
                Kernel.Messages_Window.Insert
                  (-"Couldn't execute the command """
-                  & Attr.Dynamic_List_Cmd.all & """ when computing the"
+                  & Attr.Dynamic_List_Cmd.all
+                  & """ when computing the"
                   & " valid values for a project attribute",
                   Mode => Error);
             end if;
@@ -497,8 +497,9 @@ package body GPS.Project_Properties is
                   Index := Index + 1;
                end loop;
 
-               Callback (List (Start .. Index - 1),
-                         List (Start .. Index - 1) = Attr.Dynamic_Default.all);
+               Callback
+                 (List (Start .. Index - 1),
+                  List (Start .. Index - 1) = Attr.Dynamic_Default.all);
 
                Start := Index + 1;
             end loop;
@@ -507,8 +508,7 @@ package body GPS.Project_Properties is
       elsif Attr.Typ = Attribute_As_Static_List then
          if Attr.Static_List /= null then
             for V in Attr.Static_List'Range loop
-               Callback (Attr.Static_List (V).all,
-                         Attr.Static_Default (V));
+               Callback (Attr.Static_List (V).all, Attr.Static_Default (V));
             end loop;
          end if;
       end if;
@@ -519,8 +519,10 @@ package body GPS.Project_Properties is
    ----------
 
    procedure Free (Attr : in out Attribute_Description_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Description'Class, Attribute_Description_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Attribute_Description'Class,
+           Attribute_Description_Access);
    begin
       if Attr /= null then
          Free (Attr.Name);
@@ -546,8 +548,10 @@ package body GPS.Project_Properties is
    ----------
 
    procedure Free (Page : in out Attribute_Page) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Page_Record'Class, Attribute_Page);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Attribute_Page_Record'Class,
+           Attribute_Page);
    begin
       if Page /= null then
          Free (Page.Name);
@@ -566,8 +570,10 @@ package body GPS.Project_Properties is
    ----------
 
    procedure Free (Section : in out Attribute_Page_Section) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Attribute_Page_Section_Record'Class, Attribute_Page_Section);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Attribute_Page_Section_Record'Class,
+           Attribute_Page_Section);
    begin
       if Section /= null then
          Free (Section.Name);
@@ -590,18 +596,20 @@ package body GPS.Project_Properties is
    ----------
 
    procedure Free (Typ : in out Attribute_Type) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Boolean_Array, Boolean_List);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Boolean_Array, Boolean_List);
    begin
       case Typ.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Unit
-            | Attribute_As_Directory =>
+            | Attribute_As_Directory    =>
             Free (Typ.Default);
-         when Attribute_As_Static_List =>
+
+         when Attribute_As_Static_List  =>
             Free (Typ.Static_List);
             Unchecked_Free (Typ.Static_Default);
+
          when Attribute_As_Dynamic_List =>
             Free (Typ.Dynamic_List_Lang);
             Free (Typ.Dynamic_List_Cmd);
@@ -642,8 +650,9 @@ package body GPS.Project_Properties is
                      Pos := T;
                   end if;
                elsif Equal
-                 (Attr.Index_Types (T).Index_Value.all, Index,
-                  Case_Sensitive => Attr.Case_Sensitive_Index)
+                       (Attr.Index_Types (T).Index_Value.all,
+                        Index,
+                        Case_Sensitive => Attr.Case_Sensitive_Index)
                then
                   Pos := T;
                   exit;
@@ -666,9 +675,8 @@ package body GPS.Project_Properties is
    ----------------------------------
 
    function Get_Attribute_Type_From_Name
-     (Module : access Base_Properties_Module;
-      Pkg    : String;
-      Name   : String) return Attribute_Description_Access is
+     (Module : access Base_Properties_Module; Pkg : String; Name : String)
+      return Attribute_Description_Access is
    begin
       for Page of Module.Pages loop
          for Section of Page.Sections loop
@@ -688,10 +696,9 @@ package body GPS.Project_Properties is
    -----------------------
 
    function Get_Default_Value
-     (Attr          : access Attribute_Description'Class;
-      Index         : String) return String
+     (Attr : access Attribute_Description'Class; Index : String) return String
    is
-      Typ : constant Attribute_Type :=
+      Typ    : constant Attribute_Type :=
         Get_Attribute_Type_From_Description (Attr, Index);
       Result : GNAT.Strings.String_Access;
    begin
@@ -699,10 +706,10 @@ package body GPS.Project_Properties is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Unit
-            | Attribute_As_Directory =>
+            | Attribute_As_Directory    =>
             Result := Typ.Default;
 
-         when Attribute_As_Static_List =>
+         when Attribute_As_Static_List  =>
             for S in Typ.Static_Default'Range loop
                if Typ.Static_Default (S) then
                   Result := Typ.Static_List (S);
@@ -742,12 +749,15 @@ package body GPS.Project_Properties is
          To_Lower (Lower_Attribute_Index);
       end if;
 
-      return Project.Attribute_Value
-        (Attribute => Attribute_Pkg_String'
-           (Build (Package_Name   => Attr.Pkg.all,
+      return
+        Project.Attribute_Value
+          (Attribute =>
+             Attribute_Pkg_String'
+               (Build
+                  (Package_Name   => Attr.Pkg.all,
                    Attribute_Name => Attr.Name.all)),
-         Default   => Default_Value,
-         Index     => Lower_Attribute_Index);
+           Default   => Default_Value,
+           Index     => Lower_Attribute_Index);
    end Get_Value_From_Project;
 
    -----------------------
@@ -755,9 +765,9 @@ package body GPS.Project_Properties is
    -----------------------
 
    function Get_Default_Value
-     (Kernel        : access Core_Kernel_Record'Class;
-      Attr          : access Attribute_Description'Class;
-      Index         : String := "") return String_List_Access
+     (Kernel : access Core_Kernel_Record'Class;
+      Attr   : access Attribute_Description'Class;
+      Index  : String := "") return String_List_Access
    is
       Result : String_List_Access;
 
@@ -769,8 +779,10 @@ package body GPS.Project_Properties is
       ----------------
 
       procedure Save_Value (Value : String; Is_Default : Boolean) is
-         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-           (GNAT.Strings.String_List, String_List_Access);
+         procedure Unchecked_Free is new
+           Ada.Unchecked_Deallocation
+             (GNAT.Strings.String_List,
+              String_List_Access);
          Tmp : String_List_Access := Result;
       begin
          if Is_Default then
@@ -794,11 +806,9 @@ package body GPS.Project_Properties is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Unit
-            | Attribute_As_Directory =>
+            | Attribute_As_Directory                               =>
 
-            if Attr_Type.Default = null
-              or else Attr_Type.Default.all = ""
-            then
+            if Attr_Type.Default = null or else Attr_Type.Default.all = "" then
                return null;
 
             elsif Attr_Type.Default.all = "project source files" then
@@ -814,8 +824,7 @@ package body GPS.Project_Properties is
                end;
             end if;
 
-         when Attribute_As_Static_List
-            | Attribute_As_Dynamic_List =>
+         when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
             For_Each_Item_In_List
               (Kernel, Attr_Type, Save_Value'Unrestricted_Access);
 
@@ -845,9 +854,7 @@ package body GPS.Project_Properties is
       --  Else lookup in the project or in the default values
 
       if Project = GNATCOLL.Projects.No_Project then
-         if Omit_If_Default
-           and then Attr.Omit_If_Default
-         then
+         if Omit_If_Default and then Attr.Omit_If_Default then
             return null;
          else
             return Get_Default_Value (Kernel, Attr, Index);
@@ -855,15 +862,19 @@ package body GPS.Project_Properties is
 
       else
          if Attr.Pkg.all = "" and then Attr.Name.all = "languages" then
-            return new GNAT.Strings.String_List'
-              (Project.Languages (Recursive => False));
+            return
+              new GNAT.Strings.String_List'
+                (Project.Languages (Recursive => False));
          end if;
 
          declare
-            Current : String_List_Access := Project.Attribute_Value
-              (Attribute => Build (Package_Name   => Attr.Pkg.all,
-                                   Attribute_Name => Attr.Name.all),
-               Index     => Lower_Attribute_Index);
+            Current : String_List_Access :=
+              Project.Attribute_Value
+                (Attribute =>
+                   Build
+                     (Package_Name   => Attr.Pkg.all,
+                      Attribute_Name => Attr.Name.all),
+                 Index     => Lower_Attribute_Index);
          begin
             if Current /= null and then Current'Length /= 0 then
                return Current;
@@ -874,20 +885,18 @@ package body GPS.Project_Properties is
 
       --  Else get the default value
 
-      if Omit_If_Default
-        and then Attr.Omit_If_Default
-      then
+      if Omit_If_Default and then Attr.Omit_If_Default then
          return null;
       end if;
 
-      Attr_Type := Get_Attribute_Type_From_Description
-        (Attr, Lower_Attribute_Index);
+      Attr_Type :=
+        Get_Attribute_Type_From_Description (Attr, Lower_Attribute_Index);
 
       case Attr_Type.Typ is
          when Attribute_As_String
             | Attribute_As_Filename
             | Attribute_As_Unit
-            | Attribute_As_Directory =>
+            | Attribute_As_Directory                               =>
 
             if Attr_Type.Default /= null
               and then Attr_Type.Default.all = "project source files"
@@ -908,8 +917,7 @@ package body GPS.Project_Properties is
                end;
             end if;
 
-         when Attribute_As_Static_List
-            | Attribute_As_Dynamic_List =>
+         when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
 
             null;
       end case;
@@ -922,20 +930,24 @@ package body GPS.Project_Properties is
    -------------------
 
    function Is_Any_String
-     (Attr  : access Attribute_Description'Class;
-      Index : String) return Boolean
+     (Attr : access Attribute_Description'Class; Index : String) return Boolean
    is
       Typ : constant Attribute_Type :=
-              Get_Attribute_Type_From_Description (Attr, Index);
+        Get_Attribute_Type_From_Description (Attr, Index);
    begin
       case Typ.Typ is
-         when Attribute_As_String    => return True;
+         when Attribute_As_String       =>
+            return True;
+
          when Attribute_As_Filename
             | Attribute_As_Unit
-            | Attribute_As_Directory => return False;
-         when Attribute_As_Static_List =>
-            return Typ.Static_List = null
-              and then Typ.Static_Allows_Any_String;
+            | Attribute_As_Directory    =>
+            return False;
+
+         when Attribute_As_Static_List  =>
+            return
+              Typ.Static_List = null and then Typ.Static_Allows_Any_String;
+
          when Attribute_As_Dynamic_List =>
             return False;
       end case;
@@ -946,8 +958,7 @@ package body GPS.Project_Properties is
    -------------------------------
 
    function New_Attribute_Description
-     (Module  : access Base_Properties_Module;
-      Indexed : Boolean)
+     (Module : access Base_Properties_Module; Indexed : Boolean)
       return Attribute_Description_Access
    is
       pragma Unreferenced (Module);
@@ -961,8 +972,7 @@ package body GPS.Project_Properties is
 
    function Pages
      (Self : Base_Properties_Module) return Attribute_Page_Lists.List
-   is
-     (Self.Pages);
+   is (Self.Pages);
 
    ---------------------------------
    -- Parse_Attribute_Description --
@@ -974,29 +984,27 @@ package body GPS.Project_Properties is
       A      : Attribute_Description_Access)
    is
       Descr                : constant String :=
-                               Get_Attribute_S (N, "description");
+        Get_Attribute_S (N, "description");
       Label                : constant String :=
-                               Get_Attribute_S (N, "label", A.Name.all);
+        Get_Attribute_S (N, "label", A.Name.all);
       Is_List              : constant String :=
-                               Get_Attribute_S (N, "list", "false");
+        Get_Attribute_S (N, "list", "false");
       Ordered              : constant String :=
-                               Get_Attribute_S (N, "ordered", "false");
+        Get_Attribute_S (N, "ordered", "false");
       Case_Sensitive_Index : constant String :=
-                               Get_Attribute_S
-                                 (N, "case_sensitive_index", "false");
+        Get_Attribute_S (N, "case_sensitive_index", "false");
       Omit                 : constant String :=
-                               Get_Attribute_S (N, "omit_if_default", "false");
+        Get_Attribute_S (N, "omit_if_default", "false");
       Base                 : constant String :=
-                               Get_Attribute_S (N, "base_name_only", "false");
+        Get_Attribute_S (N, "base_name_only", "false");
       Indexed              : constant Boolean :=
-                               N.Child /= null
-                                   and then (N.Child.Tag.all = "index"
-                                             or else N.Child.Tag.all =
-                                               "specialized_index");
+        N.Child /= null
+        and then
+          (N.Child.Tag.all = "index"
+           or else N.Child.Tag.all = "specialized_index");
       Hide_In              : constant String := Get_Attribute_S (N, "hide_in");
       Disable_If_Not_Set   : constant String :=
-                               Get_Attribute_S
-                                 (N, "disable_if_not_set", "false");
+        Get_Attribute_S (N, "disable_if_not_set", "false");
       Child                : Node_Ptr;
 
       procedure Parse_Indexed_Type (Value : String);
@@ -1015,7 +1023,8 @@ package body GPS.Project_Properties is
                if Value = "" and then A.Index_Types (T).Index_Value = null then
                   Kernel.Messages_Window.Insert
                     (-("General indexed type already defined for"
-                     & " attribute ") & A.Name.all,
+                       & " attribute ")
+                     & A.Name.all,
                      Mode => Error);
                   Found := True;
                   exit;
@@ -1026,7 +1035,11 @@ package body GPS.Project_Properties is
                then
                   Kernel.Messages_Window.Insert
                     (-"Attribute type already defined for attribute"
-                     & A.Name.all & (-" indexed by") & '"' & Value & '"',
+                     & A.Name.all
+                     & (-" indexed by")
+                     & '"'
+                     & Value
+                     & '"',
                      Mode => Error);
                   Found := True;
                   exit;
@@ -1035,8 +1048,8 @@ package body GPS.Project_Properties is
 
             if not Found then
                Tmp := A.Index_Types;
-               A.Index_Types := new Indexed_Attribute_Type_Array
-                 (1 .. Tmp'Length + 1);
+               A.Index_Types :=
+                 new Indexed_Attribute_Type_Array (1 .. Tmp'Length + 1);
                A.Index_Types (1 .. Tmp'Length) := Tmp.all;
                Unchecked_Free (Tmp);
             end if;
@@ -1050,7 +1063,9 @@ package body GPS.Project_Properties is
          end if;
 
          Parse_Attribute_Type
-           (Kernel, Child.Child, A.Name.all,
+           (Kernel,
+            Child.Child,
+            A.Name.all,
             A.Index_Types (A.Index_Types'Last).Typ);
       end Parse_Indexed_Type;
 
@@ -1077,18 +1092,18 @@ package body GPS.Project_Properties is
            Case_Sensitive_Index = "true" or else Case_Sensitive_Index = "1";
       end if;
 
-      A.Disable_If_Not_Set := Disable_If_Not_Set = "true"
-        or else Disable_If_Not_Set = "1";
+      A.Disable_If_Not_Set :=
+        Disable_If_Not_Set = "true" or else Disable_If_Not_Set = "1";
 
       if Indexed then
          Child := N.Child;
          while Child /= null loop
             if Child.Tag.all = "index" then
-               A.Index_Attribute := new String'
-                 (Get_Attribute_S (Child, "attribute"));
+               A.Index_Attribute :=
+                 new String'(Get_Attribute_S (Child, "attribute"));
                To_Lower (A.Index_Attribute.all);
-               A.Index_Package := new String'
-                 (Get_Attribute_S (Child, "package"));
+               A.Index_Package :=
+                 new String'(Get_Attribute_S (Child, "package"));
                To_Lower (A.Index_Package.all);
                Parse_Indexed_Type ("");
 
@@ -1120,20 +1135,19 @@ package body GPS.Project_Properties is
       Choice_Count : Natural;
    begin
       if Child = null then
-         A := (Typ          => Attribute_As_String,
-               Filter       => Filter_None,
-               Allow_Empty  => True,
-               Default      => null);
+         A :=
+           (Typ         => Attribute_As_String,
+            Filter      => Filter_None,
+            Allow_Empty => True,
+            Default     => null);
 
       elsif Child.Tag.all = "string" then
          declare
-            Typ         : constant String :=
-              Get_Attribute_S (Child, "type");
+            Typ         : constant String := Get_Attribute_S (Child, "type");
             Default     : constant String :=
               Get_Attribute_S (Child, "default");
             Allow_Empty : constant Boolean :=
-              Boolean'Value
-                (Get_Attribute_S (Child, "allow_empty", "True"));
+              Boolean'Value (Get_Attribute_S (Child, "allow_empty", "True"));
             Filter_Attr : constant String :=
               Get_Attribute_S (Child, "filter", "none");
             Filter      : File_Filter := Filter_None;
@@ -1150,39 +1164,43 @@ package body GPS.Project_Properties is
             end if;
 
             if Typ = "file" then
-               A := (Typ          => Attribute_As_Filename,
-                     Filter       => Filter,
-                     Allow_Empty  => Allow_Empty,
-                     Default      => new String'(Default));
+               A :=
+                 (Typ         => Attribute_As_Filename,
+                  Filter      => Filter,
+                  Allow_Empty => Allow_Empty,
+                  Default     => new String'(Default));
             elsif Typ = "directory" then
-               A := (Typ          => Attribute_As_Directory,
-                     Filter       => Filter,
-                     Allow_Empty  => Allow_Empty,
-                     Default      => new String'(Default));
+               A :=
+                 (Typ         => Attribute_As_Directory,
+                  Filter      => Filter,
+                  Allow_Empty => Allow_Empty,
+                  Default     => new String'(Default));
             elsif Typ = "unit" then
-               A := (Typ          => Attribute_As_Unit,
-                     Filter       => Filter,
-                     Allow_Empty  => Allow_Empty,
-                     Default      => new String'(Default));
+               A :=
+                 (Typ         => Attribute_As_Unit,
+                  Filter      => Filter,
+                  Allow_Empty => Allow_Empty,
+                  Default     => new String'(Default));
             else
                if Typ /= "" then
                   Kernel.Messages_Window.Insert
                     (-("Invalid value for ""type"" attribute"
-                     & " for a <string> node"),
+                       & " for a <string> node"),
                      Mode => Error);
                end if;
 
-               A := (Typ         => Attribute_As_String,
-                     Filter      => Filter,
-                     Allow_Empty => Allow_Empty,
-                     Default     => new String'(Default));
+               A :=
+                 (Typ         => Attribute_As_String,
+                  Filter      => Filter,
+                  Allow_Empty => Allow_Empty,
+                  Default     => new String'(Default));
             end if;
          end;
 
          if Child.Next /= null then
             Kernel.Messages_Window.Insert
               (-("<string> node must always appear only once,"
-               & " and after all other type descriptions"),
+                 & " and after all other type descriptions"),
                Mode => Error);
          end if;
 
@@ -1196,12 +1214,11 @@ package body GPS.Project_Properties is
          end loop;
 
          if Child2 /= null
-           and then (Child2.Tag.all /= "string"
-                     or else Child2.Next /= null)
+           and then (Child2.Tag.all /= "string" or else Child2.Next /= null)
          then
             Kernel.Messages_Window.Insert
               (-("Only <string> can be specified in addition"
-               & " to <choice> for the type of attributes"),
+                 & " to <choice> for the type of attributes"),
                Mode => Error);
          end if;
 
@@ -1209,15 +1226,13 @@ package body GPS.Project_Properties is
            (Typ                      => Attribute_As_Static_List,
             Static_Allows_Any_String => Child2 /= null,
             Static_List              =>
-            new GNAT.Strings.String_List (1 .. Choice_Count),
+              new GNAT.Strings.String_List (1 .. Choice_Count),
             Static_Default           => new Boolean_Array (1 .. Choice_Count));
 
          Child2 := Child;
          Choice_Count := 1;
 
-         while Child2 /= null
-           and then Child2.Tag.all = "choice"
-         loop
+         while Child2 /= null and then Child2.Tag.all = "choice" loop
             A.Static_List (Choice_Count) := new String'(Child2.Value.all);
             A.Static_Default (Choice_Count) :=
               Get_Attribute_S (Child2, "default") = "true"
@@ -1229,21 +1244,21 @@ package body GPS.Project_Properties is
       elsif Child.Tag.all = "shell" then
          A :=
            (Typ                       => Attribute_As_Dynamic_List,
-            Dynamic_Allows_Any_String => Child.Next /= null
-            and then Child.Next.Tag.all = "string",
+            Dynamic_Allows_Any_String =>
+              Child.Next /= null and then Child.Next.Tag.all = "string",
             Dynamic_Default           =>
-            new String'(Get_Attribute_S (Child, "default")),
-            Dynamic_List_Lang         => new String'
-              (Get_Attribute_S (Child, "lang", "shell")),
+              new String'(Get_Attribute_S (Child, "default")),
+            Dynamic_List_Lang         =>
+              new String'(Get_Attribute_S (Child, "lang", "shell")),
             Dynamic_List_Cmd          => new String'(Child.Value.all));
 
          if Child.Next /= null
-           and then (Child.Next.Tag.all /= "string"
-                     or else Child.Next.Next /= null)
+           and then
+             (Child.Next.Tag.all /= "string" or else Child.Next.Next /= null)
          then
             Kernel.Messages_Window.Insert
               (-("Only <string> can be specified in addition"
-               & " to <shell> for the type of attributes"),
+                 & " to <shell> for the type of attributes"),
                Mode => Error);
          end if;
 
@@ -1262,21 +1277,21 @@ package body GPS.Project_Properties is
      (Kernel : access Core_Kernel_Record'Class;
       Attr   : Attribute_Description_Access)
    is
-      Registered_Outside : constant Boolean := Attribute_Registered
-        (Name => Attr.Name.all,
-         Pkg  => Attr.Pkg.all);
+      Registered_Outside : constant Boolean :=
+        Attribute_Registered (Name => Attr.Name.all, Pkg => Attr.Pkg.all);
    begin
       --  Register project attributes only if not already registered in
       --  GNATCOLL.
 
       if not Registered_Outside then
          declare
-            Msg : constant String := Register_New_Attribute
-              (Name    => Attr.Name.all,
-               Pkg     => Attr.Pkg.all,
-               Is_List => Attr.Is_List,
-               Indexed => Attr.Indexed,
-               Case_Sensitive_Index => Attr.Case_Sensitive_Index);
+            Msg : constant String :=
+              Register_New_Attribute
+                (Name                 => Attr.Name.all,
+                 Pkg                  => Attr.Pkg.all,
+                 Is_List              => Attr.Is_List,
+                 Indexed              => Attr.Indexed,
+                 Case_Sensitive_Index => Attr.Case_Sensitive_Index);
          begin
             if Msg /= "" then
                Kernel.Messages_Window.Insert (Msg, Mode => Error);

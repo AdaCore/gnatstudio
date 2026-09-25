@@ -28,8 +28,8 @@ package body String_List_Utils is
    function List_To_Argument_List
      (L : String_List.Vector) return GNAT.OS_Lib.Argument_List
    is
-      Args   : Argument_List (1 .. Natural (L.Length));
-      Index  : Natural := Args'First;
+      Args  : Argument_List (1 .. Natural (L.Length));
+      Index : Natural := Args'First;
    begin
       for Item of L loop
          Args (Index) := new String'(Item);
@@ -50,9 +50,9 @@ package body String_List_Utils is
       end if;
 
       declare
-         Node    : Cursor          := L.First;
+         Node    : Cursor := L.First;
          First_S : constant String := Element (Node);
-         Length  : Natural         := First_S'Length;
+         Length  : Natural := First_S'Length;
       begin
          Next (Node);
          while Has_Element (Node) loop
@@ -61,9 +61,9 @@ package body String_List_Utils is
             begin
                Length := Natural'Min (Length, Data_S'Length);
                while Length > 0
-                 and then First_S
-                   (First_S'First .. First_S'First + Length - 1) /=
-                   Data_S (Data_S'First .. Data_S'First + Length - 1)
+                 and then
+                   First_S (First_S'First .. First_S'First + Length - 1)
+                   /= Data_S (Data_S'First .. Data_S'First + Length - 1)
                loop
                   Length := Length - 1;
                end loop;

@@ -18,8 +18,8 @@
 with VSS.Strings.Conversions;
 with VSS.String_Vectors;
 
-with GPS.Search;           use GPS.Search;
-with Histories;            use Histories;
+with GPS.Search; use GPS.Search;
+with Histories;  use Histories;
 
 package body GPS.Kernel.Search is
 
@@ -36,9 +36,9 @@ package body GPS.Kernel.Search is
    is
       use type VSS.Strings.Virtual_String;
 
-      Key : constant History_Key :=
-         "search-recent-"
-         & History_Key (Search_Provider'Class (Self.all).Display_Name);
+      Key  : constant History_Key :=
+        "search-recent-"
+        & History_Key (Search_Provider'Class (Self.all).Display_Name);
       Hist : constant VSS.String_Vectors.Virtual_String_Vector :=
         Get_History (Self.Kernel.Get_History.all, Key);
       M    : Integer;
@@ -59,13 +59,14 @@ package body GPS.Kernel.Search is
    -- On_Result_Executed --
    ------------------------
 
-   overriding procedure On_Result_Executed
-      (Self   : not null access Kernel_Search_Provider;
-       Result : not null access Search_Result'Class)
+   overriding
+   procedure On_Result_Executed
+     (Self   : not null access Kernel_Search_Provider;
+      Result : not null access Search_Result'Class)
    is
       Key : constant History_Key :=
-         "search-recent-"
-         & History_Key (Search_Provider'Class (Self.all).Display_Name);
+        "search-recent-"
+        & History_Key (Search_Provider'Class (Self.all).Display_Name);
    begin
       Set_Max_Length (Self.Kernel.Get_History.all, Max_History_Items, Key);
       Self.Kernel.Add_To_History
@@ -79,14 +80,14 @@ package body GPS.Kernel.Search is
    function Path_And_Name
      (Kernel  : Kernel_Handle;
       File    : Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type)
-      return String
+      Project : GNATCOLL.Projects.Project_Type) return String
    is
       use GNATCOLL.Projects;
    begin
       if Project /= No_Project
-        and then Get_History
-          (Get_History (Kernel).all, Key_Search_Displays_Relative_Paths)
+        and then
+          Get_History
+            (Get_History (Kernel).all, Key_Search_Displays_Relative_Paths)
       then
          return +(Relative_Path (File, Project.Project_Path.Dir));
       else

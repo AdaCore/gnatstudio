@@ -25,14 +25,13 @@
 package BT.Xml.Reader is
 
    function Get_Srcpos_Vn_Values
-     (File_Name : String;
-      Srcpos    : Source_Position) return Vn_Values_Seqs.Vector;
+     (File_Name : String; Srcpos : Source_Position)
+      return Vn_Values_Seqs.Vector;
    --  Given a source position, find all the available vn <-> value_sets pairs
    --  Note that a value_set is actually just a string representing the values
 
    function Get_Srcpos_Vn_Values
-     (File_Name : String;
-      Line      : Line_Number) return Vn_Values_Seqs.Vector;
+     (File_Name : String; Line : Line_Number) return Vn_Values_Seqs.Vector;
    --  Given a line number, find all the available vn <-> value_sets pairs
 
    procedure Clear;

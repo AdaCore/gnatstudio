@@ -24,8 +24,8 @@ with XML_Utils;
 
 package Switches_Parser is
 
-   type Other_Config_Finder is access
-     function (Name : String) return Switches_Editor_Config;
+   type Other_Config_Finder is
+     access function (Name : String) return Switches_Editor_Config;
    --  See Parse_Switches_Node
 
    procedure Parse_Switches_Node

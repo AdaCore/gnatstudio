@@ -27,9 +27,9 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    -- Characters --
    ----------------
 
-   overriding procedure Characters
-     (Self : in out Reader;
-      Text : Unicode.CES.Byte_Sequence) is
+   overriding
+   procedure Characters
+     (Self : in out Reader; Text : Unicode.CES.Byte_Sequence) is
    begin
       if Self.Audit_Record /= null then
          Append (Self.Audit_Record.Comment, Text);
@@ -40,7 +40,8 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    -- End_Element --
    -----------------
 
-   overriding procedure End_Element
+   overriding
+   procedure End_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
@@ -64,9 +65,9 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
       Input    : in out Input_Sources.Input_Source'Class;
       Messages : CodePeer.Message_Maps.Map) is
    begin
-      Self.Messages     := Messages'Unchecked_Access;
+      Self.Messages := Messages'Unchecked_Access;
       Self.Audit_Record := null;
-      Self.Version      := Supported_Format_Version'First;
+      Self.Version := Supported_Format_Version'First;
 
       Self.Parse (Input);
    end Parse;
@@ -75,7 +76,8 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;

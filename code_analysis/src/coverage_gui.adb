@@ -15,21 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;                    use Ada.Calendar;
-with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Calendar;          use Ada.Calendar;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;
-with GNAT.OS_Lib;                     use GNAT.OS_Lib;
-with GNATCOLL.Projects;               use GNATCOLL.Projects;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
 
 with VSS.Application;
 
-with GNATCOLL.VFS.VSS_Utils;          use GNATCOLL.VFS.VSS_Utils;
+with GNATCOLL.VFS.VSS_Utils; use GNATCOLL.VFS.VSS_Utils;
 
-with Basic_Types;                     use Basic_Types;
-with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
-with GPS.Kernel.Locations;            use GPS.Kernel.Locations;
-with GPS.Kernel.Messages;             use GPS.Kernel.Messages;
-with GPS.Kernel.Project;              use GPS.Kernel.Project;
+with Basic_Types;          use Basic_Types;
+with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
+with GPS.Kernel.Locations; use GPS.Kernel.Locations;
+with GPS.Kernel.Messages;  use GPS.Kernel.Messages;
+with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with Default_Preferences.Enums;
 
 with Language;                        use Language;
@@ -45,8 +45,8 @@ with Commands;                        use Commands;
 
 package body Coverage_GUI is
 
-   package Coverage_Toolchain_Preferences is
-      new Default_Preferences.Enums.Generics (Coverage_Toolchain_Kinds);
+   package Coverage_Toolchain_Preferences is new
+     Default_Preferences.Enums.Generics (Coverage_Toolchain_Kinds);
 
    Coverage_Toolchain_Preference : Coverage_Toolchain_Preferences.Preference;
 
@@ -57,8 +57,7 @@ package body Coverage_GUI is
    ---------------------------
 
    procedure Add_Gcov_Project_Info
-     (Kernel   : Kernel_Handle;
-      Prj_Node : Project_Access)
+     (Kernel : Kernel_Handle; Prj_Node : Project_Access)
    is
       Src_Files : File_Array_Access;
       Src_File  : Virtual_File;
@@ -79,8 +78,8 @@ package body Coverage_GUI is
          else
             if Current_Coverage_Tool /= GNATcov then
                Kernel.Insert
-                 (-"Could not find coverage file " &
-                    Display_Full_Name (Cov_File));
+                 (-"Could not find coverage file "
+                  & Display_Full_Name (Cov_File));
 
                declare
                   File_Node : constant Code_Analysis.File_Access :=
@@ -109,16 +108,16 @@ package body Coverage_GUI is
       Project_Node : Project_Access)
    is
       File_Contents : GNAT.Strings.String_Access;
-      File_Node     : constant Code_Analysis.File_Access
-        := Get_Or_Create (Project_Node, Src_File);
-      Handler       : constant Language_Handler
-        := Get_Language_Handler (Kernel);
+      File_Node     : constant Code_Analysis.File_Access :=
+        Get_Or_Create (Project_Node, Src_File);
+      Handler       : constant Language_Handler :=
+        Get_Language_Handler (Kernel);
    begin
       if File_Time_Stamp (Src_File) > File_Time_Stamp (Cov_File) then
          Kernel.Insert
-           (Display_Base_Name (Src_File) &
-            (-" has been modified since coverage information was generated.") &
-            (-" Skipped."),
+           (Display_Base_Name (Src_File)
+            & (-" has been modified since coverage information was generated.")
+            & (-" Skipped."),
             Mode => GPS.Kernel.Error);
          Set_Error (File_Node, File_Out_Of_Date);
       else
@@ -138,7 +137,7 @@ package body Coverage_GUI is
          end;
 
          case Current_Coverage_Tool is
-            when Gcov =>
+            when Gcov    =>
                Code_Coverage.Gcov.Add_File_Info (File_Node, File_Contents);
 
             when GNATcov =>
@@ -148,29 +147,29 @@ package body Coverage_GUI is
          --  Check for project runs info
          if Project_Node.Analysis_Data.Coverage_Data = null then
             Project_Node.Analysis_Data.Coverage_Data := new Project_Coverage;
-            Project_Coverage
-              (Project_Node.Analysis_Data.Coverage_Data.all).Status := Valid;
+            Project_Coverage (Project_Node.Analysis_Data.Coverage_Data.all)
+              .Status :=
+              Valid;
             Get_Runs_Info_From_File
               (File_Contents,
-               Project_Coverage
-                 (Project_Node.Analysis_Data.Coverage_Data.all).Runs,
-               Project_Coverage
-                 (Project_Node.Analysis_Data.Coverage_Data.all).Have_Runs);
+               Project_Coverage (Project_Node.Analysis_Data.Coverage_Data.all)
+                 .Runs,
+               Project_Coverage (Project_Node.Analysis_Data.Coverage_Data.all)
+                 .Have_Runs);
          end if;
 
          if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
             declare
                Lang : constant Language_Access :=
-                        Get_Language_From_File (Handler, Src_File);
+                 Get_Language_From_File (Handler, Src_File);
             begin
                if Lang /= Unknown_Lang then
                   declare
                      Tree : aliased Semantic_Tree'Class :=
-                              Kernel.Get_Abstract_Tree_For_File
-                                ("COV", File_Node.Name);
+                       Kernel.Get_Abstract_Tree_For_File
+                         ("COV", File_Node.Name);
                   begin
-                     Add_Subprogram_Info
-                       (File_Node, Tree'Access);
+                     Add_Subprogram_Info (File_Node, Tree'Access);
                   end;
                end if;
             end;
@@ -201,8 +200,7 @@ package body Coverage_GUI is
    --------------------------
 
    procedure Clear_File_Locations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access) is
+     (Kernel : Kernel_Handle; File_Node : Code_Analysis.File_Access) is
    begin
       Get_Messages_Container (Kernel).Remove_File
         (Coverage_GUI.Uncovered_Category,
@@ -225,8 +223,9 @@ package body Coverage_GUI is
    begin
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          for J in Subp_Node.Start .. Subp_Node.Stop loop
-            if File_Node.Lines (J) /= Null_Line and then
-              File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0
+            if File_Node.Lines (J) /= Null_Line
+              and then
+                File_Node.Lines (J).Analysis_Data.Coverage_Data.Coverage = 0
             then
                Remove_Location_Category
                  (Kernel,
@@ -248,18 +247,17 @@ package body Coverage_GUI is
    -----------------------------------
 
    procedure Add_File_Coverage_Annotations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access)
-   is
+     (Kernel : Kernel_Handle; File_Node : Code_Analysis.File_Access) is
    begin
       --  Remove the previous annotation if they are already present
       Remove_File_Coverage_Annotations (Kernel, File_Node);
 
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
          declare
-            Line_Info     : Line_Information_Array
-              (Editable_Line_Type (File_Node.Lines'First) ..
-                 Editable_Line_Type (File_Node.Lines'Last));
+            Line_Info     :
+              Line_Information_Array
+                (Editable_Line_Type (File_Node.Lines'First)
+                 .. Editable_Line_Type (File_Node.Lines'Last));
             Editable_Line : Editable_Line_Type;
          begin
             for Line in File_Node.Lines'Range loop
@@ -268,18 +266,18 @@ package body Coverage_GUI is
                if File_Node.Lines (Line) /= Null_Line then
                   declare
                      Line_Cov : Line_Coverage'Class renames
-                                  Line_Coverage'Class
-                                    (File_Node.Lines
-                                       (Line).Analysis_Data.Coverage_Data.all);
+                       Line_Coverage'Class
+                         (File_Node.Lines (Line)
+                            .Analysis_Data
+                            .Coverage_Data.all);
                   begin
-                     Line_Info (Editable_Line) := Line_Coverage_Info
-                       (Line_Cov'Access,
-                        Kernel,
-                        Binary_Coverage_Mode);
+                     Line_Info (Editable_Line) :=
+                       Line_Coverage_Info
+                         (Line_Cov'Access, Kernel, Binary_Coverage_Mode);
 
                      if Current_Coverage_Tool = GNATcov
-                       and then Line_Info (Editable_Line)
-                       /= Empty_Line_Information
+                       and then
+                         Line_Info (Editable_Line) /= Empty_Line_Information
                      then
                         Ref (Line_Info (Editable_Line).Associated_Command);
                         File_Node.Line_Commands.Append
@@ -304,8 +302,7 @@ package body Coverage_GUI is
    --------------------------------------
 
    procedure Remove_File_Coverage_Annotations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access) is
+     (Kernel : Kernel_Handle; File_Node : Code_Analysis.File_Access) is
    begin
       Remove_Line_Information_Column
         (Kernel, File_Node.Name, CodeAnalysis_Cst);
@@ -316,9 +313,9 @@ package body Coverage_GUI is
    -------------------------------
 
    procedure List_File_Uncovered_Lines
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access;
-      Quiet     : Boolean;
+     (Kernel                   : Kernel_Handle;
+      File_Node                : Code_Analysis.File_Access;
+      Quiet                    : Boolean;
       Allow_Auto_Jump_To_First : Boolean)
    is
       pragma Unreferenced (Quiet);
@@ -344,13 +341,13 @@ package body Coverage_GUI is
 
          if not File_Added then
             Kernel.Insert
-              (-"There is no uncovered line in " &
-               Display_Base_Name (File_Node.Name));
+              (-"There is no uncovered line in "
+               & Display_Base_Name (File_Node.Name));
          end if;
       else
          Kernel.Insert
-           (-"There is no Gcov information associated with " &
-            Display_Base_Name (File_Node.Name));
+           (-"There is no Gcov information associated with "
+            & Display_Base_Name (File_Node.Name));
       end if;
    end List_File_Uncovered_Lines;
 
@@ -363,8 +360,8 @@ package body Coverage_GUI is
    is
       use File_Maps;
       Map_Cur  : File_Maps.Cursor := Project_Node.Files.First;
-      Sort_Arr : Code_Analysis.File_Array
-        (1 .. Integer (Project_Node.Files.Length));
+      Sort_Arr :
+        Code_Analysis.File_Array (1 .. Integer (Project_Node.Files.Length));
    begin
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
@@ -376,8 +373,7 @@ package body Coverage_GUI is
       for J in Sort_Arr'Range loop
          if Sort_Arr (J).Analysis_Data.Coverage_Data /= null then
             List_File_Uncovered_Lines
-              (Kernel, Sort_Arr (J), False,
-               Allow_Auto_Jump_To_First => True);
+              (Kernel, Sort_Arr (J), False, Allow_Auto_Jump_To_First => True);
          end if;
       end loop;
    end List_Project_Uncovered_Lines;
@@ -391,8 +387,8 @@ package body Coverage_GUI is
    is
       use File_Maps;
       Map_Cur  : File_Maps.Cursor := Project_Node.Files.First;
-      Sort_Arr : Code_Analysis.File_Array
-        (1 .. Integer (Project_Node.Files.Length));
+      Sort_Arr :
+        Code_Analysis.File_Array (1 .. Integer (Project_Node.Files.Length));
    begin
       for J in Sort_Arr'Range loop
          Sort_Arr (J) := Element (Map_Cur);
@@ -439,20 +435,20 @@ package body Coverage_GUI is
          for J in Subp_Node.Start .. Subp_Node.Stop loop
             if File_Node.Lines (J) /= Null_Line then
                Line_Coverage'Class
-                 (File_Node.Lines (J).Analysis_Data.Coverage_Data.all).
-                 Add_Location_If_Uncovered
-                   (Kernel,
-                    File_Node.Name,
-                    J,
-                    File_Node.Lines (J).Contents,
-                    Added,
-                    Allow_Auto_Jump_To_First => False);
+                 (File_Node.Lines (J).Analysis_Data.Coverage_Data.all)
+                 .Add_Location_If_Uncovered
+                    (Kernel,
+                     File_Node.Name,
+                     J,
+                     File_Node.Lines (J).Contents,
+                     Added,
+                     Allow_Auto_Jump_To_First => False);
             end if;
          end loop;
       else
          Kernel.Insert
-           (-"There is no Gcov information associated with " &
-            Display_Base_Name (File_Node.Name),
+           (-"There is no Gcov information associated with "
+            & Display_Base_Name (File_Node.Name),
             Mode => GPS.Kernel.Error);
       end if;
    end List_Subprogram_Uncovered_Lines;
@@ -462,8 +458,7 @@ package body Coverage_GUI is
    -----------------------------------
 
    procedure Show_All_Coverage_Information
-     (Kernel   : Kernel_Handle;
-      Projects : Code_Analysis_Tree)
+     (Kernel : Kernel_Handle; Projects : Code_Analysis_Tree)
    is
       use Project_Maps;
       Map_Cur  : Project_Maps.Cursor := Projects.First;
@@ -488,8 +483,7 @@ package body Coverage_GUI is
    -----------------------------------
 
    procedure Hide_All_Coverage_Information
-   (Kernel   : Kernel_Handle;
-    Projects : Code_Analysis_Tree)
+     (Kernel : Kernel_Handle; Projects : Code_Analysis_Tree)
    is
       use Project_Maps;
       Map_Cur : Project_Maps.Cursor := Projects.First;
@@ -506,13 +500,12 @@ package body Coverage_GUI is
    ------------------------------
 
    procedure Clean_All_Expanded_Lines
-     (Kernel   : Kernel_Handle;
-      Projects : Code_Analysis_Tree)
+     (Kernel : Kernel_Handle; Projects : Code_Analysis_Tree)
    is
       use Project_Maps;
       Project_Map_Cur : Project_Maps.Cursor := Projects.First;
       use File_Maps;
-      File_Map_Cur : File_Maps.Cursor;
+      File_Map_Cur    : File_Maps.Cursor;
    begin
       if Current_Coverage_Tool /= GNATcov then
          return;
@@ -536,8 +529,7 @@ package body Coverage_GUI is
    -------------------------------
 
    procedure Clean_File_Expanded_Lines
-     (Kernel : Kernel_Handle;
-      File   : Code_Analysis.File_Access)
+     (Kernel : Kernel_Handle; File : Code_Analysis.File_Access)
    is
       pragma Unreferenced (Kernel);
       use Command_Lists;
@@ -551,8 +543,7 @@ package body Coverage_GUI is
 
       for C of File.Line_Commands loop
          if C /= null
-           and then
-             Code_Coverage.GNATcov.Detail_Messages_Command (C.all).Added
+           and then Code_Coverage.GNATcov.Detail_Messages_Command (C.all).Added
          then
             --  Remove the expanded lines
             Code_Coverage.GNATcov.Remove_Inlined_Detailed_Messages
@@ -588,7 +579,7 @@ package body Coverage_GUI is
          if C /= null
            and then
              Code_Coverage.GNATcov.Detail_Messages_Command (C.all).Line.Line
-           = Line_Number
+             = Line_Number
          then
             Success := Execute (C);
             return;
@@ -601,8 +592,8 @@ package body Coverage_GUI is
    --------------------------------
 
    function Find_File_Node_In_Projects
-     (Projects : Code_Analysis_Tree;
-      File     : GNATCOLL.VFS.Virtual_File) return Code_Analysis.File_Access
+     (Projects : Code_Analysis_Tree; File : GNATCOLL.VFS.Virtual_File)
+      return Code_Analysis.File_Access
    is
       Project_Map_Cur : Project_Maps.Cursor;
       File_Map_Cur    : File_Maps.Cursor;
@@ -632,15 +623,15 @@ package body Coverage_GUI is
    --------------------
 
    function Find_Gcov_File
-     (Kernel : Kernel_Handle;
-      Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
+     (Kernel : Kernel_Handle; Source : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.VFS.Virtual_File
    is
       Gcov_Root_Env : VSS.Strings.Virtual_String;
       Gcov_Root     : GNATCOLL.VFS.Virtual_File;
 
    begin
       case Current_Coverage_Tool is
-         when Gcov =>
+         when Gcov    =>
             Gcov_Root_Env :=
               VSS.Application.System_Environment.Value ("GCOV_ROOT");
 
@@ -656,15 +647,15 @@ package body Coverage_GUI is
 
             if Gcov_Root = No_File then
                Kernel.Insert
-                 (-("Could not determine directory for GCOV files: make sure" &
-                    " that the root project has an object directory, or that" &
-                    " the environment variable GCOV_ROOT is set."),
+                 (-("Could not determine directory for GCOV files: make sure"
+                    & " that the root project has an object directory, or that"
+                    & " the environment variable GCOV_ROOT is set."),
                   Mode => Error);
             end if;
 
-            return Create_From_Dir
-              (Gcov_Root,
-               Base_Name (Source) & Gcov_Extension_Cst);
+            return
+              Create_From_Dir
+                (Gcov_Root, Base_Name (Source) & Gcov_Extension_Cst);
 
          when GNATcov =>
 
@@ -681,16 +672,17 @@ package body Coverage_GUI is
             declare
                Multiple_Format_File : constant Virtual_File :=
                  Create_From_Dir
-                   (Object_Dir
-                      (Get_Registry (Kernel).Tree.Root_Project) / (+"xcov+"),
+                   (Object_Dir (Get_Registry (Kernel).Tree.Root_Project)
+                    / (+"xcov+"),
                     Base_Name (Source) & GNATcov_Extension_Cst);
             begin
                if Multiple_Format_File.Is_Regular_File then
                   return Multiple_Format_File;
                end if;
-               return Create_From_Dir
-                 (Object_Dir (Get_Registry (Kernel).Tree.Root_Project),
-                  Base_Name (Source) & GNATcov_Extension_Cst);
+               return
+                 Create_From_Dir
+                   (Object_Dir (Get_Registry (Kernel).Tree.Root_Project),
+                    Base_Name (Source) & GNATcov_Extension_Cst);
             end;
       end case;
    end Find_Gcov_File;
@@ -762,21 +754,23 @@ package body Coverage_GUI is
       --  pointing to GNATcov otherwise.
 
       if Gcov_Enabled_Through_Env then
-         Coverage_Toolchain_Preference := Coverage_Toolchain_Preferences.Create
-           (Kernel.Get_Preferences,
-            Name  => "Coverage-Toolchain",
-            Label => "Coverage toolchain",
-            Path  => "Coverage Analysis",
-            Doc   => -"Select the toolchain to perform coverage analysis.",
-            Default => Gcov);
+         Coverage_Toolchain_Preference :=
+           Coverage_Toolchain_Preferences.Create
+             (Kernel.Get_Preferences,
+              Name    => "Coverage-Toolchain",
+              Label   => "Coverage toolchain",
+              Path    => "Coverage Analysis",
+              Doc     => -"Select the toolchain to perform coverage analysis.",
+              Default => Gcov);
       else
-         Coverage_Toolchain_Preference := Coverage_Toolchain_Preferences.Create
-           (Kernel.Get_Preferences,
-            Name  => "Coverage-Toolchain-Internal",
-            Label => "",
-            Path  => "",
-            Doc   => "",
-            Default => GNATcov);
+         Coverage_Toolchain_Preference :=
+           Coverage_Toolchain_Preferences.Create
+             (Kernel.Get_Preferences,
+              Name    => "Coverage-Toolchain-Internal",
+              Label   => "",
+              Path    => "",
+              Doc     => "",
+              Default => GNATcov);
       end if;
    end Register_Module;
 

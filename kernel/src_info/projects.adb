@@ -17,12 +17,12 @@
 
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
-with GPR.Opt;                    use GPR.Opt;
-with GPR.Names;                  use GPR.Names;
-with GPR.Snames;                 use GPR.Snames;
-with GNAT.Strings;               use GNAT.Strings;
+with GPR.Opt;      use GPR.Opt;
+with GPR.Names;    use GPR.Names;
+with GPR.Snames;   use GPR.Snames;
+with GNAT.Strings; use GNAT.Strings;
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 package body Projects is
    Me : constant Trace_Handle := Create ("GPS.KERNEL.PROJECTS");
@@ -47,8 +47,8 @@ package body Projects is
    -----------------------
 
    function Project_Directory
-     (Project : Project_Type;
-      Host    : String := Local_Host) return GNATCOLL.VFS.Virtual_File is
+     (Project : Project_Type; Host : String := Local_Host)
+      return GNATCOLL.VFS.Virtual_File is
    begin
       return Dir (Project_Path (Project, Host));
    end Project_Directory;
@@ -78,9 +78,8 @@ package body Projects is
    --------------------------
 
    function Source_Dirs_With_VCS
-     (Project   : Project_Type;
-      Recursive : Boolean) return GNATCOLL.VFS.File_Array
-   is
+     (Project : Project_Type; Recursive : Boolean)
+      return GNATCOLL.VFS.File_Array is
    begin
       --  ??? We could optimize and only take into account projects with a
       --  VCS attribute. This used to be the case before we moved the projects
@@ -110,9 +109,10 @@ package body Projects is
       begin
          --  An Ada identifier cannot be empty and must start with a letter
 
-         if S'Length = 0 or else
-            (S (S'First) not in 'a' .. 'z' and then
-             S (S'First) not in 'A' .. 'Z')
+         if S'Length = 0
+           or else
+             (S (S'First) not in 'a' .. 'z'
+              and then S (S'First) not in 'A' .. 'Z')
          then
             return False;
          end if;
@@ -133,9 +133,9 @@ package body Projects is
                --  An Ada identifier is made only of letters, digits and
                --  underscores (already treated).
 
-               if S (J) not in 'a' .. 'z' and then
-                  S (J) not in 'A' .. 'Z' and then
-                  S (J) not in '0' .. '9'
+               if S (J) not in 'a' .. 'z'
+                 and then S (J) not in 'A' .. 'Z'
+                 and then S (J) not in '0' .. '9'
                then
                   return False;
                end if;
@@ -173,15 +173,13 @@ package body Projects is
 
       loop
          Finish := Start - 1;
-         while Finish < Name'Last and then
-               Name (Finish + 1) /= '.'
-         loop
+         while Finish < Name'Last and then Name (Finish + 1) /= '.' loop
             Finish := Finish + 1;
          end loop;
 
          declare
             OK : constant Boolean :=
-                    Is_Ada_Identifier (Name (Start .. Finish));
+              Is_Ada_Identifier (Name (Start .. Finish));
          begin
             --  A project name needs to be an Ada identifier and cannot be an
             --  Ada95 reserved word.
@@ -205,8 +203,7 @@ package body Projects is
    -----------------
 
    function Environment
-     (Self : Project_Registry) return Project_Environment_Access
-   is
+     (Self : Project_Registry) return Project_Environment_Access is
    begin
       return Self.Env;
    end Environment;
@@ -225,8 +222,10 @@ package body Projects is
    -------------
 
    procedure Destroy (Registry : in out Project_Registry_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Project_Registry'Class, Project_Registry_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Project_Registry'Class,
+           Project_Registry_Access);
    begin
       Cleanup_Subdirs (Registry.Tree.all);
 
@@ -251,7 +250,7 @@ package body Projects is
       Reg : constant Project_Registry_Access := new Project_Registry;
    begin
       Reg.Tree := Project_Tree_Access (Tree);
-      Reg.Env  := Env;
+      Reg.Env := Env;
       Initialize (Reg.Env, IDE_Mode => True);
       return Reg;
    end Create;
@@ -261,8 +260,10 @@ package body Projects is
    ----------
 
    procedure Free (Self : in out Project_Type_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Project_Type_Array, Project_Type_Array_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Project_Type_Array,
+           Project_Type_Array_Access);
    begin
       Unchecked_Free (Self);
    end Free;
@@ -272,8 +273,7 @@ package body Projects is
    ------------
 
    procedure Append
-     (Files : in out File_And_Project_Array_Access;
-      F     : File_And_Project_Array)
+     (Files : in out File_And_Project_Array_Access; F : File_And_Project_Array)
    is
       Tmp : File_And_Project_Array_Access;
    begin
@@ -293,17 +293,17 @@ package body Projects is
    --------------------------------
 
    function Source_Files_Non_Recursive
-     (Projects              : Project_Type_Array;
-      Include_Project_Files : Boolean := False)
+     (Projects : Project_Type_Array; Include_Project_Files : Boolean := False)
       return GNATCOLL.Projects.File_And_Project_Array_Access
    is
       Result : File_And_Project_Array_Access;
       Tmp    : File_And_Project_Array_Access;
    begin
       for P in Projects'Range loop
-         Tmp := Projects (P).Source_Files
-           (Recursive             => False,
-            Include_Project_Files => Include_Project_Files);
+         Tmp :=
+           Projects (P).Source_Files
+             (Recursive             => False,
+              Include_Project_Files => Include_Project_Files);
 
          if Tmp /= null then
             Append (Result, Tmp.all);
@@ -319,22 +319,23 @@ package body Projects is
    ---------------------
 
    procedure Cleanup_Subdirs (Tree : GNATCOLL.Projects.Project_Tree'Class) is
-      F : Virtual_File;
+      F       : Virtual_File;
       Success : Boolean;
    begin
       --  Remove temporary files if needed
 
       if Tree.Root_Project.Object_Dir /= No_File then
-         F := Create_From_Dir
-            (Tree.Root_Project.Object_Dir, Saved_Config_File);
+         F :=
+           Create_From_Dir (Tree.Root_Project.Object_Dir, Saved_Config_File);
          if F.Is_Regular_File then
             Trace (Me, "Deleting " & F.Display_Full_Name);
             F.Delete (Success);
          end if;
       end if;
 
-      F := Create_From_Dir
-         (Tree.Root_Project.Project_Path.Dir, Saved_Config_File);
+      F :=
+        Create_From_Dir
+          (Tree.Root_Project.Project_Path.Dir, Saved_Config_File);
       if F.Is_Regular_File then
          Trace (Me, "Deleting " & F.Display_Full_Name);
          F.Delete (Success);
@@ -377,8 +378,8 @@ package body Projects is
    ------------
 
    function Create
-     (Self     : in out Project_Registry;
-      Filename : Filesystem_String) return Virtual_File
+     (Self : in out Project_Registry; Filename : Filesystem_String)
+      return Virtual_File
    is
       use FS_To_File;
       C : Cursor;

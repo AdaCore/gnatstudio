@@ -23,22 +23,24 @@ with GPS.Core_Kernels;
 
 package GPS.Process_Launchers.Implementation is
 
-   type GPS_Process_Launcher_Record is new
-     GPS.Process_Launchers.Process_Launcher_Record with
-   record
+   type GPS_Process_Launcher_Record is
+     new GPS.Process_Launchers.Process_Launcher_Record
+   with record
       Kernel : GPS.Core_Kernels.Core_Kernel;
    end record;
 
-   overriding procedure Launch_Process
-     (Launcher             : access GPS_Process_Launcher_Record;
-      CL                   : Arg_List;
-      Server               : Server_Type := GPS_Server;
-      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Output_Parser        : GPS.Tools_Output.Tools_Output_Parser_Access;
-      Show_Command_To      : Messages_Windows.Abstract_Messages_Window_Access;
-      Success              : out Boolean);
+   overriding
+   procedure Launch_Process
+     (Launcher        : access GPS_Process_Launcher_Record;
+      CL              : Arg_List;
+      Server          : Server_Type := GPS_Server;
+      Directory       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Output_Parser   : GPS.Tools_Output.Tools_Output_Parser_Access;
+      Show_Command_To : Messages_Windows.Abstract_Messages_Window_Access;
+      Success         : out Boolean);
 
-   overriding procedure Launch_Process_In_Background
+   overriding
+   procedure Launch_Process_In_Background
      (Launcher             : access GPS_Process_Launcher_Record;
       CL                   : Arg_List;
       Server               : Server_Type := GPS_Server;

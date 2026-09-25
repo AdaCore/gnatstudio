@@ -19,20 +19,20 @@
 --  NOTE: this should remain independent from the GNAT Studio Kernel, so that
 --  it can be reused in a stand-alone executable.
 
-with GPS.Kernel;                       use GPS.Kernel;
-with Gtk.Window;                       use Gtk.Window;
+with GPS.Kernel; use GPS.Kernel;
+with Gtk.Window; use Gtk.Window;
 
 with Project_Templates.Script_Objects; use Project_Templates.Script_Objects;
 
 package Project_Templates.GUI is
 
    type Template_Script_Object is record
-      Project  : Project_Template;
-      Object   : Script_Object;
+      Project : Project_Template;
+      Object  : Script_Object;
    end record;
 
-   package Templates_Script_Objects_List is
-      new Ada.Containers.Doubly_Linked_Lists (Template_Script_Object);
+   package Templates_Script_Objects_List is new
+     Ada.Containers.Doubly_Linked_Lists (Template_Script_Object);
 
    procedure Install_Template
      (Templates     : Templates_Script_Objects_List.List;

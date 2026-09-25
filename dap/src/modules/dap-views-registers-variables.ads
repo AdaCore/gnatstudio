@@ -20,15 +20,15 @@ with DAP.Tools;
 
 private package DAP.Views.Registers.Variables is
 
-   type Variables_Request is
-     new DAP.Requests.Variables.Variables_DAP_Request
+   type Variables_Request is new DAP.Requests.Variables.Variables_DAP_Request
    with record
       Kind : Command_Kind := Update_Registers;
    end record;
 
    type Variables_Request_Access is access all Variables_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Variables_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.VariablesResponse;

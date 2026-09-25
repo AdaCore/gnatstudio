@@ -17,7 +17,7 @@
 
 with Ada.Strings.Unbounded;
 
-with Gtkada.MDI;                   use Gtkada.MDI;
+with Gtkada.MDI; use Gtkada.MDI;
 
 with Basic_Types;
 with GPS.Default_Styles;
@@ -31,8 +31,8 @@ package body DAP.Utils is
 
    Debugger_Messages_Category : constant VSS.Strings.Virtual_String :=
      "debugger-current-line";
-   Current_Line_Pixbuf        : constant
-     Ada.Strings.Unbounded.Unbounded_String :=
+   Current_Line_Pixbuf        :
+     constant Ada.Strings.Unbounded.Unbounded_String :=
        Ada.Strings.Unbounded.To_Unbounded_String
          ("gps-emblem-debugger-current");
 
@@ -50,32 +50,33 @@ package body DAP.Utils is
    begin
       Unhighlight_Current_Line (Kernel);
 
-      if File = No_File
-        or else Line = 0
-      then
+      if File = No_File or else Line = 0 then
          return;
       end if;
 
-      Msg := Create_Simple_Message
-        (GPS.Kernel.Get_Messages_Container (Kernel),
-         Category                 => Debugger_Messages_Category,
-         File                     => File,
-         Line                     => Line,
-         Column                   => 1,
-         Text                     => "",
-         Importance               => Unspecified,
-         Flags                    => GPS.Kernel.Messages.Sides_Only,
-         Allow_Auto_Jump_To_First => False);
+      Msg :=
+        Create_Simple_Message
+          (GPS.Kernel.Get_Messages_Container (Kernel),
+           Category                 => Debugger_Messages_Category,
+           File                     => File,
+           Line                     => Line,
+           Column                   => 1,
+           Text                     => "",
+           Importance               => Unspecified,
+           Flags                    => GPS.Kernel.Messages.Sides_Only,
+           Allow_Auto_Jump_To_First => False);
 
       Msg.Set_Highlighting
         (GPS.Default_Styles.Debugger_Current_Line_Style, Highlight_Whole_Line);
 
-      Action := new Line_Information_Record'
-        (Text         => Ada.Strings.Unbounded.Null_Unbounded_String,
-         Tooltip_Text => Ada.Strings.Unbounded.To_Unbounded_String
-           ("Current line in debugger"),
-         Image        => Current_Line_Pixbuf,
-         others       => <>);
+      Action :=
+        new Line_Information_Record'
+          (Text         => Ada.Strings.Unbounded.Null_Unbounded_String,
+           Tooltip_Text =>
+             Ada.Strings.Unbounded.To_Unbounded_String
+               ("Current line in debugger"),
+           Image        => Current_Line_Pixbuf,
+           others       => <>);
       Msg.Set_Action (Action);
 
       DAP.Utils.Goto_Location (Kernel, File, Line);
@@ -92,10 +93,7 @@ package body DAP.Utils is
    is
       Buffer : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get
-          (File,
-           Open_Buffer   => True,
-           Focus         => False,
-           Unlocked_Only => True);
+          (File, Open_Buffer => True, Focus => False, Unlocked_Only => True);
    begin
       Buffer.Current_View.Cursor_Goto
         (Location   =>
@@ -104,8 +102,8 @@ package body DAP.Utils is
 
       --  raise the source editor without giving a focus
       declare
-         C : constant MDI_Child := GPS.Editors.GtkAda.Get_MDI_Child
-           (Buffer.Current_View);
+         C : constant MDI_Child :=
+           GPS.Editors.GtkAda.Get_MDI_Child (Buffer.Current_View);
       begin
          if C /= null then
             Raise_Child (C, False);
@@ -129,8 +127,7 @@ package body DAP.Utils is
    -------------
 
    function To_File
-     (Item : VSS.Strings.Virtual_String'Class)
-      return GNATCOLL.VFS.Virtual_File
+     (Item : VSS.Strings.Virtual_String'Class) return GNATCOLL.VFS.Virtual_File
    is
       use GNATCOLL.VFS;
    begin

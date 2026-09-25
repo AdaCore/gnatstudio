@@ -18,10 +18,10 @@
 --  This package provides a way to analyze & modify the toolchain definition
 --  decribed in a GNAT project file.
 
-with GNAT.Strings; use GNAT.Strings;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
+with GNAT.Strings;      use GNAT.Strings;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
-with Basic_Types; use Basic_Types;
+with Basic_Types;       use Basic_Types;
 
 private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 private with Ada.Containers.Indefinite_Hashed_Maps;
@@ -48,8 +48,8 @@ package Toolchains is
       From_Project_Driver,
       From_User);
 
-   subtype Default_Compiler_Origin is Compiler_Origin
-     range From_Default .. From_Gprconfig;
+   subtype Default_Compiler_Origin is
+     Compiler_Origin range From_Default .. From_Gprconfig;
 
    type Compiler is private;
    type Compiler_Array is array (Natural range <>) of Compiler;
@@ -125,12 +125,7 @@ package Toolchains is
    -- Toolchain --
    ---------------
 
-   type Tools is
-     (Unknown,
-      GNAT_Driver,
-      GNAT_List,
-      Debugger,
-      CPP_Filt);
+   type Tools is (Unknown, GNAT_Driver, GNAT_List, Debugger, CPP_Filt);
    --  This enumeration represents the various tools that can be set in a
    --  toolchain.
 
@@ -197,10 +192,7 @@ package Toolchains is
       Origin : Compiler_Origin);
    --  Add command for the compiler for Lang on this toolchain
 
-   procedure Set_Compiler
-     (This  : Toolchain;
-      Lang  : String;
-      Value : String);
+   procedure Set_Compiler (This : Toolchain; Lang : String; Value : String);
    --  Sets the compiler command to use for this toolchain. If such a compiler
    --  has already been defined using Add_Compiler above, then this compiler
    --  is selected as the compiler to use. Else, a compiler is created using
@@ -278,8 +270,7 @@ package Toolchains is
    --  information needs to have been computed beforehands.
 
    procedure Set_Library_Information
-     (This : Toolchain;
-      Info : Ada_Library_Info_Access);
+     (This : Toolchain; Info : Ada_Library_Info_Access);
    --  Modifies the library information stored in this toolchain.
 
    procedure Initialize_Known_Toolchain (This : Toolchain; Name : String);
@@ -287,33 +278,25 @@ package Toolchains is
    --  given in parameter. This doesn't add the toolchain in the manager.
 
    function Get_Defined_Runtimes
-     (Tc   : Toolchain;
-      Lang : String) return GNAT.Strings.String_List;
+     (Tc : Toolchain; Lang : String) return GNAT.Strings.String_List;
    --  Return the list of all the runtimes defined for this toolchain and the
    --  given language.
 
-   function Get_Used_Runtime
-     (Tc   : Toolchain;
-      Lang : String) return String;
+   function Get_Used_Runtime (Tc : Toolchain; Lang : String) return String;
    --  Return the runtime currently used by this toolchain for the given
    --  language.
 
    procedure Set_Used_Runtime
-     (Tc      : Toolchain;
-      Lang    : String;
-      Runtime : String);
+     (Tc : Toolchain; Lang : String; Runtime : String);
    --  Set the runtime used by this toolchain for the given language.
 
    function Is_Runtime_Defined
-     (Tc      : Toolchain;
-      Lang    : String;
-      Runtime : String) return Boolean;
+     (Tc : Toolchain; Lang : String; Runtime : String) return Boolean;
    --  Return True if the given runtime is valid for this toolchain and this
    --  language, False otherwise.
 
    function Is_Default_Runtime_Used
-     (Tc   : Toolchain;
-      Lang : String) return Boolean;
+     (Tc : Toolchain; Lang : String) return Boolean;
    --  Return True if the runtime currently used by this toolchain and this
    --  language is the default one, False otherwise.
 
@@ -329,7 +312,7 @@ package Toolchains is
       Command           : String;
       Timeout_MS        : Integer;
       Handle_GUI_Events : Boolean := False) return String
-      is abstract;
+   is abstract;
    --  Executes the command and returns the result. The implementation of this
    --  subprogram typically differs between GNATbench and GNAT Studio. If the
    --  process didn't return until timeout miliseconds, then the call has to
@@ -350,8 +333,8 @@ package Toolchains is
    --  ??? what is this project parameter for?
 
    function Get_Or_Create_Language
-     (Manager : access Toolchain_Manager_Record;
-      Lang    : String) return Language_Id;
+     (Manager : access Toolchain_Manager_Record; Lang : String)
+      return Language_Id;
    --  Return the language id of the given name, create one if it doesn't exist
    --  yet.
 
@@ -362,28 +345,26 @@ package Toolchains is
    --  be modified, different from Null_Toolchain which can't.
 
    function Get_Toolchain
-     (Manager : access Toolchain_Manager_Record;
-      Label   : String) return Toolchain;
+     (Manager : access Toolchain_Manager_Record; Label : String)
+      return Toolchain;
    --  Return a toolchain according to its name. If no such toolchain exist,
    --  but the name is the name of a known toolchain, then it will be
    --  automatically created. Otherwise, will return Null_Toolchain.
 
    function Get_Toolchain
-     (Manager : access Toolchain_Manager_Record;
-      Project : Project_Type) return Toolchain;
+     (Manager : access Toolchain_Manager_Record; Project : Project_Type)
+      return Toolchain;
    --  Retreives the toolchain based on the contents of a project. This
    --  toolchain is always stored in the Manager.
 
    procedure Add_Toolchain
-     (Manager : access Toolchain_Manager_Record;
-      Tc      : Toolchain);
+     (Manager : access Toolchain_Manager_Record; Tc : Toolchain);
    --  Add a toolchain in the toolchain manager - raise an exception if the
    --  toolchain already exsits. If the toolchain added has no ada library
    --  information available, it will be automatically computed.
 
    procedure Remove_Toolchain
-     (Manager : access Toolchain_Manager_Record;
-      Tc_Name : String);
+     (Manager : access Toolchain_Manager_Record; Tc_Name : String);
    --  Remove an existing toolchain in the toolchain manager - raise an
    --  exception if the toolchain is not found.
 
@@ -394,15 +375,13 @@ package Toolchains is
    --  Return the toolchains contained in this manager.
 
    procedure Compute_Gprconfig_Compilers
-     (Mgr     : access Toolchain_Manager_Record;
-      Success : out Boolean);
+     (Mgr : access Toolchain_Manager_Record; Success : out Boolean);
    --  Retrieve all compilers found on the host.
    --  Status is set to false if gprconfig could not be found or is too olds
 
    procedure Compute_Gprconfig_Compilers
      (Mgr      : access Toolchain_Manager_Record;
-      Callback : access procedure
-        (Toolchain : String; Num, Total : Natural);
+      Callback : access procedure (Toolchain : String; Num, Total : Natural);
       Success  : out Boolean);
    --  Same as above, with callback called when analyzing toolchains
 
@@ -441,12 +420,12 @@ package Toolchains is
    -------------------------------
 
    type Toolchain_Change_Listener_Record is abstract tagged null record;
-   type Toolchain_Change_Listener is access all
-     Toolchain_Change_Listener_Record'Class;
+   type Toolchain_Change_Listener is
+     access all Toolchain_Change_Listener_Record'Class;
 
    procedure Toolchain_Changed
-     (This    : Toolchain_Change_Listener_Record;
-      Manager : Toolchain_Manager) is abstract;
+     (This : Toolchain_Change_Listener_Record; Manager : Toolchain_Manager)
+   is abstract;
    --  Reacts to changes made in the manager.
 
    procedure Add_Listener
@@ -462,8 +441,8 @@ package Toolchains is
    --  the listener doesn't exist.
 
    function Get_Or_Create_Library_Information
-     (Manager        : access Toolchain_Manager_Record;
-      GNATls_Command : String) return Ada_Library_Info_Access;
+     (Manager : access Toolchain_Manager_Record; GNATls_Command : String)
+      return Ada_Library_Info_Access;
    --  Return the library info for this gnatls command. The resulting object
    --  is not computed through gnatls, and the information may be inaccurate.
    --  This is flagged in the internal state of the object, which will do
@@ -489,13 +468,13 @@ private
    end record;
 
    type Tool_Record is record
-      Command   : Ada.Strings.Unbounded.Unbounded_String;
+      Command : Ada.Strings.Unbounded.Unbounded_String;
       --  The actual command used to launch the tool
 
-      Is_Valid  : Boolean;
+      Is_Valid : Boolean;
       --  Wether the command was found
 
-      Origin    : Compiler_Origin;
+      Origin : Compiler_Origin;
       --  Where the tool definition comes from
 
       Base_Name : Boolean;
@@ -503,27 +482,27 @@ private
    end record;
 
    No_Tool : constant Tool_Record :=
-               (Command     => Ada.Strings.Unbounded.Null_Unbounded_String,
-                Is_Valid    => False,
-                Origin      => From_Default,
-                Base_Name => False);
+     (Command   => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Is_Valid  => False,
+      Origin    => From_Default,
+      Base_Name => False);
 
    type Tool_Array is array (Tools) of Tool_Record;
 
    type Compiler is record
-      Exe         : Ada.Strings.Unbounded.Unbounded_String;
+      Exe : Ada.Strings.Unbounded.Unbounded_String;
       --  The base or full name of the compiler
 
-      Is_Valid    : Boolean;
+      Is_Valid : Boolean;
       --  Wether the Exe command could be resolved to an actual file
 
-      Origin      : Compiler_Origin;
+      Origin : Compiler_Origin;
       --  Where this compiler description comes from
 
-      Toolchain   : Ada.Strings.Unbounded.Unbounded_String;
+      Toolchain : Ada.Strings.Unbounded.Unbounded_String;
       --  The toolchain the compiler belongs to
 
-      Lang        : Ada.Strings.Unbounded.Unbounded_String;
+      Lang : Ada.Strings.Unbounded.Unbounded_String;
       --  The language compiled by this compiler
 
       Base_Name : Boolean;
@@ -531,36 +510,41 @@ private
    end record;
 
    No_Compiler : constant Compiler :=
-                   (Exe         => Ada.Strings.Unbounded.Null_Unbounded_String,
-                    Is_Valid    => False,
-                    Origin      => From_Default,
-                    Toolchain   => Ada.Strings.Unbounded.Null_Unbounded_String,
-                    Lang        => Ada.Strings.Unbounded.Null_Unbounded_String,
-                    Base_Name => False);
+     (Exe       => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Is_Valid  => False,
+      Origin    => From_Default,
+      Toolchain => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Lang      => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Base_Name => False);
 
    package Compiler_Vector is new Ada.Containers.Vectors (Positive, Compiler);
-   package Compiler_Ref_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Natural,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
+   package Compiler_Ref_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (String,
+        Natural,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
 
-   package Runtime_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Element_Type => String,
-      "="          => Ada.Strings.Equal_Case_Insensitive);
+   package Runtime_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists
+       (Element_Type => String,
+        "="          => Ada.Strings.Equal_Case_Insensitive);
 
-   package Runtime_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => String,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
-      "="             => "=");
+   package Runtime_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => String,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
+        "="             => "=");
 
-   package Runtime_Lists_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Runtime_Lists.List,
-      Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
-      "="             => Runtime_Lists."=");
+   package Runtime_Lists_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Runtime_Lists.List,
+        Hash            => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
+        "="             => Runtime_Lists."=");
 
    type Toolchain_Record is record
       Name : String_Access;
@@ -577,7 +561,7 @@ private
       --  Are the contents of this toolchain coming from standard description,
       --  or are fields been manually set by the user?
 
-      Tools         : Tool_Array := (others => No_Tool);
+      Tools : Tool_Array := (others => No_Tool);
       --  The tools for this toolchain.
 
       Default_Tools : Tool_Array := (others => No_Tool);
@@ -606,7 +590,7 @@ private
       Manager : Toolchain_Manager;
       --  The manager this toolchain is attached to
 
-      Refs    : Integer := 0;
+      Refs : Integer := 0;
       --  Number of references to that toolchain. The toolchain is never
       --  freed before this reaches 0.
    end record;
@@ -615,19 +599,20 @@ private
 
    Null_Toolchain : aliased constant Toolchain := null;
 
-   package Toolchain_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, Toolchain);
+   package Toolchain_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, Toolchain);
 
-   package Library_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, Ada_Library_Info_Access);
+   package Library_Maps is new
+     Ada.Containers.Indefinite_Ordered_Maps (String, Ada_Library_Info_Access);
 
-   package Listener_List is new Ada.Containers.Doubly_Linked_Lists
-     (Toolchain_Change_Listener);
+   package Listener_List is new
+     Ada.Containers.Doubly_Linked_Lists (Toolchain_Change_Listener);
 
-   package Language_Sets is new Ada.Containers.Indefinite_Hashed_Sets
-     (String,
-      Hash                => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Elements => Ada.Strings.Equal_Case_Insensitive);
+   package Language_Sets is new
+     Ada.Containers.Indefinite_Hashed_Sets
+       (String,
+        Hash                => Ada.Strings.Hash_Case_Insensitive,
+        Equivalent_Elements => Ada.Strings.Equal_Case_Insensitive);
 
    type Language_Id is new Language_Sets.Cursor;
 
@@ -647,14 +632,14 @@ private
    end record;
 
    function Get_Known_Toolchain
-     (Manager : access Toolchain_Manager_Record;
-      Name    : String) return Toolchain;
+     (Manager : access Toolchain_Manager_Record; Name : String)
+      return Toolchain;
    --  Gets a toolchain from a known description - creates it if it's not yet
    --  stored in the manager.
 
    function Create_Anonymous_Name
-     (Manager : access Toolchain_Manager_Record;
-      Prefix  : String) return String;
+     (Manager : access Toolchain_Manager_Record; Prefix : String)
+      return String;
    --  Return a unique anonymous name from a prefix, that's not already
    --  registered in the manager
 

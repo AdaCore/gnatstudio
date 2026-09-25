@@ -35,11 +35,11 @@ private
    type Word is new Interfaces.C.unsigned with Volatile => True;
 
    Map : constant array (Client_Request_Kinds) of Word :=
-     (Callgrind_Dump_Stats => 16#43540000#,
-      Callgrind_Zero_Stats => 16#43540001#,
-      Callgrind_Toggle_Collect => 16#43540002#,
+     (Callgrind_Dump_Stats            => 16#43540000#,
+      Callgrind_Zero_Stats            => 16#43540001#,
+      Callgrind_Toggle_Collect        => 16#43540002#,
       --  Callgrind_Dump_Stats_At => 16#43540003#,
       Callgrind_Start_Instrumentation => 16#43540004#,
-      Callgrind_Stop_Instrumentation => 16#43540005#);
+      Callgrind_Stop_Instrumentation  => 16#43540005#);
 
 end GPS.Valgrind.Binding;

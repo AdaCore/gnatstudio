@@ -15,13 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Any_Types;         use GNATCOLL.Any_Types;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with Commands;                   use Commands;
+with GNATCOLL.Any_Types;   use GNATCOLL.Any_Types;
+with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
+with Commands;             use Commands;
 with GPS.Python_GIL;
-with GPS.Scripts;                use GPS.Scripts;
-with GPS.Scripts.Commands;       use GPS.Scripts.Commands;
-with GPS.Tools_Output;           use GPS.Tools_Output;
+with GPS.Scripts;          use GPS.Scripts;
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
+with GPS.Tools_Output;     use GPS.Tools_Output;
 with String_List_Utils;
 
 package body Custom_Tools_Output is
@@ -43,8 +43,7 @@ package body Custom_Tools_Output is
 
    type Tools_Output_Property_Access is access all Tools_Output_Property;
 
-   procedure Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+   procedure Handler (Data : in out Callback_Data'Class; Command : String);
    --  Handle the custom output parser commands
 
    type Custom_Parser is new Tools_Output_Parser with record
@@ -52,19 +51,22 @@ package body Custom_Tools_Output is
       Kernel : Core_Kernel;
    end record;
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Custom_Parser;
       Item    : String;
       Command : access Root_Command'Class);
    --  Parse a piece of an output passed as Item.
 
-   overriding procedure Parse_Standard_Error
+   overriding
+   procedure Parse_Standard_Error
      (Self    : not null access Custom_Parser;
       Item    : String;
       Command : access Root_Command'Class);
    --  Parse a piece of an stderr passed as Item.
 
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Custom_Parser;
       Status  : Integer;
       Command : access Root_Command'Class);
@@ -74,7 +76,8 @@ package body Custom_Tools_Output is
       Kernel : Core_Kernel;
    end record;
 
-   overriding procedure Create_External_Parsers
+   overriding
+   procedure Create_External_Parsers
      (Self        : access Python_Parser_Fabric;
       Parser_List : in out String_List_Utils.String_List.Cursor;
       Child       : in out Tools_Output_Parser_Access;
@@ -84,14 +87,16 @@ package body Custom_Tools_Output is
    -- Create_External_Parsers --
    -----------------------------
 
-   overriding procedure Create_External_Parsers
+   overriding
+   procedure Create_External_Parsers
      (Self        : access Python_Parser_Fabric;
       Parser_List : in out String_List_Utils.String_List.Cursor;
       Child       : in out Tools_Output_Parser_Access;
       Found       : out Boolean)
    is
       use String_List_Utils.String_List;
-      Lock : GPS.Python_GIL.Lock with Unreferenced;
+      Lock : GPS.Python_GIL.Lock
+      with Unreferenced;
 
       Create_Parser : constant String := "tool_output.create_parser";
 
@@ -109,8 +114,9 @@ package body Custom_Tools_Output is
          if Child /= null then
             --  Create wrapper around Child and pass to python function
             declare
-               Class    : constant Class_Type := New_Class
-                 (Self.Kernel.Scripts, Tools_Output_Handler_Class_Name);
+               Class    : constant Class_Type :=
+                 New_Class
+                   (Self.Kernel.Scripts, Tools_Output_Handler_Class_Name);
                Instance : constant Class_Instance :=
                  New_Instance (Script, Class);
                Property : constant Tools_Output_Property := (Child => Child);
@@ -153,34 +159,36 @@ package body Custom_Tools_Output is
       end loop;
 
       Found := True;
-      Child := new Custom_Parser'
-        (Child => null, Inst => Inst, Kernel => Self.Kernel);
+      Child :=
+        new Custom_Parser'(Child => null, Inst => Inst, Kernel => Self.Kernel);
    end Create_External_Parsers;
 
    -------------------
    -- End_Of_Stream --
    -------------------
 
-   overriding procedure End_Of_Stream
+   overriding
+   procedure End_Of_Stream
      (Self    : not null access Custom_Parser;
       Status  : Integer;
       Command : access Root_Command'Class)
    is
-      Inst : Class_Instance := No_Class_Instance;
+      Inst      : Class_Instance := No_Class_Instance;
       Scheduled : Scheduled_Command_Access;
    begin
       --  Unless we have finalized the scripts module already
       if Self.Kernel.Scripts /= null then
-         Scheduled := Scheduled_Command_Access
-            (Self.Kernel.Get_Scheduled_Command (Command));
+         Scheduled :=
+           Scheduled_Command_Access
+             (Self.Kernel.Get_Scheduled_Command (Command));
          if Scheduled /= null then
             Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
          end if;
 
          declare
             Proc : Subprogram_Type := Get_Method (Self.Inst, On_Exit_Cst);
-            Args : Callback_Data'Class := Create
-              (Get_Script (Self.Inst), Arguments_Count => 2);
+            Args : Callback_Data'Class :=
+              Create (Get_Script (Self.Inst), Arguments_Count => 2);
          begin
             Set_Nth_Arg (Args, 1, Status);
             Set_Nth_Arg (Args, 2, Inst);
@@ -203,14 +211,12 @@ package body Custom_Tools_Output is
    -- Handler --
    -------------
 
-   procedure Handler
-     (Data    : in out Callback_Data'Class; Command : String)
-   is
+   procedure Handler (Data : in out Callback_Data'Class; Command : String) is
       Kernel : constant Core_Kernel := Get_Kernel (Data);
-      Class  : constant Class_Type := New_Class
-        (Kernel.Scripts, Tools_Output_Handler_Class_Name);
+      Class  : constant Class_Type :=
+        New_Class (Kernel.Scripts, Tools_Output_Handler_Class_Name);
       Arg_3  : constant Scheduled_Command_Access :=
-         Get_Command (Data, 3, Allow_Null => True);
+        Get_Command (Data, 3, Allow_Null => True);
    begin
       if Command = On_Stdout_Cst then
          Name_Parameters (Data, On_Text_Params);
@@ -256,15 +262,16 @@ package body Custom_Tools_Output is
    -- Parse_Standard_Error --
    --------------------------
 
-   overriding procedure Parse_Standard_Error
+   overriding
+   procedure Parse_Standard_Error
      (Self    : not null access Custom_Parser;
       Item    : String;
       Command : access Root_Command'Class)
    is
-      Args : Callback_Data'Class := Create
-        (Get_Script (Self.Inst), Arguments_Count => 2);
-      Proc : Subprogram_Type;
-      Inst : Class_Instance := No_Class_Instance;
+      Args      : Callback_Data'Class :=
+        Create (Get_Script (Self.Inst), Arguments_Count => 2);
+      Proc      : Subprogram_Type;
+      Inst      : Class_Instance := No_Class_Instance;
       Scheduled : constant Scheduled_Command_Access :=
         Scheduled_Command_Access (Self.Kernel.Get_Scheduled_Command (Command));
    begin
@@ -289,15 +296,16 @@ package body Custom_Tools_Output is
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Custom_Parser;
       Item    : String;
       Command : access Root_Command'Class)
    is
-      Args : Callback_Data'Class := Create
-        (Get_Script (Self.Inst), Arguments_Count => 2);
-      Proc : Subprogram_Type;
-      Inst : Class_Instance := No_Class_Instance;
+      Args      : Callback_Data'Class :=
+        Create (Get_Script (Self.Inst), Arguments_Count => 2);
+      Proc      : Subprogram_Type;
+      Inst      : Class_Instance := No_Class_Instance;
       Scheduled : constant Scheduled_Command_Access :=
         Scheduled_Command_Access (Self.Kernel.Get_Scheduled_Command (Command));
    begin
@@ -325,37 +333,37 @@ package body Custom_Tools_Output is
    procedure Register_Commands (Kernel : access Core_Kernel_Record'Class) is
       Fabric : constant External_Parser_Fabric_Access :=
         new Python_Parser_Fabric'(Kernel => Core_Kernel (Kernel));
-      Class : constant Class_Type :=
+      Class  : constant Class_Type :=
         New_Class (Kernel.Scripts, Tools_Output_Handler_Class_Name);
    begin
       Register_Command
         (Kernel.Scripts,
          Constructor_Method,
-         Minimum_Args  => 0,
-         Maximum_Args  => 1,
-         Class         => Class,
-         Handler       => Handler'Access);
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Class        => Class,
+         Handler      => Handler'Access);
       Register_Command
         (Kernel.Scripts,
          On_Stdout_Cst,
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Class,
-         Handler       => Handler'Access);
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class        => Class,
+         Handler      => Handler'Access);
       Register_Command
         (Kernel.Scripts,
          On_Stderr_Cst,
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Class,
-         Handler       => Handler'Access);
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class        => Class,
+         Handler      => Handler'Access);
       Register_Command
         (Kernel.Scripts,
          On_Exit_Cst,
-         Minimum_Args  => 2,
-         Maximum_Args  => 2,
-         Class         => Class,
-         Handler       => Handler'Access);
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Class        => Class,
+         Handler      => Handler'Access);
 
       Set_External_Parser_Fabric (Fabric);
    end Register_Commands;

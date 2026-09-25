@@ -24,8 +24,8 @@ package body Lazy_Vectors is
    ----------
 
    procedure Free (This : in out Lazy_Vector) is
-      procedure Internal is new Ada.Unchecked_Deallocation
-        (Lazy_Vector_Record, Lazy_Vector);
+      procedure Internal is new
+        Ada.Unchecked_Deallocation (Lazy_Vector_Record, Lazy_Vector);
    begin
       Free (This.Datas);
       Internal (This);
@@ -35,7 +35,7 @@ package body Lazy_Vectors is
    -- Insert --
    ------------
 
-   procedure Insert  (Vector : Lazy_Vector; Data : Data_Type) is
+   procedure Insert (Vector : Lazy_Vector; Data : Data_Type) is
       Dummy : Iterator;
    begin
       Insert (Vector, Data, Dummy);
@@ -46,10 +46,7 @@ package body Lazy_Vectors is
    ------------
 
    procedure Insert
-     (Vector : Lazy_Vector;
-      Data   : Data_Type;
-      Pos    : out Iterator)
-   is
+     (Vector : Lazy_Vector; Data : Data_Type; Pos : out Iterator) is
    begin
       Pos.Vector := Vector;
 
@@ -189,8 +186,8 @@ package body Lazy_Vectors is
    ----------
 
    procedure Free (This : in out Data_Array_Access) is
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (Data_Array, Data_Array_Access);
+      procedure Internal_Free is new
+        Ada.Unchecked_Deallocation (Data_Array, Data_Array_Access);
    begin
       Internal_Free (This);
    end Free;

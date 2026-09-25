@@ -42,8 +42,7 @@ package GPS.Kernel.Messages.Legacy is
       Category : VSS.Strings.Virtual_String;
       File     : GNATCOLL.VFS.Virtual_File;
       Line     : Natural;
-      Column   : Basic_Types.Visible_Column_Type)
-      return Message_Access;
+      Column   : Basic_Types.Visible_Column_Type) return Message_Access;
    --  Returns last inserted mesage at the specified location if any;
    --  otherwise returns null.
 

@@ -20,7 +20,8 @@ with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 with Basic_Types;                use Basic_Types;
 with Case_Handling;
 with GNAT.Expect;
-with GNAT.Regpat;                use GNAT;
+with GNAT.Regpat;
+use GNAT;
 with GNAT.Strings;
 with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Xref;
@@ -29,8 +30,8 @@ with GNATCOLL.VFS;
 
 package Language is
 
-   Clang_Support : GNATCOLL.Traces.Trace_Handle := GNATCOLL.Traces.Create
-     ("GPS.INTERNAL.LANGUAGE", GNATCOLL.Traces.On);
+   Clang_Support : GNATCOLL.Traces.Trace_Handle :=
+     GNATCOLL.Traces.Create ("GPS.INTERNAL.LANGUAGE", GNATCOLL.Traces.On);
 
    type Language_Root is abstract tagged limited private;
    type Language_Access is access all Language_Root'Class;
@@ -67,7 +68,8 @@ package Language is
    --  for each language.
 
    function Is_Simple_Type
-     (Lang : access Language_Root; Str : String) return Boolean is abstract;
+     (Lang : access Language_Root; Str : String) return Boolean
+   is abstract;
    --  Return True if Str is a simple type, like integer, ...
    --  These are the types that don't need information from the debugger to
    --  be known, ie we can save a call to the debugger when parsing the value
@@ -102,17 +104,17 @@ package Language is
    --  annotations, e.g. SPARK annotations.
    --  Aspect_Text represents Ada 2012 or SPARK 2014 aspects.
 
-   subtype Identifier_Entity is Language_Entity
-     range Identifier_Text .. Type_Text;
+   subtype Identifier_Entity is
+     Language_Entity range Identifier_Text .. Type_Text;
    --  All the entities that represent an identifier
 
-   subtype Standout_Language_Entity is Language_Entity
-     range Block_Text .. String_Text;
+   subtype Standout_Language_Entity is
+     Language_Entity range Block_Text .. String_Text;
    --  All the entities that have a special meaning. Used for syntax
    --  highlighting for example.
 
-   subtype Aspect_Entity is Language_Entity
-     range Aspect_Keyword_Text .. Aspect_Text;
+   subtype Aspect_Entity is
+     Language_Entity range Aspect_Keyword_Text .. Aspect_Text;
 
    procedure Looking_At
      (Lang      : access Language_Root;
@@ -127,16 +129,16 @@ package Language is
    --  First is required so that regexps can be used to match on e.g. start
    --  of lines.
 
-   function Keywords
-     (Lang : access Language_Root) return Strings.String_Access is abstract;
+   function Keywords (Lang : access Language_Root) return Strings.String_Access
+   is abstract;
    --  Returns the uncompiled keyword regular expression. This string is used
    --  to create the pattern matcher as returned by the version below.
    --  Do not free the result.
    --  The regexp starts with "^" and ends with "\b" (word separator)
 
    function Keywords
-     (Lang : access Language_Root)
-      return GNAT.Expect.Pattern_Matcher_Access is abstract;
+     (Lang : access Language_Root) return GNAT.Expect.Pattern_Matcher_Access
+   is abstract;
    --  Return a regular expression that matches the keywords for the current
    --  language.
    --  Note: we return an access type (instead of a Pattern_Matcher) for
@@ -149,21 +151,20 @@ package Language is
    --  digits and underscore characters.
 
    function Keywords
-     (Lang : access Language_Root) return GNAT.Strings.String_List is abstract;
+     (Lang : access Language_Root) return GNAT.Strings.String_List
+   is abstract;
    --  Return a list of keywords, encoded in UTF-8.
    --  For case-insensitive languages, the keywords are listed in lower case.
    --  Caller must not free the results.
 
    function Is_Interpolation_Char
      (Lang : access Language_Root; Char : Wide_Wide_Character) return Boolean
-      is abstract;
+   is abstract;
    --  Return True if Char belongs to the set of characters used in string
    --  interpolation for Lang.
 
    function Is_Entity_Name
-     (Lang : access Language_Root;
-      Name : String)
-      return Boolean;
+     (Lang : access Language_Root; Name : String) return Boolean;
    --  Return true when Name can be an entity.
 
    ----------------------------
@@ -171,8 +172,7 @@ package Language is
    ----------------------------
 
    function Can_Tooltip_On_Entity
-     (Lang   : access Language_Root;
-      Entity : String) return Boolean;
+     (Lang : access Language_Root; Entity : String) return Boolean;
    --  Return True if we should display a tooltip for the Entity.
    --  Note that Entity is analyzed in the current context. This is used at
    --  least for the gdb Ada mode, since we don't want to evaluate subprograms
@@ -184,28 +184,25 @@ package Language is
    ------------------------
 
    function Dereference_Name
-     (Lang : access Language_Root;
-      Name : String) return String is abstract;
+     (Lang : access Language_Root; Name : String) return String
+   is abstract;
    --  Return the name to use to dereference Name (ie in Ada "Name.all", in
    --  C "*Name", ...). Note that Name can be a composite name (Name.Field),
    --  and thus might have to be protected with parentheses.
 
    function Array_Item_Name
-     (Lang  : access Language_Root;
-      Name  : String;
-      Index : String) return String is abstract;
+     (Lang : access Language_Root; Name : String; Index : String) return String
+   is abstract;
    --  Return the name to use to access a specific element of an array.
    --  Index is a comma-separated list of the indexes for all the dimensions,
    --  as in "1,2".
 
    function Record_Field_Name
-     (Lang  : access Language_Root;
-      Name  : String;
-      Field : String) return String is abstract;
+     (Lang : access Language_Root; Name : String; Field : String) return String
+   is abstract;
    --  Return the name to use for a specific field of a record.
 
-   function Scope_Separator
-     (Lang : access Language_Root) return String;
+   function Scope_Separator (Lang : access Language_Root) return String;
    --  Return the scope separator for the language.
    --  e.g. "." for Ada, "::" for C++
    --  Default implementation return ".", so is suitable for Ada, Java.
@@ -236,32 +233,32 @@ package Language is
       --  Syntax information that is also useful in the context of the
       --  cross references.
 
-      String_Delimiter              : Character;
+      String_Delimiter : Character;
       --  How strings start and end
 
-      Quote_Character               : Character;
+      Quote_Character : Character;
       --  The character used to quote (protect) the following one. If this
       --  is set to ASCII.NUL, then there is no such character in the
       --  language. For instance, it should be set to \ for C.
 
-      Constant_Character            : Character;
+      Constant_Character : Character;
       --  The character that starts and ends constant characters
 
-      Can_Indent                    : Boolean;
+      Can_Indent : Boolean;
       --  Whether indentation is supported by this language
 
-      Syntax_Highlighting           : Boolean;
+      Syntax_Highlighting : Boolean;
       --  Whether syntax highlighting is relevant to this language
 
-      Case_Sensitive                : Boolean;
+      Case_Sensitive : Boolean;
       --  Whether the language is case sensitive
 
-      Accurate_Xref                 : Boolean;
+      Accurate_Xref : Boolean;
       --  Whether cross reference information for this language is supposed
       --  to be fully accurate (and therefore any mismatch means the xref info
       --  is not up-to-date) or not.
 
-      Use_Semicolon                 : Boolean;
+      Use_Semicolon : Boolean;
       --  Whether semicolons are expected in sources and may be used as a
       --  delimiter for syntax highlighting purposes.
    end record;
@@ -272,7 +269,8 @@ package Language is
    type Language_Context_Access is access all Language_Context;
 
    function Get_Language_Context
-     (Lang : access Language_Root) return Language_Context_Access is abstract;
+     (Lang : access Language_Root) return Language_Context_Access
+   is abstract;
    --  Return the context to use for a specific language
 
    procedure Free (Context : in out Language_Context_Access);
@@ -283,7 +281,7 @@ package Language is
    ----------------------
 
    type Source_Location is record
-      Line   : Natural := 0;
+      Line : Natural := 0;
       --  Line number for this entity. Line numbers start at 1.
 
       Column : Natural := 0;
@@ -292,7 +290,7 @@ package Language is
       --  the previous line.
       --  Column numbers start at 1 otherwise.
 
-      Index  : Natural := 0;
+      Index : Natural := 0;
       --  Index in the buffer for this entity
    end record;
    --  See also Sloc_T for a similar construct that store the real column
@@ -302,7 +300,8 @@ package Language is
    function ">=" (S1, S2 : Source_Location) return Boolean;
    function "<" (S1, S2 : Source_Location) return Boolean;
    function "<=" (S1, S2 : Source_Location) return Boolean;
-   overriding function "=" (S1, S2 : Source_Location) return Boolean;
+   overriding
+   function "=" (S1, S2 : Source_Location) return Boolean;
 
    type Indent_Style is (Automatic, RM_Style, Non_RM_Style);
    --  Indentation style used by some constructs (e.g. case statements in
@@ -333,8 +332,8 @@ package Language is
       --      - assignments in declarations
       --      - assignments in assignment statements
 
-      Indent_Comments     : Boolean;
-      Stick_Comments      : Boolean;
+      Indent_Comments : Boolean;
+      Stick_Comments  : Boolean;
    end record;
    --  Define all parameters to indent a source code.
    --  Note that some of these parameters will be ignored, depending on the
@@ -403,8 +402,7 @@ package Language is
    --  ??? This wouldn't be necessary if we had access to the preferences from
    --  the language hierarchy.
 
-   function Get_Indentation_Level
-     (Lang : access Language_Root) return Integer;
+   function Get_Indentation_Level (Lang : access Language_Root) return Integer;
    --  Return the indentation level for this language. This often defines
    --  the size of tabs.
 
@@ -490,33 +488,31 @@ package Language is
       Cat_Snippet);
    --  Keep the above synchronized with completion.py
 
-   subtype Enclosing_Entity_Category is Language_Category
-     range Cat_Package .. Cat_Union;
+   subtype Enclosing_Entity_Category is
+     Language_Category range Cat_Package .. Cat_Union;
 
-   subtype Namespace_Category is Enclosing_Entity_Category
-     range Cat_Package .. Cat_Namespace;
+   subtype Namespace_Category is
+     Enclosing_Entity_Category range Cat_Package .. Cat_Namespace;
 
-   subtype Subprogram_Category is Enclosing_Entity_Category
-     range Cat_Task .. Cat_Entry;
+   subtype Subprogram_Category is
+     Enclosing_Entity_Category range Cat_Task .. Cat_Entry;
 
-   subtype Subprogram_Explorer_Category is Subprogram_Category
-     range Cat_Procedure .. Cat_Destructor;
+   subtype Subprogram_Explorer_Category is
+     Subprogram_Category range Cat_Procedure .. Cat_Destructor;
    --  Subprograms, as displayed in the explorer
 
-   subtype Data_Type_Category is Language_Category
-     range Cat_Class .. Cat_Variable;
+   subtype Data_Type_Category is
+     Language_Category range Cat_Class .. Cat_Variable;
 
-   subtype Type_Category is Data_Type_Category
-     range Cat_Class .. Cat_Subtype;
+   subtype Type_Category is Data_Type_Category range Cat_Class .. Cat_Subtype;
 
-   subtype Data_Category is Language_Category
-     range Cat_Variable .. Cat_Field;
+   subtype Data_Category is Language_Category range Cat_Variable .. Cat_Field;
 
-   subtype Dependency_Category is Language_Category
-     range Cat_With .. Cat_Include;
+   subtype Dependency_Category is
+     Language_Category range Cat_With .. Cat_Include;
 
-   subtype Construct_Category is Language_Category
-     range Cat_Loop_Statement .. Cat_Simple_Block;
+   subtype Construct_Category is
+     Language_Category range Cat_Loop_Statement .. Cat_Simple_Block;
 
    function Category_Name
      (Category : Language.Language_Category;
@@ -535,9 +531,7 @@ package Language is
    ----------------
 
    type Construct_Visibility is
-     (Visibility_Private,
-      Visibility_Protected,
-      Visibility_Public);
+     (Visibility_Private, Visibility_Protected, Visibility_Public);
    --  Represents the visibility of a construct from the enclosing entity.
 
    type Construct_Att_Key is range 1 .. 32;
@@ -553,8 +547,8 @@ package Language is
 
    No_Attribute : constant Construct_Attribute_Map := (others => False);
 
-   Access_Attribute : constant Construct_Att_Key  := 1;
-   Array_Attribute  : constant Construct_Att_Key  := 2;
+   Access_Attribute : constant Construct_Att_Key := 1;
+   Array_Attribute  : constant Construct_Att_Key := 2;
    --  ??? This list is currently incomplete. To be completed.
 
    Last_Gen_Att : constant Construct_Att_Key := 2;
@@ -563,31 +557,31 @@ package Language is
    type Construct_Access is access all Construct_Information;
 
    type Simple_Construct_Information is record
-      Category        : Language_Category;
+      Category : Language_Category;
       --  Define the kind of construct
 
-      Category_Name  : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Category_Name : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Optional category name. Used if Category = Cat_Custom.
 
-      Is_Declaration  : Boolean;
+      Is_Declaration : Boolean;
       --  Is this a declaration (e.g function specification) ?
 
       Is_Generic_Spec : Boolean := False;
       --  Is this in a generic parameter?
 
-      Visibility      : Construct_Visibility := Visibility_Public;
+      Visibility : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
-      Name     : aliased GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Name : aliased GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Name of the enclosing token. Null if not relevant for Token
       --  This is encoded in UTF-8
 
-      Unique_Id       : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Unique_Id : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  A unique identifier for this entity. Used to identify the id in the
       --  Outline view, between refreshes. If this is unspecified, one will be
       --  computed from the name and the profile info.
 
-      Profile  : aliased GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Profile : aliased GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Subprogram profile, if Category is in Subprogram_Category.
       --  This can either be set when the construct is created, or will be
       --  computed automatically from the subprogram's name and list of
@@ -596,27 +590,27 @@ package Language is
       --  subprogram does not have any parameter.
       --  This is encoded in UTF-8.
 
-      Sloc_Start      : aliased Source_Location;
+      Sloc_Start : aliased Source_Location;
       --  Location of beginning of the construct
 
-      Sloc_Entity     : aliased Source_Location;
+      Sloc_Entity : aliased Source_Location;
       --  Location of beginning of the name of the entity. Only relevant if
       --  Name is non null. This is different from Sloc_Start since Sloc_Start
       --  is the beginning of the construct itself, e.g for
       --  "procedure Foo;", Sloc_Start will point to the first character, while
       --  Sloc_Entity will point to the 11th character.
 
-      Sloc_End        : aliased Source_Location;
+      Sloc_End : aliased Source_Location;
       --  Location of end of the construct
 
-      Attributes      : aliased Construct_Attribute_Map := (others => False);
+      Attributes : aliased Construct_Attribute_Map := (others => False);
       --  Set of construct attributes
    end record;
 
    type Construct_Information is record
-      Info           : aliased Simple_Construct_Information;
+      Info : aliased Simple_Construct_Information;
 
-      Prev, Next     : Construct_Access;
+      Prev, Next : Construct_Access;
       --  Links to the previous and the next construct info
    end record;
    --  Information needed to define a language construct (e.g procedure,
@@ -650,20 +644,20 @@ package Language is
    --  columns rather than character offsets, unlike the Source_Location type
 
    type Semantic_Node_Info is record
-      Category   : Language_Category;
+      Category : Language_Category;
       --  The category/kind of this node
 
-      Name       : GNATCOLL.Symbols.Symbol;
+      Name : GNATCOLL.Symbols.Symbol;
       --  The name of this node if applicable
 
-      Profile    : GNATCOLL.Symbols.Symbol;
+      Profile : GNATCOLL.Symbols.Symbol;
       --  The profile of this node, if this node is a subprogram
       --  declaration/body
 
-      Unique_Id  : GNATCOLL.Symbols.Symbol;
+      Unique_Id : GNATCOLL.Symbols.Symbol;
       --  The unique Id of this node
 
-      Is_Decl    : Boolean;
+      Is_Decl : Boolean;
       --  Wether this node represents a declaration
 
       Visibility : Construct_Visibility;
@@ -673,7 +667,7 @@ package Language is
       --  The starting source location of this node.
       --  Tabs have been resolved to real columns
 
-      Sloc_Def_No_Tab   : Sloc_T;
+      Sloc_Def_No_Tab : Sloc_T;
       --  The source location where the defining identifier of this node is, if
       --  there is one
       --  Tabs have been resolved to real columns
@@ -684,8 +678,14 @@ package Language is
    --  information outside the tree.
 
    No_Node_Info : Semantic_Node_Info :=
-     (Cat_Unknown, No_Symbol, No_Symbol, No_Symbol,
-      False, Visibility_Public, (0, 0, 0), (0, 0, 0));
+     (Cat_Unknown,
+      No_Symbol,
+      No_Symbol,
+      No_Symbol,
+      False,
+      Visibility_Public,
+      (0, 0, 0),
+      (0, 0, 0));
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
@@ -697,8 +697,8 @@ package Language is
 
    function Should_Refresh_Constructs_Tree
      (Lang       : not null access Language_Root;
-      Dummy_File : GNATCOLL.VFS.Virtual_File)
-      return Boolean is (False);
+      Dummy_File : GNATCOLL.VFS.Virtual_File) return Boolean
+   is (False);
    --  Whether Parse_Constructs should be called to refresh the contents of
    --  the semantic tree associated with the file.
    --  This is only called when the timestamp of the file on the disk has not
@@ -710,7 +710,8 @@ package Language is
       File      : GNATCOLL.VFS.Virtual_File;
       Unique_ID : String;
       Name      : String;
-      Start_Loc : Sloc_T) return Boolean is (False);
+      Start_Loc : Sloc_T) return Boolean
+   is (False);
    --  Called when the user clicked on a construct (in particular in the
    --  Outline).
    --  This function should return True if it handled the click, and False for
@@ -721,8 +722,7 @@ package Language is
    function Get_Last_Selected_Construct_ID
      (Lang       : not null access Language_Root;
       Dummy_File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol
-   is
-      (GNATCOLL.Symbols.No_Symbol);
+   is (GNATCOLL.Symbols.No_Symbol);
    --  Called when the Outline view needs to reselect the last selected
    --  construct for the given File (i.e: when leaving and then coming back
    --  to the view associated with File).
@@ -755,11 +755,9 @@ package Language is
    --  If Clean is True, a clean up of the block should be performed
    --  (e.g. leading spaces are removed for each line).
 
-   type Replace_Text_Callback is access procedure
-     (Line    : Natural;
-      First   : Natural;
-      Last    : Natural;
-      Replace : String);
+   type Replace_Text_Callback is
+     access procedure
+       (Line : Natural; First : Natural; Last : Natural; Replace : String);
    --  Replacement procedure used by Format_Buffer below.
    --  Replace the slice First .. Last by contents of Replace.
    --  First and Last are byte offsets from the start of the line, not
@@ -773,8 +771,8 @@ package Language is
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
-      Is_Optional_Keyword : access function (S : String)
-                                             return Boolean := null);
+      Is_Optional_Keyword : access function (S : String) return Boolean :=
+        null);
    --  Given a Buffer, reformat it, based on Indent_Params.
    --  Reformat only lines comprised between From and To.
    --  Is_Keyword is an optional parameter, used to customize the behavior
@@ -782,11 +780,12 @@ package Language is
    --  This is useful in particular when defining custom languages that are
    --  derived from existing languages, e.g. GPR which derives from Ada.
 
-   type Entity_Callback is access function
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean) return Boolean;
+   type Entity_Callback is
+     access function
+       (Entity         : Language_Entity;
+        Sloc_Start     : Source_Location;
+        Sloc_End       : Source_Location;
+        Partial_Entity : Boolean) return Boolean;
    --  Callback during parsing of entities.
    --  Partial_Entity is True if parsing is at the end of the string with a
    --  non terminated entity (e.g string or multi-line comment).
@@ -821,9 +820,9 @@ package Language is
    --  multiple inheritance in C++). If From_Index is 0 the search will start
    --  at the begining of the construct.
 
-   type Make_Entry_Func is access function
-     (Str      : String;
-      Matched  : Regpat.Match_Array) return String;
+   type Make_Entry_Func is
+     access function
+       (Str : String; Matched : Regpat.Match_Array) return String;
    --  Function that builds the string to be inserted in the tree.
 
    type Explorer_Category is record
@@ -848,13 +847,12 @@ package Language is
    --  If Make_Entry is null, then Position_Index is used to compute the
    --  string to display.
 
-   type Explorer_Categories is
-     array (Positive range <>) of Explorer_Category;
+   type Explorer_Categories is array (Positive range <>) of Explorer_Category;
    --  A list of categories. Each category is assigned an internal number which
    --  is the index in this table, and is passed to each Make_Entry_Func
    --  functions.
 
-   procedure Free (Category   : in out Explorer_Category);
+   procedure Free (Category : in out Explorer_Category);
    procedure Free (Categories : in out Explorer_Categories);
    --  Free the memory allocated for the parameter
 
@@ -864,8 +862,7 @@ package Language is
    --  By default, no category is defined, and thus the explorer is empty.
 
    function Is_System_File
-     (Lang      : access Language_Root;
-      File_Name : String) return Boolean;
+     (Lang : access Language_Root; File_Name : String) return Boolean;
    --  Return True if File_Name is the name of a system file (standard include
    --  files in C or run-time file in Ada). These files are displayed
    --  separately in the explorer.
@@ -916,21 +913,21 @@ package Language is
    --  below.
 
    procedure Parse_Tokens_Backwards
-     (Lang              : access Language_Root;
-      Buffer            : UTF8_String;
-      Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0;
-      Callback          : access procedure (Token : Token_Record;
-                                            Stop  : in out Boolean));
+     (Lang         : access Language_Root;
+      Buffer       : UTF8_String;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type := 0;
+      Callback     :
+        access procedure (Token : Token_Record; Stop : in out Boolean));
    --  Parses the tokens from the Start_Offset backwards to end offset. Calls
    --  Callback on each token. If Stop is True on the callback, then the
    --  parsing is stoped.
 
    function Parse_Reference_Backwards
-     (Lang              : access Language_Root;
-      Buffer            : UTF8_String;
-      Start_Offset      : String_Index_Type;
-      End_Offset        : String_Index_Type := 0) return String;
+     (Lang         : access Language_Root;
+      Buffer       : UTF8_String;
+      Start_Offset : String_Index_Type;
+      End_Offset   : String_Index_Type := 0) return String;
    --  Return a string containing a reference to a value, looking backwards
    --  from End_Offset. E.g., for Ada, if the code is something like:
    --  A := B (C.D (X).E)
@@ -941,7 +938,7 @@ private
    type Language_Root is abstract tagged limited record
       Symbols       : GNATCOLL.Symbols.Symbol_Table_Access;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters;
-      Indent_Style  : Indentation_Kind  := Extended;
+      Indent_Style  : Indentation_Kind := Extended;
    end record;
 
    function Comment_Line
@@ -955,9 +952,7 @@ private
    --  (e.g. leading spaces are removed).
 
    Null_Token : constant Token_Record :=
-     (Tok_Type             => No_Token,
-      Token_First          => 0,
-      Token_Last           => 0);
+     (Tok_Type => No_Token, Token_First => 0, Token_Last => 0);
 
    Null_Simple_Construct_Info : constant Simple_Construct_Information :=
      (Category        => Cat_Unknown,
@@ -973,9 +968,7 @@ private
       Attributes      => (others => False),
       Profile         => GNATCOLL.Symbols.No_Symbol);
 
-   Null_Construct_Info        : constant Construct_Information :=
-     (Info => Null_Simple_Construct_Info,
-      Prev            => null,
-      Next            => null);
+   Null_Construct_Info : constant Construct_Information :=
+     (Info => Null_Simple_Construct_Info, Prev => null, Next => null);
 
 end Language;

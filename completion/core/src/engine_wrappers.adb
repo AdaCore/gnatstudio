@@ -22,16 +22,17 @@ with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 
 package body Engine_Wrappers is
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Root_Iterator'Class, Root_Iterator_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Root_Iterator'Class, Root_Iterator_Access);
 
    ---------------
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return String
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
    begin
       return Get_Label (Proposal.P.all, Db);
@@ -41,7 +42,8 @@ package body Engine_Wrappers is
    -- Get_Sort_Text --
    -------------------
 
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : Comp_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
@@ -53,7 +55,8 @@ package body Engine_Wrappers is
    -- Get_Filter_Text --
    ---------------------
 
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : Comp_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
@@ -65,10 +68,11 @@ package body Engine_Wrappers is
    -- Get_Completion --
    --------------------
 
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return String is
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is
    begin
       return Get_Completion (Proposal.P.all, Db);
    end Get_Completion;
@@ -77,9 +81,9 @@ package body Engine_Wrappers is
    -- Get_Visibility --
    --------------------
 
-   overriding function Get_Visibility
-     (Proposal : Comp_Proposal)
-      return Construct_Visibility is
+   overriding
+   function Get_Visibility
+     (Proposal : Comp_Proposal) return Construct_Visibility is
    begin
       return Get_Visibility (Proposal.P.all);
    end Get_Visibility;
@@ -88,9 +92,8 @@ package body Engine_Wrappers is
    -- Get_Category --
    ------------------
 
-   overriding function Get_Category
-     (Proposal : Comp_Proposal)
-      return Language_Category is
+   overriding
+   function Get_Category (Proposal : Comp_Proposal) return Language_Category is
    begin
       return Get_Category (Proposal.P.all);
    end Get_Category;
@@ -99,9 +102,10 @@ package body Engine_Wrappers is
    -- Get_Caret_Offset --
    ----------------------
 
-   overriding function Get_Caret_Offset
+   overriding
+   function Get_Caret_Offset
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return Character_Offset_Type is
    begin
       return Get_Caret_Offset (Proposal.P.all, Db);
@@ -111,9 +115,10 @@ package body Engine_Wrappers is
    -- Get_Location --
    ------------------
 
-   overriding function Get_Location
+   overriding
+   function Get_Location
      (Proposal : Comp_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return File_Location is
    begin
       return Get_Location (Proposal.P.all, Db);
@@ -123,7 +128,8 @@ package body Engine_Wrappers is
    -- Free --
    ----------
 
-   overriding procedure Free (X : in out Comp_Proposal) is
+   overriding
+   procedure Free (X : in out Comp_Proposal) is
    begin
       Free (X.P);
    end Free;
@@ -144,7 +150,8 @@ package body Engine_Wrappers is
    -- Free --
    ----------
 
-   overriding procedure Free (Iter : in out Comp_Iterator) is
+   overriding
+   procedure Free (Iter : in out Comp_Iterator) is
    begin
       Free (Iter.I);
    end Free;
@@ -153,7 +160,8 @@ package body Engine_Wrappers is
    -- Free --
    ----------
 
-   overriding procedure Free (Iter : in out Entity_Iterator) is
+   overriding
+   procedure Free (Iter : in out Entity_Iterator) is
    begin
       Free (Iter.I);
    end Free;
@@ -162,10 +170,12 @@ package body Engine_Wrappers is
    -- Shallow_Free --
    ------------------
 
-   overriding procedure Shallow_Free (X : in out Comp_Proposal) is
+   overriding
+   procedure Shallow_Free (X : in out Comp_Proposal) is
       procedure Unchecked_Free is new
         Ada.Unchecked_Deallocation
-          (Completion_Proposal'Class, Completion_Proposal_Access);
+          (Completion_Proposal'Class,
+           Completion_Proposal_Access);
    begin
       Unchecked_Free (X.P);
    end Shallow_Free;
@@ -175,8 +185,8 @@ package body Engine_Wrappers is
    -----------------------------
 
    procedure Set_Completion_Iterator
-     (Comp_Iter : in out Comp_Iterator;
-      Completion_Iter : Completion_Iterator) is
+     (Comp_Iter : in out Comp_Iterator; Completion_Iter : Completion_Iterator)
+   is
    begin
       Comp_Iter.I := Completion_Iter;
    end Set_Completion_Iterator;
@@ -185,7 +195,8 @@ package body Engine_Wrappers is
    -- At_End --
    ------------
 
-   overriding function At_End (Iter : Comp_Iterator) return Boolean is
+   overriding
+   function At_End (Iter : Comp_Iterator) return Boolean is
    begin
       return At_End (Iter.I);
    end At_End;
@@ -194,7 +205,8 @@ package body Engine_Wrappers is
    -- Is_Valid --
    --------------
 
-   overriding function Is_Valid (Iter : Comp_Iterator) return Boolean is
+   overriding
+   function Is_Valid (Iter : Comp_Iterator) return Boolean is
    begin
       return Is_Valid (Iter.I);
    end Is_Valid;
@@ -203,9 +215,10 @@ package body Engine_Wrappers is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Iter : in out Comp_Iterator;
-      Db : access Xref.General_Xref_Database_Record'Class) is
+      Db   : access Xref.General_Xref_Database_Record'Class) is
    begin
       Next (Iter.I);
    end Next;
@@ -214,20 +227,22 @@ package body Engine_Wrappers is
    -- Get_Proposal --
    ------------------
 
-   overriding function Get_Proposal
-     (Iter    : Comp_Iterator) return Root_Proposal'Class is
+   overriding
+   function Get_Proposal (Iter : Comp_Iterator) return Root_Proposal'Class is
    begin
-      return Comp_Proposal'
-        (P => new Completion_Proposal'Class'(Get_Proposal (Iter.I)));
+      return
+        Comp_Proposal'
+          (P => new Completion_Proposal'Class'(Get_Proposal (Iter.I)));
    end Get_Proposal;
 
    ---------------
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class) return String
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
       pragma Unreferenced (Db);
    begin
@@ -242,7 +257,8 @@ package body Engine_Wrappers is
    -- Get_Sort_Text --
    -------------------
 
-   overriding function Get_Sort_Text
+   overriding
+   function Get_Sort_Text
      (Proposal : Entity_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
@@ -254,7 +270,8 @@ package body Engine_Wrappers is
    -- Get_Filter_Text --
    ---------------------
 
-   overriding function Get_Filter_Text
+   overriding
+   function Get_Filter_Text
      (Proposal : Entity_Proposal;
       Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
@@ -266,10 +283,11 @@ package body Engine_Wrappers is
    -- Get_Completion --
    --------------------
 
-   overriding function Get_Completion
+   overriding
+   function Get_Completion
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
-      return String is
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
+   is
    begin
       return Get_Label (Proposal, Db);
    end Get_Completion;
@@ -278,9 +296,9 @@ package body Engine_Wrappers is
    -- Get_Visibility --
    --------------------
 
-   overriding function Get_Visibility
-     (Proposal : Entity_Proposal)
-      return Construct_Visibility is
+   overriding
+   function Get_Visibility
+     (Proposal : Entity_Proposal) return Construct_Visibility is
    begin
       return Proposal.Construct.Visibility;
    end Get_Visibility;
@@ -289,9 +307,9 @@ package body Engine_Wrappers is
    -- Get_Category --
    ------------------
 
-   overriding function Get_Category
-     (Proposal : Entity_Proposal)
-      return Language_Category is
+   overriding
+   function Get_Category (Proposal : Entity_Proposal) return Language_Category
+   is
    begin
       return Proposal.Construct.Category;
    end Get_Category;
@@ -300,9 +318,10 @@ package body Engine_Wrappers is
    -- Get_Caret_Offset --
    ----------------------
 
-   overriding function Get_Caret_Offset
+   overriding
+   function Get_Caret_Offset
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return Character_Offset_Type
    is
       pragma Unreferenced (Proposal, Db);
@@ -314,9 +333,10 @@ package body Engine_Wrappers is
    -- Get_Location --
    ------------------
 
-   overriding function Get_Location
+   overriding
+   function Get_Location
      (Proposal : Entity_Proposal;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db       : access Xref.General_Xref_Database_Record'Class)
       return File_Location
    is
       pragma Unreferenced (Db);
@@ -324,15 +344,16 @@ package body Engine_Wrappers is
       return
         (File_Path => Proposal.File,
          Line      => Proposal.Construct.Sloc_Start.Line,
-         Column    => Visible_Column_Type
-           (Proposal.Construct.Sloc_Start.Column));
+         Column    =>
+           Visible_Column_Type (Proposal.Construct.Sloc_Start.Column));
    end Get_Location;
 
    ------------
    -- At_End --
    ------------
 
-   overriding function At_End (Iter : Entity_Iterator) return Boolean is
+   overriding
+   function At_End (Iter : Entity_Iterator) return Boolean is
    begin
       return At_End (Iter.I);
    end At_End;
@@ -341,7 +362,8 @@ package body Engine_Wrappers is
    -- Is_Valid --
    --------------
 
-   overriding function Is_Valid (Iter : Entity_Iterator) return Boolean is
+   overriding
+   function Is_Valid (Iter : Entity_Iterator) return Boolean is
    begin
       return Is_Valid (Iter.I);
    end Is_Valid;
@@ -350,9 +372,10 @@ package body Engine_Wrappers is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Iter : in out Entity_Iterator;
-      Db : access Xref.General_Xref_Database_Record'Class)
+      Db   : access Xref.General_Xref_Database_Record'Class)
    is
       pragma Unreferenced (Db);
    begin
@@ -360,8 +383,8 @@ package body Engine_Wrappers is
 
       --  We do not want to list declaration in package specs
       while not At_End (Iter.I)
-        and then Get_First_Occurence
-          (Get_Entity (Iter.I)) /= Get_Entity (Iter.I)
+        and then
+          Get_First_Occurence (Get_Entity (Iter.I)) /= Get_Entity (Iter.I)
       loop
          Next (Iter.I);
       end loop;
@@ -371,12 +394,10 @@ package body Engine_Wrappers is
    -- Get_Proposal --
    ------------------
 
-   overriding function Get_Proposal
-     (Iter    : Entity_Iterator)
-      return Root_Proposal'Class
-   is
-      File : Virtual_File;
-      Decl : Entity_View;
+   overriding
+   function Get_Proposal (Iter : Entity_Iterator) return Root_Proposal'Class is
+      File      : Virtual_File;
+      Decl      : Entity_View;
       Construct : Simple_Construct_Information;
    begin
       Decl := Get_View (Iter.I);
@@ -396,9 +417,7 @@ package body Engine_Wrappers is
 
       Free (Decl);
 
-      return Entity_Proposal'
-        (File      => File,
-         Construct => Construct);
+      return Entity_Proposal'(File => File, Construct => Construct);
    end Get_Proposal;
 
    -----------------------------
@@ -415,8 +434,8 @@ package body Engine_Wrappers is
    -- On_Documentation_Query --
    ----------------------------
 
-   overriding function On_Documentation_Query
-     (Proposal : Comp_Proposal) return Boolean is
+   overriding
+   function On_Documentation_Query (Proposal : Comp_Proposal) return Boolean is
    begin
       return Proposal.P.On_Documentation_Query;
    end On_Documentation_Query;
@@ -425,10 +444,10 @@ package body Engine_Wrappers is
    -- Get_Documentation --
    -----------------------
 
-   overriding function Get_Documentation
+   overriding
+   function Get_Documentation
      (Proposal : Comp_Proposal;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return String
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) return String
    is
       Loc : constant Completion.File_Location :=
         Proposal.Get_Location (Kernel.Databases);
@@ -446,79 +465,84 @@ package body Engine_Wrappers is
          return "Predefined entity.";
       end if;
 
-      return Documentation
-        (Self                     => Kernel.Databases,
-         Handler                  => Kernel.Get_Language_Handler,
-         Entity                   => Get_Entity
-           (Kernel.Databases,
-            Name  => Proposal.Get_Label (Kernel.Databases),
-            Loc   => (File   => Loc.File_Path,
-                      Project_Path => No_File,  --  ??? unknown
-                      Line   => Loc.Line,
-                      Column  => Loc.Column)));
+      return
+        Documentation
+          (Self    => Kernel.Databases,
+           Handler => Kernel.Get_Language_Handler,
+           Entity  =>
+             Get_Entity
+               (Kernel.Databases,
+                Name => Proposal.Get_Label (Kernel.Databases),
+                Loc  =>
+                  (File         => Loc.File_Path,
+                   Project_Path => No_File,  --  ??? unknown
+                   Line         => Loc.Line,
+                   Column       => Loc.Column)));
    end Get_Documentation;
 
    --------------------------
    -- Get_Custom_Icon_Name --
    --------------------------
 
-   overriding function Get_Custom_Icon_Name
-     (Proposal : Comp_Proposal) return String
+   overriding
+   function Get_Custom_Icon_Name (Proposal : Comp_Proposal) return String
    is (Proposal.P.Get_Custom_Icon_Name);
 
    -------------------
    -- Is_Accessible --
    -------------------
 
-   overriding function Is_Accessible
-     (Proposal : Comp_Proposal)
-      return Boolean
+   overriding
+   function Is_Accessible (Proposal : Comp_Proposal) return Boolean
    is (Proposal.P.Is_Accessible);
 
    ----------------------------
    -- On_Documentation_Query --
    ----------------------------
 
-   overriding function On_Documentation_Query
-     (Proposal : Entity_Proposal) return Boolean
-   is
-     (False);
+   overriding
+   function On_Documentation_Query (Proposal : Entity_Proposal) return Boolean
+   is (False);
 
    -----------------------
    -- Get_Documentation --
    -----------------------
 
-   overriding function Get_Documentation
+   overriding
+   function Get_Documentation
      (Proposal : Entity_Proposal;
-      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return String
-   is
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class) return String is
    begin
-      return Documentation
-        (Self                     => Kernel.Databases,
-         Handler                  => Kernel.Get_Language_Handler,
-         Entity                   => Xref.Get_Entity
-           (Kernel.Databases,
-            Name  => Get (Proposal.Construct.Name).all,
-            Loc   => (File    => Proposal.File,
-                      Project_Path => No_File,  --  ??? unknown
-                      Line    => Proposal.Construct.Sloc_Start.Line,
-                      Column  => Visible_Column_Type
-                        (Proposal.Construct.Sloc_Start.Column))));
+      return
+        Documentation
+          (Self    => Kernel.Databases,
+           Handler => Kernel.Get_Language_Handler,
+           Entity  =>
+             Xref.Get_Entity
+               (Kernel.Databases,
+                Name => Get (Proposal.Construct.Name).all,
+                Loc  =>
+                  (File         => Proposal.File,
+                   Project_Path => No_File,  --  ??? unknown
+                   Line         => Proposal.Construct.Sloc_Start.Line,
+                   Column       =>
+                     Visible_Column_Type
+                       (Proposal.Construct.Sloc_Start.Column))));
    end Get_Documentation;
 
    ---------------
    -- Deep_Copy --
    ---------------
 
-   overriding function Deep_Copy
-     (Proposal : Comp_Proposal) return Root_Proposal'Class is
+   overriding
+   function Deep_Copy (Proposal : Comp_Proposal) return Root_Proposal'Class is
    begin
       if Proposal.P = null then
          return Comp_Proposal'(P => null);
       else
-         return Comp_Proposal'(P => new Completion_Proposal'Class'
-                                 (Deep_Copy (Proposal.P.all)));
+         return
+           Comp_Proposal'
+             (P => new Completion_Proposal'Class'(Deep_Copy (Proposal.P.all)));
       end if;
    end Deep_Copy;
 
@@ -526,11 +550,13 @@ package body Engine_Wrappers is
    -- Deep_Copy --
    ---------------
 
-   overriding function Deep_Copy
-     (Proposal : Entity_Proposal) return Root_Proposal'Class is
+   overriding
+   function Deep_Copy (Proposal : Entity_Proposal) return Root_Proposal'Class
+   is
    begin
-      return Entity_Proposal'(File      => Proposal.File,
-                              Construct => Proposal.Construct);
+      return
+        Entity_Proposal'
+          (File => Proposal.File, Construct => Proposal.Construct);
    end Deep_Copy;
 
    --------------------------

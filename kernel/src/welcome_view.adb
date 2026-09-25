@@ -15,20 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with Glib.Object;            use Glib.Object;
-with Glib.Unicode;           use Glib.Unicode;
-with Glib;                   use Glib;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Button;             use Gtk.Button;
-with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Image;              use Gtk.Image;
-with Gtk.Label;              use Gtk.Label;
-with Gtk.Link_Button;        use Gtk.Link_Button;
-with Gtk.Style_Context;      use Gtk.Style_Context;
-with Gtk.Widget;             use Gtk.Widget;
-with Gtkada.MDI;             use Gtkada.MDI;
+with Glib.Object;       use Glib.Object;
+with Glib.Unicode;      use Glib.Unicode;
+with Glib;              use Glib;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Button;        use Gtk.Button;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Image;         use Gtk.Image;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Link_Button;   use Gtk.Link_Button;
+with Gtk.Style_Context; use Gtk.Style_Context;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtkada.MDI;        use Gtkada.MDI;
 
 with Dialog_Utils;           use Dialog_Utils;
 with Generic_Views;          use Generic_Views;
@@ -47,16 +47,17 @@ package body Welcome_View is
    function Initialize
      (Self : access Welcome_Page_Record'Class) return Gtk_Widget;
 
-   package Welcome_Page_Views is new Generic_Views.Simple_Views
-     (Module_Name               => "Welcome",
-      View_Name                 => "Welcome",
-      Formal_View_Record        => Welcome_Page_Record,
-      Formal_MDI_Child          => GPS_MDI_Child_Record,
-      Reuse_If_Exist            => True,
-      Group                     => Group_Default,
-      Areas                     => Gtkada.MDI.Both,
-      Position                  => Position_Automatic,
-      Initialize                => Initialize);
+   package Welcome_Page_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Welcome",
+        View_Name          => "Welcome",
+        Formal_View_Record => Welcome_Page_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Group              => Group_Default,
+        Areas              => Gtkada.MDI.Both,
+        Position           => Position_Automatic,
+        Initialize         => Initialize);
 
    type GPS_Link_Button_Record is new Gtk_Link_Button_Record with record
       Kernel      : Kernel_Handle;
@@ -70,8 +71,7 @@ package body Welcome_View is
    -- On_Link_Clicked --
    ---------------------
 
-   procedure On_Link_Clicked (Self : access Gtk_Button_Record'Class)
-   is
+   procedure On_Link_Clicked (Self : access Gtk_Button_Record'Class) is
       Link_Button : constant GPS_Link_Button := GPS_Link_Button (Self);
    begin
       Html_Action_Hook.Run
@@ -121,14 +121,14 @@ package body Welcome_View is
          Label.Set_Markup (Before_Text);
          Hbox.Pack_Start (Label, Expand => False);
 
-         Link_Button := new GPS_Link_Button_Record'
-           (GObject_Record with
-            Kernel      => Self.Kernel,
-            URL_Or_File => To_Unbounded_String (URL_Or_File));
+         Link_Button :=
+           new GPS_Link_Button_Record'
+             (GObject_Record
+              with
+                Kernel      => Self.Kernel,
+                URL_Or_File => To_Unbounded_String (URL_Or_File));
          Initialize_With_Label
-           (Link_Button,
-            URI   => Hyperlink,
-            Label => Hyperlink);
+           (Link_Button, URI => Hyperlink, Label => Hyperlink);
          Link_Button.On_Clicked (On_Link_Clicked'Access);
          Hbox.Pack_Start (Link_Button, Expand => False);
 
@@ -151,11 +151,12 @@ package body Welcome_View is
         (Create_Logo_And_Title_Area (Gtk_Theme.Get_Pref.Dark),
          Expand => False);
 
-      Gtk_New (Desc_Label,
-               ("GNAT Studio is a powerful and simple-to-use IDE that"
-                & " streamlines your software development process"
-                & " from the initial coding stage through testing,"
-                & " debugging, system integration, and maintenance."));
+      Gtk_New
+        (Desc_Label,
+         ("GNAT Studio is a powerful and simple-to-use IDE that"
+          & " streamlines your software development process"
+          & " from the initial coding stage through testing,"
+          & " debugging, system integration, and maintenance."));
       Get_Style_Context (Desc_Label).Add_Class ("gps-welcome-view-desc");
       Desc_Label.Set_Line_Wrap (True);
       Main_View.Append (Desc_Label, Expand => False, Add_Separator => False);
@@ -164,8 +165,7 @@ package body Welcome_View is
       Help_Vbox.Set_Halign (Align_Center);
       Main_View.Append (Help_Vbox, Expand => False, Add_Separator => False);
 
-      Gtk_New (Help_Label,
-               "For more information and help, please visit:");
+      Gtk_New (Help_Label, "For more information and help, please visit:");
       Help_Label.Set_Alignment (0.0, 0.0);
       Help_Vbox.Pack_Start (Help_Label, Expand => False, Padding => 5);
 
@@ -173,10 +173,7 @@ package body Welcome_View is
          Bullet_Char : String (1 .. 6);
          Last        : Natural;
       begin
-         Unichar_To_UTF8
-           (C      => 8_226,
-            Buffer => Bullet_Char,
-            Last   => Last);
+         Unichar_To_UTF8 (C => 8_226, Buffer => Bullet_Char, Last => Last);
 
          Create_Help_Entry
            (Before_Text => "   " & Bullet_Char (1 .. Last) & " The ",
@@ -197,11 +194,13 @@ package body Welcome_View is
          Icon_Name => "gps-github-symbolic",
          Size      => Icon_Size_Button);
 
-      Github_Link := new GPS_Link_Button_Record'
-        (GObject_Record with
-         Kernel      => Self.Kernel,
-         URL_Or_File =>
-           To_Unbounded_String ("https://github.com/AdaCore/gps"));
+      Github_Link :=
+        new GPS_Link_Button_Record'
+          (GObject_Record
+           with
+             Kernel      => Self.Kernel,
+             URL_Or_File =>
+               To_Unbounded_String ("https://github.com/AdaCore/gps"));
 
       Initialize_With_Label
         (Github_Link, " Contribute to GNAT Studio on GitHub!");
@@ -223,7 +222,8 @@ package body Welcome_View is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       View : constant Welcome_Page_Views.View_Access :=
-        Welcome_Page_Views.Get_Or_Create_View (Kernel) with Unreferenced;
+        Welcome_Page_Views.Get_Or_Create_View (Kernel)
+      with Unreferenced;
    begin
       null;
    end Display_Welcome_View;

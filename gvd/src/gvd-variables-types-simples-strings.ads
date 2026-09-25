@@ -29,7 +29,9 @@ private
 
    type GVD_String_Type is new GVD_Simple_Type with null record;
 
-   overriding function Get_Type_Descr
-     (Self : not null access GVD_String_Type) return String is ("String");
+   overriding
+   function Get_Type_Descr
+     (Self : not null access GVD_String_Type) return String
+   is ("String");
 
 end GVD.Variables.Types.Simples.Strings;

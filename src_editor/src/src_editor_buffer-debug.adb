@@ -16,32 +16,31 @@
 ------------------------------------------------------------------------------
 
 with Ada.Tags;
-with GNAT.Strings;            use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 with VSS.Characters;
 
-with Glib.Object;             use Glib.Object;
+with Glib.Object; use Glib.Object;
 
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
-with GPS.Kernel.Messages;     use GPS.Kernel.Messages;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Messages; use GPS.Kernel.Messages;
+with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
 
-with Gtk.Text_Tag;            use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;      use Gtk.Text_Tag_Table;
-with Gtk.Text_Iter;           use Gtk.Text_Iter;
-with Language;                use Language;
-with Commands.Editor;         use Commands.Editor;
+with Gtk.Text_Tag;       use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Language;           use Language;
+with Commands.Editor;    use Commands.Editor;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
 
 package body Src_Editor_Buffer.Debug is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.INTERNAL.SOURCE_EDITOR.BUFFER_DEBUG",
-      GNATCOLL.Traces.Off);
+   Me : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.SOURCE_EDITOR.BUFFER_DEBUG", GNATCOLL.Traces.Off);
 
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String);
    --  Command handler for the EditorBuffer class
@@ -103,8 +102,7 @@ package body Src_Editor_Buffer.Debug is
          return "";
       else
          if Action.Associated_Command = null then
-            return To_String (Action.Text) &
-              To_String (Action.Tooltip_Text);
+            return To_String (Action.Text) & To_String (Action.Tooltip_Text);
          else
             return Ada.Tags.External_Tag (Action.Associated_Command.all'Tag);
          end if;
@@ -133,10 +131,18 @@ package body Src_Editor_Buffer.Debug is
       if X = null or X.Get_Action = null then
          return "NULL";
       else
-         return "Text: " & To_String (X.Get_Action.Text) & ", "
-           & "Tooltip: " & To_String (X.Get_Action.Tooltip_Text) & ", "
-           & "Image: " & To_String (X.Get_Action.Image) & ", "
-           & "Command: " & To_String (X.Get_Action.Associated_Command);
+         return
+           "Text: "
+           & To_String (X.Get_Action.Text)
+           & ", "
+           & "Tooltip: "
+           & To_String (X.Get_Action.Tooltip_Text)
+           & ", "
+           & "Image: "
+           & To_String (X.Get_Action.Image)
+           & ", "
+           & "Command: "
+           & To_String (X.Get_Action.Associated_Command);
       end if;
    end To_String;
 
@@ -167,12 +173,11 @@ package body Src_Editor_Buffer.Debug is
 
       for J in Info'Range loop
          if Info (J).Messages.Is_Empty then
-            Res := Res & "#"
-              & ", "
-              & To_String (Info (J).Action)
-              & "#";
+            Res := Res & "#" & ", " & To_String (Info (J).Action) & "#";
          else
-            Res := Res & "#"
+            Res :=
+              Res
+              & "#"
               & To_String (Info (J).Messages.First_Element.Message)
               & ", "
               & "#";
@@ -223,8 +228,7 @@ package body Src_Editor_Buffer.Debug is
             --  range.
 
             Append
-              (R,
-               Character'Val (VSS.Characters.Virtual_Character'Pos (C)));
+              (R, Character'Val (VSS.Characters.Virtual_Character'Pos (C)));
 
          else
             --  Mark other cases, which should not happened.
@@ -246,7 +250,7 @@ package body Src_Editor_Buffer.Debug is
    procedure Buffer_Cmds (Data : in out Callback_Data'Class; Command : String)
    is
       --  Kernel      : constant Kernel_Handle := Get_Kernel (Data);
-      Buffer      : Source_Buffer;
+      Buffer : Source_Buffer;
 
       procedure Print_With_Folded_Info (L : Editable_Line_Type);
       --  Print the debug line's information including folding information
@@ -260,8 +264,8 @@ package body Src_Editor_Buffer.Debug is
          --  Get the folding level first
 
          for Folded_Block of Buffer.Folded_Blocks loop
-            Start_Line := Editable_Line_Type
-              (Folded_Block.Start_Mark.Element.Line);
+            Start_Line :=
+              Editable_Line_Type (Folded_Block.Start_Mark.Element.Line);
 
             if L in Start_Line + 1 .. Start_Line + Folded_Block.Nb_Lines then
                Folding_Level := Folding_Level + 1;
@@ -274,8 +278,8 @@ package body Src_Editor_Buffer.Debug is
          --  block
 
          for Folded_Block of Buffer.Folded_Blocks loop
-            Start_Line := Editable_Line_Type
-              (Folded_Block.Start_Mark.Element.Line);
+            Start_Line :=
+              Editable_Line_Type (Folded_Block.Start_Mark.Element.Line);
 
             if Start_Line = L then
                Nb_Folded_Lines := Folded_Block.Nb_Lines;
@@ -296,27 +300,34 @@ package body Src_Editor_Buffer.Debug is
          Set_Return_Value_As_List (Data);
 
          for Line in 1 .. Buffer.Last_Editable_Line loop
-            Set_Return_Value
-              (Data, "bl:" & I (Buffer.Editable_Lines (Line)));
+            Set_Return_Value (Data, "bl:" & I (Buffer.Editable_Lines (Line)));
          end loop;
 
       elsif Command = "debug_dump_buffer_lines" then
          Set_Return_Value_As_List (Data);
 
-         for Line in Buffer.Line_Data'First .. Buffer.Line_Data'First +
-           Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
+         for Line in
+           Buffer.Line_Data'First
+           ..
+             Buffer.Line_Data'First
+             + Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
          loop
             Set_Return_Value
-              (Data, "[" & I (Line) & "] " &
-               (if Buffer.Line_Data (Line).Side_Info_Data = null
+              (Data,
+               "["
+               & I (Line)
+               & "] "
+               & (if Buffer.Line_Data (Line).Side_Info_Data = null
                   then "null"
-                  else "<>") &
-                 ":" & I (Buffer.Line_Data (Line).Editable_Line) &
-                 ":" & (if Buffer.Line_Data (Line).Line_Mark = null
-                        then "null"
-                        else "<>") &
-                 ":" & I (Integer
-                          (Buffer.Line_Data (Line).Highlighting'Length)));
+                  else "<>")
+               & ":"
+               & I (Buffer.Line_Data (Line).Editable_Line)
+               & ":"
+               & (if Buffer.Line_Data (Line).Line_Mark = null
+                  then "null"
+                  else "<>")
+               & ":"
+               & I (Integer (Buffer.Line_Data (Line).Highlighting'Length)));
          end loop;
 
       elsif Command = "debug_dump_side_info" then
@@ -330,21 +341,27 @@ package body Src_Editor_Buffer.Debug is
       elsif Command = "debug_dump_line_highlighting" then
          Set_Return_Value_As_List (Data);
 
-         for Line in Buffer.Line_Data'First .. Buffer.Line_Data'First +
-           Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
+         for Line in
+           Buffer.Line_Data'First
+           ..
+             Buffer.Line_Data'First
+             + Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
          loop
             Set_Return_Value
               (Data,
                Get_Name
-                 (Buffer.Line_Data (Line).Highlighting
-                    (Highlight_Editor).Active));
+                 (Buffer.Line_Data (Line).Highlighting (Highlight_Editor)
+                    .Active));
          end loop;
 
       elsif Command = "debug_dump_all_lines" then
          Set_Return_Value_As_List (Data);
 
-         for Line in Buffer.Line_Data'First .. Buffer.Line_Data'First +
-           Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
+         for Line in
+           Buffer.Line_Data'First
+           ..
+             Buffer.Line_Data'First
+             + Buffer_Line_Type (Get_Line_Count (Buffer) - 1)
          loop
             if Buffer.Line_Data (Line).Editable_Line /= 0 then
                Print_With_Folded_Info (Buffer.Line_Data (Line).Editable_Line);
@@ -361,8 +378,9 @@ package body Src_Editor_Buffer.Debug is
             declare
             begin
                --  Check whether the parameter is a syntax tag
-               Tag := Buffer.Highlighter.Syntax_Tags
-                 (Language_Entity'Value (Nth_Arg (Data, 2)));
+               Tag :=
+                 Buffer.Highlighter.Syntax_Tags
+                   (Language_Entity'Value (Nth_Arg (Data, 2)));
             exception
                when Constraint_Error =>
                   --  Try to find the parameter in the syntax highlighting tags
@@ -413,8 +431,10 @@ package body Src_Editor_Buffer.Debug is
                if C.all in Base_Editor_Command_Type'Class then
                   Set_Return_Value
                     (Data,
-                     "[" & I (Debug_Get_Group (C)) & "]" &
-                     Debug_String (Base_Editor_Command_Type'Class (C.all)));
+                     "["
+                     & I (Debug_Get_Group (C))
+                     & "]"
+                     & Debug_String (Base_Editor_Command_Type'Class (C.all)));
                else
                   Set_Return_Value (Data, String'("not an editor command!"));
                end if;
@@ -435,8 +455,9 @@ package body Src_Editor_Buffer.Debug is
       Arg    : Positive)
    is
       EditorBuffer : constant Class_Type :=
-                       New_Class (Get_Kernel (Data), "EditorBuffer");
-      Inst : constant Class_Instance := Nth_Arg (Data, Arg, EditorBuffer);
+        New_Class (Get_Kernel (Data), "EditorBuffer");
+      Inst         : constant Class_Instance :=
+        Nth_Arg (Data, Arg, EditorBuffer);
    begin
       Buffer := Source_Buffer (GObject'(Get_Data (Inst)));
       if Buffer = null then
@@ -448,8 +469,7 @@ package body Src_Editor_Buffer.Debug is
    -- Register --
    --------------
 
-   procedure Register
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   procedure Register (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       EditorBuffer : constant Class_Type := New_Class (Kernel, "EditorBuffer");
    begin
@@ -458,32 +478,68 @@ package body Src_Editor_Buffer.Debug is
       end if;
 
       Register_Command
-        (Kernel, "debug_dump_editable_lines",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_editable_lines",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_side_info",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_side_info",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_side_info_config",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_side_info_config",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_all_lines",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_all_lines",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_buffer_lines",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_buffer_lines",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_syntax_highlighting",
-         1, 1, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_syntax_highlighting",
+         1,
+         1,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_line_highlighting",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_line_highlighting",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_undo_queue",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_undo_queue",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
       Register_Command
-        (Kernel, "debug_dump_redo_queue",
-         0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel,
+         "debug_dump_redo_queue",
+         0,
+         0,
+         Buffer_Cmds'Access,
+         EditorBuffer);
    end Register;
 
 end Src_Editor_Buffer.Debug;

@@ -20,15 +20,15 @@ with DAP.Tools;
 
 private package DAP.Views.Registers.Scopes is
 
-   type Scopes_Request is
-     new DAP.Requests.Scopes.Scopes_DAP_Request
+   type Scopes_Request is new DAP.Requests.Scopes.Scopes_DAP_Request
    with record
       Kind : Command_Kind := Update_Registers;
    end record;
 
    type Scopes_Request_Access is access all Scopes_Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Scopes_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.ScopesResponse;

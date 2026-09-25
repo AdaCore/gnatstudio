@@ -17,20 +17,20 @@
 
 with VSS.Strings.Conversions;
 
-with String_Utils;            use String_Utils;
+with String_Utils; use String_Utils;
 
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
-with Gtk.Text_Iter;           use Gtk.Text_Iter;
-with Gtk.Text_Tag;            use Gtk.Text_Tag;
-with Gtk.Text_View;           use Gtk.Text_View;
-with Pango.Enums;             use Pango.Enums;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Text_Buffer; use Gtk.Text_Buffer;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Gtk.Text_Tag;    use Gtk.Text_Tag;
+with Gtk.Text_View;   use Gtk.Text_View;
+with Pango.Enums;     use Pango.Enums;
 
-with Default_Preferences;     use Default_Preferences;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Search;              use GPS.Search;
-with GPS.Kernel.Custom.GUI;   use GPS.Kernel.Custom.GUI;
+with Default_Preferences;    use Default_Preferences;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Search;             use GPS.Search;
+with GPS.Kernel.Custom.GUI;  use GPS.Kernel.Custom.GUI;
 
 package body GPS.Kernel.Search.Plugins is
 
@@ -38,11 +38,14 @@ package body GPS.Kernel.Search.Plugins is
    -- Documentation --
    -------------------
 
-   overriding function Documentation
-     (Self    : not null access Plugins_Search_Provider) return String is
+   overriding
+   function Documentation
+     (Self : not null access Plugins_Search_Provider) return String
+   is
       pragma Unreferenced (Self);
    begin
-      return "Search amongst the GNAT Studio plugins, and display the"
+      return
+        "Search amongst the GNAT Studio plugins, and display the"
         & " associated page in the preferences editor dialog.";
    end Documentation;
 
@@ -50,7 +53,8 @@ package body GPS.Kernel.Search.Plugins is
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Plugins_Search_Provider) is
+   overriding
+   procedure Free (Self : in out Plugins_Search_Provider) is
    begin
       if Self.Pattern_Needs_Free then
          Free (Self.Pattern);
@@ -63,7 +67,8 @@ package body GPS.Kernel.Search.Plugins is
    -- Set_Pattern --
    -----------------
 
-   overriding procedure Set_Pattern
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Plugins_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
@@ -77,25 +82,27 @@ package body GPS.Kernel.Search.Plugins is
       end if;
 
       --  Set Self.Pattern to Approximate if Pattern.Kind = Fuzzy
-      Self.Pattern := Pattern.Build_If_Needed
-        (Kind     => Fuzzy,
-         New_Kind => Approximate,
-         Built    => Self.Pattern_Needs_Free);
+      Self.Pattern :=
+        Pattern.Build_If_Needed
+          (Kind     => Fuzzy,
+           New_Kind => Approximate,
+           Built    => Self.Pattern_Needs_Free);
 
-      Self.Iter :=  Get_First_Reference (Self.Kernel.Get_Preferences);
+      Self.Iter := Get_First_Reference (Self.Kernel.Get_Preferences);
    end Set_Pattern;
 
    ----------
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Plugins_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
       Page                   : constant Preferences_Page :=
-                                 Get_Page (Self.Iter);
+        Get_Page (Self.Iter);
       Is_Plugins_Page        : Boolean := False;
       Displayed_In_Assistant : Boolean := False;
    begin
@@ -106,34 +113,32 @@ package body GPS.Kernel.Search.Plugins is
 
       if Is_Plugins_Page and then not Displayed_In_Assistant then
          declare
-            Plugin_Page            : constant Plugin_Preferences_Page :=
-                                       Plugin_Preferences_Page (Page);
-            Doc                    : constant String :=
-                                       Plugin_Page.Get_Documentation;
-            Doc_First_Line         : constant String :=
-                                       Get_Surrounding_Line
-                                         (Doc, Doc'First, Doc'First);
-            Plugin_Label           : constant String :=
-                                       Plugin_Page.Get_Plugin_Label;
-            Name_Context           : Search_Context;
-            Doc_Context            : Search_Context;
-            Short                  : GNAT.Strings.String_Access;
-            Long                   : GNAT.Strings.String_Access;
+            Plugin_Page    : constant Plugin_Preferences_Page :=
+              Plugin_Preferences_Page (Page);
+            Doc            : constant String := Plugin_Page.Get_Documentation;
+            Doc_First_Line : constant String :=
+              Get_Surrounding_Line (Doc, Doc'First, Doc'First);
+            Plugin_Label   : constant String := Plugin_Page.Get_Plugin_Label;
+            Name_Context   : Search_Context;
+            Doc_Context    : Search_Context;
+            Short          : GNAT.Strings.String_Access;
+            Long           : GNAT.Strings.String_Access;
          begin
             Result := null;
             Name_Context := Self.Pattern.Search_Best_Match (Plugin_Label);
 
             --  Try to match the plugin's name
             if Name_Context /= GPS.Search.No_Match then
-               Short := new String'
-                 (Self.Pattern.Highlight_Match
-                    (Buffer  => Plugin_Label,
-                     Context => Name_Context));
+               Short :=
+                 new String'
+                   (Self.Pattern.Highlight_Match
+                      (Buffer => Plugin_Label, Context => Name_Context));
                Long := new String'(Doc_First_Line);
 
-               Result := Plugins_Search_Provider'Class
-                 (Self.all).Create_Plugins_Search_Result
-                 (Plugin_Page, Short, Long, Name_Context.Score);
+               Result :=
+                 Plugins_Search_Provider'Class (Self.all)
+                   .Create_Plugins_Search_Result
+                      (Plugin_Page, Short, Long, Name_Context.Score);
 
                Self.Adjust_Score (Result);
             end if;
@@ -145,14 +150,15 @@ package body GPS.Kernel.Search.Plugins is
 
                if Doc_Context /= GPS.Search.No_Match then
                   Short := new String'(Plugin_Label);
-                  Long := new String'
-                    (Self.Pattern.Highlight_Match
-                       (Buffer  => Doc_First_Line,
-                        Context => Doc_Context));
+                  Long :=
+                    new String'
+                      (Self.Pattern.Highlight_Match
+                         (Buffer => Doc_First_Line, Context => Doc_Context));
 
-                  Result := Plugins_Search_Provider'Class
-                    (Self.all).Create_Plugins_Search_Result
-                    (Plugin_Page, Short, Long, Doc_Context.Score);
+                  Result :=
+                    Plugins_Search_Provider'Class (Self.all)
+                      .Create_Plugins_Search_Result
+                         (Plugin_Page, Short, Long, Doc_Context.Score);
 
                   Self.Adjust_Score (Result);
                end if;
@@ -175,21 +181,23 @@ package body GPS.Kernel.Search.Plugins is
       Long        : GNAT.Strings.String_Access;
       Score       : Natural) return GPS.Search.Search_Result_Access is
    begin
-      return new Plugins_Search_Result'
-        (Kernel      => Self.Kernel,
-         Provider    => Self,
-         Score       => Score,
-         Short       => Short,
-         Long        => Long,
-         Id          => VSS.Strings.Conversions.To_Virtual_String (Long.all),
-         Plugin_Page => Plugin_Page);
+      return
+        new Plugins_Search_Result'
+          (Kernel      => Self.Kernel,
+           Provider    => Self,
+           Score       => Score,
+           Short       => Short,
+           Long        => Long,
+           Id          => VSS.Strings.Conversions.To_Virtual_String (Long.all),
+           Plugin_Page => Plugin_Page);
    end Create_Plugins_Search_Result;
 
    ----------
    -- Free --
    ----------
 
-   overriding procedure Free (Self : in out Plugins_Search_Result) is
+   overriding
+   procedure Free (Self : in out Plugins_Search_Result) is
    begin
       Free (Kernel_Search_Result (Self));
    end Free;
@@ -198,16 +206,19 @@ package body GPS.Kernel.Search.Plugins is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self       : not null access Plugins_Search_Result;
-      Give_Focus : Boolean)
+   overriding
+   procedure Execute
+     (Self : not null access Plugins_Search_Result; Give_Focus : Boolean)
    is
-      Success        : Boolean;
+      Success : Boolean;
       pragma Unreferenced (Give_Focus, Success);
    begin
-      Success := Execute_Action
-        (Self.Kernel, "open Preferences", Synchronous => True,
-         Error_Msg_In_Console        => True);
+      Success :=
+        Execute_Action
+          (Self.Kernel,
+           "open Preferences",
+           Synchronous          => True,
+           Error_Msg_In_Console => True);
 
       --  Display the plugin page in the preferences editor dialog
       Self.Kernel.Get_Preferences.Get_Editor.Display_Page
@@ -218,8 +229,9 @@ package body GPS.Kernel.Search.Plugins is
    -- Full --
    ----------
 
-   overriding function Full
-     (Self       : not null access Plugins_Search_Result)
+   overriding
+   function Full
+     (Self : not null access Plugins_Search_Result)
       return Gtk.Widget.Gtk_Widget
    is
       View      : Gtk_Text_View;
@@ -242,8 +254,7 @@ package body GPS.Kernel.Search.Plugins is
       Set_Property
         (Underline, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
       Set_Property
-        (Underline, Gtk.Text_Tag.Underline_Property,
-         Pango_Underline_Single);
+        (Underline, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
 
       Buffer.Get_End_Iter (Iter);
       Buffer.Insert (Iter, Self.Plugin_Page.Get_Documentation);

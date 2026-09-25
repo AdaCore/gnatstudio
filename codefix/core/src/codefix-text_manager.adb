@@ -15,20 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Exceptions; use Ada.Exceptions;
 
-with GNAT.Case_Util;          use GNAT.Case_Util;
-with GNAT.Regpat;             use GNAT.Regpat;
-with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
-with GNATCOLL.Utils;          use GNATCOLL.Utils;
+with GNAT.Case_Util;   use GNAT.Case_Util;
+with GNAT.Regpat;      use GNAT.Regpat;
+with GNATCOLL.Symbols; use GNATCOLL.Symbols;
+with GNATCOLL.Utils;   use GNATCOLL.Utils;
 
-with Case_Handling;           use Case_Handling;
-with Language.Ada;            use Language.Ada;
-with Projects;                use Projects;
+with Case_Handling; use Case_Handling;
+with Language.Ada;  use Language.Ada;
+with Projects;      use Projects;
 
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 
-with GPS.Editors;             use GPS.Editors;
+with GPS.Editors; use GPS.Editors;
 
 package body Codefix.Text_Manager is
 
@@ -55,11 +55,13 @@ package body Codefix.Text_Manager is
       To_Lower (Str_2_Lower);
 
       if Str_1'Length < Str_2'Length then
-         return Str_1_Lower = Str_2_Lower
-           (Str_2'Last - Str_1'Length + 1 .. Str_2'Last);
+         return
+           Str_1_Lower
+           = Str_2_Lower (Str_2'Last - Str_1'Length + 1 .. Str_2'Last);
       else
-         return Str_2_Lower = Str_1_Lower
-           (Str_1'Last - Str_2'Length + 1 .. Str_1'Last);
+         return
+           Str_2_Lower
+           = Str_1_Lower (Str_1'Last - Str_2'Length + 1 .. Str_1'Last);
       end if;
    end Compare_Last;
 
@@ -113,8 +115,11 @@ package body Codefix.Text_Manager is
       end if;
 
       case Char is
-         when '.' | ',' | ';' | ''' => return True;
-         when others => return False;
+         when '.' | ',' | ';' | ''' =>
+            return True;
+
+         when others                =>
+            return False;
       end case;
    end Is_Separator;
 
@@ -125,8 +130,11 @@ package body Codefix.Text_Manager is
    function Is_Bracket (Char : Character) return Boolean is
    begin
       case Char is
-         when '(' | ')' => return True;
-         when others => return False;
+         when '(' | ')' =>
+            return True;
+
+         when others    =>
+            return False;
       end case;
    end Is_Bracket;
 
@@ -140,7 +148,8 @@ package body Codefix.Text_Manager is
 
    function "<" (Left, Right : Text_Cursor) return Boolean is
    begin
-      return Left.Line < Right.Line
+      return
+        Left.Line < Right.Line
         or else (Left.Line = Right.Line and then Left.Col < Right.Col);
    end "<";
 
@@ -175,9 +184,11 @@ package body Codefix.Text_Manager is
    -- "=" --
    ---------
 
-   overriding function "=" (Left, Right : File_Cursor) return Boolean is
+   overriding
+   function "=" (Left, Right : File_Cursor) return Boolean is
    begin
-      return Left.Line = Right.Line
+      return
+        Left.Line = Right.Line
         and then Left.Col = Right.Col
         and then Left.File = Right.File;
    end "=";
@@ -186,11 +197,14 @@ package body Codefix.Text_Manager is
    -- "<" --
    ---------
 
-   overriding function "<" (Left, Right : File_Cursor) return Boolean is
+   overriding
+   function "<" (Left, Right : File_Cursor) return Boolean is
    begin
-      return Left.File < Right.File
-        or else (Left.File = Right.File
-                 and then Text_Cursor (Left) < Text_Cursor (Right));
+      return
+        Left.File < Right.File
+        or else
+          (Left.File = Right.File
+           and then Text_Cursor (Left) < Text_Cursor (Right));
    end "<";
 
    ------------
@@ -200,7 +214,7 @@ package body Codefix.Text_Manager is
    procedure Assign
      (This : in out File_Cursor'Class; Source : File_Cursor'Class) is
    begin
-      This.Col  := Source.Col;
+      This.Col := Source.Col;
       This.Line := Source.Line;
       This.File := Source.File;
    end Assign;
@@ -257,8 +271,10 @@ package body Codefix.Text_Manager is
    ----------
 
    procedure Free (This : in out Ptr_Text_Navigator) is
-      procedure Free_Pool is new Ada.Unchecked_Deallocation
-        (Text_Navigator_Abstr'Class, Ptr_Text_Navigator);
+      procedure Free_Pool is new
+        Ada.Unchecked_Deallocation
+          (Text_Navigator_Abstr'Class,
+           Ptr_Text_Navigator);
    begin
       if This /= null then
          Free (This.all);
@@ -290,9 +306,7 @@ package body Codefix.Text_Manager is
    ----------------
 
    procedure Initialize
-     (This : Text_Navigator_Abstr;
-      File : in out Text_Interface'Class)
-   is
+     (This : Text_Navigator_Abstr; File : in out Text_Interface'Class) is
    begin
       File.Construct_Db := This.Construct_Db;
    end Initialize;
@@ -302,8 +316,8 @@ package body Codefix.Text_Manager is
    ------------------
 
    function Get_New_Mark
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Mark_Abstr'Class
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Mark_Abstr'Class
    is
       Real_Cursor : File_Cursor := File_Cursor (Cursor);
    begin
@@ -321,9 +335,10 @@ package body Codefix.Text_Manager is
             To_Width   => Current_Text.Tab_Width (Cursor.Get_File)));
 
       declare
-         Res : Mark_Abstr'Class := Get_New_Mark
-          (Get_File (Current_Text, Get_File (Real_Cursor)).all,
-           Real_Cursor);
+         Res : Mark_Abstr'Class :=
+           Get_New_Mark
+             (Get_File (Current_Text, Get_File (Real_Cursor)).all,
+              Real_Cursor);
       begin
          if Cursor.Line = 0 then
             Res.Is_First_Line := True;
@@ -341,11 +356,11 @@ package body Codefix.Text_Manager is
    ------------------------
 
    function Get_Current_Cursor
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class
+     (Current_Text : Text_Navigator_Abstr'Class; Mark : Mark_Abstr'Class)
+      return File_Cursor'Class
    is
-      Cursor : File_Cursor'Class := Get_Current_Cursor
-        (Get_File (Current_Text, Mark.File_Name).all, Mark);
+      Cursor : File_Cursor'Class :=
+        Get_Current_Cursor (Get_File (Current_Text, Mark.File_Name).all, Mark);
    begin
       if Mark.Is_First_Line then
          Cursor.Line := 0;
@@ -366,12 +381,13 @@ package body Codefix.Text_Manager is
       Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator is
    begin
-      return Get_Iterator_At
-        (Get_File (Current_Text, Get_File (Cursor)),
-         Text_Cursor (Cursor),
-         From_Type,
-         Position,
-         Categories_Seeked);
+      return
+        Get_Iterator_At
+          (Get_File (Current_Text, Get_File (Cursor)),
+           Text_Cursor (Cursor),
+           From_Type,
+           Position,
+           Categories_Seeked);
    end Get_Iterator_At;
 
    ---------
@@ -379,12 +395,12 @@ package body Codefix.Text_Manager is
    ---------
 
    function Get
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class;
-      Len    : Natural) return String is
+     (This : Text_Navigator_Abstr; Cursor : File_Cursor'Class; Len : Natural)
+      return String is
    begin
-      return Get
-        (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor), Len);
+      return
+        Get
+          (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor), Len);
    end Get;
 
    ---------
@@ -392,12 +408,11 @@ package body Codefix.Text_Manager is
    ---------
 
    function Get
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class) return Character
+     (This : Text_Navigator_Abstr; Cursor : File_Cursor'Class) return Character
    is
    begin
-      return Get
-        (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor));
+      return
+        Get (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor));
    end Get;
 
    ---------
@@ -405,13 +420,14 @@ package body Codefix.Text_Manager is
    ---------
 
    function Get
-     (This        : Text_Navigator_Abstr;
-      Start, Stop : File_Cursor'Class) return String is
+     (This : Text_Navigator_Abstr; Start, Stop : File_Cursor'Class)
+      return String is
    begin
-      return Get
-        (Get_File (This, Get_File (Start)).all,
-         Text_Cursor (Start),
-         Text_Cursor (Stop));
+      return
+        Get
+          (Get_File (This, Get_File (Start)).all,
+           Text_Cursor (Start),
+           Text_Cursor (Stop));
    end Get;
 
    --------------
@@ -423,10 +439,11 @@ package body Codefix.Text_Manager is
       Cursor    : File_Cursor'Class;
       Start_Col : Visible_Column_Type := 0) return String is
    begin
-      return Get_Line
-        (Get_File (This, Get_File (Cursor)).all,
-         Text_Cursor (Cursor),
-         Start_Col);
+      return
+        Get_Line
+          (Get_File (This, Get_File (Cursor)).all,
+           Text_Cursor (Cursor),
+           Start_Col);
    end Get_Line;
 
    ---------------
@@ -434,8 +451,8 @@ package body Codefix.Text_Manager is
    ---------------
 
    function Read_File
-     (This      : Text_Navigator_Abstr;
-      File_Name : Virtual_File) return Unbounded_String is
+     (This : Text_Navigator_Abstr; File_Name : Virtual_File)
+      return Unbounded_String is
    begin
       return Read_File (Get_File (This, File_Name).all);
    end Read_File;
@@ -445,8 +462,8 @@ package body Codefix.Text_Manager is
    --------------
 
    function Get_File
-     (This : Text_Navigator_Abstr'Class;
-      Name : GNATCOLL.VFS.Virtual_File) return Ptr_Text
+     (This : Text_Navigator_Abstr'Class; Name : GNATCOLL.VFS.Virtual_File)
+      return Ptr_Text
    is
       New_Text : Ptr_Text;
    begin
@@ -493,8 +510,7 @@ package body Codefix.Text_Manager is
      (This     : in out Text_Navigator_Abstr;
       Cursor   : File_Cursor'Class;
       New_Line : String;
-      Indent   : Boolean := False)
-   is
+      Indent   : Boolean := False) is
    begin
       Add_Line
         (Get_File (This, Get_File (Cursor)).all,
@@ -508,8 +524,7 @@ package body Codefix.Text_Manager is
    -----------------
 
    procedure Delete_Line
-     (This : in out Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class) is
+     (This : in out Text_Navigator_Abstr; Cursor : File_Cursor'Class) is
    begin
       Delete_Line
         (Get_File (This, Get_File (Cursor)).all, Text_Cursor (Cursor));
@@ -520,12 +535,12 @@ package body Codefix.Text_Manager is
    -----------------
 
    function Line_Length
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class) return Natural is
+     (This : Text_Navigator_Abstr; Cursor : File_Cursor'Class) return Natural
+   is
    begin
-      return Line_Length
-        (Get_File (This, Get_File (Cursor)).all,
-         File_Cursor (Cursor));
+      return
+        Line_Length
+          (Get_File (This, Get_File (Cursor)).all, File_Cursor (Cursor));
    end Line_Length;
 
    ------------------
@@ -536,14 +551,14 @@ package body Codefix.Text_Manager is
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
       Searched : Token_Record;
-      Step     : Step_Way := Normal_Step)
-      return Word_Cursor'Class is
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class is
    begin
-      return Search_Token
-        (Get_File (This, Get_File (Cursor)).all,
-         File_Cursor (Cursor),
-         Searched,
-         Step);
+      return
+        Search_Token
+          (Get_File (This, Get_File (Cursor)).all,
+           File_Cursor (Cursor),
+           Searched,
+           Step);
    end Search_Token;
 
    -------------------
@@ -554,14 +569,14 @@ package body Codefix.Text_Manager is
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
       Searched : Token_List;
-      Step     : Step_Way := Normal_Step)
-      return Word_Cursor'Class is
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class is
    begin
-      return Search_Tokens
-        (Get_File (This, Get_File (Cursor)).all,
-         File_Cursor (Cursor),
-         Searched,
-         Step);
+      return
+        Search_Tokens
+          (Get_File (This, Get_File (Cursor)).all,
+           File_Cursor (Cursor),
+           Searched,
+           Step);
    end Search_Tokens;
 
    -----------------
@@ -582,8 +597,8 @@ package body Codefix.Text_Manager is
    --------------
 
    function Line_Max
-     (This      : Text_Navigator_Abstr'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File) return Natural is
+     (This : Text_Navigator_Abstr'Class; File_Name : GNATCOLL.VFS.Virtual_File)
+      return Natural is
    begin
       return Line_Max (Get_File (This, File_Name).all);
    end Line_Max;
@@ -593,8 +608,8 @@ package body Codefix.Text_Manager is
    ---------------
 
    function Tab_Width
-     (This      : Text_Navigator_Abstr'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File) return Natural is
+     (This : Text_Navigator_Abstr'Class; File_Name : GNATCOLL.VFS.Virtual_File)
+      return Natural is
    begin
       return Tab_Width (Get_File (This, File_Name).all);
    end Tab_Width;
@@ -606,11 +621,10 @@ package body Codefix.Text_Manager is
    function Get_Full_Prefix
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
-      Category : Language_Category := Cat_Unknown)
-      return String is
+      Category : Language_Category := Cat_Unknown) return String is
    begin
-      return Get_Full_Prefix
-        (Get_File (This, Get_File (Cursor)), Cursor, Category);
+      return
+        Get_Full_Prefix (Get_File (This, Get_File (Cursor)), Cursor, Category);
    end Get_Full_Prefix;
 
    ----------------
@@ -625,15 +639,16 @@ package body Codefix.Text_Manager is
    is
       Unit_Info, Body_Info : Construct_Tree_Iterator;
    begin
-      Unit_Info := Get_Iterator_At
-        (Current_Text, Cursor, From_Type => Start_Name);
+      Unit_Info :=
+        Get_Iterator_At (Current_Text, Cursor, From_Type => Start_Name);
 
       if Unit_Info = Null_Construct_Tree_Iterator then
          --  If the location was not the location of an entity name, see if we
          --  can find the beginning of a construct
 
-         Unit_Info := Get_Iterator_At
-           (Current_Text, Cursor, From_Type => Start_Construct);
+         Unit_Info :=
+           Get_Iterator_At
+             (Current_Text, Cursor, From_Type => Start_Construct);
       end if;
 
       if Unit_Info = Null_Construct_Tree_Iterator then
@@ -649,64 +664,72 @@ package body Codefix.Text_Manager is
       --  expected name to catch certain changes.
 
       if Get_Construct (Unit_Info).Is_Declaration then
-         Body_Info := To_Construct_Tree_Iterator (Get_Second_Occurence
-           (To_Entity_Access
-              (Get_Structured_File
-                 (Current_Text, Get_File (Cursor)), Unit_Info)));
+         Body_Info :=
+           To_Construct_Tree_Iterator
+             (Get_Second_Occurence
+                (To_Entity_Access
+                   (Get_Structured_File (Current_Text, Get_File (Cursor)),
+                    Unit_Info)));
       else
          Body_Info := Null_Construct_Tree_Iterator;
       end if;
 
       if Body_Info /= Null_Construct_Tree_Iterator then
          Set_File (Body_Begin, Get_File (Cursor));
-         Set_File (Body_End,   Get_File (Cursor));
+         Set_File (Body_End, Get_File (Cursor));
          Set_File (Spec_Begin, Get_File (Cursor));
-         Set_File (Spec_End,   Get_File (Cursor));
+         Set_File (Spec_End, Get_File (Cursor));
 
          Body_Begin.Col := 1;
          Body_End.Col := 1;
          Body_Begin.Line := Get_Construct (Body_Info).Sloc_Start.Line;
          Body_End.Line := Get_Construct (Body_Info).Sloc_End.Line;
 
-         Body_Begin.Col := To_Column_Index
-           (String_Index_Type (Get_Construct (Body_Info).Sloc_Start.Column),
-            Get_Line (Current_Text, Body_Begin),
-            Current_Text.Tab_Width (Get_File (Body_Begin)));
-         Body_End.Col := To_Column_Index
-           (String_Index_Type (Get_Construct (Body_Info).Sloc_End.Column),
-            Get_Line (Current_Text, Body_End),
-            Current_Text.Tab_Width (Get_File (Body_End)));
+         Body_Begin.Col :=
+           To_Column_Index
+             (String_Index_Type (Get_Construct (Body_Info).Sloc_Start.Column),
+              Get_Line (Current_Text, Body_Begin),
+              Current_Text.Tab_Width (Get_File (Body_Begin)));
+         Body_End.Col :=
+           To_Column_Index
+             (String_Index_Type (Get_Construct (Body_Info).Sloc_End.Column),
+              Get_Line (Current_Text, Body_End),
+              Current_Text.Tab_Width (Get_File (Body_End)));
 
          Spec_Begin.Col := 1;
          Spec_End.Col := 1;
          Spec_Begin.Line := Get_Construct (Unit_Info).Sloc_Start.Line;
          Spec_End.Line := Get_Construct (Unit_Info).Sloc_End.Line;
 
-         Spec_Begin.Col := To_Column_Index
-           (String_Index_Type (Get_Construct (Unit_Info).Sloc_Start.Column),
-            Get_Line (Current_Text, Spec_Begin),
-            Current_Text.Tab_Width (Get_File (Spec_Begin)));
-         Spec_End.Col := To_Column_Index
-           (String_Index_Type (Get_Construct (Unit_Info).Sloc_End.Column),
-            Get_Line (Current_Text, Spec_End),
-            Current_Text.Tab_Width (Get_File (Spec_End)));
+         Spec_Begin.Col :=
+           To_Column_Index
+             (String_Index_Type (Get_Construct (Unit_Info).Sloc_Start.Column),
+              Get_Line (Current_Text, Spec_Begin),
+              Current_Text.Tab_Width (Get_File (Spec_Begin)));
+         Spec_End.Col :=
+           To_Column_Index
+             (String_Index_Type (Get_Construct (Unit_Info).Sloc_End.Column),
+              Get_Line (Current_Text, Spec_End),
+              Current_Text.Tab_Width (Get_File (Spec_End)));
       else
          Set_File (Body_Begin, Get_File (Cursor));
-         Set_File (Body_End,   Get_File (Cursor));
+         Set_File (Body_End, Get_File (Cursor));
 
          Body_Begin.Col := 1;
          Body_End.Col := 1;
          Body_Begin.Line := Get_Construct (Unit_Info).Sloc_Start.Line;
          Body_End.Line := Get_Construct (Unit_Info).Sloc_End.Line;
 
-         Body_Begin.Col := To_Column_Index
-           (String_Index_Type (Get_Construct (Unit_Info).Sloc_Start.Column),
-            Get_Line (Current_Text, Body_Begin),
-            Current_Text.Tab_Width (Get_File (Body_Begin)));
-         Body_End.Col := To_Column_Index
-           (String_Index_Type (Get_Construct (Unit_Info).Sloc_End.Column),
-            Get_Line (Current_Text, Body_End),
-            Current_Text.Tab_Width (Get_File (Body_End)));
+         Body_Begin.Col :=
+           To_Column_Index
+             (String_Index_Type (Get_Construct (Unit_Info).Sloc_Start.Column),
+              Get_Line (Current_Text, Body_Begin),
+              Current_Text.Tab_Width (Get_File (Body_Begin)));
+         Body_End.Col :=
+           To_Column_Index
+             (String_Index_Type (Get_Construct (Unit_Info).Sloc_End.Column),
+              Get_Line (Current_Text, Body_End),
+              Current_Text.Tab_Width (Get_File (Body_End)));
 
          Assign (Spec_Begin, Null_File_Cursor);
          Assign (Spec_End, Null_File_Cursor);
@@ -725,10 +748,7 @@ package body Codefix.Text_Manager is
       Include_Dot : Boolean := False) is
    begin
       Next_Word
-        (Get_File (This, Get_File (Cursor)).all,
-         Cursor,
-         Word,
-         Include_Dot);
+        (Get_File (This, Get_File (Cursor)).all, Cursor, Word, Include_Dot);
    end Next_Word;
 
    --------------------
@@ -742,10 +762,7 @@ package body Codefix.Text_Manager is
       Include_Dot : Boolean := False) is
    begin
       Previouse_Word
-        (Get_File (This, Get_File (Cursor)).all,
-         Cursor,
-         Word,
-         Include_Dot);
+        (Get_File (This, Get_File (Cursor)).all, Cursor, Word, Include_Dot);
    end Previouse_Word;
 
    ----------------
@@ -765,14 +782,14 @@ package body Codefix.Text_Manager is
 
    function Previous_Char
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-     return File_Cursor'Class
+      return File_Cursor'Class
    is
       Result : File_Cursor;
    begin
-      Result := (Text_Cursor
-                   (Previous_Char
-                      (Get_File (This, Get_File (Cursor)).all, Cursor))
-                 with Get_File (Cursor));
+      Result :=
+        (Text_Cursor
+           (Previous_Char (Get_File (This, Get_File (Cursor)).all, Cursor))
+         with Get_File (Cursor));
       return Result;
    end Previous_Char;
 
@@ -780,8 +797,8 @@ package body Codefix.Text_Manager is
    -- Undo --
    ----------
 
-   procedure Undo
-     (This : Text_Navigator_Abstr'Class; File_Name : Virtual_File) is
+   procedure Undo (This : Text_Navigator_Abstr'Class; File_Name : Virtual_File)
+   is
    begin
       Undo (Get_File (This, File_Name).all);
    end Undo;
@@ -818,9 +835,11 @@ package body Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : Text_Navigator_Abstr'Class;
-      Callback : access procedure (Buffer : Unbounded_String;
-                                   Token  : Language.Token_Record;
-                                   Stop   : in out Boolean);
+      Callback :
+        access procedure
+          (Buffer : Unbounded_String;
+           Token  : Language.Token_Record;
+           Stop   : in out Boolean);
       Start    : File_Cursor'Class) is
    begin
       Parse_Entities_Backwards
@@ -857,9 +876,7 @@ package body Codefix.Text_Manager is
    ----------------
 
    procedure Initialize
-     (This      : in out Text_Interface;
-      File_Name : GNATCOLL.VFS.Virtual_File)
-   is
+     (This : in out Text_Interface; File_Name : GNATCOLL.VFS.Virtual_File) is
    begin
       This.File_Name := File_Name;
    end Initialize;
@@ -876,21 +893,23 @@ package body Codefix.Text_Manager is
       Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator
    is
-      Line_Cursor : constant String := Get_Line
-        (Text_Interface'Class (Current_Text.all), Cursor, 1);
+      Line_Cursor : constant String :=
+        Get_Line (Text_Interface'Class (Current_Text.all), Cursor, 1);
       It          : Construct_Tree_Iterator;
    begin
-      It := Get_Iterator_At
-        (Get_Tree (Get_Structured_File (Current_Text)),
-         (Absolute_Offset => False,
-          Line            => Get_Line (Cursor),
-          Line_Offset     => To_Char_Index
-            (Get_Column (Cursor),
-             Line_Cursor,
-             Text_Interface'Class (Current_Text.all).Tab_Width)),
-         From_Type,
-         Position,
-         Categories_Seeked);
+      It :=
+        Get_Iterator_At
+          (Get_Tree (Get_Structured_File (Current_Text)),
+           (Absolute_Offset => False,
+            Line            => Get_Line (Cursor),
+            Line_Offset     =>
+              To_Char_Index
+                (Get_Column (Cursor),
+                 Line_Cursor,
+                 Text_Interface'Class (Current_Text.all).Tab_Width)),
+           From_Type,
+           Position,
+           Categories_Seeked);
 
       return It;
    end Get_Iterator_At;
@@ -909,29 +928,30 @@ package body Codefix.Text_Manager is
    ---------
 
    function Get
-     (This        : Text_Interface;
-      Start, Stop : Text_Cursor'Class) return String
+     (This : Text_Interface; Start, Stop : Text_Cursor'Class) return String
    is
 
       function Recursive_Get (C : Text_Cursor; Before : String) return String;
 
       function Recursive_Get (C : Text_Cursor; Before : String) return String
       is
-         Line        : constant String :=
+         Line                 : constant String :=
            Get_Line (Text_Interface'Class (This), C, 1);
-         Next_Cursor : Text_Cursor;
+         Next_Cursor          : Text_Cursor;
          Char_Start, Char_End : String_Index_Type;
       begin
          if C.Line = Start.Line then
-            Char_Start := To_Char_Index
-              (Start.Col, Line, Text_Interface'Class (This).Tab_Width);
+            Char_Start :=
+              To_Char_Index
+                (Start.Col, Line, Text_Interface'Class (This).Tab_Width);
          else
             Char_Start := String_Index_Type (Line'First);
          end if;
 
          if C.Line = Stop.Line then
-            Char_End := To_Char_Index
-              (Stop.Col, Line, Text_Interface'Class (This).Tab_Width);
+            Char_End :=
+              To_Char_Index
+                (Stop.Col, Line, Text_Interface'Class (This).Tab_Width);
          else
             Char_End := String_Index_Type (Line'Last);
          end if;
@@ -943,7 +963,8 @@ package body Codefix.Text_Manager is
             Next_Cursor.Line := Next_Cursor.Line + 1;
             Next_Cursor.Col := 1;
 
-            return Before
+            return
+              Before
               & Line (Integer (Char_Start) .. Integer (Char_End))
               & Recursive_Get (Next_Cursor, (1 => ASCII.LF));
          end if;
@@ -980,8 +1001,8 @@ package body Codefix.Text_Manager is
    -----------------
 
    function Line_Length
-     (This   : Text_Interface'Class;
-      Cursor : Text_Cursor'Class) return Natural is
+     (This : Text_Interface'Class; Cursor : Text_Cursor'Class) return Natural
+   is
    begin
       return Get_Line (This, Cursor)'Length;
    end Line_Length;
@@ -997,8 +1018,8 @@ package body Codefix.Text_Manager is
       Step     : Step_Way := Normal_Step) return Word_Cursor'Class
    is
       Tokens : constant Token_List := (1 => Searched);
-      Result : constant Word_Cursor'Class := Search_Tokens
-        (This, Cursor, Tokens, Step);
+      Result : constant Word_Cursor'Class :=
+        Search_Tokens (This, Cursor, Tokens, Step);
    begin
       return Result;
    end Search_Token;
@@ -1016,10 +1037,10 @@ package body Codefix.Text_Manager is
    is
       --  ??? This is a bit Ada-specific (casing, use of Ada_Lang).
 
-      Result        : Word_Cursor :=
+      Result      : Word_Cursor :=
         (File_Cursor (Cursor) with Null_Unbounded_String, Text_Ascii);
-      Start_Index   : String_Index_Type;
-      Found         : Boolean := False;
+      Start_Index : String_Index_Type;
+      Found       : Boolean := False;
 
       function Callback
         (Entity         : Language_Entity;
@@ -1041,15 +1062,19 @@ package body Codefix.Text_Manager is
       begin
          for J in Searched'Range loop
             if Entity = Searched (J).Kind
-              and then Equal
-                (Line (Sloc_Start.Index .. Sloc_End.Index),
-                 To_String (Searched (J).Name),
-                 False)
+              and then
+                Equal
+                  (Line (Sloc_Start.Index .. Sloc_End.Index),
+                   To_String (Searched (J).Name),
+                   False)
             then
                Found := True;
 
-               Result.Col := To_Column_Index
-                 (String_Index_Type (Sloc_Start.Index), Line, This.Tab_Width);
+               Result.Col :=
+                 To_Column_Index
+                   (String_Index_Type (Sloc_Start.Index),
+                    Line,
+                    This.Tab_Width);
                Result.String_Match :=
                  To_Unbounded_String
                    (Line (Sloc_Start.Index .. Sloc_End.Index));
@@ -1082,18 +1107,16 @@ package body Codefix.Text_Manager is
       end if;
 
       case Step is
-         when Normal_Step =>
+         when Normal_Step  =>
             Parse_Entities
               (Lang     => Ada_Lang,
-               Buffer   => Line
-                 (Integer (Start_Index) .. Line'Last),
+               Buffer   => Line (Integer (Start_Index) .. Line'Last),
                Callback => Callback'Unrestricted_Access);
 
          when Reverse_Step =>
             Parse_Entities
               (Lang     => Ada_Lang,
-               Buffer   => Line
-                 (Line'First .. Integer (Start_Index)),
+               Buffer   => Line (Line'First .. Integer (Start_Index)),
                Callback => Callback'Unrestricted_Access);
 
       end case;
@@ -1111,16 +1134,17 @@ package body Codefix.Text_Manager is
       Searched : Token_List;
       Step     : Step_Way := Normal_Step) return Word_Cursor'Class
    is
-      Last, Increment    : Integer;
-      Result             : Word_Cursor;
-      New_Cursor         : File_Cursor;
+      Last, Increment : Integer;
+      Result          : Word_Cursor;
+      New_Cursor      : File_Cursor;
    begin
       New_Cursor := File_Cursor (Cursor);
 
       case Step is
-         when Normal_Step =>
+         when Normal_Step  =>
             Last := Line_Max (This);
             Increment := 1;
+
          when Reverse_Step =>
             Last := 1;
             Increment := -1;
@@ -1173,8 +1197,9 @@ package body Codefix.Text_Manager is
          if Get_Construct (Current_Info).Category = Category
            and then
              (Name = ""
-              or else Compare_Last
-                (Get (Get_Construct (Current_Info).Name).all, Name))
+              or else
+                Compare_Last
+                  (Get (Get_Construct (Current_Info).Name).all, Name))
          then
             return Get_Construct (Current_Info).all;
          end if;
@@ -1192,26 +1217,27 @@ package body Codefix.Text_Manager is
    function Get_Full_Prefix
      (This     : access Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
-      Category : Language_Category := Cat_Unknown)
-      return String
+      Category : Language_Category := Cat_Unknown) return String
    is
       It : Construct_Tree_Iterator;
    begin
       if Category = Cat_Unknown then
-         It := Get_Iterator_At
-           (Get_Tree (This.Get_Structured_File),
-            (Absolute_Offset => False,
-             Line            => Get_Line (Cursor),
-             Line_Offset     => 0),
-            Position => After);
+         It :=
+           Get_Iterator_At
+             (Get_Tree (This.Get_Structured_File),
+              (Absolute_Offset => False,
+               Line            => Get_Line (Cursor),
+               Line_Offset     => 0),
+              Position => After);
       else
-         It := Get_Iterator_At
-           (Get_Tree (This.Get_Structured_File),
-            (Absolute_Offset => False,
-             Line            => Get_Line (Cursor),
-             Line_Offset     => 0),
-            Position => After,
-            Categories_Seeked => (1 => Category));
+         It :=
+           Get_Iterator_At
+             (Get_Tree (This.Get_Structured_File),
+              (Absolute_Offset => False,
+               Line            => Get_Line (Cursor),
+               Line_Offset     => 0),
+              Position          => After,
+              Categories_Seeked => (1 => Category));
       end if;
 
       declare
@@ -1258,12 +1284,15 @@ package body Codefix.Text_Manager is
 
       Line_Cursor.Col := 1;
       Current_Line := To_Unbounded_String (Get_Line (This, Line_Cursor));
-      Cursor_Char_Index := To_Char_Index
-        (Get_Column (Cursor), To_String (Current_Line), This.Tab_Width);
+      Cursor_Char_Index :=
+        To_Char_Index
+          (Get_Column (Cursor), To_String (Current_Line), This.Tab_Width);
 
       while Is_Blank
-        (Slice
-           (Current_Line, Natural (Cursor_Char_Index), Length (Current_Line)))
+              (Slice
+                 (Current_Line,
+                  Natural (Cursor_Char_Index),
+                  Length (Current_Line)))
       loop
          Cursor_Char_Index := 1;
          Cursor.Line := Cursor.Line + 1;
@@ -1277,8 +1306,9 @@ package body Codefix.Text_Manager is
       Begin_Word := Cursor_Char_Index;
 
       while Natural (Cursor_Char_Index) < Length (Current_Line)
-        and then Is_Word_Character
-          (Element (Current_Line, Natural (Cursor_Char_Index)))
+        and then
+          Is_Word_Character
+            (Element (Current_Line, Natural (Cursor_Char_Index)))
       loop
          Cursor_Char_Index := Cursor_Char_Index + 1;
       end loop;
@@ -1302,14 +1332,12 @@ package body Codefix.Text_Manager is
 
          Word.String_Match :=
            Unbounded_Slice
-             (Current_Line,
-              Natural (Begin_Word),
-              Natural (Cursor_Char_Index));
+             (Current_Line, Natural (Begin_Word), Natural (Cursor_Char_Index));
       end if;
 
       Word.Line := Line_Cursor.Line;
-      Word.Col := To_Column_Index
-        (Begin_Word, To_String (Current_Line), This.Tab_Width);
+      Word.Col :=
+        To_Column_Index (Begin_Word, To_String (Current_Line), This.Tab_Width);
 
       if Cursor_Char_Index = String_Index_Type (Length (Current_Line)) then
          Cursor_Char_Index := 1;
@@ -1318,8 +1346,9 @@ package body Codefix.Text_Manager is
          Cursor_Char_Index := Cursor_Char_Index + 1;
       end if;
 
-      Cursor.Col := To_Column_Index
-        (Cursor_Char_Index, To_String (Current_Line), This.Tab_Width);
+      Cursor.Col :=
+        To_Column_Index
+          (Cursor_Char_Index, To_String (Current_Line), This.Tab_Width);
    end Next_Word;
 
    --------------------
@@ -1344,7 +1373,8 @@ package body Codefix.Text_Manager is
             return True;
          end if;
 
-         return not Is_Blank (C)
+         return
+           not Is_Blank (C)
            and then not Is_Separator (C)
            and then not Is_Bracket (C);
       end Is_Word_Character;
@@ -1355,14 +1385,14 @@ package body Codefix.Text_Manager is
 
       Line_Cursor.Col := 1;
       Current_Line := To_Unbounded_String (Get_Line (This, Line_Cursor));
-      Cursor_Char_Index := To_Char_Index
-        (Get_Column (Cursor), To_String (Current_Line), This.Tab_Width);
+      Cursor_Char_Index :=
+        To_Char_Index
+          (Get_Column (Cursor), To_String (Current_Line), This.Tab_Width);
 
-      while Is_Blank
-        (Slice (Current_Line, 1, Natural (Cursor_Char_Index)))
+      while Is_Blank (Slice (Current_Line, 1, Natural (Cursor_Char_Index)))
       loop
-         Cursor.Line       := Cursor.Line - 1;
-         Current_Line      := To_Unbounded_String (Get_Line (This, Cursor));
+         Cursor.Line := Cursor.Line - 1;
+         Current_Line := To_Unbounded_String (Get_Line (This, Cursor));
          Cursor_Char_Index := String_Index_Type (Length (Current_Line));
       end loop;
 
@@ -1373,8 +1403,9 @@ package body Codefix.Text_Manager is
       End_Word := Cursor_Char_Index;
 
       while Natural (Cursor_Char_Index) >= 1
-        and then Is_Word_Character
-          (Element (Current_Line, Natural (Cursor_Char_Index)))
+        and then
+          Is_Word_Character
+            (Element (Current_Line, Natural (Cursor_Char_Index)))
       loop
          Cursor_Char_Index := Cursor_Char_Index - 1;
       end loop;
@@ -1383,16 +1414,16 @@ package body Codefix.Text_Manager is
 
       Word.String_Match :=
         Unbounded_Slice
-          (Current_Line,
-           Natural (Cursor_Char_Index),
-           Natural (End_Word));
+          (Current_Line, Natural (Cursor_Char_Index), Natural (End_Word));
 
       Word.Line := Line_Cursor.Line;
-      Word.Col  := To_Column_Index
-        (Cursor_Char_Index, To_String (Current_Line), This.Tab_Width);
+      Word.Col :=
+        To_Column_Index
+          (Cursor_Char_Index, To_String (Current_Line), This.Tab_Width);
 
-      Cursor.Col := To_Column_Index
-        (Cursor_Char_Index, To_String (Current_Line), This.Tab_Width);
+      Cursor.Col :=
+        To_Column_Index
+          (Cursor_Char_Index, To_String (Current_Line), This.Tab_Width);
    end Previouse_Word;
 
    -------------------------
@@ -1416,8 +1447,8 @@ package body Codefix.Text_Manager is
       if not This.Structure_Up_To_Date.all then
          Update_Contents (This.Construct_Db, This.File_Name);
 
-         This.Construct_File := Get_Or_Create
-           (This.Construct_Db, This.File_Name);
+         This.Construct_File :=
+           Get_Or_Create (This.Construct_Db, This.File_Name);
 
          This.Structure_Up_To_Date.all := True;
       end if;
@@ -1438,7 +1469,7 @@ package body Codefix.Text_Manager is
 
    function Previous_Char
      (This : Text_Interface'Class; Cursor : Text_Cursor'Class)
-     return Text_Cursor'Class
+      return Text_Cursor'Class
    is
       Result, Line_Cursor : Text_Cursor := Text_Cursor (Cursor);
       Current_Line        : Unbounded_String;
@@ -1459,17 +1490,19 @@ package body Codefix.Text_Manager is
             end if;
 
             Current_Line := To_Unbounded_String (Get_Line (This, Line_Cursor));
-            Result.Col := To_Column_Index
-              (String_Index_Type (Length (Current_Line)),
-               Current_Line,
-               This.Tab_Width);
+            Result.Col :=
+              To_Column_Index
+                (String_Index_Type (Length (Current_Line)),
+                 Current_Line,
+                 This.Tab_Width);
          end if;
 
          if not Is_Blank
-           (Element
-              (Current_Line,
-               Natural (To_Char_Index
-                 (Result.Col, Current_Line, This.Tab_Width))))
+                  (Element
+                     (Current_Line,
+                      Natural
+                        (To_Char_Index
+                           (Result.Col, Current_Line, This.Tab_Width))))
          then
             return Result;
          end if;
@@ -1486,7 +1519,7 @@ package body Codefix.Text_Manager is
       Callback : Codefix_Entity_Callback;
       Start    : Text_Cursor'Class)
    is
-      Stop : Boolean := False;
+      Stop                    : Boolean := False;
       Line_Offset, Col_Offset : Integer;
 
       First_Line : constant String := Get_Line (This, Start, 1);
@@ -1495,10 +1528,13 @@ package body Codefix.Text_Manager is
 
    begin
       Line_Offset := Get_Line (Start) - 1;
-      Col_Offset := Integer
-        (To_Column_Index
-           (String_Index_Type
-                (Get_Column (Start)), First_Line, This.Tab_Width)) - 1;
+      Col_Offset :=
+        Integer
+          (To_Column_Index
+             (String_Index_Type (Get_Column (Start)),
+              First_Line,
+              This.Tab_Width))
+        - 1;
 
       while not Stop and then Line_Offset + 1 <= Last_Line loop
          declare
@@ -1536,8 +1572,7 @@ package body Codefix.Text_Manager is
 
                Adjusted_Sloc_Start.Line :=
                  Adjusted_Sloc_Start.Line + Line_Offset;
-               Adjusted_Sloc_End.Line :=
-                 Adjusted_Sloc_End.Line + Line_Offset;
+               Adjusted_Sloc_End.Line := Adjusted_Sloc_End.Line + Line_Offset;
 
                Stop :=
                  Callback
@@ -1569,30 +1604,28 @@ package body Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : in out Text_Interface'Class;
-      Callback : access procedure (Buffer : Unbounded_String;
-                                   Token  : Language.Token_Record;
-                                   Stop   : in out Boolean);
+      Callback :
+        access procedure
+          (Buffer : Unbounded_String;
+           Token  : Language.Token_Record;
+           Stop   : in out Boolean);
       Start    : File_Cursor'Class)
    is
       Contents : constant Unbounded_String := This.Read_File;
       Offset   : String_Index_Type;
 
       procedure Internal_Callback
-        (Token  : Language.Token_Record;
-         Stop   : in out Boolean);
+        (Token : Language.Token_Record; Stop : in out Boolean);
 
       procedure Internal_Callback
-        (Token  : Language.Token_Record;
-         Stop   : in out Boolean) is
+        (Token : Language.Token_Record; Stop : in out Boolean) is
       begin
          Callback.all (Contents, Token, Stop);
       end Internal_Callback;
 
    begin
-      Offset := To_String_Index
-        (This.Get_Structured_File,
-         Start.Line,
-         Start.Col);
+      Offset :=
+        To_String_Index (This.Get_Structured_File, Start.Line, Start.Col);
 
       Lang.Parse_Tokens_Backwards
         (Buffer       => To_String (Contents),
@@ -1630,23 +1663,25 @@ package body Codefix.Text_Manager is
    -------------
 
    procedure Replace
-     (This           : in out Text_Navigator_Abstr'Class;
-      Position       : File_Cursor'Class;
-      Len            : Integer;
-      New_Text       : String;
-      Blanks_Before  : Replace_Blanks_Policy;
-      Blanks_After   : Replace_Blanks_Policy)
+     (This          : in out Text_Navigator_Abstr'Class;
+      Position      : File_Cursor'Class;
+      Len           : Integer;
+      New_Text      : String;
+      Blanks_Before : Replace_Blanks_Policy;
+      Blanks_After  : Replace_Blanks_Policy)
    is
       Dest_Start : File_Cursor'Class := Clone (Position);
       Dest_Stop  : File_Cursor'Class := Clone (Position);
       Line       : constant String := This.Get_Line (Position, 1);
    begin
-      Dest_Stop.Col := To_Column_Index
-        (To_Char_Index
-           (Dest_Start.Col, Line, This.Tab_Width (Position.Get_File)) +
-             String_Index_Type (Len) - 1,
-         Line,
-         This.Tab_Width (Position.Get_File));
+      Dest_Stop.Col :=
+        To_Column_Index
+          (To_Char_Index
+             (Dest_Start.Col, Line, This.Tab_Width (Position.Get_File))
+           + String_Index_Type (Len)
+           - 1,
+           Line,
+           This.Tab_Width (Position.Get_File));
 
       Replace
         (This          => This,
@@ -1683,21 +1718,23 @@ package body Codefix.Text_Manager is
          Policy : Replace_Blanks_Policy;
          Pos    : Bound_Type)
       is
-         Line : constant String := Dest_Text.Get_Line (Around, 1);
-         Begin_Text : String_Index_Type;
-         End_Text   : String_Index_Type;
+         Line         : constant String := Dest_Text.Get_Line (Around, 1);
+         Begin_Text   : String_Index_Type;
+         End_Text     : String_Index_Type;
          Tmp_Cursor   : Text_Cursor := Around;
          Blank_Length : String_Index_Type;
       begin
          case Pos is
             when First =>
-               End_Text := To_Char_Index
-                 (Tmp_Cursor.Col, Line, This.Tab_Width (Dest_Start.File));
+               End_Text :=
+                 To_Char_Index
+                   (Tmp_Cursor.Col, Line, This.Tab_Width (Dest_Start.File));
                Begin_Text := End_Text - 1;
 
-            when Last =>
-               Begin_Text := To_Char_Index
-                 (Tmp_Cursor.Col, Line, This.Tab_Width (Dest_Start.File));
+            when Last  =>
+               Begin_Text :=
+                 To_Char_Index
+                   (Tmp_Cursor.Col, Line, This.Tab_Width (Dest_Start.File));
                End_Text := Begin_Text + 1;
 
          end case;
@@ -1711,8 +1748,10 @@ package body Codefix.Text_Manager is
          if Integer (Begin_Text) < Line'First then
             Tmp_Cursor.Col := 1;
          else
-            Tmp_Cursor.Col := To_Column_Index
-              (Begin_Text, Line, This.Tab_Width (Dest_Start.File)) + 1;
+            Tmp_Cursor.Col :=
+              To_Column_Index
+                (Begin_Text, Line, This.Tab_Width (Dest_Start.File))
+              + 1;
          end if;
 
          Blank_Length := End_Text - Begin_Text - 1;
@@ -1720,8 +1759,10 @@ package body Codefix.Text_Manager is
          case Policy is
             when Keep =>
                null;
-            when One =>
+
+            when One  =>
                Dest_Text.Replace (Tmp_Cursor, Integer (Blank_Length), " ");
+
             when None =>
                Dest_Text.Replace (Tmp_Cursor, Integer (Blank_Length), "");
          end case;
@@ -1740,8 +1781,10 @@ package body Codefix.Text_Manager is
          begin
             New_Stop.Line := Dest_Stop.Line;
             New_Stop.File := Dest_Stop.File;
-            New_Stop.Col := Dest_Stop.Col +
-              Word_Cursor (Dest_Stop).Get_Matching_Word (This)'Length - 1;
+            New_Stop.Col :=
+              Dest_Stop.Col
+              + Word_Cursor (Dest_Stop).Get_Matching_Word (This)'Length
+              - 1;
 
             This.Replace
               (Dest_Start, New_Stop, New_Text, Blanks_Before, Blanks_After);
@@ -1778,19 +1821,21 @@ package body Codefix.Text_Manager is
 
          declare
             Line  : constant String := This.Get_Line (Dest_Start, 1);
-            Index : constant String_Index_Type := To_Char_Index
-              (Dest_Start.Col, Line, This.Tab_Width (Dest_Start.File))
-              + New_Text'Length - 1;
+            Index : constant String_Index_Type :=
+              To_Char_Index
+                (Dest_Start.Col, Line, This.Tab_Width (Dest_Start.File))
+              + New_Text'Length
+              - 1;
          begin
-            Dest_Stop.Col := To_Column_Index
-              (Index, Line, This.Tab_Width (Dest_Stop.File));
+            Dest_Stop.Col :=
+              To_Column_Index (Index, Line, This.Tab_Width (Dest_Stop.File));
          end;
       else
          --  If there are several lines, then get the position of the last one.
 
          declare
-            subtype Line_Indexes is String
-              (1 .. New_Text'Last - Last_Begin_Line + 1);
+            subtype Line_Indexes is
+              String (1 .. New_Text'Last - Last_Begin_Line + 1);
          begin
             Dest_Stop.Col :=
               To_Column_Index
@@ -1829,9 +1874,7 @@ package body Codefix.Text_Manager is
    -----------
 
    procedure Erase
-     (This            : in out Text_Interface'Class;
-      Start, Stop     : File_Cursor'Class)
-   is
+     (This : in out Text_Interface'Class; Start, Stop : File_Cursor'Class) is
    begin
       This.Replace (Start, Stop, "");
 
@@ -1845,12 +1888,11 @@ package body Codefix.Text_Manager is
    -------------
 
    procedure Comment
-     (This        : in out Text_Interface'Class;
-      Start, Stop : File_Cursor'Class)
+     (This : in out Text_Interface'Class; Start, Stop : File_Cursor'Class)
    is
       Line_Cursor      : File_Cursor := File_Cursor (Start);
       Start_Char_Index : String_Index_Type;
-      Stop_Char_Index : String_Index_Type;
+      Stop_Char_Index  : String_Index_Type;
       Tmp_Cursor       : File_Cursor;
    begin
       Line_Cursor.Col := 1;
@@ -1862,21 +1904,21 @@ package body Codefix.Text_Manager is
          declare
             Current_String : constant String := This.Get_Line (Start, 1);
          begin
-            Start_Char_Index := To_Char_Index
-              (Start.Col, Current_String, This.Tab_Width);
-            Stop_Char_Index := To_Char_Index
-              (Stop.Col, Current_String, This.Tab_Width);
+            Start_Char_Index :=
+              To_Char_Index (Start.Col, Current_String, This.Tab_Width);
+            Stop_Char_Index :=
+              To_Char_Index (Stop.Col, Current_String, This.Tab_Width);
 
             declare
-               Back : constant String := Current_String
-                 (Integer (Stop_Char_Index) + 1 .. Current_String'Last);
+               Back : constant String :=
+                 Current_String
+                   (Integer (Stop_Char_Index) + 1 .. Current_String'Last);
             begin
                if not Is_Blank (Back) then
                   This.Add_Line (Stop, Back, False);
                   Tmp_Cursor := File_Cursor (Stop);
                   Tmp_Cursor.Col := Tmp_Cursor.Col + 1;
-                  This.Replace
-                    (Tmp_Cursor, Back'Length, "");
+                  This.Replace (Tmp_Cursor, Back'Length, "");
 
                   --  The indentation must be done after the comment, otherwise
                   --  the file may not be semantically correct while indenting.
@@ -1889,8 +1931,7 @@ package body Codefix.Text_Manager is
 
             --  But proper comment at the begining of the entity
 
-            if Is_Blank (Current_String
-                         (1 .. Natural (Start_Char_Index) - 1))
+            if Is_Blank (Current_String (1 .. Natural (Start_Char_Index) - 1))
             then
                Line_Cursor.Col := 1;
                This.Replace (Line_Cursor, 0, "--  ");
@@ -1905,11 +1946,10 @@ package body Codefix.Text_Manager is
          declare
             Current_String : constant String := This.Get_Line (Start, 1);
          begin
-            Start_Char_Index := To_Char_Index
-              (Start.Col, Current_String, This.Tab_Width);
+            Start_Char_Index :=
+              To_Char_Index (Start.Col, Current_String, This.Tab_Width);
 
-            if Is_Blank
-              (Current_String (1 .. Natural (Start_Char_Index) - 1))
+            if Is_Blank (Current_String (1 .. Natural (Start_Char_Index) - 1))
             then
                This.Replace (Line_Cursor, 0, "--  ");
             else
@@ -1930,16 +1970,15 @@ package body Codefix.Text_Manager is
 
          declare
             Current_String : constant String := This.Get_Line (Stop);
-            Back           : constant String := Current_String
-              (Current_String'First + 1 .. Current_String'Last);
+            Back           : constant String :=
+              Current_String (Current_String'First + 1 .. Current_String'Last);
          begin
             if not Is_Blank (Back) then
                This.Add_Line (Stop, Back, False);
 
                Tmp_Cursor := File_Cursor (Stop);
                Tmp_Cursor.Col := Tmp_Cursor.Col + 1;
-               This.Replace
-                 (Tmp_Cursor, Back'Length, "");
+               This.Replace (Tmp_Cursor, Back'Length, "");
 
                This.Replace (Line_Cursor, 0, "--  ");
 
@@ -1960,7 +1999,8 @@ package body Codefix.Text_Manager is
    -- Free --
    ----------
 
-   overriding procedure Free (This : in out Word_Cursor) is
+   overriding
+   procedure Free (This : in out Word_Cursor) is
    begin
       Free (File_Cursor (This));
    end Free;
@@ -1969,7 +2009,8 @@ package body Codefix.Text_Manager is
    -- Clone --
    -----------
 
-   overriding function Clone (This : Word_Cursor) return Word_Cursor is
+   overriding
+   function Clone (This : Word_Cursor) return Word_Cursor is
    begin
       return (Clone (File_Cursor (This)) with This.String_Match, This.Mode);
    end Clone;
@@ -2000,7 +2041,7 @@ package body Codefix.Text_Manager is
       Curs : constant File_Cursor'Class :=
         Get_Current_Cursor (Current_Text, Word.Mark_Id.all);
    begin
-      Set_File     (Cursor, Get_File (Curs));
+      Set_File (Cursor, Get_File (Curs));
       Set_Location (Cursor, Get_Line (Curs), Get_Column (Curs));
 
       if Word.String_Match = Null_Unbounded_String then
@@ -2024,8 +2065,8 @@ package body Codefix.Text_Manager is
    ------------------
 
    procedure Set_Registry
-     (Text   : in out Text_Navigator_Abstr;
-      Registry : Project_Registry_Access) is
+     (Text : in out Text_Navigator_Abstr; Registry : Project_Registry_Access)
+   is
    begin
       Text.Registry := Registry;
    end Set_Registry;
@@ -2035,8 +2076,7 @@ package body Codefix.Text_Manager is
    ------------------
 
    function Get_Registry
-     (Text : Text_Navigator_Abstr)
-      return Project_Registry_Access is
+     (Text : Text_Navigator_Abstr) return Project_Registry_Access is
    begin
       return Text.Registry;
    end Get_Registry;
@@ -2046,9 +2086,7 @@ package body Codefix.Text_Manager is
    ----------------------------
 
    procedure Set_Construct_Database
-     (Text : in out Text_Navigator_Abstr;
-      Db   : Construct_Database_Access)
-   is
+     (Text : in out Text_Navigator_Abstr; Db : Construct_Database_Access) is
    begin
       Text.Construct_Db := Db;
    end Set_Construct_Database;
@@ -2058,8 +2096,7 @@ package body Codefix.Text_Manager is
    ----------------------------
 
    function Get_Construct_Database
-     (Text : Text_Navigator_Abstr) return Construct_Database_Access
-   is
+     (Text : Text_Navigator_Abstr) return Construct_Database_Access is
    begin
       return Text.Construct_Db;
    end Get_Construct_Database;
@@ -2069,9 +2106,7 @@ package body Codefix.Text_Manager is
    -----------------
 
    procedure Set_Context
-     (Text    : in out Text_Navigator_Abstr;
-      Context : Factory_Context)
-   is
+     (Text : in out Text_Navigator_Abstr; Context : Factory_Context) is
    begin
       Text.Context := Context;
    end Set_Context;
@@ -2080,9 +2115,7 @@ package body Codefix.Text_Manager is
    -- Get_Context --
    -----------------
 
-   function Get_Context
-     (Text : Text_Navigator_Abstr)
-      return Factory_Context is
+   function Get_Context (Text : Text_Navigator_Abstr) return Factory_Context is
    begin
       return Text.Context;
    end Get_Context;
@@ -2139,8 +2172,7 @@ package body Codefix.Text_Manager is
    ----------------
 
    procedure Set_Column
-     (This : in out Text_Cursor; Column : Visible_Column_Type)
-   is
+     (This : in out Text_Cursor; Column : Visible_Column_Type) is
    begin
       This.Col := Column;
    end Set_Column;
@@ -2150,8 +2182,7 @@ package body Codefix.Text_Manager is
    ------------------
 
    procedure Set_Location
-     (This : in out Text_Cursor;
-      Line : Natural; Column : Visible_Column_Type)
+     (This : in out Text_Cursor; Line : Natural; Column : Visible_Column_Type)
    is
    begin
       This.Line := Line;
@@ -2177,7 +2208,7 @@ package body Codefix.Text_Manager is
       Mode         : String_Mode := Text_Ascii) is
    begin
       Word.String_Match := String_Match;
-      Word.Mode         := Mode;
+      Word.Mode := Mode;
    end Set_Word;
 
    --------------
@@ -2196,11 +2227,10 @@ package body Codefix.Text_Manager is
    function Get_Matching_Word
      (Word  : Word_Cursor;
       Text  : Text_Navigator_Abstr'Class;
-      Check : Boolean := False) return String
-   is
+      Check : Boolean := False) return String is
    begin
       case Word.Mode is
-         when Text_Ascii =>
+         when Text_Ascii         =>
             if not Check then
                return To_String (Word.String_Match);
             end if;
@@ -2208,38 +2238,48 @@ package body Codefix.Text_Manager is
             declare
                Str_Parsed : constant String := Text.Get_Line (Word);
             begin
-               if Str_Parsed'Length < Length (Word.String_Match) or else
-                 Str_Parsed
-                   (Str_Parsed'First ..
-                        Str_Parsed'First + Length (Word.String_Match) - 1)
-                     /= Word.String_Match
+               if Str_Parsed'Length < Length (Word.String_Match)
+                 or else
+                   Str_Parsed
+                     (Str_Parsed'First
+                      .. Str_Parsed'First + Length (Word.String_Match) - 1)
+                   /= Word.String_Match
                then
-                  raise Codefix_Panic with "string '"
-                    & To_String (Word.String_Match)
-                    & "' in '"
-                    & Str_Parsed & "' can't be found";
+                  raise Codefix_Panic
+                    with
+                      "string '"
+                      & To_String (Word.String_Match)
+                      & "' in '"
+                      & Str_Parsed
+                      & "' can't be found";
                else
                   return To_String (Word.String_Match);
                end if;
             end;
+
          when Regular_Expression =>
             declare
                Matches    : Match_Array (0 .. 1);
-               Matcher    : constant Pattern_Matcher := Compile
-                 (To_String (Word.String_Match));
+               Matcher    : constant Pattern_Matcher :=
+                 Compile (To_String (Word.String_Match));
                Str_Parsed : constant String := Text.Get_Line (Word, 1);
-               Index      : constant String_Index_Type := To_Char_Index
-                 (Word.Col, Str_Parsed, Text.Tab_Width (Word.Get_File));
+               Index      : constant String_Index_Type :=
+                 To_Char_Index
+                   (Word.Col, Str_Parsed, Text.Tab_Width (Word.Get_File));
             begin
                Match
                  (Matcher,
-                  Str_Parsed (Integer (Index) .. Str_Parsed'Last), Matches);
+                  Str_Parsed (Integer (Index) .. Str_Parsed'Last),
+                  Matches);
 
                if Matches (0) = No_Match then
-                  raise Codefix_Panic with "pattern '"
-                    & To_String (Word.String_Match)
-                    & "' in '"
-                    & Str_Parsed & "' can't be found";
+                  raise Codefix_Panic
+                    with
+                      "pattern '"
+                      & To_String (Word.String_Match)
+                      & "' in '"
+                      & Str_Parsed
+                      & "' can't be found";
                else
                   return Str_Parsed (Matches (1).First .. Matches (1).Last);
                end if;
@@ -2288,8 +2328,7 @@ package body Codefix.Text_Manager is
    -----------------
 
    procedure Set_Caption
-     (This    : in out Text_Command'Class;
-      Caption : Unbounded_String) is
+     (This : in out Text_Command'Class; Caption : Unbounded_String) is
    begin
       This.Caption := Caption;
    end Set_Caption;
@@ -2307,22 +2346,23 @@ package body Codefix.Text_Manager is
       end if;
    end Get_Caption;
 
-   function Get_Parser
-     (This : Text_Command'Class) return Error_Parser_Access is
+   function Get_Parser (This : Text_Command'Class) return Error_Parser_Access
+   is
    begin
       return This.Parser;
    end Get_Parser;
 
    procedure Set_Parser
-     (This : in out Text_Command'Class;
-      Parser : Error_Parser_Access) is
+     (This : in out Text_Command'Class; Parser : Error_Parser_Access) is
    begin
       This.Parser := Parser;
    end Set_Parser;
 
    procedure Free (Corruption : in out Execute_Corrupted) is
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (Execute_Corrupted_Record'Class, Execute_Corrupted);
+      procedure Internal_Free is new
+        Ada.Unchecked_Deallocation
+          (Execute_Corrupted_Record'Class,
+           Execute_Corrupted);
    begin
       Internal_Free (Corruption);
    end Free;
@@ -2368,15 +2408,16 @@ package body Codefix.Text_Manager is
    -----------
 
    function Valid
-     (This         : Text_Command;
-      Current_Text : Text_Navigator_Abstr'Class)
+     (This : Text_Command; Current_Text : Text_Navigator_Abstr'Class)
       return Boolean is
    begin
       if This.Cursor = null then
          return True;
       else
-         return This.Origin_Line = Current_Text.Get_Line
-           (Current_Text.Get_Current_Cursor (This.Cursor.all));
+         return
+           This.Origin_Line
+           = Current_Text.Get_Line
+               (Current_Text.Get_Current_Cursor (This.Cursor.all));
       end if;
    end Valid;
 
@@ -2389,8 +2430,7 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) is
    begin
-      This.Cursor      := new Mark_Abstr'Class'
-        (Current_Text.Get_New_Mark (Cursor));
+      This.Cursor := new Mark_Abstr'Class'(Current_Text.Get_New_Mark (Cursor));
       This.Origin_Line := To_Unbounded_String (Current_Text.Get_Line (Cursor));
    end Init;
 

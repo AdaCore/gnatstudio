@@ -49,12 +49,14 @@ package GPS.Kernel.MDI is
    type General_UI_Module_Record is new Module_ID_Record with private;
    type General_UI_Module is access all General_UI_Module_Record'Class;
 
-   overriding function Bookmark_Handler
+   overriding
+   function Bookmark_Handler
      (Module : access General_UI_Module_Record;
       Load   : XML_Utils.Node_Ptr := null;
       JSON   : JSON_Value := JSON_Null) return Location_Marker;
 
-   overriding procedure Destroy (Module : in out General_UI_Module_Record);
+   overriding
+   procedure Destroy (Module : in out General_UI_Module_Record);
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -66,22 +68,22 @@ package GPS.Kernel.MDI is
 
    package Kernel_Desktop is new Gtkada.MDI.Desktop (Kernel_Handle);
 
-   type Save_Desktop_Function is access function
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      User   : Kernel_Handle) return XML_Utils.Node_Ptr;
+   type Save_Desktop_Function is
+     access function
+       (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+        User   : Kernel_Handle) return XML_Utils.Node_Ptr;
 
-   type Load_Desktop_Function is access function
-     (MDI  : Gtkada.MDI.MDI_Window;
-      Node : XML_Utils.Node_Ptr;
-      User : Kernel_Handle) return Gtkada.MDI.MDI_Child;
+   type Load_Desktop_Function is
+     access function
+       (MDI  : Gtkada.MDI.MDI_Window;
+        Node : XML_Utils.Node_Ptr;
+        User : Kernel_Handle) return Gtkada.MDI.MDI_Child;
 
    procedure Register_Desktop_Functions
-     (Save : Save_Desktop_Function;
-      Load : Load_Desktop_Function);
+     (Save : Save_Desktop_Function; Load : Load_Desktop_Function);
 
    function Get_XML_Content
-     (MDI : Gtkada.MDI.MDI_Window;
-      Tag : String) return XML_Utils.Node_Ptr;
+     (MDI : Gtkada.MDI.MDI_Window; Tag : String) return XML_Utils.Node_Ptr;
    --  Wrapper around Kernel_Desktop functions
 
    function Has_User_Desktop
@@ -91,7 +93,7 @@ package GPS.Kernel.MDI is
 
    procedure Save_Desktop
      (Handle              : access Kernel_Handle_Record'Class;
-      Desktop_Perspective : String  := "";
+      Desktop_Perspective : String := "";
       Backup              : Boolean := False);
    --  Save the current desktop.
    --  Current perspective will be replaced to passed in parameter in
@@ -145,16 +147,18 @@ package GPS.Kernel.MDI is
    --  Base record for all MDI children that go into the MDI
 
    procedure Gtk_New
-     (Child               : out GPS_MDI_Child;
-      Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Kernel              : not null access Kernel_Handle_Record'Class;
-      Flags               : Child_Flags := All_Buttons;
-      Group               : Child_Group := Group_Default;
-      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
+     (Child                         : out GPS_MDI_Child;
+      Widget                        :
+        access Gtk.Widget.Gtk_Widget_Record'Class;
+      Kernel                        :
+        not null access Kernel_Handle_Record'Class;
+      Flags                         : Child_Flags := All_Buttons;
+      Group                         : Child_Group := Group_Default;
+      Focus_Widget                  : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class := null;
-      Desktop_Independent : Boolean := False;
-      Areas               : Allowed_Areas := Both);
+      Module                        : access Module_ID_Record'Class := null;
+      Desktop_Independent           : Boolean := False;
+      Areas                         : Allowed_Areas := Both);
    --  Recommended version of Gtk_New to use, instead of the one in
    --  GtkAda.MDI. This version has several new parameters:
    --    - Module : used to associate a module with a widget. This is used to
@@ -165,23 +169,27 @@ package GPS.Kernel.MDI is
    --      inside a scrolled window
 
    procedure Initialize
-     (Child               : access GPS_MDI_Child_Record'Class;
-      Widget              : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Kernel              : not null access Kernel_Handle_Record'Class;
-      Flags               : Child_Flags := All_Buttons;
-      Group               : Child_Group := Group_Default;
-      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
+     (Child                         : access GPS_MDI_Child_Record'Class;
+      Widget                        :
+        access Gtk.Widget.Gtk_Widget_Record'Class;
+      Kernel                        :
+        not null access Kernel_Handle_Record'Class;
+      Flags                         : Child_Flags := All_Buttons;
+      Group                         : Child_Group := Group_Default;
+      Focus_Widget                  : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class := null;
-      Desktop_Independent : Boolean := False;
-      Areas               : Allowed_Areas := Both);
+      Module                        : access Module_ID_Record'Class := null;
+      Desktop_Independent           : Boolean := False;
+      Areas                         : Allowed_Areas := Both);
    --  Internal version of Gtk_New
 
    function Get_Tooltip
      (Self : not null access GPS_MDI_Child_Record)
-      return VSS.Strings.Virtual_String is (VSS.Strings.Empty_Virtual_String);
+      return VSS.Strings.Virtual_String
+   is (VSS.Strings.Empty_Virtual_String);
 
-   overriding function Save_Desktop
+   overriding
+   function Save_Desktop
      (Self : not null access GPS_MDI_Child_Record)
       return Glib.Xml_Int.Node_Ptr;
    function Save_Desktop
@@ -215,29 +223,31 @@ package GPS.Kernel.MDI is
    procedure Set_Is_Loading (Value : Boolean);
    --  Set to True to prevent backup save when loading a project
 
-   overriding procedure Set_Title
+   overriding
+   procedure Set_Title
      (Child       : access GPS_MDI_Child_Record;
       Title       : String;
       Short_Title : String := "");
-   overriding procedure Set_Default_Size_For_Floating_Window
-     (Child : not null access GPS_MDI_Child_Record;
-      Win   : not null access Gtk.Window.Gtk_Window_Record'Class;
+   overriding
+   procedure Set_Default_Size_For_Floating_Window
+     (Child         : not null access GPS_MDI_Child_Record;
+      Win           : not null access Gtk.Window.Gtk_Window_Record'Class;
       Width, Height : Glib.Gint);
-   overriding procedure Create_Float_Window_For_Child
-      (Child     : not null access GPS_MDI_Child_Record;
-       Win       : out Gtk_Window;
-       Container : out Gtk_Container);
+   overriding
+   procedure Create_Float_Window_For_Child
+     (Child     : not null access GPS_MDI_Child_Record;
+      Win       : out Gtk_Window;
+      Container : out Gtk_Container);
    --  see inherited documentation
 
    procedure Load_Perspective
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String);
+     (Kernel : access Kernel_Handle_Record'Class; Name : String);
    --  Change the current perspective to another one.
    --  Nothing is done if Name does not exist
 
    function Perspective_Exists
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Boolean;
+     (Kernel : access Kernel_Handle_Record'Class; Name : String)
+      return Boolean;
    --  Chech whether a perspective with that name exists.
 
    procedure Configure_MDI
@@ -253,8 +263,7 @@ package GPS.Kernel.MDI is
    --  Create the preferences for the MDI
 
    function Get_MDI
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtkada.MDI.MDI_Window;
+     (Handle : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Window;
    --  Return the MDI associated with Handle.
    --  Use the Put function below instead of the one in GtkAda.MDI to
    --  associated a widget with a GNAT Studio module
@@ -265,7 +274,7 @@ package GPS.Kernel.MDI is
 
    function Get_Child_Class
      (Self : not null access GPS_MDI_Child_Record)
-     return GNATCOLL.Scripts.Class_Type;
+      return GNATCOLL.Scripts.Class_Type;
    --  Return the class to use for instances representing the widget
    --  contained in Self.
    --  Might return No_Class to use the default GPS.GUI class
@@ -284,15 +293,15 @@ package GPS.Kernel.MDI is
    --  Return the local toolbar for the MDI child, if there is one.
 
    function Has_Menu_Bar_When_Floating
-      (Child : not null access GPS_MDI_Child_Record) return Boolean
-      is (False) with Inline;
+     (Child : not null access GPS_MDI_Child_Record) return Boolean
+   is (False)
+   with Inline;
    --  Whether to add a menubar when the child is made floating
 
    function Build_Context
      (Self        : not null access GPS_MDI_Child_Record;
-      Dummy_Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
-     is (New_Context (Self.Kernel, Get_Module_From_Child (Self)));
+      Dummy_Event : Gdk.Event.Gdk_Event := null) return Selection_Context
+   is (New_Context (Self.Kernel, Get_Module_From_Child (Self)));
    --  Return the current context for Self.
    --  When no event is specified, the context should related to the current
    --  selection in the view (for a tree view, this is a description of the
@@ -302,9 +311,8 @@ package GPS.Kernel.MDI is
    --  new context. An event is only given before we display a contextual menu.
 
    function Get_Actual_Widget
-     (Self : not null access GPS_MDI_Child_Record)
-      return Gtk.Widget.Gtk_Widget
-     is (Self.Get_Widget);
+     (Self : not null access GPS_MDI_Child_Record) return Gtk.Widget.Gtk_Widget
+   is (Self.Get_Widget);
    --  Returns the actual widget that was put in the MDI.
    --  When using the Generic_Views package, it is possible that this widget
    --  has been encapsulated to provide a local menubar and other decorations,
@@ -338,8 +346,9 @@ package GPS.Kernel.MDI is
 
    procedure For_All_MDI_Children
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Callback : not null access procedure
-        (Child : not null access GPS_MDI_Child_Record'Class));
+      Callback :
+        not null access procedure
+          (Child : not null access GPS_MDI_Child_Record'Class));
    --  Call the given callback on all the MDI children.
 
    function Get_Command_Queue
@@ -349,8 +358,7 @@ package GPS.Kernel.MDI is
    --     Start_Group (Get_Command_Queue (Child))
    --  By default, it returns Null_Command_Queue
 
-   function Interrupt
-     (Child : access GPS_MDI_Child_Record) return Boolean;
+   function Interrupt (Child : access GPS_MDI_Child_Record) return Boolean;
    --  The user has selected the /Tools/Interrupt menu while this Child has
    --  the focus. If this function returns False (the default), this indicates
    --  the control-C could not be handled by the child itself, and we
@@ -424,13 +432,15 @@ package GPS.Kernel.MDI is
    --  Return the stored SHA1
 
    function Needs_To_Be_Saved
-     (Self : not null access GPS_MDI_Child_Record) return Boolean is (False);
+     (Self : not null access GPS_MDI_Child_Record) return Boolean
+   is (False);
    --  Do we have unsaved contents in the view. This is mostly used by the
    --  editors.
 
    function Report_Deleted_File
-     (Self   : not null access GPS_MDI_Child_Record;
-      Exists : Boolean) return Boolean is (not Exists);
+     (Self : not null access GPS_MDI_Child_Record; Exists : Boolean)
+      return Boolean
+   is (not Exists);
    --  Views can chose not to let users know when a file has been removed on
    --  disk (for instance temporary files for source editors).
    --  The Exists = True means that file has been deleted, but it's restored
@@ -439,10 +449,9 @@ package GPS.Kernel.MDI is
    function Check_Monitored_Files
      (Kernel       : not null access Kernel_Handle_Record'Class;
       Interactive  : Boolean := True;
-      Only_On_File : Virtual_File := No_File)
-     return Boolean;
+      Only_On_File : Virtual_File := No_File) return Boolean;
    procedure Check_Monitored_Files_In_Background
-     (Kernel      : not null access Kernel_Handle_Record'Class);
+     (Kernel : not null access Kernel_Handle_Record'Class);
    --  For each MDI child that monitors files, checks whether the file has been
    --  updated on the disk (including computing checksums, so that simple
    --  timestamp changes do not impact GNAT Studio), and either automatically
@@ -480,24 +489,30 @@ package GPS.Kernel.MDI is
    type MDI_Location_Marker_Data is new Location_Marker_Data with private;
 
    function Create_MDI_Marker
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Name   : String) return Location_Marker;
+     (Kernel : not null access Kernel_Handle_Record'Class; Name : String)
+      return Location_Marker;
    --  Create a location marker from the name of an MDI child
 
-   overriding function Go_To
+   overriding
+   function Go_To
      (Marker : not null access MDI_Location_Marker_Data) return Boolean;
-   overriding function To_String
+   overriding
+   function To_String
      (Marker : not null access MDI_Location_Marker_Data) return String;
-   overriding function Save
+   overriding
+   function Save
      (Marker : not null access MDI_Location_Marker_Data)
       return XML_Utils.Node_Ptr;
-   overriding procedure Save
+   overriding
+   procedure Save
      (Marker : not null access MDI_Location_Marker_Data;
       Value  : out JSON_Value);
-   overriding function Similar
+   overriding
+   function Similar
      (Left  : not null access MDI_Location_Marker_Data;
       Right : not null access Location_Marker_Data'Class) return Boolean;
-   overriding function Distance
+   overriding
+   function Distance
      (Left  : not null access MDI_Location_Marker_Data;
       Right : not null access Location_Marker_Data'Class) return Integer;
 
@@ -526,26 +541,32 @@ package GPS.Kernel.MDI is
    procedure Setup (Data : Glib.Object.GObject; Id : Gtk.Handlers.Handler_Id);
    --  Make sure that when Data is destroyed, Id is properly removed
 
-   package Object_User_Callback is new Gtk.Handlers.User_Callback_With_Setup
-     (Glib.Object.GObject_Record, Glib.Object.GObject, Setup);
+   package Object_User_Callback is new
+     Gtk.Handlers.User_Callback_With_Setup
+       (Glib.Object.GObject_Record,
+        Glib.Object.GObject,
+        Setup);
    --  Generic callback that can be used to connect a signal to a kernel
 
-   package Object_Return_Callback is new Gtk.Handlers.Return_Callback
-     (Glib.Object.GObject_Record, Boolean);
+   package Object_Return_Callback is new
+     Gtk.Handlers.Return_Callback (Glib.Object.GObject_Record, Boolean);
    --  Generic callback that can be used to connect a signal to a kernel
 
-   package Object_User_Return_Callback
-     is new Gtk.Handlers.User_Return_Callback_With_Setup
-     (Widget_Type => Glib.Object.GObject_Record,
-      User_Type   => Glib.Object.GObject,
-      Return_Type => Boolean,
-      Setup       => Setup);
+   package Object_User_Return_Callback is new
+     Gtk.Handlers.User_Return_Callback_With_Setup
+       (Widget_Type => Glib.Object.GObject_Record,
+        User_Type   => Glib.Object.GObject,
+        Return_Type => Boolean,
+        Setup       => Setup);
    --  Generic callback that can be used to connect a signal to a kernel
 
-   package Kernel_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Kernel_Handle);
-   package Kernel_Return_Callback is new Gtk.Handlers.User_Return_Callback
-     (Glib.Object.GObject_Record, Boolean, Kernel_Handle);
+   package Kernel_Callback is new
+     Gtk.Handlers.User_Callback (Glib.Object.GObject_Record, Kernel_Handle);
+   package Kernel_Return_Callback is new
+     Gtk.Handlers.User_Return_Callback
+       (Glib.Object.GObject_Record,
+        Boolean,
+        Kernel_Handle);
    --  Generic callback that can be used to connect a signal to a kernel
 
    type Kernel_MDI is record
@@ -553,10 +574,13 @@ package GPS.Kernel.MDI is
       Child  : access GPS_MDI_Child_Record;
    end record;
 
-   package Kernel_MDI_Callback is new Gtk.Handlers.User_Callback
-     (Glib.Object.GObject_Record, Kernel_MDI);
-   package Kernel_MDI_Return_Callback is new Gtk.Handlers.User_Return_Callback
-     (Glib.Object.GObject_Record, Boolean, Kernel_MDI);
+   package Kernel_MDI_Callback is new
+     Gtk.Handlers.User_Callback (Glib.Object.GObject_Record, Kernel_MDI);
+   package Kernel_MDI_Return_Callback is new
+     Gtk.Handlers.User_Return_Callback
+       (Glib.Object.GObject_Record,
+        Boolean,
+        Kernel_MDI);
    --  Generic callback that can be used to connect a signal to a kernel
 
 private
@@ -565,7 +589,7 @@ private
       Desktop_Saved : Boolean := False;
       --  Control whether desktop already saved and no more needed to save it
 
-      Is_Loading    : Boolean := False;
+      Is_Loading : Boolean := False;
       --  True, if GNAT Studio is loading a new project
    end record;
 
@@ -592,10 +616,11 @@ private
 
       Default_Width, Default_Height : Glib.Gint := -1;
 
-      File_Monitored      : Monitored_File := No_Monitored_File;
+      File_Monitored : Monitored_File := No_Monitored_File;
    end record;
 
-   overriding function Get_Tooltip
+   overriding
+   function Get_Tooltip
      (Self : not null access GPS_MDI_Child_Record) return String;
 
    type MDI_Location_Marker_Data is new Location_Marker_Data with record

@@ -15,20 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Expect;               use GNAT.Expect;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNAT.Expect;     use GNAT.Expect;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with Debugger;                  use Debugger;
-with GVD.Preferences;           use GVD.Preferences;
-with Process_Proxies;           use Process_Proxies;
+with Debugger;        use Debugger;
+with GVD.Preferences; use GVD.Preferences;
+with Process_Proxies; use Process_Proxies;
 with System;
 
 package body GVD.Trace is
 
-   Me       : constant Trace_Handle := Create
-     ("GPS.DEBUGGING.GVD_OUT");
-   Me_Large : constant Trace_Handle := Create
-     ("GPS.DEBUGGING.GVD_OUT_LARGE", Off);
+   Me       : constant Trace_Handle := Create ("GPS.DEBUGGING.GVD_OUT");
+   Me_Large : constant Trace_Handle :=
+     Create ("GPS.DEBUGGING.GVD_OUT_LARGE", Off);
 
    Max_Lines : constant := 3;
    --  Maximum number of lines to output for each command, in GVD.OUT.
@@ -40,8 +39,7 @@ package body GVD.Trace is
    --  Output_Kind means output strings received from the debugger.
 
    Direction_String : constant array (IO_Kind) of String (1 .. 4) :=
-     (Input_Kind  => "-> """,
-      Output_Kind => "<- """);
+     (Input_Kind => "-> """, Output_Kind => "<- """);
 
    procedure Input_Filter
      (Descriptor : Process_Descriptor'Class;
@@ -57,9 +55,7 @@ package body GVD.Trace is
    --  underlying debugger.
 
    procedure Output_Message
-     (Process : Visual_Debugger;
-      Str     : String;
-      Kind    : IO_Kind := Input_Kind);
+     (Process : Visual_Debugger; Str : String; Kind : IO_Kind := Input_Kind);
    --  Write on the log file associated with Process.
    --  Replace ASCII.LF by "\n" and ASCII.HT by "\t", and put lines in quotes.
 
@@ -68,8 +64,7 @@ package body GVD.Trace is
    ------------------
 
    procedure Output_Error
-     (Kernel : access Kernel_Handle_Record'Class;
-      Str    : String) is
+     (Kernel : access Kernel_Handle_Record'Class; Str : String) is
    begin
       GNATCOLL.Traces.Trace (Me, "# " & Str);
       Kernel.Insert (Str, Mode => GPS.Kernel.Error);
@@ -80,9 +75,7 @@ package body GVD.Trace is
    --------------------
 
    procedure Output_Message
-     (Process : Visual_Debugger;
-      Str     : String;
-      Kind    : IO_Kind := Input_Kind)
+     (Process : Visual_Debugger; Str : String; Kind : IO_Kind := Input_Kind)
    is
       Num        : constant String := Integer'Image (Process.Debugger_Num);
       Output     : String (1 .. Str'Length * 2);
@@ -93,9 +86,7 @@ package body GVD.Trace is
       H          : Trace_Handle;
 
    begin
-      if Kind = Input_Kind
-         or else Process.Log_Lines <= Max_Lines
-      then
+      if Kind = Input_Kind or else Process.Log_Lines <= Max_Lines then
          H := Me;
       else
          if Process.Log_Lines = Max_Lines + 1 then
@@ -111,27 +102,35 @@ package body GVD.Trace is
          case Str (J) is
             when ASCII.LF =>
                if not Had_Output then
-                  GNATCOLL.Traces.Trace (H, Prefix
-                         & Direction_String (Kind)
-                         & Output (Output'First .. Index - 1)
-                         & '"');
+                  GNATCOLL.Traces.Trace
+                    (H,
+                     Prefix
+                     & Direction_String (Kind)
+                     & Output (Output'First .. Index - 1)
+                     & '"');
                   Had_Output := True;
                else
-                  GNATCOLL.Traces.Trace (H, Prefix & "..."
-                         & Direction_String (Kind)
-                         & Output (Output'First .. Index - 1)
-                         & '"');
+                  GNATCOLL.Traces.Trace
+                    (H,
+                     Prefix
+                     & "..."
+                     & Direction_String (Kind)
+                     & Output (Output'First .. Index - 1)
+                     & '"');
                end if;
                Index := Output'First;
+
             when ASCII.CR =>
-               Output (Index)     := '\';
+               Output (Index) := '\';
                Output (Index + 1) := 'r';
                Index := Index + 2;
+
             when ASCII.HT =>
-               Output (Index)     := '\';
+               Output (Index) := '\';
                Output (Index + 1) := 't';
                Index := Index + 2;
-            when others =>
+
+            when others   =>
                Output (Index) := Str (J);
                Index := Index + 1;
          end case;
@@ -139,15 +138,20 @@ package body GVD.Trace is
 
       if Index > Output'First then
          if not Had_Output then
-            GNATCOLL.Traces.Trace (H, Prefix
-                   & Direction_String (Kind)
-                   & Output (Output'First .. Index - 1)
-                   & '"');
+            GNATCOLL.Traces.Trace
+              (H,
+               Prefix
+               & Direction_String (Kind)
+               & Output (Output'First .. Index - 1)
+               & '"');
          else
-            GNATCOLL.Traces.Trace (H, Prefix & "..."
-                   & Direction_String (Kind)
-                   & Output (Output'First .. Index - 1)
-                   & '"');
+            GNATCOLL.Traces.Trace
+              (H,
+               Prefix
+               & "..."
+               & Direction_String (Kind)
+               & Output (Output'First .. Index - 1)
+               & '"');
          end if;
       end if;
    end Output_Message;
@@ -209,14 +213,8 @@ package body GVD.Trace is
       D : constant Process_Descriptor_Access :=
         Get_Descriptor (Get_Process (Process.Debugger));
    begin
-      Add_Filter
-        (D.all,
-         Output_Filter'Access, Output,
-         Process.all'Address);
-      Add_Filter
-        (D.all,
-         Input_Filter'Access, Input,
-         Process.all'Address);
+      Add_Filter (D.all, Output_Filter'Access, Output, Process.all'Address);
+      Add_Filter (D.all, Input_Filter'Access, Input, Process.all'Address);
    end Set_Input_Output_Filter;
 
 end GVD.Trace;

@@ -19,59 +19,59 @@ with Ada.Finalization;
 with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with Glib;                       use Glib;
+with Glib;              use Glib;
 with Glib.Convert;
 with Glib.Values;
-with Glib_Values_Utils;          use Glib_Values_Utils;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Event;                  use Gdk.Event;
-with Gdk.RGBA;                   use Gdk.RGBA;
-with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.RGBA;          use Gdk.RGBA;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
-with Gtk.Box;                    use Gtk.Box;
-with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Menu;
-with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtk.Tree_Store;             use Gtk.Tree_Store;
-with Gtk.Tree_View;              use Gtk.Tree_View;
-with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
 
-with Pango.Font;                 use Pango.Font;
+with Pango.Font; use Pango.Font;
 with Gtkada.MDI;
 
 with VSS.Characters.Latin;
 with VSS.Strings.Conversions;
 with VSS.Strings.Cursors.Iterators.Characters;
 
-with GPS.Debuggers;              use GPS.Debuggers;
+with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Default_Styles;
 with GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager;
-with Default_Preferences;        use Default_Preferences;
+with Default_Preferences;    use Default_Preferences;
 
-with Commands;                   use Commands;
-with Commands.Interactive;       use Commands.Interactive;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 
 with Debugger_Pixmaps;
 
-with DAP.Clients;                use DAP.Clients;
+with DAP.Clients;             use DAP.Clients;
 with DAP.Clients.Breakpoint_Managers;
-with DAP.Clients.Stack_Trace;    use DAP.Clients.Stack_Trace;
-with DAP.Tools;                  use DAP.Tools;
-with DAP.Types;                  use DAP.Types;
-with DAP.Modules.Preferences;    use DAP.Modules.Preferences;
+with DAP.Clients.Stack_Trace; use DAP.Clients.Stack_Trace;
+with DAP.Tools;               use DAP.Tools;
+with DAP.Types;               use DAP.Types;
+with DAP.Modules.Preferences; use DAP.Modules.Preferences;
 with DAP.Requests.Disassemble;
-with DAP.Types.Breakpoints;      use DAP.Types.Breakpoints;
-with DAP.Utils;                  use DAP.Utils;
+with DAP.Types.Breakpoints;   use DAP.Types.Breakpoints;
+with DAP.Utils;               use DAP.Utils;
 
 package body DAP.Views.Assembly is
 
@@ -81,7 +81,7 @@ package body DAP.Views.Assembly is
       Low, High : Address_Type;
       --  The low and high ranges for this item
 
-      Data      : Disassemble_Elements;
+      Data : Disassemble_Elements;
       --  The assembly code for that range
 
       Next       : Cache_Data_Access;
@@ -94,34 +94,36 @@ package body DAP.Views.Assembly is
    type Direction_Kind is (Prepend, Append, Full);
    --  How to manage next portion of the data
 
-   type Assembly_View_Record is new View_Record with
-      record
-         Tree          : Gtk.Tree_View.Gtk_Tree_View;
-         Model         : Gtk.Tree_Store.Gtk_Tree_Store;
-         --  The actual contents of the viewer
+   type Assembly_View_Record is new View_Record with record
+      Tree  : Gtk.Tree_View.Gtk_Tree_View;
+      Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      --  The actual contents of the viewer
 
-         Cache         : Cache_Data_Access;
-         Current_Range : Cache_Data_Access;
-         --  The range of assembly code being displayed.
-      end record;
+      Cache         : Cache_Data_Access;
+      Current_Range : Cache_Data_Access;
+      --  The range of assembly code being displayed.
+   end record;
    type Assembly_View is access all Assembly_View_Record'Class;
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (Self : not null access Assembly_View_Record);
-   overriding procedure On_Status_Changed
+   overriding
+   procedure On_Status_Changed
      (Self   : not null access Assembly_View_Record;
       Status : GPS.Debuggers.Debugger_State);
-   overriding procedure On_Location_Changed
-     (Self : not null access Assembly_View_Record);
-   overriding procedure Update (Self : not null access Assembly_View_Record);
+   overriding
+   procedure On_Location_Changed (Self : not null access Assembly_View_Record);
+   overriding
+   procedure Update (Self : not null access Assembly_View_Record);
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access Assembly_View_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    procedure Configure
-     (Self : Assembly_View;
-      Font : Pango.Font.Pango_Font_Description);
+     (Self : Assembly_View; Font : Pango.Font.Pango_Font_Description);
    --  Set the various settings of the assembly view.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
@@ -132,8 +134,7 @@ package body DAP.Views.Assembly is
    --  Internal initialization function
 
    procedure Set_Font
-     (Self : Assembly_View;
-      Font : Pango.Font.Pango_Font_Description);
+     (Self : Assembly_View; Font : Pango.Font.Pango_Font_Description);
    --  Set the font used for the box.
    --  This is called by Configure internally.
 
@@ -141,8 +142,7 @@ package body DAP.Views.Assembly is
    --  Free local cahed data
 
    procedure Fill_Model
-     (Self     : Assembly_View;
-      Elements : Disassemble_Elements);
+     (Self : Assembly_View; Elements : Disassemble_Elements);
    --  Set models data. The Hightlighting is reset.
 
    procedure Get_Machine_Code
@@ -152,41 +152,43 @@ package body DAP.Views.Assembly is
       Direction : Direction_Kind);
    --  Sends DAP request
 
-   package Assembly_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Assembly_View",
-      View_Name                       => "Assembly",
-      Formal_View_Record              => Assembly_View_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => True,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Both,
-      Group                           => Group_Debugger_Stack,
-      Position                        => Gtkada.MDI.Position_Right,
-      Initialize                      => Initialize,
-      Local_Config                    => True,
-      Local_Toolbar                   => True);
+   package Assembly_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Assembly_View",
+        View_Name                       => "Assembly",
+        Formal_View_Record              => Assembly_View_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => True,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Both,
+        Group                           => Group_Debugger_Stack,
+        Position                        => Gtkada.MDI.Position_Right,
+        Initialize                      => Initialize,
+        Local_Config                    => True,
+        Local_Toolbar                   => True);
    subtype Assembly_MDI is Assembly_MDI_Views.View_Access;
    use type Assembly_MDI;
 
-   package Assembly_Views is new DAP.Views.Simple_Views
-     (Formal_Views       => Assembly_MDI_Views,
-      Formal_View_Record => Assembly_View_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record);
+   package Assembly_Views is new
+     DAP.Views.Simple_Views
+       (Formal_Views       => Assembly_MDI_Views,
+        Formal_View_Record => Assembly_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record);
 
-   package Assembly_View_Event_Cb is
-     new Gtk.Handlers.Return_Callback (Assembly_View_Record, Boolean);
+   package Assembly_View_Event_Cb is new
+     Gtk.Handlers.Return_Callback (Assembly_View_Record, Boolean);
 
    function Key_Press_Cb
-     (View  : access Assembly_View_Record'Class;
-      Event : Gdk_Event) return Boolean;
+     (View : access Assembly_View_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Called when a key is pressed in the child (handling of meta-scrolling)
 
    procedure Iter_From_Address
-     (View     : not null access Assembly_View_Record'Class;
-      Address  : Address_Type;
-      Iter     : out Gtk_Tree_Iter;
-      Found    : out Boolean);
+     (View    : not null access Assembly_View_Record'Class;
+      Address : Address_Type;
+      Iter    : out Gtk_Tree_Iter;
+      Found   : out Boolean);
    --  Return an iterator pointing to the row belong to the Address.
    --  Found indicates whether the address was found.
 
@@ -196,20 +198,17 @@ package body DAP.Views.Assembly is
    --  Redo the buffer highlighting
 
    procedure On_Frame_Changed
-     (View          : Assembly_View;
-      Start_Address : Address_Type);
+     (View : Assembly_View; Start_Address : Address_Type);
    --  Called when the assembly code for the address PC needs to be loaded.
    --  This gets the assembly source code for a range starting at PC, and
    --  going up to End_Pc.
 
    function In_Range
-     (Address : Address_Type;
-      R       : Cache_Data_Access) return Boolean;
+     (Address : Address_Type; R : Cache_Data_Access) return Boolean;
    --  Return True if Address is in the range of addresses described by R.
 
    function Find_In_Cache
-     (View    : Assembly_View;
-      Address : Address_Type) return Cache_Data_Access;
+     (View : Assembly_View; Address : Address_Type) return Cache_Data_Access;
    --  Return the cached data that contains Address.
    --  null is returned if none is found.
 
@@ -220,44 +219,40 @@ package body DAP.Views.Assembly is
       End_Iter     : out Gtk_Tree_Iter);
    --  Find the start and end iter at the same location as Current_Iter
 
-   procedure Meta_Scroll
-     (View : Assembly_View;
-      Down : Boolean);
+   procedure Meta_Scroll (View : Assembly_View; Down : Boolean);
    --  The user has asked to see the assembly range outside what is currently
    --  displayed in the assembly editor.
 
-   procedure Meta_Scroll_PC
-     (View : Assembly_View);
+   procedure Meta_Scroll_PC (View : Assembly_View);
    --  Scroll to current PC position
 
-   procedure Meta_Scroll_Down
-     (View : access Assembly_View_Record'Class);
-   procedure Meta_Scroll_Up
-     (View : access Assembly_View_Record'Class);
+   procedure Meta_Scroll_Down (View : access Assembly_View_Record'Class);
+   procedure Meta_Scroll_Up (View : access Assembly_View_Record'Class);
    --  The user has asked for the previous or next undisplayed assembly page
 
-   type On_Breakpoint_Added_Or_Deleted is
-     new Debugger_Breakpoint_Hook_Function
-      with null record;
-   overriding procedure Execute
-      (Self     : On_Breakpoint_Added_Or_Deleted;
-       Kernel   : not null access Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class;
-       Id       : Integer);
+   type On_Breakpoint_Added_Or_Deleted is new Debugger_Breakpoint_Hook_Function
+   with null record;
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoint_Added_Or_Deleted;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class;
+      Id       : Integer);
    --   Called when the breakpoint has been added or deleted
 
-   type On_Breakpoints_Changed is new Debugger_Hooks_Function
-      with null record;
-   overriding procedure Execute
-      (Self     : On_Breakpoints_Changed;
-       Kernel   : not null access Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class);
+   type On_Breakpoints_Changed is new Debugger_Hooks_Function with null record;
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoints_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
    --   Called when the breakpoints might have changed
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : Assembly_View;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -265,43 +260,47 @@ package body DAP.Views.Assembly is
    --  appropriately.
 
    type Breakpoint_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Create/delete a breakpoint
 
    procedure Free (Data : in out Cache_Data_Access);
 
-   procedure Unchecked_Free is
-     new Ada.Unchecked_Deallocation (Cache_Data, Cache_Data_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Cache_Data, Cache_Data_Access);
 
    ---------------------------------
    -- Off_On_Sensitive_Controller --
    ---------------------------------
 
    type Off_On_Sensitive_Controller
-     (View  : access Assembly_View_Record'Class) is new
-     Ada.Finalization.Limited_Controlled with null record;
+     (View : access Assembly_View_Record'Class)
+   is new Ada.Finalization.Limited_Controlled with null record;
    --  This type makes view's tree insensitive on initialization and restore
    --  sensitivity on destruction. We use it because we don't want to process
    --  too many key events while performing the disassemble operation because
    --  several such operation processing one by one can hung GNAT Studio for
    --  a while.
 
-   overriding procedure Initialize (Self : in out Off_On_Sensitive_Controller);
-   overriding procedure Finalize (Self : in out Off_On_Sensitive_Controller);
+   overriding
+   procedure Initialize (Self : in out Off_On_Sensitive_Controller);
+   overriding
+   procedure Finalize (Self : in out Off_On_Sensitive_Controller);
 
    -----------------------------
    -- Disassemble_DAP_Request --
    -----------------------------
 
-   type Request is
-     new DAP.Requests.Disassemble.Disassemble_DAP_Request with record
+   type Request is new DAP.Requests.Disassemble.Disassemble_DAP_Request
+   with record
       Direction : Direction_Kind;
    end record;
    type Request_Access is access all Request;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.DisassembleResponse;
@@ -312,13 +311,15 @@ package body DAP.Views.Assembly is
    type Scroll_Command_Context is new Interactive_Command with record
       Down : Boolean := False;
    end record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Scroll_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Disassemble next/previuos code block
 
    type Scroll_PC_Command_Context is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Scroll_PC_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Disassemble $pc code block
@@ -327,22 +328,23 @@ package body DAP.Views.Assembly is
    --  Defaults --
    ---------------
 
-   Invalid_Cache_Data : constant Cache_Data_Access := new Cache_Data'
-     (Low        => Invalid_Address,
-      High       => Invalid_Address,
-      Data       => <>,
-      Next       => null,
-      Subprogram => False);
+   Invalid_Cache_Data : constant Cache_Data_Access :=
+     new Cache_Data'
+       (Low        => Invalid_Address,
+        High       => Invalid_Address,
+        Data       => <>,
+        Next       => null,
+        Subprogram => False);
 
-   PC_Pixmap_Column     : constant := 0;
-   Address_Column       : constant := 1;
-   Instr_Column         : constant := 2;
-   Opcodes_Column       : constant := 3;
-   FG_Color_Column      : constant := 4;
-   BG_Color_Column      : constant := 5;
-   File_Column          : constant := 6;
-   Line_Column          : constant := 7;
-   Symbol_Column        : constant := 8;
+   PC_Pixmap_Column : constant := 0;
+   Address_Column   : constant := 1;
+   Instr_Column     : constant := 2;
+   Opcodes_Column   : constant := 3;
+   FG_Color_Column  : constant := 4;
+   BG_Color_Column  : constant := 5;
+   File_Column      : constant := 6;
+   Line_Column      : constant := 7;
+   Symbol_Column    : constant := 8;
 
    Can_Not_Get : constant String := "Couldn't get assembly code";
 
@@ -369,7 +371,8 @@ package body DAP.Views.Assembly is
       Col           : Gtk_Tree_View_Column;
       Render        : Gtk_Cell_Renderer_Text;
       Pixmap_Render : Gtk_Cell_Renderer_Pixbuf;
-      Col_Number    : Gint with Unreferenced;
+      Col_Number    : Gint
+      with Unreferenced;
    begin
       Initialize_Vbox (Widget, Homogeneous => False);
 
@@ -378,7 +381,7 @@ package body DAP.Views.Assembly is
       Widget.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Widget.Model, Column_Types);
-      Gtk_New (Widget.Tree,  Widget.Model);
+      Gtk_New (Widget.Tree, Widget.Model);
       Widget.Tree.Get_Selection.Set_Mode (Selection_Single);
       Widget.Tree.Set_Enable_Search (False);
       Widget.Tree.Set_Show_Expanders (False);
@@ -440,23 +443,24 @@ package body DAP.Views.Assembly is
       end if;
 
       Assembly_View_Event_Cb.Object_Connect
-        (Widget.Tree, Signal_Key_Press_Event,
+        (Widget.Tree,
+         Signal_Key_Press_Event,
          Assembly_View_Event_Cb.To_Marshaller (Key_Press_Cb'Access),
          Widget);
 
       Configure (Assembly_View (Widget), Default_Style.Get_Pref_Font);
 
       Debugger_Breakpoints_Changed_Hook.Add
-         (new On_Breakpoints_Changed, Watch => Widget);
+        (new On_Breakpoints_Changed, Watch => Widget);
       Debugger_Breakpoint_Added_Hook.Add
-         (new On_Breakpoint_Added_Or_Deleted, Watch => Widget);
+        (new On_Breakpoint_Added_Or_Deleted, Watch => Widget);
       Debugger_Breakpoint_Deleted_Hook.Add
-         (new On_Breakpoint_Added_Or_Deleted, Watch => Widget);
+        (new On_Breakpoint_Added_Or_Deleted, Watch => Widget);
 
       Preferences_Changed_Hook.Add
         (Obj   =>
-            new On_Pref_Changed'
-           (Hook_Function with View => Assembly_View (Widget)),
+           new On_Pref_Changed'
+             (Hook_Function with View => Assembly_View (Widget)),
          Watch => Widget);
 
       return Gtk_Widget (Widget.Tree);
@@ -467,8 +471,7 @@ package body DAP.Views.Assembly is
    ---------------
 
    procedure Configure
-     (Self : Assembly_View;
-      Font : Pango.Font.Pango_Font_Description) is
+     (Self : Assembly_View; Font : Pango.Font.Pango_Font_Description) is
    begin
       --  Font
       Set_Font (Self, Font);
@@ -478,9 +481,7 @@ package body DAP.Views.Assembly is
    -- Fill_Model --
    ----------------
 
-   procedure Fill_Model
-     (Self     : Assembly_View;
-      Elements : Disassemble_Elements)
+   procedure Fill_Model (Self : Assembly_View; Elements : Disassemble_Elements)
    is
       use VSS.Strings;
 
@@ -497,8 +498,8 @@ package body DAP.Views.Assembly is
       if Elements.Is_Empty then
          Model.Append (Row, Null_Iter);
          Columns (1) := Instr_Column;
-         Values  (1) := As_String
-           ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
+         Values (1) :=
+           As_String ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
          Set_And_Clear (Model, Row, Columns (1 .. 1), Values (1 .. 1));
          return;
       end if;
@@ -511,48 +512,50 @@ package body DAP.Views.Assembly is
             S : constant String := Address_To_String (El.Address);
          begin
             if S /= "" then
-               Last           := Last + 1;
+               Last := Last + 1;
                Columns (Last) := Address_Column;
-               Values  (Last) := As_String (S);
+               Values (Last) := As_String (S);
             end if;
          end;
 
          if not El.Instr.Is_Empty then
-            Last           := Last + 1;
+            Last := Last + 1;
             Columns (Last) := Instr_Column;
             if El.Instr = To_Virtual_String (Can_Not_Get) then
-               Values  (Last) := As_String
-                 ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
+               Values (Last) :=
+                 As_String
+                   ("<b>" & Glib.Convert.Escape_Text (Can_Not_Get) & "</b>");
             else
-               Values (Last) := As_String
-                 (Get_Markup_For_Language
-                    (Self.Kernel,
-                     "ASM",
-                     Glib.Convert.Escape_Text (To_UTF_8_String (El.Instr))));
+               Values (Last) :=
+                 As_String
+                   (Get_Markup_For_Language
+                      (Self.Kernel,
+                       "ASM",
+                       Glib.Convert.Escape_Text (To_UTF_8_String (El.Instr))));
             end if;
 
          end if;
 
          if not El.Opcodes.Is_Empty then
-            Last           := Last + 1;
+            Last := Last + 1;
             Columns (Last) := Opcodes_Column;
-            Values  (Last) := As_String (To_UTF_8_String (El.Opcodes));
+            Values (Last) := As_String (To_UTF_8_String (El.Opcodes));
          end if;
 
          if El.File /= No_File then
-            Last           := Last + 1;
+            Last := Last + 1;
             Columns (Last) := File_Column;
-            Values  (Last) := As_String (Display_Full_Name (El.File));
+            Values (Last) := As_String (Display_Full_Name (El.File));
          end if;
 
-         Last           := Last + 1;
+         Last := Last + 1;
          Columns (Last) := Line_Column;
-         Values  (Last) := As_Int (Gint (El.Line));
+         Values (Last) := As_Int (Gint (El.Line));
 
          if not El.Symbol.Is_Empty then
-            Last           := Last + 1;
+            Last := Last + 1;
             Columns (Last) := Symbol_Column;
-            Values  (Last) := As_String (To_UTF_8_String (El.Symbol));
+            Values (Last) := As_String (To_UTF_8_String (El.Symbol));
          end if;
 
          Set_And_Clear (Model, Row, Columns (1 .. Last), Values (1 .. Last));
@@ -568,11 +571,9 @@ package body DAP.Views.Assembly is
    begin
       if Self.Current_Range /= Invalid_Cache_Data then
          Tmp := Self.Cache;
-         while Tmp /= null
-           and then Tmp /= Self.Current_Range
-         loop
+         while Tmp /= null and then Tmp /= Self.Current_Range loop
             Prev := Tmp;
-            Tmp  := Tmp.Next;
+            Tmp := Tmp.Next;
          end loop;
 
          if Tmp /= null then
@@ -601,7 +602,8 @@ package body DAP.Views.Assembly is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
+   overriding
+   procedure Create_Menu
      (Self : not null access Assembly_View_Record;
       Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
@@ -616,31 +618,34 @@ package body DAP.Views.Assembly is
    ------------------
 
    function Key_Press_Cb
-     (View  : access Assembly_View_Record'Class;
-      Event : Gdk_Event) return Boolean is
+     (View : access Assembly_View_Record'Class; Event : Gdk_Event)
+      return Boolean is
    begin
       case Get_Key_Val (Event) is
          when GDK_Page_Down =>
             declare
-               C : Off_On_Sensitive_Controller (View) with Unreferenced;
+               C : Off_On_Sensitive_Controller (View)
+               with Unreferenced;
             begin
                Meta_Scroll_Down (Assembly_View (View));
             end;
             return True;
 
-         when GDK_Page_Up =>
+         when GDK_Page_Up   =>
             declare
-               C : Off_On_Sensitive_Controller (View) with Unreferenced;
+               C : Off_On_Sensitive_Controller (View)
+               with Unreferenced;
             begin
                Meta_Scroll_Up (Assembly_View (View));
             end;
             return True;
 
-         when GDK_Home =>
+         when GDK_Home      =>
             Meta_Scroll_PC (Assembly_View (View));
             return True;
 
-         when others => null;
+         when others        =>
+            null;
       end case;
 
       return False;
@@ -650,7 +655,8 @@ package body DAP.Views.Assembly is
    -- On_Process_Terminated --
    ---------------------------
 
-   overriding procedure On_Process_Terminated
+   overriding
+   procedure On_Process_Terminated
      (Self : not null access Assembly_View_Record) is
    begin
       Clear (-Get_Model (Self.Tree));
@@ -661,7 +667,8 @@ package body DAP.Views.Assembly is
    -- On_Status_Changed --
    -----------------------
 
-   overriding procedure On_Status_Changed
+   overriding
+   procedure On_Status_Changed
      (Self   : not null access Assembly_View_Record;
       Status : GPS.Debuggers.Debugger_State)
    is
@@ -681,9 +688,7 @@ package body DAP.Views.Assembly is
    -- Set_Font --
    --------------
 
-   procedure Set_Font
-     (Self : Assembly_View;
-      Font : Pango_Font_Description) is
+   procedure Set_Font (Self : Assembly_View; Font : Pango_Font_Description) is
    begin
       if Self = null then
          return;
@@ -704,12 +709,12 @@ package body DAP.Views.Assembly is
    is
       Model : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
    begin
-      Iter  := Model.Get_Iter_First;
+      Iter := Model.Get_Iter_First;
       Found := False;
 
       while Iter /= Null_Iter loop
-         if String_To_Address
-           (Model.Get_String (Iter, Address_Column)) = Address
+         if String_To_Address (Model.Get_String (Iter, Address_Column))
+           = Address
          then
             Found := True;
             return;
@@ -746,7 +751,8 @@ package body DAP.Views.Assembly is
 
       function Has_File_Information (Iter : Gtk_Tree_Iter) return Boolean is
       begin
-         return Model.Get_String (Iter, File_Column) /= ""
+         return
+           Model.Get_String (Iter, File_Column) /= ""
            and then Model.Get_Int (Iter, Line_Column) /= 0;
       end Has_File_Information;
 
@@ -757,7 +763,8 @@ package body DAP.Views.Assembly is
       function Compare_File_Information (Iter : Gtk_Tree_Iter) return Boolean
       is
       begin
-         return Model.Get_String (Iter, File_Column) = To_String (Current_File)
+         return
+           Model.Get_String (Iter, File_Column) = To_String (Current_File)
            and then Model.Get_Int (Iter, Line_Column) /= Current_Line;
       end Compare_File_Information;
    begin
@@ -802,17 +809,16 @@ package body DAP.Views.Assembly is
    ---------------
 
    procedure Highlight
-     (View         : access Assembly_View_Record'Class;
-      Scroll_To_Pc : Boolean := True)
+     (View : access Assembly_View_Record'Class; Scroll_To_Pc : Boolean := True)
    is
       use DAP.Types.Breakpoints;
 
-      Client   : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
-      Model    : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
-      Values   : Glib.Values.GValue_Array (1 .. 3);
-      Columns  : Columns_Array (Values'Range);
-      Iter     : Gtk_Tree_Iter;
-      Found    : Boolean;
+      Client  : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
+      Model   : Gtk.Tree_Store.Gtk_Tree_Store renames View.Model;
+      Values  : Glib.Values.GValue_Array (1 .. 3);
+      Columns : Columns_Array (Values'Range);
+      Iter    : Gtk_Tree_Iter;
+      Found   : Boolean;
 
       Detached : Gtk.Tree_Model.Gtk_Tree_Model;
       Last     : Address_Type := Invalid_Address;
@@ -820,9 +826,7 @@ package body DAP.Views.Assembly is
       First_Visible_Line_Iter : Gtk_Tree_Iter := Null_Iter;
       Selected_Line_Iter      : Gtk_Tree_Iter := Null_Iter;
    begin
-      if View = null
-        or else Client = null
-      then
+      if View = null or else Client = null then
          return;
       end if;
 
@@ -830,8 +834,8 @@ package body DAP.Views.Assembly is
          --  Detaching the model will reset the scrolling and the selection so
          --  store them now.
          declare
-            From : Gtk_Tree_Path  := Null_Gtk_Tree_Path;
-            To   : Gtk_Tree_Path  := Null_Gtk_Tree_Path;
+            From : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+            To   : Gtk_Tree_Path := Null_Gtk_Tree_Path;
             M    : Gtk_Tree_Model := Null_Gtk_Tree_Model;
          begin
             View.Tree.Get_Visible_Range (From, To, Found);
@@ -877,21 +881,21 @@ package body DAP.Views.Assembly is
                Glib.Values.Init (Values (1), Gdk.RGBA.Get_Type);
                Gdk.RGBA.Set_Value
                  (Values (1),
-                  (if not Data.Enabled then
-                        GPS.Kernel.Style_Manager.Background
-                     (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
-                   elsif not Data.Condition.Is_Empty then
-                      GPS.Kernel.Style_Manager.Background
-                     (GPS.Default_Styles.Debugger_Conditional_Breakpoint_Style)
+                  (if not Data.Enabled
+                   then
+                     GPS.Kernel.Style_Manager.Background
+                       (GPS.Default_Styles.Debugger_Disabled_Breakpoint_Style)
+                   elsif not Data.Condition.Is_Empty
+                   then
+                     GPS.Kernel.Style_Manager.Background
+                       (GPS
+                          .Default_Styles
+                          .Debugger_Conditional_Breakpoint_Style)
                    else
-                      GPS.Kernel.Style_Manager.Background
-                     (GPS.Default_Styles.Debugger_Breakpoint_Style)));
+                     GPS.Kernel.Style_Manager.Background
+                       (GPS.Default_Styles.Debugger_Breakpoint_Style)));
 
-               Set_And_Clear
-                 (Model,
-                  Iter,
-                  Columns (1 .. 1),
-                  Values (1 .. 1));
+               Set_And_Clear (Model, Iter, Columns (1 .. 1), Values (1 .. 1));
             end if;
          end if;
       end loop;
@@ -902,16 +906,18 @@ package body DAP.Views.Assembly is
 
       if Found then
          Model.Set
-           (Iter, PC_Pixmap_Column,
+           (Iter,
+            PC_Pixmap_Column,
             Ada.Strings.Unbounded.To_String
               (Debugger_Pixmaps.Current_Line_Pixbuf));
 
       elsif In_Range
-        (Client.Get_Stack_Trace.Get_Current_Address, View.Current_Range)
+              (Client.Get_Stack_Trace.Get_Current_Address, View.Current_Range)
       then
          for Index in 1 .. Natural (View.Current_Range.Data.Length) loop
-            exit when View.Current_Range.Data.Element
-              (Index).Address > Client.Get_Stack_Trace.Get_Current_Address;
+            exit when
+              View.Current_Range.Data.Element (Index).Address
+              > Client.Get_Stack_Trace.Get_Current_Address;
 
             Last := View.Current_Range.Data.Element (Index).Address;
          end loop;
@@ -920,7 +926,8 @@ package body DAP.Views.Assembly is
             Iter_From_Address (View, Last, Iter, Found);
             if Found then
                Model.Set
-                 (Iter, PC_Pixmap_Column,
+                 (Iter,
+                  PC_Pixmap_Column,
                   Ada.Strings.Unbounded.To_String
                     (Debugger_Pixmaps.Current_Line_Inside_Pixbuf));
             end if;
@@ -944,9 +951,7 @@ package body DAP.Views.Assembly is
             Iter := Start_Iter;
             while Iter /= Null_Iter and then Iter /= End_Iter loop
                Model.Set
-                 (Iter,
-                  Glib.Gint_Array (Columns (1 .. 1)),
-                  Values (1 .. 1));
+                 (Iter, Glib.Gint_Array (Columns (1 .. 1)), Values (1 .. 1));
 
                Model.Next (Iter);
             end loop;
@@ -1020,7 +1025,8 @@ package body DAP.Views.Assembly is
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.DisassembleResponse;
@@ -1028,8 +1034,8 @@ package body DAP.Views.Assembly is
    is
       pragma Unreferenced (New_Request);
 
-      View : constant Assembly_MDI := Assembly_MDI_Views.Retrieve_View
-        (Self.Kernel, True);
+      View : constant Assembly_MDI :=
+        Assembly_MDI_Views.Retrieve_View (Self.Kernel, True);
       S    : Disassemble_Elements;
 
       function Format_Opcodes
@@ -1044,8 +1050,9 @@ package body DAP.Views.Assembly is
         (S : VSS.Strings.Virtual_String) return VSS.Strings.Virtual_String
       is
          Result : VSS.Strings.Virtual_String;
-         I      : VSS.Strings.Cursors.Iterators.Characters.
-           Character_Iterator := S.At_First_Character;
+         I      :
+           VSS.Strings.Cursors.Iterators.Characters.Character_Iterator :=
+             S.At_First_Character;
          Count  : Natural := 0;
          Dummy  : Boolean;
       begin
@@ -1079,18 +1086,16 @@ package body DAP.Views.Assembly is
             begin
                S.Append
                  (Disassemble_Element'
-                    (Address       =>
-                         String_To_Address (To_UTF8 (Line.address)),
-                     Instr         => Line.instruction,
-                     Opcodes       => Format_Opcodes (Line.instructionBytes),
-                     Symbol        => Line.symbol,
-                     File          =>
+                    (Address => String_To_Address (To_UTF8 (Line.address)),
+                     Instr   => Line.instruction,
+                     Opcodes => Format_Opcodes (Line.instructionBytes),
+                     Symbol  => Line.symbol,
+                     File    =>
                        (if Line.location.Is_Set
                         then To_File (Line.location.Value.path)
                         else GNATCOLL.VFS.No_File),
-                     Line    => (if Line.line.Is_Set
-                                 then Line.line.Value
-                                 else 0)));
+                     Line    =>
+                       (if Line.line.Is_Set then Line.line.Value else 0)));
             end;
          end loop;
 
@@ -1109,14 +1114,15 @@ package body DAP.Views.Assembly is
             View.Current_Range.Data.Append (S);
 
          else
-            View.Cache := new Cache_Data'
-              (Low        =>
-                 Disassemble_Element_Vectors.First_Element (S).Address,
-               High       =>
-                 Disassemble_Element_Vectors.Last_Element (S).Address,
-               Data       => S,
-               Next       => View.Cache,
-               Subprogram => False);
+            View.Cache :=
+              new Cache_Data'
+                (Low        =>
+                   Disassemble_Element_Vectors.First_Element (S).Address,
+                 High       =>
+                   Disassemble_Element_Vectors.Last_Element (S).Address,
+                 Data       => S,
+                 Next       => View.Cache,
+                 Subprogram => False);
 
             View.Current_Range := View.Cache;
          end if;
@@ -1137,8 +1143,7 @@ package body DAP.Views.Assembly is
    ----------------------
 
    procedure On_Frame_Changed
-     (View          : Assembly_View;
-      Start_Address : Address_Type)
+     (View : Assembly_View; Start_Address : Address_Type)
    is
       End_Address    : Address_Type;
       Size           : Integer;
@@ -1149,9 +1154,7 @@ package body DAP.Views.Assembly is
          return;
       end if;
 
-      if View.Current_Range /= null
-        and then View.Current_Range.Subprogram
-      then
+      if View.Current_Range /= null and then View.Current_Range.Subprogram then
          Free (View.Current_Range);
       end if;
 
@@ -1176,13 +1179,11 @@ package body DAP.Views.Assembly is
 
          else
             Start_In_Range := In_Range (Start_Address, View.Current_Range);
-            End_In_Range   := In_Range (End_Address, View.Current_Range);
+            End_In_Range := In_Range (End_Address, View.Current_Range);
          end if;
       end if;
 
-      if Start_In_Range
-        and then End_In_Range
-      then
+      if Start_In_Range and then End_In_Range then
          View.Highlight;
          return;
       end if;
@@ -1219,10 +1220,10 @@ package body DAP.Views.Assembly is
    --------------
 
    function In_Range
-     (Address : Address_Type;
-      R       : Cache_Data_Access) return Boolean is
+     (Address : Address_Type; R : Cache_Data_Access) return Boolean is
    begin
-      return R /= null
+      return
+        R /= null
         and then R.Low /= Invalid_Address
         and then R.High /= Invalid_Address
         and then Address >= R.Low
@@ -1233,15 +1234,10 @@ package body DAP.Views.Assembly is
    -- Meta_Scroll --
    -----------------
 
-   procedure Meta_Scroll
-     (View : Assembly_View;
-      Down : Boolean)
-   is
+   procedure Meta_Scroll (View : Assembly_View; Down : Boolean) is
       Address : Address_Type;
    begin
-      if View = null
-        or else View.Current_Range = null
-      then
+      if View = null or else View.Current_Range = null then
          return;
       end if;
 
@@ -1252,11 +1248,12 @@ package body DAP.Views.Assembly is
 
       else
          if View.Current_Range.Low /= Invalid_Address then
-            Address := Add_Address
-              (View.Current_Range.Low,
-               (if Assembly_Range_Size.Get_Pref = 0
-                then -200
-                else -Assembly_Range_Size.Get_Pref));
+            Address :=
+              Add_Address
+                (View.Current_Range.Low,
+                 (if Assembly_Range_Size.Get_Pref = 0
+                  then -200
+                  else -Assembly_Range_Size.Get_Pref));
 
             if Address /= Invalid_Address then
                On_Frame_Changed (View, Address);
@@ -1271,17 +1268,13 @@ package body DAP.Views.Assembly is
    -- Meta_Scroll_PC --
    --------------------
 
-   procedure Meta_Scroll_PC
-     (View : Assembly_View)
-   is
+   procedure Meta_Scroll_PC (View : Assembly_View) is
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (View);
       Iter   : Gtk_Tree_Iter;
       Path   : Gtk_Tree_Path;
       Found  : Boolean;
    begin
-      if View /= null
-        and then Client /= null
-      then
+      if View /= null and then Client /= null then
          On_Frame_Changed (View, Client.Get_Stack_Trace.Get_Current_Address);
 
          Iter_From_Address
@@ -1318,8 +1311,7 @@ package body DAP.Views.Assembly is
    -------------------
 
    function Find_In_Cache
-     (View    : Assembly_View;
-      Address : Address_Type) return Cache_Data_Access
+     (View : Assembly_View; Address : Address_Type) return Cache_Data_Access
    is
       Tmp : Cache_Data_Access;
    begin
@@ -1344,8 +1336,8 @@ package body DAP.Views.Assembly is
    -- On_Location_Changed --
    -------------------------
 
-   overriding procedure On_Location_Changed
-     (Self : not null access Assembly_View_Record)
+   overriding
+   procedure On_Location_Changed (Self : not null access Assembly_View_Record)
    is
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
    begin
@@ -1359,7 +1351,8 @@ package body DAP.Views.Assembly is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -1367,16 +1360,12 @@ package body DAP.Views.Assembly is
       pragma Unreferenced (Kernel);
       Do_Update : Boolean := False;
    begin
-      if Pref = null
-        or else Pref = Preference (Default_Style)
-      then
+      if Pref = null or else Pref = Preference (Default_Style) then
          Do_Update := True;
          Set_Font (Self.View, Default_Style.Get_Pref_Font);
       end if;
 
-      if Pref = null
-        or else Pref = Preference (Asm_Show_Addresses)
-      then
+      if Pref = null or else Pref = Preference (Asm_Show_Addresses) then
          Do_Update := True;
          if Asm_Show_Addresses.Get_Pref then
             Self.View.Tree.Get_Column (Address_Column).Set_Visible (True);
@@ -1385,9 +1374,7 @@ package body DAP.Views.Assembly is
          end if;
       end if;
 
-      if Pref = null
-        or else Pref = Preference (Asm_Show_Opcodes)
-      then
+      if Pref = null or else Pref = Preference (Asm_Show_Opcodes) then
          Do_Update := True;
          if Asm_Show_Opcodes.Get_Pref then
             Self.View.Tree.Get_Column (Opcodes_Column).Set_Visible (True);
@@ -1413,11 +1400,12 @@ package body DAP.Views.Assembly is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self     : On_Breakpoint_Added_Or_Deleted;
-       Kernel   : not null access Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class;
-       Id       : Integer)
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoint_Added_Or_Deleted;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class;
+      Id       : Integer)
    is
       pragma Unreferenced (Self);
       View : constant Assembly_View :=
@@ -1432,14 +1420,15 @@ package body DAP.Views.Assembly is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-      (Self     : On_Breakpoints_Changed;
-       Kernel   : not null access Kernel_Handle_Record'Class;
-       Debugger : access Base_Visual_Debugger'Class)
+   overriding
+   procedure Execute
+     (Self     : On_Breakpoints_Changed;
+      Kernel   : not null access Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Self);
-      View : constant Assembly_View := Assembly_View
-        (Assembly_MDI_Views.Retrieve_View (Kernel, True));
+      View : constant Assembly_View :=
+        Assembly_View (Assembly_MDI_Views.Retrieve_View (Kernel, True));
    begin
       if View /= null then
          View.Highlight (False);
@@ -1450,12 +1439,13 @@ package body DAP.Views.Assembly is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Scroll_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View    : constant Assembly_View :=
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Assembly_View :=
         Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
 
    begin
@@ -1467,13 +1457,14 @@ package body DAP.Views.Assembly is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Scroll_PC_Command_Context;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View    : constant Assembly_View :=
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Assembly_View :=
         Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
 
    begin
@@ -1485,7 +1476,8 @@ package body DAP.Views.Assembly is
    -- Update --
    ------------
 
-   overriding procedure Update (Self : not null access Assembly_View_Record) is
+   overriding
+   procedure Update (Self : not null access Assembly_View_Record) is
       use DAP.Clients;
 
       Client : constant DAP.Clients.DAP_Client_Access := Get_Client (Self);
@@ -1504,8 +1496,8 @@ package body DAP.Views.Assembly is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize
-     (Self : in out Off_On_Sensitive_Controller) is
+   overriding
+   procedure Initialize (Self : in out Off_On_Sensitive_Controller) is
    begin
       Self.View.Tree.Set_Sensitive (False);
    end Initialize;
@@ -1514,7 +1506,8 @@ package body DAP.Views.Assembly is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Off_On_Sensitive_Controller) is
+   overriding
+   procedure Finalize (Self : in out Off_On_Sensitive_Controller) is
    begin
       Self.View.Tree.Set_Sensitive (True);
       Self.View.Tree.Grab_Focus;
@@ -1524,16 +1517,17 @@ package body DAP.Views.Assembly is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      View     : constant Assembly_View :=
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Assembly_View :=
         Assembly_View (Assembly_MDI_Views.Get_Or_Create_View (Kernel));
-      Model    : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Model  : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
    begin
       View.Tree.Get_Selection.Get_Selected (Model, Iter);
 
@@ -1580,25 +1574,28 @@ package body DAP.Views.Assembly is
       Debugger_Available := Kernel.Lookup_Filter ("Debugger available");
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "assembly_view disassemble next",
-         Command     => new Scroll_Command_Context'
-           (Interactive_Command with Down => True),
+        (Kernel,
+         "assembly_view disassemble next",
+         Command     =>
+           new Scroll_Command_Context'(Interactive_Command with Down => True),
          Description => "Disassemble next code block",
          Icon_Name   => "gps-debugger-down-symbolic",
          Category    => "Debug",
          Filter      => Debugger_Available);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "assembly_view disassemble previous",
-         Command     => new Scroll_Command_Context'
-           (Interactive_Command with Down => False),
+        (Kernel,
+         "assembly_view disassemble previous",
+         Command     =>
+           new Scroll_Command_Context'(Interactive_Command with Down => False),
          Description => "Disassemble previous code block",
          Icon_Name   => "gps-debugger-up-symbolic",
          Category    => "Debug",
          Filter      => Debugger_Available);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "assembly_view disassemble pc",
+        (Kernel,
+         "assembly_view disassemble pc",
          Command     => new Scroll_PC_Command_Context,
          Description => "Disassemble $pc code block",
          Icon_Name   => "gps-debugger-step-symbolic",
@@ -1606,7 +1603,8 @@ package body DAP.Views.Assembly is
          Filter      => Debugger_Available);
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "assembly_view toggle breakpoint",
+        (Kernel,
+         "assembly_view toggle breakpoint",
          Command     => new Breakpoint_Command,
          Description => "Create/delete a breakpoint on address",
          Icon_Name   => "gps-emblem-debugger-current",

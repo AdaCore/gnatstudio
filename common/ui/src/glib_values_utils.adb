@@ -73,11 +73,11 @@ package body Glib_Values_Utils is
    -- As_Object --
    ---------------
 
-   function As_Object
-     (Value : Glib.Object.GObject) return Glib.Values.GValue is
+   function As_Object (Value : Glib.Object.GObject) return Glib.Values.GValue
+   is
    begin
       return Result : Glib.Values.GValue do
-         Glib.Values.Init       (Result, Glib.GType_Object);
+         Glib.Values.Init (Result, Glib.GType_Object);
          Glib.Values.Set_Object (Result, Value);
       end return;
    end As_Object;
@@ -134,7 +134,7 @@ package body Glib_Values_Utils is
    -- As_RGBA --
    -------------
 
-   function As_RGBA  (Value : Gdk.RGBA.Gdk_RGBA) return Glib.Values.GValue is
+   function As_RGBA (Value : Gdk.RGBA.Gdk_RGBA) return Glib.Values.GValue is
    begin
       return Result : Glib.Values.GValue do
          Glib.Values.Init (Result, Gdk.RGBA.Get_Type);
@@ -153,8 +153,7 @@ package body Glib_Values_Utils is
    begin
       for Index in Values'Range loop
          Glib.Values.Init
-           (Values (Index),
-            Types (Glib.Guint (Columns (Natural (Index)))));
+           (Values (Index), Types (Glib.Guint (Columns (Natural (Index)))));
       end loop;
    end Init;
 

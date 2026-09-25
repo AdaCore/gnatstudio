@@ -22,15 +22,17 @@ package GNAThub.Loader.Databases is
 
    type Database_Loader_Type is new Loader_Type with private;
 
-   overriding procedure Prepare_Loading (Self : in out Database_Loader_Type);
+   overriding
+   procedure Prepare_Loading (Self : in out Database_Loader_Type);
 
-   overriding function Has_Data_To_Load
-     (Self : Database_Loader_Type) return Boolean;
+   overriding
+   function Has_Data_To_Load (Self : Database_Loader_Type) return Boolean;
 
-   overriding procedure Load_Data
-     (Self : in out Database_Loader_Type);
+   overriding
+   procedure Load_Data (Self : in out Database_Loader_Type);
 
-   overriding procedure Cleanup (Self : in out Database_Loader_Type);
+   overriding
+   procedure Cleanup (Self : in out Database_Loader_Type);
 
    procedure Remove_Database
      (Self : in out Database_Loader_Type; Force : Boolean := False);
@@ -53,20 +55,19 @@ private
 
    type Resource_Access is access all Resource_Record;
 
-   package Resource_Maps is
-     new Ada.Containers.Ordered_Maps (Natural, Resource_Access);
+   package Resource_Maps is new
+     Ada.Containers.Ordered_Maps (Natural, Resource_Access);
 
-   package Severity_Maps is
-     new Ada.Containers.Ordered_Maps (Natural, Severity_Access);
+   package Severity_Maps is new
+     Ada.Containers.Ordered_Maps (Natural, Severity_Access);
 
-   package Rule_Maps is
-     new Ada.Containers.Ordered_Maps (Natural, Rule_Access);
+   package Rule_Maps is new Ada.Containers.Ordered_Maps (Natural, Rule_Access);
 
    type Database_Loader_Type is new Loader_Type with record
-      Rules     : Rule_Maps.Map;
+      Rules : Rule_Maps.Map;
       --  Database's id to object mappings.
 
-      Metrics   : Rule_Maps.Map;
+      Metrics : Rule_Maps.Map;
       --  Database's id to object mappings for the metrics
 
       Resources : Resource_Maps.Map;

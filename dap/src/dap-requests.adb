@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 with VSS.Strings.Conversions;
 
 package body DAP.Requests is
@@ -28,8 +28,8 @@ package body DAP.Requests is
    -------------
 
    procedure Destroy (Item : in out DAP_Request_Access) is
-      procedure Free is
-        new Ada.Unchecked_Deallocation (DAP_Request'Class, DAP_Request_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (DAP_Request'Class, DAP_Request_Access);
 
    begin
       if Item /= null then
@@ -59,8 +59,12 @@ package body DAP.Requests is
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
-      Trace (Me, "Error:" & DAP_Request'Class (Self).Method & ". "
-             & VSS.Strings.Conversions.To_UTF_8_String (Message));
+      Trace
+        (Me,
+         "Error:"
+         & DAP_Request'Class (Self).Method
+         & ". "
+         & VSS.Strings.Conversions.To_UTF_8_String (Message));
    end On_Error_Message;
 
 end DAP.Requests;

@@ -17,9 +17,9 @@
 
 with Interfaces.C.Strings;
 with Glib;
-with Glib.Object;          use Glib.Object;
+with Glib.Object;     use Glib.Object;
 with Glib.Error;
-with Gtkada.Bindings;      use Gtkada.Bindings;
+with Gtkada.Bindings; use Gtkada.Bindings;
 with System;
 
 package GPS.Initialization is
@@ -28,10 +28,10 @@ package GPS.Initialization is
    use type ICS.chars_ptr;
 
    function On_Switch
-      (Option_Name : ICS.chars_ptr;
-       Value       : ICS.chars_ptr;
-       Data        : System.Address;  --  ignored
-       Error       : access Glib.Error.GError) return Glib.Gboolean;
+     (Option_Name : ICS.chars_ptr;
+      Value       : ICS.chars_ptr;
+      Data        : System.Address;  --  ignored
+      Error       : access Glib.Error.GError) return Glib.Gboolean;
    pragma Convention (C, On_Switch);
    --  General callback for switch handling from GApplication
 
@@ -44,9 +44,9 @@ package GPS.Initialization is
    --  General callback for file opening handling from GApplication
 
    function Local_Command_Line
-      (Self        : System.Address;
-       Arguments   : access chars_ptr_array_access;
-       Exit_Status : access Glib.Gint) return Glib.Gboolean;
+     (Self        : System.Address;
+      Arguments   : access chars_ptr_array_access;
+      Exit_Status : access Glib.Gint) return Glib.Gboolean;
    pragma Convention (C, Local_Command_Line);
    --  override gtk+ builtin virtual method for an application.
    --  This makes sure that we can do our own handling of --help

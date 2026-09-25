@@ -17,9 +17,9 @@
 
 --  This package handles the charsets supported by GNAT Studio
 
-with Default_Preferences;  use Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 
-with Glib.Object;          use Glib.Object;
+with Glib.Object; use Glib.Object;
 with Gtk.Combo_Box_Text;
 with Gtk.Widget;
 
@@ -33,29 +33,29 @@ package GPS.Kernel.Charsets is
    -- Preferences --
    -----------------
 
-   type Charset_Preference_Record is new
-     String_Preference_Record with null record;
+   type Charset_Preference_Record is new String_Preference_Record
+   with null record;
    type Charset_Preference is access all Charset_Preference_Record'Class;
 
    function Create
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Path                      : Preference_Path;
-      Name, Label, Doc          : String;
-      Default                   : String)
-      return Charset_Preference;
+     (Manager          : access Preferences_Manager_Record'Class;
+      Path             : Preference_Path;
+      Name, Label, Doc : String;
+      Default          : String) return Charset_Preference;
    --  Create a new preference representing a charset
 
-   overriding function Edit
-     (Pref               : access Charset_Preference_Record;
-      Manager            : access Preferences_Manager_Record'Class)
+   overriding
+   function Edit
+     (Pref    : access Charset_Preference_Record;
+      Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
 
-   overriding procedure Update_On_Pref_Changed
+   overriding
+   procedure Update_On_Pref_Changed
      (Pref   : access Charset_Preference_Record;
       Widget : access GObject_Record'Class);
 
-   procedure Register_Preferences
-     (Kernel : access Kernel_Handle_Record'Class);
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class);
    --  Register the charset-related preferences
 
    ------------
@@ -63,8 +63,8 @@ package GPS.Kernel.Charsets is
    ------------
 
    function Create_Charset_Combo
-     (File    : GNATCOLL.VFS.Virtual_File;
-      Default : String := "") return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
+     (File : GNATCOLL.VFS.Virtual_File; Default : String := "")
+      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    --  Return a combo box that can be used to edit the charset associated with
    --  a file.
    --  Default is used if File is VFS.No_File. If unspecified, the

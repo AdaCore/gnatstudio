@@ -18,17 +18,17 @@
 with Ada.Containers; use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
-with GNATCOLL.Xref;    use GNATCOLL.Xref;
-with GPS.Kernel;       use GPS.Kernel;
-with Gtk.Tree_Model;   use Gtk.Tree_Model;
-with Gtk.Widget;       use Gtk.Widget;
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
+with GNATCOLL.Xref;  use GNATCOLL.Xref;
+with GPS.Kernel;     use GPS.Kernel;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Gtk.Widget;     use Gtk.Widget;
 with Gtkada.Tree_View;
 
 with VSS.Strings;
 
-with Basic_Types;      use Basic_Types;
-with Language;         use Language;
+with Basic_Types; use Basic_Types;
+with Language;    use Language;
 
 package Outline_View is
 
@@ -66,8 +66,8 @@ package Outline_View is
    type Outline_Provider is interface;
    type Outline_Provider_Access is access all Outline_Provider'Class;
 
-   procedure Start_Fill
-     (Self : access Outline_Provider; File : Virtual_File) is abstract;
+   procedure Start_Fill (Self : access Outline_Provider; File : Virtual_File)
+   is abstract;
    --  Fill the Outline view: depending of the provider this can be done
    --  asynchronously.
 
@@ -76,9 +76,8 @@ package Outline_View is
    --  Do nothing otherwise.
 
    function Support_Language
-     (Self : access Outline_Provider;
-      Lang : Language_Access)
-      return Boolean is abstract;
+     (Self : access Outline_Provider; Lang : Language_Access) return Boolean
+   is abstract;
    --  Ask the provider if Lang is supported
 
    procedure Set_Default_Provider (Provider : Outline_Provider_Access);
@@ -103,9 +102,7 @@ package Outline_View is
    --  Stay : insert as a brother
 
    function Get_Outline_Model
-     (Kernel  : Kernel_Handle;
-      File    : Virtual_File;
-      Default : Boolean := False)
+     (Kernel : Kernel_Handle; File : Virtual_File; Default : Boolean := False)
       return Outline_Model_Access;
    --  Retrieve the model, return null if the File is not currently displayed
    --  in Outline and Outline_Error if the view is closed.
@@ -147,8 +144,7 @@ package Outline_View is
    --                   adding unecessary nodes (I.E. the Entity's children)
 
    procedure Move_Cursor
-     (Self     : Outline_Model_Access;
-      Movement : Insertion_Movement);
+     (Self : Outline_Model_Access; Movement : Insertion_Movement);
    --  Change the cursor pointing to the last added row.
 
    type Computing_Status is (Failed, Stopped, Succeeded);
@@ -158,8 +154,7 @@ package Outline_View is
    --  changed or the current editor has been modified).
    --  Succeeded will be returned when the Oultine has been properly filled.
    procedure Finished_Computing
-     (Kernel : Kernel_Handle;
-      Status : Computing_Status := Succeeded);
+     (Kernel : Kernel_Handle; Status : Computing_Status := Succeeded);
    --  Must be called by a provider when all the nodes have been added.
 
    procedure Clear_Outline_Model (Self : Outline_Model_Access);
@@ -169,26 +164,25 @@ package Outline_View is
    --  Free the model, this does not clear or affect the view.
 
 private
-   function Identity
-     (Self : Language_Category)
-      return Ada.Containers.Hash_Type
+   function Identity (Self : Language_Category) return Ada.Containers.Hash_Type
    is (Ada.Containers.Hash_Type (Language_Category'Pos (Self)));
-   package Category_To_Path_Map is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Language_Category,
-      Element_Type    => Gtk_Tree_Path,
-      Hash            => Identity,
-      Equivalent_Keys => "=");
+   package Category_To_Path_Map is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => Language_Category,
+        Element_Type    => Gtk_Tree_Path,
+        Hash            => Identity,
+        Equivalent_Keys => "=");
    --  Map used for the preferences Group_By_Categories
 
    function Get_Id
      (Self : not null access Gtkada.Tree_View.Tree_View_Record'Class;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return String;
-   package Expansion is new Gtkada.Tree_View.Expansion_Support
-     (Tree_Record        => Gtkada.Tree_View.Tree_View_Record,
-      Id                 => String,
-      Get_Id             => Get_Id,
-      Hash               => Ada.Strings.Hash);
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return String;
+   package Expansion is new
+     Gtkada.Tree_View.Expansion_Support
+       (Tree_Record => Gtkada.Tree_View.Tree_View_Record,
+        Id          => String,
+        Get_Id      => Get_Id,
+        Hash        => Ada.Strings.Hash);
 
    type Tree_Filter is record
       Show_Profile      : Boolean;

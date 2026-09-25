@@ -27,8 +27,7 @@ package body DAP.Types is
    -----------------
 
    function Add_Address
-     (Address : Address_Type;
-      Offset  : Integer) return Address_Type
+     (Address : Address_Type; Offset : Integer) return Address_Type
    is
       Value  : Long_Long_Integer;
       Buffer : String (1 .. 32);
@@ -65,13 +64,15 @@ package body DAP.Types is
       end if;
 
       declare
-         Str : constant String := "16#" &
-           Address.Address_String
-           (Address.Address_String'First + 2 .. Address.Last) & "#";
+         Str   : constant String :=
+           "16#"
+           & Address.Address_String
+               (Address.Address_String'First + 2 .. Address.Last)
+           & "#";
          Value : Long_Long_Integer;
       begin
-         Value := Long_Long_Integer'Value (Str) +
-           Long_Long_Integer (Address.Offset);
+         Value :=
+           Long_Long_Integer'Value (Str) + Long_Long_Integer (Address.Offset);
          return Value;
       end;
    end Address_To_Integer;
@@ -84,16 +85,16 @@ package body DAP.Types is
       Index : Natural;
    begin
       if Address_String'Length < 3
-        or else Address_String
-          (Address_String'First .. Address_String'First + 1) /= "0x"
+        or else
+          Address_String (Address_String'First .. Address_String'First + 1)
+          /= "0x"
       then
          return Invalid_Address;
       end if;
 
       Index := Address_String'First + 2;
 
-      while Index <= Address_String'Last
-        and then Address_String (Index) = '0'
+      while Index <= Address_String'Last and then Address_String (Index) = '0'
       loop
          Index := Index + 1;
       end loop;
@@ -112,8 +113,9 @@ package body DAP.Types is
    function Address_To_String (Address : Address_Type) return String is
    begin
       if Address.Offset = 0 then
-         return Address.Address_String
-           (Address.Address_String'First .. Address.Last);
+         return
+           Address.Address_String
+             (Address.Address_String'First .. Address.Last);
       else
          declare
             Offset : VSS.Strings.Virtual_String;
@@ -128,9 +130,10 @@ package body DAP.Types is
               (VSS.Strings.Conversions.To_Virtual_String
                  (String_Utils.Image (abs Address.Offset)));
 
-            return Address.Address_String
-              (Address.Address_String'First .. Address.Last) &
-            VSS.Strings.Conversions.To_UTF_8_String (Offset);
+            return
+              Address.Address_String
+                (Address.Address_String'First .. Address.Last)
+              & VSS.Strings.Conversions.To_UTF_8_String (Offset);
          end;
       end if;
    end Address_To_String;
@@ -139,15 +142,15 @@ package body DAP.Types is
    -- "=" --
    ---------
 
-   overriding function "="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean is
+   overriding
+   function "="
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean is
    begin
-      return Address_1.Address_String
-        (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) =
-        Address_2.Address_String
-          (Address_2.Last - Address_2.Length + 1 .. Address_2.Last)
+      return
+        Address_1.Address_String
+          (Address_1.Last - Address_1.Length + 1 .. Address_1.Last)
+        = Address_2.Address_String
+            (Address_2.Last - Address_2.Length + 1 .. Address_2.Last)
         and then Address_1.Offset = Address_2.Offset;
    end "=";
 
@@ -156,8 +159,7 @@ package body DAP.Types is
    ----------------
 
    function Set_Offset
-     (Address : Address_Type;
-      Offset  : Integer) return Address_Type
+     (Address : Address_Type; Offset : Integer) return Address_Type
    is
       Address_With_Offset : Address_Type := Address;
    begin
@@ -171,9 +173,7 @@ package body DAP.Types is
    ---------
 
    function ">"
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean is
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean is
    begin
       if Address_1.Offset = Address_2.Offset then
          if Address_1.Length > Address_2.Length then
@@ -183,15 +183,16 @@ package body DAP.Types is
             return False;
 
          else
-            return Address_1.Address_String
-              (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) >
-              Address_2.Address_String
-                (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
+            return
+              Address_1.Address_String
+                (Address_1.Last - Address_1.Length + 1 .. Address_1.Last)
+              > Address_2.Address_String
+                  (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
          end if;
 
       else
-         return Address_To_Integer (Address_1) >
-           Address_To_Integer (Address_2);
+         return
+           Address_To_Integer (Address_1) > Address_To_Integer (Address_2);
       end if;
    end ">";
 
@@ -200,9 +201,7 @@ package body DAP.Types is
    ---------
 
    function ">="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean is
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean is
    begin
       if Address_1.Offset = Address_2.Offset then
          if Address_1.Length > Address_2.Length then
@@ -212,15 +211,16 @@ package body DAP.Types is
             return False;
 
          else
-            return Address_1.Address_String
-              (Address_1.Last - Address_1.Length + 1 .. Address_1.Last) >=
-              Address_2.Address_String
-                (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
+            return
+              Address_1.Address_String
+                (Address_1.Last - Address_1.Length + 1 .. Address_1.Last)
+              >= Address_2.Address_String
+                   (Address_2.Last - Address_2.Length + 1 .. Address_2.Last);
          end if;
 
       else
-         return Address_To_Integer (Address_1) >=
-           Address_To_Integer (Address_2);
+         return
+           Address_To_Integer (Address_1) >= Address_To_Integer (Address_2);
       end if;
    end ">=";
 
@@ -229,9 +229,7 @@ package body DAP.Types is
    ---------
 
    function "<"
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean is
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean is
    begin
       return Address_2 > Address_1;
    end "<";
@@ -241,9 +239,7 @@ package body DAP.Types is
    ----------
 
    function "<="
-     (Address_1 : Address_Type;
-      Address_2 : Address_Type)
-      return Boolean is
+     (Address_1 : Address_Type; Address_2 : Address_Type) return Boolean is
    begin
       return Address_2 >= Address_1;
    end "<=";

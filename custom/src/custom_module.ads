@@ -18,7 +18,8 @@
 --  This package provides facilities for customizing menus,
 --  keyboard shortcuts, and so on, in GNAT Studio.
 
-with GPS.Kernel.Modules; use GPS.Kernel;
+with GPS.Kernel.Modules;
+use GPS.Kernel;
 
 package Custom_Module is
 

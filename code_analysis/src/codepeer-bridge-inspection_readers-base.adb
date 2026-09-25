@@ -17,9 +17,9 @@
 
 with GNAT.Strings;
 
-with GNATCOLL.Projects;  use GNATCOLL.Projects;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.Utils;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with CodePeer.Module;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
@@ -43,21 +43,21 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    Review_Tag              : constant String := "review";
    Annotation_File_Tag     : constant String := "annotation_file";
 
-   Annotations_Attribute        : constant String := "annotations";
-   Category_Attribute           : constant String := "category";
-   Checks_Attribute             : constant String := "checks";
-   Column_Attribute             : constant String := "column";
-   CWE_Attribute                : constant String := "cwe";
-   Entry_Point_Attribute        : constant String := "entry_point";
-   File_Attribute               : constant String := "file";
-   Identifier_Attribute         : constant String := "identifier";
-   Is_Check_Attribute           : constant String := "is_check";
-   Kind_Attribute               : constant String := "kind";
-   Line_Attribute               : constant String := "line";
-   Name_Attribute               : constant String := "name";
-   Primary_Checks_Attribute     : constant String := "primary_checks";
-   Rank_Attribute               : constant String := "rank";
-   Vn_Id_Attribute              : constant String := "vn-id";
+   Annotations_Attribute    : constant String := "annotations";
+   Category_Attribute       : constant String := "category";
+   Checks_Attribute         : constant String := "checks";
+   Column_Attribute         : constant String := "column";
+   CWE_Attribute            : constant String := "cwe";
+   Entry_Point_Attribute    : constant String := "entry_point";
+   File_Attribute           : constant String := "file";
+   Identifier_Attribute     : constant String := "identifier";
+   Is_Check_Attribute       : constant String := "is_check";
+   Kind_Attribute           : constant String := "kind";
+   Line_Attribute           : constant String := "line";
+   Name_Attribute           : constant String := "name";
+   Primary_Checks_Attribute : constant String := "primary_checks";
+   Rank_Attribute           : constant String := "rank";
+   Vn_Id_Attribute          : constant String := "vn-id";
 
    function Subprogram_Name
      (Self : Base_Inspection_Reader'Class)
@@ -140,8 +140,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -------------------------
 
    function Annotation_Category
-     (Self : Base_Inspection_Reader'Class;
-      Id   : Natural) return Annotation_Category_Access is
+     (Self : Base_Inspection_Reader'Class; Id : Natural)
+      return Annotation_Category_Access is
    begin
       return Self.Annotation_Categories.Element (Id);
    end Annotation_Category;
@@ -150,9 +150,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- End_Element --
    -----------------
 
-   overriding procedure End_Element
-     (Self  : in out Base_Inspection_Reader;
-      Name  : String) is
+   overriding
+   procedure End_Element (Self : in out Base_Inspection_Reader; Name : String)
+   is
    begin
       if Self.Ignore_Depth /= 0 then
          --  Decrase depth of ignored XML element.
@@ -197,8 +197,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
 
    procedure End_Object_Race (Self : in out Base_Inspection_Reader'Class) is
    begin
-      CodePeer.Project_Data'Class
-        (Self.Root_Inspection.all).Object_Races.Append (Self.Object_Race);
+      CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+        .Object_Races
+        .Append (Self.Object_Race);
       Self.Object_Race :=
         (Name         => <>,
          Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
@@ -222,7 +223,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- Get_Annotation_Categories --
    -------------------------------
 
-   overriding function Get_Annotation_Categories
+   overriding
+   function Get_Annotation_Categories
      (Self : Base_Inspection_Reader) return Annotation_Category_Maps.Map is
    begin
       return Self.Annotation_Categories;
@@ -232,7 +234,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- Get_Code_Analysis_Tree --
    ----------------------------
 
-   overriding function Get_Code_Analysis_Tree
+   overriding
+   function Get_Code_Analysis_Tree
      (Self : Base_Inspection_Reader) return Code_Analysis.Code_Analysis_Tree is
    begin
       return Self.Projects;
@@ -260,7 +263,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- Get_Race_Category --
    -----------------------
 
-   overriding function Get_Race_Category
+   overriding
+   function Get_Race_Category
      (Self : Base_Inspection_Reader) return CodePeer.Message_Category_Access is
    begin
       return Self.Race_Category;
@@ -291,8 +295,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       if not Self.CWE_Categories.Contains (Id) then
          Aux := new CWE_Category'(Identifier => Id, Name => Name);
          Self.CWE_Categories.Include (Id, Aux);
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).CWE_Categories.Include (Aux);
+         CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+           .CWE_Categories
+           .Include (Aux);
       end if;
    end Include_CWE_Category;
 
@@ -309,11 +314,11 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       Root_Project : Code_Analysis.Project_Access;
 
    begin
-      Self.Base_Directory  := Base_Directory;
+      Self.Base_Directory := Base_Directory;
       Self.Root_Inspection := Root_Inspection;
 
-      Self.Projects        := new Code_Analysis.Project_Maps.Map;
-      Self.Messages        := Messages;
+      Self.Projects := new Code_Analysis.Project_Maps.Map;
+      Self.Messages := Messages;
       Self.Message_Categories.Clear;
       Self.Messages.Clear;
       Root_Project :=
@@ -376,12 +381,11 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
           (Order => Natural'Value (Attrs.Get_Value ("identifier")),
            Text  => Reader_Utilities.Get_Value (Attrs, "name"),
            Vn    => Get_Vn);
-      CodePeer.Project_Data'Class
-        (Self.Root_Inspection.all).Annotation_Categories.Insert
-        (Annotation_Category);
+      CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+        .Annotation_Categories
+        .Insert (Annotation_Category);
       Self.Annotation_Categories.Insert
-        (Natural'Value (Attrs.Get_Value ("identifier")),
-         Annotation_Category);
+        (Natural'Value (Attrs.Get_Value ("identifier")), Annotation_Category);
    end Start_Annotation_Category;
 
    ------------------------
@@ -393,8 +397,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       Attrs : Sax.Attributes.Attributes'Class) is
    begin
       Self.Include_CWE_Category
-        (Id   =>
-           CWE_Identifier'Value (Attrs.Get_Value (Identifier_Attribute)),
+        (Id   => CWE_Identifier'Value (Attrs.Get_Value (Identifier_Attribute)),
          Name =>
            Ada.Strings.Unbounded.To_Unbounded_String
              (Attrs.Get_Value (Name_Attribute)));
@@ -404,7 +407,8 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self  : in out Base_Inspection_Reader;
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class) is
@@ -476,8 +480,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
                (+Attrs.Get_Value (File_Attribute), Self.Kernel),
            Line   => Integer'Value (Attrs.Get_Value (Line_Attribute)),
            Column => Get_Optional_Column (Attrs));
-      CodePeer.Project_Data'Class
-        (Self.Root_Inspection.all).Entry_Points.Insert (Entry_Point);
+      CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+        .Entry_Points
+        .Insert (Entry_Point);
       Self.Entry_Point_Map.Insert
         (Integer'Value (Attrs.Get_Value ("identifier")), Entry_Point);
    end Start_Entry_Point;
@@ -554,13 +559,12 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          end if;
       end Get_Optional_Annotations;
 
-      File_Name           : GNATCOLL.VFS.Virtual_File;
-      Relocated_Name      : GNATCOLL.VFS.Virtual_File;
-      Project_Node        : Code_Analysis.Project_Access;
+      File_Name      : GNATCOLL.VFS.Virtual_File;
+      Relocated_Name : GNATCOLL.VFS.Virtual_File;
+      Project_Node   : Code_Analysis.Project_Access;
 
    begin
-      File_Name :=
-        GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
+      File_Name := GPS.Kernel.Create (+Attrs.Get_Value ("name"), Self.Kernel);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
 
@@ -578,15 +582,16 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          F_Info : constant GNATCOLL.Projects.File_Info'Class :=
            GNATCOLL.Projects.File_Info'Class
              (Get_Registry (Self.Kernel).Tree.Info_Set (File_Name)
-              .First_Element);
+                .First_Element);
       begin
          if F_Info.Project = No_Project
            and then GNATCOLL.Utils.Starts_With (+File_Name.Base_Name, "b__")
          then
             declare
                Base : constant String := (+File_Name.Base_Name);
-               File : GNATCOLL.VFS.Virtual_File := Create_From_Base
-                 (+Base (Base'First + 3 .. Base'Last), File_Name.Dir_Name);
+               File : GNATCOLL.VFS.Virtual_File :=
+                 Create_From_Base
+                   (+Base (Base'First + 3 .. Base'Last), File_Name.Dir_Name);
 
             begin
                Relocated_Name := Self.Kernel.Create_From_Base (File.Base_Name);
@@ -598,28 +603,29 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
                   Info : constant GNATCOLL.Projects.File_Info'Class :=
                     GNATCOLL.Projects.File_Info'Class
                       (Get_Registry (Self.Kernel).Tree.Info_Set (File)
-                       .First_Element);
+                         .First_Element);
                begin
                   if Info.Project /= No_Project then
-                     Project_Node := Code_Analysis.Get_Or_Create
-                       (Self.Projects,
-                        Projects.Views.Create_Project_View_Reference
-                          (Self.Kernel, Info.Project));
+                     Project_Node :=
+                       Code_Analysis.Get_Or_Create
+                         (Self.Projects,
+                          Projects.Views.Create_Project_View_Reference
+                            (Self.Kernel, Info.Project));
                   end if;
                end;
             end;
          end if;
 
          if Project_Node = null then
-            Project_Node := Code_Analysis.Get_Or_Create
-              (Self.Projects,
-               Projects.Views.Create_Project_View_Reference
-                 (Self.Kernel, F_Info.Project));
+            Project_Node :=
+              Code_Analysis.Get_Or_Create
+                (Self.Projects,
+                 Projects.Views.Create_Project_View_Reference
+                   (Self.Kernel, F_Info.Project));
          end if;
       end;
 
-      Self.File_Node :=
-        Code_Analysis.Get_Or_Create (Project_Node, File_Name);
+      Self.File_Node := Code_Analysis.Get_Or_Create (Project_Node, File_Name);
       Self.File_Node.Analysis_Data.CodePeer_Data :=
         new CodePeer.File_Data'
           (Lifeage            => Reader_Utilities.Get_Lifeage (Attrs),
@@ -741,9 +747,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          declare
             Check_Ids : GNAT.Strings.String_List_Access :=
               GNATCOLL.Utils.Split
-                (Attrs.Get_Value (Primary_Checks_Attribute),
-                                   ' ',
-                 True);
+                (Attrs.Get_Value (Primary_Checks_Attribute), ' ', True);
 
          begin
             for Index in Check_Ids'Range loop
@@ -758,12 +762,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
 
       if Attrs.Get_Index ("from_file") /= -1 then
          From_File :=
-           GPS.Kernel.Create
-             (+Attrs.Get_Value ("from_file"), Self.Kernel);
-         From_Line :=
-           Positive'Value (Attrs.Get_Value ("from_line"));
-         From_Column :=
-           Positive'Value (Attrs.Get_Value ("from_column"));
+           GPS.Kernel.Create (+Attrs.Get_Value ("from_file"), Self.Kernel);
+         From_Line := Positive'Value (Attrs.Get_Value ("from_line"));
+         From_Column := Positive'Value (Attrs.Get_Value ("from_column"));
       end if;
 
       if Is_GNATSAS then
@@ -778,7 +779,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
 
             function Get (Attr : String) return Unbounded_String is
                use Ada.Strings.Unbounded;
-               Id : constant Integer :=  Attrs.Get_Index (Attr);
+               Id : constant Integer := Attrs.Get_Index (Attr);
 
             begin
                if Id = -1 then
@@ -789,13 +790,14 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
                end if;
             end Get;
          begin
-            GNATSAS_Id := new GNATSAS_Id_Type'
-              (Prj => Get ("id_prj"),
-               File => Get ("id_file"),
-               Subp => Get ("id_subp"),
-               Kind => Get ("id_kind"),
-               Key => Get ("id_key"),
-               Key_Seq => Get ("id_key_seq"));
+            GNATSAS_Id :=
+              new GNATSAS_Id_Type'
+                (Prj     => Get ("id_prj"),
+                 File    => Get ("id_file"),
+                 Subp    => Get ("id_subp"),
+                 Kind    => Get ("id_kind"),
+                 Key     => Get ("id_key"),
+                 Key_Seq => Get ("id_key_seq"));
          end;
       end if;
 
@@ -807,8 +809,7 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
 
       Self.Current_Message :=
         CodePeer.Module.Create_CodePeer_Message
-          (Id          =>
-             Positive'Value (Attrs.Get_Value ("identifier")),
+          (Id          => Positive'Value (Attrs.Get_Value ("identifier")),
            File        => Self.File_Node,
            Subprogram  => Self.Subprogram_Name,
            Merged      => Merged,
@@ -832,27 +833,26 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
          Self.Kernel.Insert
            (Text   =>
               "CodePeer: duplicate message"
-            & Natural'Image (Self.Current_Message.Id),
+              & Natural'Image (Self.Current_Message.Id),
             Add_LF => False,
             Mode   => GPS.Kernel.Error);
 
       else
-         Self.Messages.Insert
-           (Self.Current_Message.Id, Self.Current_Message);
+         Self.Messages.Insert (Self.Current_Message.Id, Self.Current_Message);
       end if;
 
       --  Append message's category to the list of corresponding
       --  categories.
 
       if Self.Current_Message.Is_Check then
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Check_Subcategories.Include
-           (Self.Current_Message.Category);
+         CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+           .Check_Subcategories
+           .Include (Self.Current_Message.Category);
 
       else
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Warning_Subcategories.Include
-           (Self.Current_Message.Category);
+         CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+           .Warning_Subcategories
+           .Include (Self.Current_Message.Category);
       end if;
 
       if Is_GNATSAS and then Attrs.Get_Index ("status") /= -1 then
@@ -867,10 +867,11 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
             if Attrs.Get_Index (Status_Category_Attribute) /= -1 then
                --  if a status category is specified (should always be the case
                --  with recent codepeer)
-               Self.Current_Message.Status := Get_Status
-                 (Attrs.Get_Value (Status_Attribute),
-                  Audit_Status_Category'Value
-                    (Attrs.Get_Value (Status_Category_Attribute)));
+               Self.Current_Message.Status :=
+                 Get_Status
+                   (Attrs.Get_Value (Status_Attribute),
+                    Audit_Status_Category'Value
+                      (Attrs.Get_Value (Status_Category_Attribute)));
 
             else
                --  For backward compatibility
@@ -929,14 +930,14 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
       if Attrs.Get_Index (Is_Check_Attribute) /= -1
         and then Boolean'Value (Attrs.Get_Value (Is_Check_Attribute))
       then
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Check_Subcategories.Include
-           (Message_Category);
+         CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+           .Check_Subcategories
+           .Include (Message_Category);
       end if;
 
-      CodePeer.Project_Data'Class
-        (Self.Root_Inspection.all).Message_Categories.Insert
-        (Message_Category);
+      CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+        .Message_Categories
+        .Insert (Message_Category);
       Self.Message_Categories.Insert
         (Natural'Value (Attrs.Get_Value ("identifier")), Message_Category);
 
@@ -1026,9 +1027,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
                 Ada.Strings.Unbounded.To_Unbounded_String
                   (CodePeer.Module.Race_Condition_Category),
               CWEs => CodePeer.CWE_Category_Sets.Empty_Set);
-         CodePeer.Project_Data'Class
-           (Self.Root_Inspection.all).Warning_Subcategories.Include
-           (Self.Race_Category);
+         CodePeer.Project_Data'Class (Self.Root_Inspection.all)
+           .Warning_Subcategories
+           .Include (Self.Race_Category);
       end if;
 
       Self.Object_Race.Name :=
@@ -1051,8 +1052,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    begin
       return
         (if Self.Subprogram_Node /= null
-         then CodePeer.Subprogram_Data_Access
-           (Self.Subprogram_Node.Analysis_Data.CodePeer_Data)
+         then
+           CodePeer.Subprogram_Data_Access
+             (Self.Subprogram_Node.Analysis_Data.CodePeer_Data)
          else null);
    end Subprogram_Data;
 
@@ -1066,8 +1068,9 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
    begin
       return
         (if Self.Subprogram_Node /= null
-         then Ada.Strings.Unbounded.To_Unbounded_String
-           (Self.Subprogram_Node.Name.all)
+         then
+           Ada.Strings.Unbounded.To_Unbounded_String
+             (Self.Subprogram_Node.Name.all)
          else Ada.Strings.Unbounded.Null_Unbounded_String);
    end Subprogram_Name;
 
@@ -1104,12 +1107,12 @@ package body CodePeer.Bridge.Inspection_Readers.Base is
             when '0' .. '9' =>
                null;
 
-            when ' ' =>
+            when ' '        =>
                CWE_Id := CWE_Identifier'Value (CWEs (First .. Current - 1));
-               First  := Current + 1;
+               First := Current + 1;
                Insert (CWE_Id);
 
-            when others =>
+            when others     =>
                raise Program_Error;
          end case;
       end loop;

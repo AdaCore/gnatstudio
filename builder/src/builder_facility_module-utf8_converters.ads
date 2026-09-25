@@ -21,14 +21,15 @@ with Commands; use Commands;
 
 with GPS.Kernel;
 
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with GPS.Tools_Output; use GPS.Tools_Output;
 
 package Builder_Facility_Module.UTF8_Converters is
 
    type UTF8_Converter is new Tools_Output_Parser with private;
    --  This parser converts output to UTF-8 encoding
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access UTF8_Converter;
       Item    : String;
       Command : access Root_Command'Class);
@@ -40,17 +41,17 @@ package Builder_Facility_Module.UTF8_Converters is
      (Self   : access Output_Parser_Fabric;
       Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
    --  Create new parser to convert to UTF-8 encoding
 
 private
 
-   type Output_Parser_Fabric is
-     new GPS.Tools_Output.Output_Parser_Fabric with record
-      Kernel     : GPS.Kernel.Kernel_Handle;
+   type Output_Parser_Fabric is new GPS.Tools_Output.Output_Parser_Fabric
+   with record
+      Kernel : GPS.Kernel.Kernel_Handle;
    end record;
 
    type UTF8_Converter is new Tools_Output_Parser with record

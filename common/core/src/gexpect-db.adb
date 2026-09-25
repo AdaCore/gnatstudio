@@ -23,9 +23,7 @@ package body Gexpect.Db is
    -- Define_Machine_Db --
    -----------------------
 
-   procedure Define_Machine_Db
-     (Db : access Machine_Db_Interface'Class)
-   is
+   procedure Define_Machine_Db (Db : access Machine_Db_Interface'Class) is
    begin
       Global_DB := Db;
    end Define_Machine_Db;

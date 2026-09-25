@@ -39,9 +39,8 @@ with GNATCOLL.VFS;
 
 package Language_Handlers is
 
-   type Language_Handler_Record
-     is new Language.Tree.Database.Abstract_Language_Handler_Record
-   with private;
+   type Language_Handler_Record is
+     new Language.Tree.Database.Abstract_Language_Handler_Record with private;
    type Language_Handler is access all Language_Handler_Record'Class;
 
    procedure Create_Handler
@@ -62,7 +61,8 @@ package Language_Handlers is
    -- Languages --
    ---------------
 
-   overriding function Get_Language_From_File
+   overriding
+   function Get_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False) return Language.Language_Access;
@@ -73,7 +73,8 @@ package Language_Handlers is
    --  setting is returned.
    --  Return Unknown_Lang if no other language could be found.
 
-   overriding function Get_Tree_Language_From_File
+   overriding
+   function Get_Tree_Language_From_File
      (Handler           : access Language_Handler_Record;
       Source_Filename   : GNATCOLL.VFS.Virtual_File;
       From_Project_Only : Boolean := False)
@@ -98,8 +99,8 @@ package Language_Handlers is
    --  but from a user setting.
 
    function Get_Language_By_Name
-     (Handler : access Language_Handler_Record;
-      Name    : String) return Language.Language_Access;
+     (Handler : access Language_Handler_Record; Name : String)
+      return Language.Language_Access;
 
    procedure Register_Language
      (Handler   : access Language_Handler_Record;
@@ -110,18 +111,17 @@ package Language_Handlers is
    --  Add_Language_Extension.
 
    function Known_Languages
-     (Handler : access Language_Handler_Record;
-      Sorted  : Boolean := False) return GNAT.OS_Lib.Argument_List;
+     (Handler : access Language_Handler_Record; Sorted : Boolean := False)
+      return GNAT.OS_Lib.Argument_List;
    --  Return the (sorted) list of all known languages.
    --  Return value must be freed by the caller.
 
-   function Languages_Count (Handler : access Language_Handler_Record)
-      return Natural;
+   function Languages_Count
+     (Handler : access Language_Handler_Record) return Natural;
    --  Return the number of languages declared in Handler
 
    function Get_Nth_Language
-     (Handler : access Language_Handler_Record;
-      Num     : Positive) return String;
+     (Handler : access Language_Handler_Record; Num : Positive) return String;
    --  Return the name of the Num-th language.
    --  The first handler is number 1.
 
@@ -134,8 +134,8 @@ private
    type Language_Info_Array is array (Positive range <>) of Language_Info;
    type Language_Info_Access is access Language_Info_Array;
 
-   type Language_Handler_Record
-     is new Language.Tree.Database.Abstract_Language_Handler_Record
+   type Language_Handler_Record is
+     new Language.Tree.Database.Abstract_Language_Handler_Record
    with record
       Symbols   : GNATCOLL.Symbols.Symbol_Table_Access;
       Languages : Language_Info_Access;

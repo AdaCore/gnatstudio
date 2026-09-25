@@ -26,12 +26,13 @@ package body CodePeer.Bridge.Annotations_Readers.V6 is
       File       : not null Code_Analysis.File_Access)
       return not null Annotations_Reader_Access is
    begin
-      return Result : constant not null Annotations_Reader_Access :=
-        new Annotations_Reader_V6
+      return
+         Result : constant not null Annotations_Reader_Access :=
+           new Annotations_Reader_V6
       do
          declare
-            Reader : Annotations_Reader_V6'Class
-              renames Annotations_Reader_V6'Class (Result.all);
+            Reader : Annotations_Reader_V6'Class renames
+              Annotations_Reader_V6'Class (Result.all);
 
          begin
             Reader.Initialize (Categories, File);
@@ -43,9 +44,9 @@ package body CodePeer.Bridge.Annotations_Readers.V6 is
    -- Get_Subprogram --
    --------------------
 
-   overriding function Get_Subprogram
-     (Self : Annotations_Reader_V6)
-      return CodePeer.Subprogram_Data_Access is
+   overriding
+   function Get_Subprogram
+     (Self : Annotations_Reader_V6) return CodePeer.Subprogram_Data_Access is
    begin
       return
         CodePeer.Subprogram_Data_Access
@@ -56,7 +57,8 @@ package body CodePeer.Bridge.Annotations_Readers.V6 is
    -- Start_Annotation --
    ----------------------
 
-   overriding procedure Start_Annotation
+   overriding
+   procedure Start_Annotation
      (Self  : in out Annotations_Reader_V6;
       Attrs : Sax.Attributes.Attributes'Class) is
    begin
@@ -71,7 +73,8 @@ package body CodePeer.Bridge.Annotations_Readers.V6 is
    -- Start_Subprogram --
    ----------------------
 
-   overriding procedure Start_Subprogram
+   overriding
+   procedure Start_Subprogram
      (Self  : in out Annotations_Reader_V6;
       Attrs : Sax.Attributes.Attributes'Class)
    is

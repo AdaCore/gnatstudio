@@ -22,34 +22,32 @@ package body GPS.Kernel.Messages.Markup is
    use XML_Utils;
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr);
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr);
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
-      Allow_Auto_Jump_To_First : Boolean)
-      return not null Message_Access;
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean) return not null Message_Access;
 
    function Create_Markup_Message
-     (Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean)
       return not null Markup_Message_Access;
 
@@ -66,14 +64,14 @@ package body GPS.Kernel.Messages.Markup is
    ---------------------------
 
    function Create_Markup_Message
-     (Container  : not null Messages_Container_Access;
-      Category   : VSS.Strings.Virtual_String;
-      File       : GNATCOLL.VFS.Virtual_File;
-      Line       : Natural;
-      Column     : Basic_Types.Visible_Column_Type;
-      Text       : String;
-      Importance : Message_Importance_Type;
-      Flags      : Message_Flags;
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Flags                    : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean := True)
       return not null Markup_Message_Access is
    begin
@@ -97,18 +95,17 @@ package body GPS.Kernel.Messages.Markup is
    ---------------------------
 
    function Create_Markup_Message
-     (Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Text          : String;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
-      Allow_Auto_Jump_To_First : Boolean)
-      return not null Markup_Message_Access
+     (Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Text                     : String;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean) return not null Markup_Message_Access
    is
       Result : constant not null Markup_Message_Access := new Markup_Message;
 
@@ -135,10 +132,10 @@ package body GPS.Kernel.Messages.Markup is
    -- Get_Markup --
    ----------------
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Markup_Message)
-      return Ada.Strings.Unbounded.Unbounded_String
-   is
+      return Ada.Strings.Unbounded.Unbounded_String is
    begin
       return Self.Text;
    end Get_Markup;
@@ -147,7 +144,8 @@ package body GPS.Kernel.Messages.Markup is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Markup_Message)
       return Ada.Strings.Unbounded.Unbounded_String
    is
@@ -180,7 +178,7 @@ package body GPS.Kernel.Messages.Markup is
       --  Lookup for and replace predefined entity references.
 
       First := Source'First;
-      Last  := Ada.Strings.Unbounded.Length (Result);
+      Last := Ada.Strings.Unbounded.Length (Result);
       Source (First .. Last) := Ada.Strings.Unbounded.To_String (Result);
       Result := Ada.Strings.Unbounded.Null_Unbounded_String;
 
@@ -220,7 +218,7 @@ package body GPS.Kernel.Messages.Markup is
 
             else
                raise Program_Error;
-               --  Must be never happen
+            --  Must be never happen
             end if;
 
             First := Match (0).Last + 1;
@@ -235,18 +233,17 @@ package body GPS.Kernel.Messages.Markup is
    ----------
 
    function Load
-     (XML_Node      : not null Node_Ptr;
-      Container     : not null Messages_Container_Access;
-      Category      : VSS.Strings.Virtual_String;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Importance    : Message_Importance_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags;
-      Allow_Auto_Jump_To_First : Boolean)
-      return not null Message_Access
+     (XML_Node                 : not null Node_Ptr;
+      Container                : not null Messages_Container_Access;
+      Category                 : VSS.Strings.Virtual_String;
+      File                     : GNATCOLL.VFS.Virtual_File;
+      Line                     : Natural;
+      Column                   : Basic_Types.Visible_Column_Type;
+      Importance               : Message_Importance_Type;
+      Actual_Line              : Integer;
+      Actual_Column            : Integer;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean) return not null Message_Access
    is
       Text : constant String := Get_Attribute_S (XML_Node, "text", "");
 
@@ -254,17 +251,17 @@ package body GPS.Kernel.Messages.Markup is
       return
         Message_Access
           (Create_Markup_Message
-               (Container,
-                Category,
-                File,
-                Line,
-                Column,
-                Text,
-                Importance,
-                Actual_Line,
-                Actual_Column,
-                Flags,
-                Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
+             (Container,
+              Category,
+              File,
+              Line,
+              Column,
+              Text,
+              Importance,
+              Actual_Line,
+              Actual_Column,
+              Flags,
+              Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
    end Load;
 
    --------------
@@ -282,11 +279,10 @@ package body GPS.Kernel.Messages.Markup is
    ----------
 
    procedure Save
-     (Message_Node : not null Message_Access;
-      XML_Node     : not null Node_Ptr)
+     (Message_Node : not null Message_Access; XML_Node : not null Node_Ptr)
    is
       Self : constant Markup_Message_Access :=
-               Markup_Message_Access (Message_Node);
+        Markup_Message_Access (Message_Node);
 
    begin
       Set_Attribute_S (XML_Node, "text", To_String (Self.Text));

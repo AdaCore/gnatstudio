@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
-with Gtk.Widget;                  use Gtk.Widget;
-with Gtk.Window;                  use Gtk.Window;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
 
-with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
 with Default_Preferences;         use Default_Preferences;
@@ -31,49 +31,52 @@ with Informational_Popups;        use Informational_Popups;
 package body Builder_Facility_Module.GUI is
 
    type Targets_Editor_Preferences_Page_Record is new Preferences_Page_Record
-     with null record;
+   with null record;
    type Targets_Editor_Preferences_Page is
      access all Targets_Editor_Preferences_Page_Record'Class;
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Targets_Editor_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget;
 
    type Targets_Editor_Preferences_Page_View_Record is
-     new Preferences_Page_View_Record with record
+     new Preferences_Page_View_Record
+   with record
       Config_UI : Configuration_UI_Access;
    end record;
    type Targets_Editor_Preferences_Page_View is
      access all Targets_Editor_Preferences_Page_View_Record;
 
-   overriding function Needs_Apply_Button
+   overriding
+   function Needs_Apply_Button
      (Self : not null access Targets_Editor_Preferences_Page_View_Record)
       return Boolean
-   is
-      (True);
+   is (True);
 
-   overriding procedure On_Apply_Button_Clicked
+   overriding
+   procedure On_Apply_Button_Clicked
      (Self : not null access Targets_Editor_Preferences_Page_View_Record);
 
    ----------------
    -- Get_Widget --
    ----------------
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Targets_Editor_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Self, Manager);
       Page_View : constant Targets_Editor_Preferences_Page_View :=
-                    new Targets_Editor_Preferences_Page_View_Record;
+        new Targets_Editor_Preferences_Page_View_Record;
    begin
       Dialog_Utils.Initialize (Page_View);
 
-      Gtk_New (Page_View.Config_UI,
-               Builder_Facility_Module.Registry,
-               View_Fixed_Font.Get_Pref);
+      Gtk_New
+        (Page_View.Config_UI,
+         Builder_Facility_Module.Registry,
+         View_Fixed_Font.Get_Pref);
       Page_View.Append (Page_View.Config_UI);
 
       return Gtk_Widget (Page_View);
@@ -83,7 +86,8 @@ package body Builder_Facility_Module.GUI is
    -- On_Apply_Button_Clicked --
    -----------------------------
 
-   overriding procedure On_Apply_Button_Clicked
+   overriding
+   procedure On_Apply_Button_Clicked
      (Self : not null access Targets_Editor_Preferences_Page_View_Record) is
    begin
       Self.Config_UI.Apply_Changes;
@@ -104,9 +108,9 @@ package body Builder_Facility_Module.GUI is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Manager             : constant Preferences_Manager :=
-                              Kernel.Get_Preferences;
+        Kernel.Get_Preferences;
       Targets_Editor_Page : constant Targets_Editor_Preferences_Page :=
-                              new Targets_Editor_Preferences_Page_Record;
+        new Targets_Editor_Preferences_Page_Record;
    begin
       Manager.Register_Page
         (Name => Build_Targets_Page_Name,

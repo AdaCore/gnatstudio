@@ -17,7 +17,7 @@
 
 --  The Branches view
 
-with GPS.Kernel;     use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package VCS2.Branches is
 

@@ -24,8 +24,7 @@ with Gtk.Label;
 package DAP.Clients.Evaluate is
 
    type Evaluate_Request (<>) is
-     new DAP.Requests.Evaluate.Evaluate_DAP_Request
-   with private;
+     new DAP.Requests.Evaluate.Evaluate_DAP_Request with private;
    type Evaluate_Request_Access is access all Evaluate_Request'Class;
 
    procedure Send_Evaluate_Command_Request
@@ -46,13 +45,11 @@ package DAP.Clients.Evaluate is
    --  Send the request to get the value of the given entity.
 
    procedure Send_Get_Variable_Address_Request
-     (Client   : in out DAP_Client'Class;
-      Variable : String);
+     (Client : in out DAP_Client'Class; Variable : String);
    --  Send the request to get the variable's address.
 
    procedure Send_Set_TTY_Request
-     (Client : in out DAP_Client'Class;
-      TTY    : String);
+     (Client : in out DAP_Client'Class; TTY : String);
    --  Send the request to set TTY.
 
    procedure Send_Show_Endian_Request
@@ -78,8 +75,7 @@ private
       --  Used to set tty to have debuggee console
      );
 
-   type Evaluate_Request is
-     new DAP.Requests.Evaluate.Evaluate_DAP_Request
+   type Evaluate_Request is new DAP.Requests.Evaluate.Evaluate_DAP_Request
    with record
       Kind   : Evaluate_Kind := Hover;
       Label  : Gtk.Label.Gtk_Label;
@@ -94,16 +90,20 @@ private
       On_Rejected       : GNATCOLL.Scripts.Subprogram_Type := null;
    end record;
 
-   overriding procedure Finalize (Self : in out Evaluate_Request);
-   overriding procedure On_Result_Message
+   overriding
+   procedure Finalize (Self : in out Evaluate_Request);
+   overriding
+   procedure On_Result_Message
      (Self        : in out Evaluate_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.EvaluateResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Evaluate_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Evaluate_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);

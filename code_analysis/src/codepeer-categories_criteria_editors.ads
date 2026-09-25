@@ -20,8 +20,8 @@
 
 with CodePeer.Generic_Criteria_Editors;
 
-package CodePeer.Categories_Criteria_Editors is
-  new CodePeer.Generic_Criteria_Editors
+package CodePeer.Categories_Criteria_Editors is new
+  CodePeer.Generic_Criteria_Editors
     (CodePeer.Message_Category,
      CodePeer.Message_Category_Access,
      CodePeer.Get_Name,

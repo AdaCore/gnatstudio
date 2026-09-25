@@ -20,8 +20,8 @@
 
 with CodePeer.Generic_Criteria_Editors;
 
-package CodePeer.Audit_Statuses_Criteria_Editors is
-  new CodePeer.Generic_Criteria_Editors
+package CodePeer.Audit_Statuses_Criteria_Editors is new
+  CodePeer.Generic_Criteria_Editors
     (CodePeer.Audit_Status_Kinds,
      CodePeer.Audit_Status_Access,
      CodePeer.Image,

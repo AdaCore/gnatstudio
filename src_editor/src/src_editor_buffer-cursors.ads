@@ -24,9 +24,11 @@ with Ada.Containers.Indefinite_Holders;
 package Src_Editor_Buffer.Cursors is
 
    type Cursor (Is_Main_Cursor : Boolean) is record
-      Buffer    : Source_Buffer;
+      Buffer : Source_Buffer;
       case Is_Main_Cursor is
-         when True => null;
+         when True =>
+            null;
+
          when False =>
             Cursor_Id : Integer;
             Cursor    : Slave_Cursor_Access;
@@ -35,12 +37,13 @@ package Src_Editor_Buffer.Cursors is
 
    package Cursors_Holders is new Ada.Containers.Indefinite_Holders (Cursor);
    use Cursors_Holders;
-   function Holder
-     (C : Cursor) return Holder renames Cursors_Holders.To_Holder;
+   function Holder (C : Cursor) return Holder
+   renames Cursors_Holders.To_Holder;
 
    Nil_Cursor : Cursor := (False, null, -1, null);
 
-   function Get_Main_Cursor (B : Source_Buffer) return Cursor is (True, B);
+   function Get_Main_Cursor (B : Source_Buffer) return Cursor
+   is (True, B);
 
    function Create
      (C : Slave_Cursor_Access; Buffer : Source_Buffer) return Cursor;
@@ -49,42 +52,39 @@ package Src_Editor_Buffer.Cursors is
    --  This function returns true when a cursor is alive and operations can be
    --  conducted on it. It returns false if the cursor has been deleted
 
-   package Cursors_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
-     (Cursor);
+   package Cursors_Lists is new
+     Ada.Containers.Indefinite_Doubly_Linked_Lists (Cursor);
 
    function Get_Mark (C : Cursor) return Gtk_Text_Mark
-     with Pre => (Is_Alive (C));
+   with Pre => (Is_Alive (C));
    --  Return the insert mark of the cursor given in argument
 
    function Get_Sel_Mark (C : Cursor) return Gtk_Text_Mark
-     with Pre => (Is_Alive (C));
+   with Pre => (Is_Alive (C));
    --  Return the Selection mark of the cursor given in argument
 
    function Get_Column_Memory (C : Cursor) return Gint
-     with Pre => (Is_Alive (C));
+   with Pre => (Is_Alive (C));
 
    procedure Set_Column_Memory (C : Cursor; Offset : Gint)
-     with Pre => (Is_Alive (C));
+   with Pre => (Is_Alive (C));
 
    procedure Update_MC_Selection (B : Source_Buffer);
 
-   procedure Add_Cursor
-     (Buffer : Source_Buffer; Location : Gtk_Text_Iter);
+   procedure Add_Cursor (Buffer : Source_Buffer; Location : Gtk_Text_Iter);
    function Add_Cursor
      (Buffer : Source_Buffer; Location : Gtk_Text_Iter) return Cursor;
    --  Add a new multi cursor at the specified location
    --  in the specified buffer
 
-   procedure Delete_Cursor
-     (Buffer : Source_Buffer; Location : Gtk_Text_Iter);
+   procedure Delete_Cursor (Buffer : Source_Buffer; Location : Gtk_Text_Iter);
    --  Delete a multi cursor at the specified location in the specified buffer
 
    procedure Remove_All_Slave_Cursors (Buffer : Source_Buffer);
    --  Remove all multi cursors from the current buffer
 
-   procedure Set_Manual_Sync
-     (C : Cursor)
-     with Pre => (Is_Alive (C));
+   procedure Set_Manual_Sync (C : Cursor)
+   with Pre => (Is_Alive (C));
    --  This sets the buffer in "slave manual mode" regarding multi cursor
    --  insertion, with the corresponding text mark as the multi-cursors mark.
    --  This should be called before the corresponding multi cursor's action is
@@ -101,18 +101,15 @@ package Src_Editor_Buffer.Cursors is
    --  in the buffer. Do not forget to set that back after a manual multi
    --  cursor operation !
 
-   function Get_Cursors
-     (Buffer : Source_Buffer) return Cursors_Lists.List;
+   function Get_Cursors (Buffer : Source_Buffer) return Cursors_Lists.List;
    --  Return a full list of all multi cursor's marks.
 
-   function Has_Slave_Cursors
-     (Buffer : Source_Buffer) return Boolean;
+   function Has_Slave_Cursors (Buffer : Source_Buffer) return Boolean;
 
    procedure Move
      (C : Cursor; Loc : Gtk_Text_Iter; Extend_Selection : Boolean);
 
-   function Get_Cursors_Sync
-     (Buffer : Source_Buffer) return Cursors_Sync_Type;
+   function Get_Cursors_Sync (Buffer : Source_Buffer) return Cursors_Sync_Type;
    --  This function and its counter part setter are meant to save and restore
    --  the synchronization at a given point.
 

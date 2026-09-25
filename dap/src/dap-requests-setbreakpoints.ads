@@ -23,16 +23,16 @@ package DAP.Requests.SetBreakpoints is
 
    type Breakpoint_DAP_Request is abstract new DAP_Request with record
       Parameters : aliased DAP.Tools.SetBreakpointsRequest :=
-        DAP.Tools.SetBreakpointsRequest'
-          (seq       => 0,
-           arguments => <>);
+        DAP.Tools.SetBreakpointsRequest'(seq => 0, arguments => <>);
    end record;
 
-   overriding procedure Write
+   overriding
+   procedure Write
      (Self   : Breakpoint_DAP_Request;
       Stream : in out VSS.JSON.Content_Handlers.JSON_Content_Handler'Class);
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Breakpoint_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Stream      : in out VSS.JSON.Pull_Readers.JSON_Pull_Reader'Class;
@@ -43,23 +43,25 @@ package DAP.Requests.SetBreakpoints is
      (Self        : in out Breakpoint_DAP_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetBreakpointsResponse;
-      New_Request : in out DAP_Request_Access) is abstract;
+      New_Request : in out DAP_Request_Access)
+   is abstract;
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Breakpoint_DAP_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Breakpoint_DAP_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure Set_Seq
-     (Self : in out Breakpoint_DAP_Request;
-      Id   : Integer);
+   overriding
+   procedure Set_Seq (Self : in out Breakpoint_DAP_Request; Id : Integer);
 
-   overriding function Method
-     (Self : in out Breakpoint_DAP_Request)
-      return String is ("setBreakpoints");
+   overriding
+   function Method (Self : in out Breakpoint_DAP_Request) return String
+   is ("setBreakpoints");
 
 end DAP.Requests.SetBreakpoints;

@@ -15,15 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Build_Configurations;             use Build_Configurations;
+with Build_Configurations; use Build_Configurations;
 
-with GPS.Kernel;                       use GPS.Kernel;
-with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.Messages;  use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Task_Manager;
-with GPS.Scripts.Commands;             use GPS.Scripts.Commands;
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
 with GPS.Default_Styles;
-with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
 
 package body Build_Command_Manager.Location_Parsers is
 
@@ -31,9 +31,9 @@ package body Build_Command_Manager.Location_Parsers is
    -- Create --
    ------------
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
       procedure Interrupt_Background_Build;
@@ -45,10 +45,10 @@ package body Build_Command_Manager.Location_Parsers is
          Interrupt_Background_Build (Self.Builder, Command);
 
          if Command /= null then
-            Get_Messages_Container
-              ((Kernel_Handle (Self.Builder.Kernel))).Remove_Category
-                (Self.Builder.Current_Background_Build_Id,
-                 Background_Message_Flags);
+            Get_Messages_Container ((Kernel_Handle (Self.Builder.Kernel)))
+              .Remove_Category
+                 (Self.Builder.Current_Background_Build_Id,
+                  Background_Message_Flags);
 
             GPS.Kernel.Task_Manager.Interrupt_Queue
               (Kernel_Handle (Self.Builder.Kernel),
@@ -69,21 +69,22 @@ package body Build_Command_Manager.Location_Parsers is
          --  If we are starting a "real" build, remove messages from the
          --  current background build
          Get_Messages_Container (Kernel_Handle (Self.Builder.Kernel))
-           .Remove_Category (Self.Builder.Previous_Background_Build_Id,
-                             Background_Message_Flags);
+           .Remove_Category
+              (Self.Builder.Previous_Background_Build_Id,
+               Background_Message_Flags);
       end if;
 
-      return new Location_Parser'
-        (Child   => Child,
-         Builder => Self.Builder,
-         Build   => Build);
+      return
+        new Location_Parser'
+          (Child => Child, Builder => Self.Builder, Build => Build);
    end Create;
 
    ---------------------------
    -- Parse_Standard_Output --
    ---------------------------
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Location_Parser;
       Item    : String;
       Command : access Root_Command'Class) is
@@ -104,8 +105,7 @@ package body Build_Command_Manager.Location_Parsers is
    ---------
 
    procedure Set
-     (Self    : access Output_Parser_Fabric;
-      Builder : Builder_Context) is
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context) is
    begin
       Self.Builder := Builder;
    end Set;
@@ -114,7 +114,8 @@ package body Build_Command_Manager.Location_Parsers is
    --  Destroy --
    --------------
 
-   overriding procedure Destroy (Self : not null access Location_Parser) is
+   overriding
+   procedure Destroy (Self : not null access Location_Parser) is
    begin
       if Self.Build.On_Exit /= null then
          Free (Self.Build.On_Exit);

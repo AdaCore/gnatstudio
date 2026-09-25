@@ -20,7 +20,7 @@
 --  be displayed on the collapsed state and the other one on the expanded
 --  state.
 
-with Glib;          use Glib;
+with Glib; use Glib;
 
 with Gtk.Arrow;
 with Gtk.Box;
@@ -31,8 +31,8 @@ with Gtk.Widget;
 
 package Collapsing_Pane is
 
-   type Collapsing_Pane_Record is new Gtk.Container.Gtk_Container_Record with
-     private;
+   type Collapsing_Pane_Record is
+     new Gtk.Container.Gtk_Container_Record with private;
 
    type Collapsing_Pane is access all Collapsing_Pane_Record'Class;
 
@@ -79,15 +79,15 @@ package Collapsing_Pane is
 
 private
 
-   type Collapsing_Pane_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with
-      record
-         Main_Box         : Gtk.Box.Gtk_Box;
-         State            : Foldable_Box_State := Collapsed;
-         Label            : Gtk.Label.Gtk_Label;
-         Label_Box        : Gtk.Event_Box.Gtk_Event_Box;
-         Expanded_Box     : Gtk.Widget.Gtk_Widget := null;
-         Collapsed_Box    : Gtk.Widget.Gtk_Widget := null;
-         Arrow            : Gtk.Arrow.Gtk_Arrow;
-      end record;
+   type Collapsing_Pane_Record is new Gtk.Event_Box.Gtk_Event_Box_Record
+   with record
+      Main_Box      : Gtk.Box.Gtk_Box;
+      State         : Foldable_Box_State := Collapsed;
+      Label         : Gtk.Label.Gtk_Label;
+      Label_Box     : Gtk.Event_Box.Gtk_Event_Box;
+      Expanded_Box  : Gtk.Widget.Gtk_Widget := null;
+      Collapsed_Box : Gtk.Widget.Gtk_Widget := null;
+      Arrow         : Gtk.Arrow.Gtk_Arrow;
+   end record;
 
 end Collapsing_Pane;

@@ -23,9 +23,8 @@ package body Gtk.Label.VSS_Utils is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Label : out Gtk_Label;
-      Text  : VSS.Strings.Virtual_String) is
+   procedure Gtk_New (Label : out Gtk_Label; Text : VSS.Strings.Virtual_String)
+   is
    begin
       Gtk.Label.Gtk_New
         (Label, VSS.Strings.Conversions.To_UTF_8_String (Text));
@@ -36,8 +35,8 @@ package body Gtk.Label.VSS_Utils is
    ----------------
 
    procedure Set_Markup
-      (Label : not null access Gtk_Label_Record'Class;
-       Text  : VSS.Strings.Virtual_String) is
+     (Label : not null access Gtk_Label_Record'Class;
+      Text  : VSS.Strings.Virtual_String) is
    begin
       Gtk.Label.Set_Markup
         (Label, VSS.Strings.Conversions.To_UTF_8_String (Text));

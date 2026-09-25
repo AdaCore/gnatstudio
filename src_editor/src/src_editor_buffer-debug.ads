@@ -20,8 +20,7 @@
 
 package Src_Editor_Buffer.Debug is
 
-   procedure Register
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   procedure Register (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the shell commands
 
 end Src_Editor_Buffer.Debug;

@@ -18,50 +18,50 @@
 with Ada.Characters.Handling;
 with GNAT.Calendar.Time_IO;
 
-with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 with GNATCOLL.Utils;
 
 with VSS.Strings.Conversions;
 
 with Commands.GNATTest;
 with Commands.Interactive;
-with Glib.Object;                       use Glib.Object;
-with Glib.Values;                       use Glib.Values;
+with Glib.Object; use Glib.Object;
+with Glib.Values; use Glib.Values;
 
-with Basic_Types;                       use Basic_Types;
+with Basic_Types;                 use Basic_Types;
 with Entities_Tooltips;
-with GNATTest_Module.Tree_Models;       use GNATTest_Module.Tree_Models;
-with Tooltips;                          use Tooltips;
+with GNATTest_Module.Tree_Models; use GNATTest_Module.Tree_Models;
+with Tooltips;                    use Tooltips;
 
-with GPS.Kernel;                        use GPS.Kernel;
-with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
-with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with Gdk.Event;                         use Gdk.Event;
-with Gdk.Rectangle;                     use Gdk.Rectangle;
-with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
-with Gtk.Box;                           use Gtk.Box;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Rectangle;            use Gdk.Rectangle;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Pixbuf;          use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;            use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                         use Gtk.Enums;
-with Gtk.Gesture_Multi_Press;           use Gtk.Gesture_Multi_Press;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Gesture_Multi_Press;  use Gtk.Gesture_Multi_Press;
 with Gtk.Handlers;
-with Gtk.Label;                         use Gtk.Label;
+with Gtk.Label;                use Gtk.Label;
 with Gtk.Label.VSS_Utils;
 with Gtk.Menu;
 with Gtk.Menu_Item;
-with Gtk.Tree_Model;                    use Gtk.Tree_Model;
-with Gtk.Tree_View;                     use Gtk.Tree_View;
-with Gtk.Tree_View_Column;              use Gtk.Tree_View_Column;
-with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
-with Gtk.Widget;                        use Gtk.Widget;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;
 with Gtkada.Abstract_Tree_Model;
 
@@ -71,7 +71,7 @@ with Sax.Readers;
 with Sax.Attributes;
 with Src_Editor_Box;
 with Unicode.CES;
-with Xref;                              use Xref;
+with Xref; use Xref;
 
 package body GNATTest_Module is
 
@@ -80,58 +80,64 @@ package body GNATTest_Module is
    GNATTest_Module_Name : constant String := "GNATTest_Support";
 
    type Harness_Project_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
+   with null record;
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
    type Non_Harness_Project_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
+   with null record;
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Non_Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
-   type Go_To_Tested_Filter is
-     new GPS.Kernel.Action_Filter_Record with null record;
+   type Go_To_Tested_Filter is new GPS.Kernel.Action_Filter_Record
+   with null record;
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Go_To_Tested_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
-   type Package_Declaration_Filter is
-     new GPS.Kernel.Action_Filter_Record with null record;
+   type Package_Declaration_Filter is new GPS.Kernel.Action_Filter_Record
+   with null record;
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Package_Declaration_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
    type Submenu_Factory_Record is
-     new GPS.Kernel.Modules.UI.Submenu_Factory_Record with null record;
+     new GPS.Kernel.Modules.UI.Submenu_Factory_Record
+   with null record;
 
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
    function Get_Mapping_File
-     (Project : GNATCOLL.Projects.Project_Type)
-     return String;
+     (Project : GNATCOLL.Projects.Project_Type) return String;
 
    function Is_Harness_Project
-     (Project : GNATCOLL.Projects.Project_Type)
-     return Boolean;
+     (Project : GNATCOLL.Projects.Project_Type) return Boolean;
    --  Check if given project is harness project
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
-   package Test_Entity_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Virtual_File,
-      Element_Type => Source_Entity);
+   package Test_Entity_Maps is new
+     Ada.Containers.Ordered_Maps
+       (Key_Type     => Virtual_File,
+        Element_Type => Source_Entity);
 
    type Modes is (Monolith, Separates);
 
@@ -154,7 +160,8 @@ package body GNATTest_Module is
       Stub_Unit    : Stub_Unit_Type;
    end record;
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Mapping_File;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
@@ -162,9 +169,11 @@ package body GNATTest_Module is
       Atts          : Sax.Attributes.Attributes'Class);
 
    type Show_Not_Implemented_Tests_Command_Type is
-     new Commands.Interactive.Interactive_Command with null record;
+     new Commands.Interactive.Interactive_Command
+   with null record;
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Show_Not_Implemented_Tests_Command_Type;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
@@ -176,20 +185,20 @@ package body GNATTest_Module is
    Map : Mapping_File;
 
    function Find_In_Map
-     (File_Name : GNATCOLL.VFS.Virtual_File)
-     return Test_Entity_Maps.Cursor;
+     (File_Name : GNATCOLL.VFS.Virtual_File) return Test_Entity_Maps.Cursor;
 
    function Tested_Subprogram_Name
-     (Context : GPS.Kernel.Selection_Context)
-     return String;
+     (Context : GPS.Kernel.Selection_Context) return String;
 
    type Menu_Data is record
       Entity : Test_Entity;
       Kernel : GPS.Kernel.Kernel_Handle;
    end record;
 
-   package Test_Entity_CB is new Gtk.Handlers.User_Callback
-     (Gtk.Menu_Item.Gtk_Menu_Item_Record, Menu_Data);
+   package Test_Entity_CB is new
+     Gtk.Handlers.User_Callback
+       (Gtk.Menu_Item.Gtk_Menu_Item_Record,
+        Menu_Data);
 
    procedure Test_Entity_Callback
      (Widget    : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
@@ -214,19 +223,20 @@ package body GNATTest_Module is
    --  Called every time a row in Tests View is clicked
 
    function On_Key_Press
-     (Self  : access GObject_Record'Class;
-      Event : Gdk_Event_Key) return Boolean;
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Key)
+      return Boolean;
    --  Handle key events in the Tests View
 
-   package Tests_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name               => "Tests_View",
-      View_Name                 => "Tests",
-      Formal_View_Record        => Tests_View_Record,
-      Formal_MDI_Child          => GPS_MDI_Child_Record,
-      Reuse_If_Exist            => True,
-      Initialize                => Initialize,
-      Areas                     => Gtkada.MDI.Sides_Only,
-      Position                  => Gtkada.MDI.Position_Left);
+   package Tests_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Tests_View",
+        View_Name          => "Tests",
+        Formal_View_Record => Tests_View_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Position           => Gtkada.MDI.Position_Left);
 
    --------------
    -- Tooltips --
@@ -235,10 +245,11 @@ package body GNATTest_Module is
    type Tests_View_Tooltip is new Tooltips.Tooltip_Handler with record
       View : Tests_MDI_Views.View_Access;
    end record;
-   overriding function Create_Contents
-     (Tooltip  : not null access Tests_View_Tooltip;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   overriding
+   function Create_Contents
+     (Tooltip : not null access Tests_View_Tooltip;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    ---------
    -- "<" --
@@ -263,7 +274,8 @@ package body GNATTest_Module is
    -- Append_To_Menu --
    --------------------
 
-   overriding procedure Append_To_Menu
+   overriding
+   procedure Append_To_Menu
      (Factory : access Submenu_Factory_Record;
       Context : GPS.Kernel.Selection_Context;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
@@ -303,8 +315,9 @@ package body GNATTest_Module is
                  Source_Entity_Maps.Key (Cursor);
             begin
 
-               exit when Found.Source_File /= Lookup.Source_File or
-                 Found.Line /= Lookup.Line;
+               exit when
+                 Found.Source_File /= Lookup.Source_File
+                 or Found.Line /= Lookup.Line;
 
                Gtk.Menu_Item.Gtk_New
                  (Item, "Go to " & To_String (Found.Test_Case_Name));
@@ -347,16 +360,15 @@ package body GNATTest_Module is
          if Is_Harness_Project (Project)
            and then Project.Has_Attribute (Origin_Project_Attribute)
          then
-            File := Create
-              (+Project.Attribute_Value (Origin_Project_Attribute));
+            File :=
+              Create (+Project.Attribute_Value (Origin_Project_Attribute));
 
             if not File.Is_Absolute_Path then
                File := Project.Project_Path.Dir_Name / File;
                File.Normalize_Path;
             end if;
 
-            return
-              GPS.Kernel.Project.Lookup_Project (Get_Kernel (Data), File);
+            return GPS.Kernel.Project.Lookup_Project (Get_Kernel (Data), File);
 
          else
             return No_Project;
@@ -387,15 +399,16 @@ package body GNATTest_Module is
    -- Create_Contents --
    ---------------------
 
-   overriding function Create_Contents
-     (Tooltip  : not null access Tests_View_Tooltip;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   overriding
+   function Create_Contents
+     (Tooltip : not null access Tests_View_Tooltip;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
-      Iter     : Gtk_Tree_Iter;
-      Area     : Gdk_Rectangle;
-      Value    : Glib.Values.GValue;
+      Iter  : Gtk_Tree_Iter;
+      Area  : Gdk_Rectangle;
+      Value : Glib.Values.GValue;
    begin
       Initialize_Tooltips (Tooltip.View.Tree_View, X, Y, Area, Iter);
 
@@ -423,7 +436,8 @@ package body GNATTest_Module is
                  others => <>));
 
       begin
-         if Get_Boolean (Value) then  --  If we are on file level of tree
+         if Get_Boolean (Value) then
+            --  If we are on file level of tree
 
             declare
                Label : Gtk_Label;
@@ -438,11 +452,12 @@ package body GNATTest_Module is
             end;
 
          else
-            return Entities_Tooltips.Draw_Tooltip
-              (Kernel      => Tooltip.View.Kernel,
-               Entity      => Entity,
-               Ref         => Ref.Element,
-               Draw_Border => True);
+            return
+              Entities_Tooltips.Draw_Tooltip
+                (Kernel      => Tooltip.View.Kernel,
+                 Entity      => Entity,
+                 Ref         => Ref.Element,
+                 Draw_Border => True);
          end if;
       end;
    end Create_Contents;
@@ -451,7 +466,8 @@ package body GNATTest_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Show_Not_Implemented_Tests_Command_Type;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
@@ -459,14 +475,13 @@ package body GNATTest_Module is
       pragma Unreferenced (Command);
       use type Ada.Calendar.Time;
 
-      Flags    : constant GPS.Kernel.Messages.Message_Flags :=
-        (GPS.Kernel.Messages.Locations => True,
-         others                        => False);
+      Flags : constant GPS.Kernel.Messages.Message_Flags :=
+        (GPS.Kernel.Messages.Locations => True, others => False);
 
       Category : constant VSS.Strings.Virtual_String := "GNATtest";
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Messages : constant not null GPS.Kernel.Messages_Container_Access :=
-                   Kernel.Get_Messages_Container;
+        Kernel.Get_Messages_Container;
       Cursor   : Source_Entity_Maps.Cursor := Map.Source_Map.First;
 
    begin
@@ -489,11 +504,13 @@ package body GNATTest_Module is
                   File       => File,
                   Line       => Key.Line,
                   Column     => Basic_Types.Visible_Column_Type (Key.Column),
-                  Text       => "Unimplemented " &
-                    VSS.Strings.Conversions.To_Virtual_String
-                    (Key.Test_Case_Name) & " " &
-                    VSS.Strings.Conversions.To_Virtual_String
-                    (Key.Subprogram_Name),
+                  Text       =>
+                    "Unimplemented "
+                    & VSS.Strings.Conversions.To_Virtual_String
+                        (Key.Test_Case_Name)
+                    & " "
+                    & VSS.Strings.Conversions.To_Virtual_String
+                        (Key.Subprogram_Name),
                   Importance => GPS.Kernel.Messages.Low,
                   Flags      => Flags);
             end if;
@@ -509,15 +526,16 @@ package body GNATTest_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
       declare
-         Project : constant GNATCOLL.Projects.Project_Type
-           := GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
+         Project : constant GNATCOLL.Projects.Project_Type :=
+           GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
 
       begin
          return Is_Harness_Project (Project);
@@ -528,15 +546,16 @@ package body GNATTest_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Non_Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
       declare
-         Project : constant GNATCOLL.Projects.Project_Type
-           := GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
+         Project : constant GNATCOLL.Projects.Project_Type :=
+           GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
 
       begin
          return not Is_Harness_Project (Project);
@@ -547,14 +566,16 @@ package body GNATTest_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Go_To_Tested_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
    begin
       if Has_File_Information (Context) then
-         return Test_Entity_Maps.Has_Element
+         return
+           Test_Entity_Maps.Has_Element
              (Find_In_Map (File_Information (Context)));
       else
          return False;
@@ -565,7 +586,8 @@ package body GNATTest_Module is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
+   overriding
+   function Filter_Matches_Primitive
      (Filter  : access Package_Declaration_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -584,12 +606,15 @@ package body GNATTest_Module is
                Info : constant GNATCOLL.Projects.File_Info'Class :=
                  GNATCOLL.Projects.File_Info'Class
                    (GPS.Kernel.Project.Get_Registry
-                      (GPS.Kernel.Get_Kernel (Context)).Tree.Info_Set (File)
-                    .First_Element);
+                      (GPS.Kernel.Get_Kernel (Context))
+                      .Tree
+                      .Info_Set (File)
+                      .First_Element);
             begin
 
-               return Info.Language = "ada" and then
-                 Info.Unit_Part = GNATCOLL.Projects.Unit_Spec;
+               return
+                 Info.Language = "ada"
+                 and then Info.Unit_Part = GNATCOLL.Projects.Unit_Spec;
             end;
          end if;
       end if;
@@ -614,8 +639,9 @@ package body GNATTest_Module is
          File := Test_Entity_Maps.Element (Cursor).Source_File;
          Subprogram_Name := Test_Entity_Maps.Element (Cursor).Subprogram_Name;
          Line := Test_Entity_Maps.Element (Cursor).Line;
-         Column := Basic_Types.Visible_Column_Type
-           (Test_Entity_Maps.Element (Cursor).Column);
+         Column :=
+           Basic_Types.Visible_Column_Type
+             (Test_Entity_Maps.Element (Cursor).Column);
       else
          File := GNATCOLL.VFS.No_File;
          Subprogram_Name := Ada.Strings.Unbounded.Null_Unbounded_String;
@@ -629,8 +655,7 @@ package body GNATTest_Module is
    -----------------
 
    function Find_In_Map
-     (File_Name : GNATCOLL.VFS.Virtual_File)
-     return Test_Entity_Maps.Cursor is
+     (File_Name : GNATCOLL.VFS.Virtual_File) return Test_Entity_Maps.Cursor is
    begin
       return Map.Test_Map.Find (File_Name);
    end Find_In_Map;
@@ -640,11 +665,10 @@ package body GNATTest_Module is
    ----------------------
 
    function Get_Mapping_File
-     (Project : GNATCOLL.Projects.Project_Type)
-     return String
+     (Project : GNATCOLL.Projects.Project_Type) return String
    is
-      Name  : constant GNATCOLL.Projects.Attribute_Pkg_String
-        := GNATCOLL.Projects.Build ("GNATtest", "GNATtest_Mapping_File");
+      Name : constant GNATCOLL.Projects.Attribute_Pkg_String :=
+        GNATCOLL.Projects.Build ("GNATtest", "GNATtest_Mapping_File");
    begin
       return Project.Attribute_Value (Name);
    end Get_Mapping_File;
@@ -653,7 +677,8 @@ package body GNATTest_Module is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
@@ -664,7 +689,7 @@ package body GNATTest_Module is
       pragma Unreferenced (View);
 
       Project       : constant GNATCOLL.Projects.Project_Type :=
-         GPS.Kernel.Project.Get_Project (Kernel);
+        GPS.Kernel.Project.Get_Project (Kernel);
       Map_File_Name : constant String := Get_Mapping_File (Project);
    begin
       Tests_MDI_Views.Close (Kernel);
@@ -688,12 +713,12 @@ package body GNATTest_Module is
      (Self : access Tests_View_Record'Class) return Gtk_Widget
    is
 
-      Icon_Renderer     : Gtk_Cell_Renderer_Pixbuf;
-      Tooltip           : Tooltip_Handler_Access;
-      Scrolled          : Gtk_Scrolled_Window;
-      Column            : Gtk_Tree_View_Column;
-      Text_Renderer     : Gtk_Cell_Renderer_Text;
-      Column_Id         : Glib.Gint;
+      Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
+      Tooltip       : Tooltip_Handler_Access;
+      Scrolled      : Gtk_Scrolled_Window;
+      Column        : Gtk_Tree_View_Column;
+      Text_Renderer : Gtk_Cell_Renderer_Text;
+      Column_Id     : Glib.Gint;
       pragma Unreferenced (Column_Id);
    begin
       --  Initialize the view itself
@@ -706,8 +731,8 @@ package body GNATTest_Module is
 
       --  Create a tree view to display the test case list
       Gtk_New (Self.Tree_Model, Map.Source_Map);
-      Gtk_New (Self.Tree_View,
-               Gtkada.Abstract_Tree_Model."+" (Self.Tree_Model));
+      Gtk_New
+        (Self.Tree_View, Gtkada.Abstract_Tree_Model."+" (Self.Tree_Model));
       Self.Tree_View.Set_Headers_Visible (False);
       Self.Tree_View.Set_Search_Column (Name_Column);
       Scrolled.Add (Self.Tree_View);
@@ -749,9 +774,10 @@ package body GNATTest_Module is
       Self.Tree_View.On_Key_Press_Event
         (On_Key_Press'Access, Slot => Self, After => False);
 
-      Tooltip := new Tests_View_Tooltip'
-        (Tooltips.Tooltip_Handler
-         with View => Tests_MDI_Views.View_Access (Self));
+      Tooltip :=
+        new Tests_View_Tooltip'
+          (Tooltips.Tooltip_Handler
+           with View => Tests_MDI_Views.View_Access (Self));
 
       Tooltip.Associate_To_Widget (Self.Tree_View);
       --  No widget to focus
@@ -763,12 +789,13 @@ package body GNATTest_Module is
    ------------------------
 
    function Is_Harness_Project
-     (Project : GNATCOLL.Projects.Project_Type)
-      return Boolean is
+     (Project : GNATCOLL.Projects.Project_Type) return Boolean is
    begin
-      return Get_Mapping_File (Project) /= ""
-        or else GNATCOLL.Utils.Starts_With
-          (Ada.Characters.Handling.To_Lower (Project.Name), "test_driver");
+      return
+        Get_Mapping_File (Project) /= ""
+        or else
+          GNATCOLL.Utils.Starts_With
+            (Ada.Characters.Handling.To_Lower (Project.Name), "test_driver");
    end Is_Harness_Project;
 
    ------------------
@@ -776,8 +803,7 @@ package body GNATTest_Module is
    ------------------
 
    function On_Key_Press
-     (Self  : access GObject_Record'Class;
-      Event : Gdk_Event_Key) return Boolean
+     (Self : access GObject_Record'Class; Event : Gdk_Event_Key) return Boolean
    is
       use type Gdk.Types.Gdk_Key_Type;
 
@@ -810,7 +836,9 @@ package body GNATTest_Module is
                Open_File
                  (View.Kernel,
                   GNATCOLL.Projects.No_Project,
-                  Source.Source_File, 1, 1);
+                  Source.Source_File,
+                  1,
+                  1);
             end if;
 
             return True;
@@ -833,7 +861,7 @@ package body GNATTest_Module is
 
       View : constant Tests_MDI_Views.View_Access :=
         Tests_MDI_Views.View_Access (Self);
-      Iter  : Gtk_Tree_Iter;
+      Iter : Gtk_Tree_Iter;
 
       Cell_X, Cell_Y  : Glib.Gint;
       Column          : Gtk_Tree_View_Column;
@@ -924,7 +952,9 @@ package body GNATTest_Module is
                Open_File
                  (View.Kernel,
                   GNATCOLL.Projects.No_Project,
-                  Source.Source_File, 1, 1);
+                  Source.Source_File,
+                  1,
+                  1);
             else
 
                Destination := Map.Source_Map.Element (Source);
@@ -988,10 +1018,10 @@ package body GNATTest_Module is
       Register_Filter (Kernel, Filter, "Harness project");
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel      => Kernel,
-         Name        => "Show not implemented tests",
-         Command     => new Show_Not_Implemented_Tests_Command_Type,
-         Filter      => Filter);
+        (Kernel  => Kernel,
+         Name    => "Show not implemented tests",
+         Command => new Show_Not_Implemented_Tests_Command_Type,
+         Filter  => Filter);
 
       Filter := new Non_Harness_Project_Filter;
       Register_Filter (Kernel, Filter, "Non harness project");
@@ -1013,18 +1043,18 @@ package body GNATTest_Module is
       --  with different conditions
 
       Register_Action
-        (Kernel      => Kernel,
-         Name        => "go to tested procedure",
-         Command     => new Go_To_Tested_Command_Type,
-         Filter      => Filter);
+        (Kernel  => Kernel,
+         Name    => "go to tested procedure",
+         Command => new Go_To_Tested_Command_Type,
+         Filter  => Filter);
       Register_Contextual_Menu
-        (Kernel      => Kernel,
-         Name        => "Goto tested subprogram",
-         Action      => "go to tested procedure",
-         Label       => "GNATtest/Go to %C",
-         Custom      => Tested_Subprogram_Name'Access,
-         Ref_Item    => "GNATtest",
-         Add_Before  => False);
+        (Kernel     => Kernel,
+         Name       => "Goto tested subprogram",
+         Action     => "go to tested procedure",
+         Label      => "GNATtest/Go to %C",
+         Custom     => Tested_Subprogram_Name'Access,
+         Ref_Item   => "GNATtest",
+         Add_Before => False);
 
       Kernel.Scripts.Register_Command
         ("is_harness_project",
@@ -1048,7 +1078,8 @@ package body GNATTest_Module is
    -- Start_Element --
    -------------------
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Mapping_File;
       Namespace_URI : Unicode.CES.Byte_Sequence := "";
       Local_Name    : Unicode.CES.Byte_Sequence := "";
@@ -1113,10 +1144,11 @@ package body GNATTest_Module is
          return Integer'Value (Atts.Get_Value (Name));
       end To_Integer;
 
-      Null_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
-        (Year    => Ada.Calendar.Year_Number'First,
-         Month   => Ada.Calendar.Month_Number'First,
-         Day     => Ada.Calendar.Day_Number'First);
+      Null_Time : constant Ada.Calendar.Time :=
+        Ada.Calendar.Time_Of
+          (Year  => Ada.Calendar.Year_Number'First,
+           Month => Ada.Calendar.Month_Number'First,
+           Day   => Ada.Calendar.Day_Number'First);
 
       function To_Time (Name : String) return Ada.Calendar.Time is
          Image : constant Unbounded_String := Get_Attribute (Name);
@@ -1251,15 +1283,16 @@ package body GNATTest_Module is
    ----------------------------
 
    function Tested_Subprogram_Name
-     (Context : GPS.Kernel.Selection_Context)
-     return String is
+     (Context : GPS.Kernel.Selection_Context) return String
+   is
 
       Cursor : constant Test_Entity_Maps.Cursor :=
         Find_In_Map (File_Information (Context));
    begin
       if Test_Entity_Maps.Has_Element (Cursor) then
-         return GPS.Kernel.Modules.UI.Emphasize
-           (To_String (Test_Entity_Maps.Element (Cursor).Subprogram_Name));
+         return
+           GPS.Kernel.Modules.UI.Emphasize
+             (To_String (Test_Entity_Maps.Element (Cursor).Subprogram_Name));
       else
          return "";
       end if;

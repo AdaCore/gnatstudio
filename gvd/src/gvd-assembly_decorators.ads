@@ -22,15 +22,13 @@ with Ada.Containers.Indefinite_Ordered_Sets;
 
 package GVD.Assembly_Decorators is
 
-   package Registers_Set is
-     new Ada.Containers.Indefinite_Ordered_Sets (String);
+   package Registers_Set is new
+     Ada.Containers.Indefinite_Ordered_Sets (String);
 
    type Decorator is tagged private;
 
    function Decorate
-     (Self        : Decorator;
-      Instruction : String;
-      Registers   : Registers_Set.Set)
+     (Self : Decorator; Instruction : String; Registers : Registers_Set.Set)
       return String;
 
 private

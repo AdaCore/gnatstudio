@@ -28,9 +28,9 @@ package User_Interface_Tools is
    type User_Interface_Ptr is access all User_Interface'Class;
 
    function Query_User
-     (UI            : User_Interface;
-      Prompt        : String;
-      Password_Mode : Boolean) return String is abstract;
+     (UI : User_Interface; Prompt : String; Password_Mode : Boolean)
+      return String
+   is abstract;
    --  Open a new Dialog to query a response to the user.
    --  If Password_Mode is set, then the query will print * instead of
    --   the entered characters.
@@ -44,8 +44,7 @@ package User_Interface_Tools is
    --  Get the User Interface set by Set_User_Interface.
 
    function Query_User
-     (Prompt        : String;
-      Password_Mode : Boolean) return String;
+     (Prompt : String; Password_Mode : Boolean) return String;
    --  Open a new Dialog to query a response to the user.
    --  If Password_Mode is set, then the query will print * instead of
    --   the entered characters.

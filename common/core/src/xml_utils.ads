@@ -37,10 +37,10 @@ package XML_Utils is
    --  Pointer to a node of the XML tree
 
    type Node is record
-      Tag   : String_Ptr;
+      Tag : String_Ptr;
       --  The name of this node. This is utf8-encoded
 
-      Attributes   : String_Ptr;
+      Attributes : String_Ptr;
       --  The attributes of this node. This is utf8-encoded
 
       Value : String_Ptr;
@@ -52,7 +52,7 @@ package XML_Utils is
       Child : Node_Ptr;
       --  The first Child of this Node. The next child is Child.Next
 
-      Next  : Node_Ptr;
+      Next : Node_Ptr;
       --  Next sibling node
 
       Specific_Data : Interfaces.C.int;
@@ -130,15 +130,13 @@ package XML_Utils is
    --  the Specific_Data for each node.
 
    function Get_Attribute_S
-     (N              : Node_Ptr;
-      Attribute_Name : UTF8_String;
-      Default        : UTF8_String := "") return UTF8_String;
+     (N : Node_Ptr; Attribute_Name : UTF8_String; Default : UTF8_String := "")
+      return UTF8_String;
    function Get_Attribute
      (N              : Node_Ptr;
       Attribute_Name : VSS.Strings.Virtual_String;
       Default        : VSS.Strings.Virtual_String :=
-        VSS.Strings.Empty_Virtual_String)
-      return VSS.Strings.Virtual_String;
+        VSS.Strings.Empty_Virtual_String) return VSS.Strings.Virtual_String;
    --  Return the value of the attribute 'Attribute_Name' if present.
    --  Special XML characters have already been interpreted in the result
    --  string.

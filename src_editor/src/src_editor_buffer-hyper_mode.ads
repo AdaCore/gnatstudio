@@ -24,8 +24,7 @@ with Gtk.Text_Iter;     use Gtk.Text_Iter;
 package Src_Editor_Buffer.Hyper_Mode is
 
    procedure Hyper_Mode_Highlight_On
-     (Buffer  : Source_Buffer;
-      Iter    : Gtk_Text_Iter);
+     (Buffer : Source_Buffer; Iter : Gtk_Text_Iter);
    --  Tell the source buffer that the hyper mode is being requested at the
    --  coordinates given by Iter.
 

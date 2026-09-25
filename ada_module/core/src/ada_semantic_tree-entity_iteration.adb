@@ -38,8 +38,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       References_To_Follow : References_To_Follow_Array := All_References;
       Excluded_Entities    : Excluded_Stack_Type := Null_Excluded_Stack;
       Ignored_Expressions  : Expressions_List.List :=
-        Expressions_List.Empty_List)
-      return Semantic_Tree_Iterator
+        Expressions_List.Empty_List) return Semantic_Tree_Iterator
    is
       Result        : Semantic_Tree_Iterator;
       Gen_Info      : Instance_Info;
@@ -53,7 +52,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       end if;
 
       if Is_Generic_Instance (Info.Entity) then
-         Gen_Info := Get_Generic_Instance_Information (Info.Entity)
+         Gen_Info :=
+           Get_Generic_Instance_Information (Info.Entity)
            & Info.Generic_Context;
       else
          Gen_Info := Info.Generic_Context;
@@ -70,18 +70,19 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             --  visible through a use clause.
 
             declare
-               It            : Clause_Iterator :=
+               It                : Clause_Iterator :=
                  To_Clause_Iterator (From_Visibility, Cat_Use);
-               Entity        : Entity_Access;
-               Instance      : Instance_Info;
-               Gen_Package   : Entity_Access;
+               Entity            : Entity_Access;
+               Instance          : Instance_Info;
+               Gen_Package       : Entity_Access;
                Enclosing_Package : Entity_Access;
             begin
-               Enclosing_Package := To_Entity_Access
-                 (Get_File (Real_Sem_Info.Entity),
-                  Get_Parent_Scope
-                    (Get_Tree (Get_File (Real_Sem_Info.Entity)),
-                     To_Construct_Tree_Iterator (Real_Sem_Info.Entity)));
+               Enclosing_Package :=
+                 To_Entity_Access
+                   (Get_File (Real_Sem_Info.Entity),
+                    Get_Parent_Scope
+                      (Get_Tree (Get_File (Real_Sem_Info.Entity)),
+                       To_Construct_Tree_Iterator (Real_Sem_Info.Entity)));
 
                while not At_End (It) loop
                   Entity := Resolve_Package (It);
@@ -90,11 +91,11 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
                   if Instance /= Null_Instance_Info then
                      Gen_Package :=
-                       Get_First_Occurence
-                         (Get_Generic_Entity (Instance));
+                       Get_First_Occurence (Get_Generic_Entity (Instance));
 
                      if Gen_Package = Enclosing_Package then
-                        Gen_Info := Get_Generic_Context (It)
+                        Gen_Info :=
+                          Get_Generic_Context (It)
                           & Instance
                           & Info.Generic_Context;
 
@@ -119,8 +120,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             --  the formal one.
 
             Inst_Entity :=
-              Get_Actual_For_Generic_Param
-                (Gen_Info, Real_Sem_Info.Entity);
+              Get_Actual_For_Generic_Param (Gen_Info, Real_Sem_Info.Entity);
 
             if Inst_Entity /= Null_Entity_Access then
                Real_Sem_Info.Entity := Inst_Entity;
@@ -153,8 +153,12 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       Initialize_Body_Entity (Result);
 
       case Get_Construct (Real_Sem_Info.Entity).Category is
-         when Cat_Variable | Cat_Local_Variable | Cat_Field | Cat_Parameter
-            | Cat_Class .. Cat_Subtype | Subprogram_Category =>
+         when Cat_Variable
+            | Cat_Local_Variable
+            | Cat_Field
+            | Cat_Parameter
+            | Cat_Class .. Cat_Subtype
+            | Subprogram_Category =>
 
             if Info.Kind = All_Access then
                Result.Step := All_Access;
@@ -162,10 +166,10 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                Result.Step := Referenced_Entity;
             end if;
 
-         when Cat_Package =>
+         when Cat_Package         =>
             Result.Step := Referenced_Entity_From_Package;
 
-         when others =>
+         when others              =>
             Result.Step := All_Access;  --  Step is not set by default
             Free (Result);
             return Null_Semantic_Tree_Iterator;
@@ -207,12 +211,13 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       procedure Next_All_Access is
       begin
          if not It.Step_Has_Started then
-            It.Sub_It := new Semantic_Tree_Iterator'
-              (To_Semantic_Tree_Iterator
-                 ((It.Root_Entity.Entity, None, It.Generic_Context),
-                  It.From_Visibility,
-                  All_References,
-                  It.Excluded_Entities));
+            It.Sub_It :=
+              new Semantic_Tree_Iterator'
+                (To_Semantic_Tree_Iterator
+                   ((It.Root_Entity.Entity, None, It.Generic_Context),
+                    It.From_Visibility,
+                    All_References,
+                    It.Excluded_Entities));
 
             if At_End (It.Sub_It.all) then
                It.Step_Has_Started := False;
@@ -249,8 +254,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
          procedure Set_Sub_It is
          begin
             if not At_End (It.Decl_It) then
-               if Get_Construct (It.Current_Construct).
-                     Attributes (Ada_Access_Attribute)
+               if Get_Construct (It.Current_Construct).Attributes
+                    (Ada_Access_Attribute)
                then
                   It.Is_All := True;
                   Sub_References_Allowed (Dereferences) := False;
@@ -265,8 +270,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                end if;
 
                declare
-                  Generic_Context : Instance_Info :=
-                    Null_Instance_Info;
+                  Generic_Context : Instance_Info := Null_Instance_Info;
                   View            : Entity_View;
                begin
                   View := Get_View (It.Decl_It);
@@ -287,19 +291,18 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                      Generic_Context := It.Generic_Context;
                   end if;
 
-                  It.Sub_It := new Semantic_Tree_Iterator'
-                    (To_Semantic_Tree_Iterator
-                       ((Get_Entity (View), None, Generic_Context),
-                        It.From_Visibility,
-                        Sub_References_Allowed,
-                        It.Excluded_Entities));
+                  It.Sub_It :=
+                    new Semantic_Tree_Iterator'
+                      (To_Semantic_Tree_Iterator
+                         ((Get_Entity (View), None, Generic_Context),
+                          It.From_Visibility,
+                          Sub_References_Allowed,
+                          It.Excluded_Entities));
 
                   Free (View);
                end;
 
-               if At_End (It.Sub_It.all)
-                 and then It.Is_All = False
-               then
+               if At_End (It.Sub_It.all) and then It.Is_All = False then
                   It.Step_Has_Started := False;
                else
                   It.Step_Has_Started := True;
@@ -319,7 +322,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                It.Step_Has_Started := False;
             end if;
          elsif Is_Tagged
-           (Get_Ada_Type (It.Root_Entity.Entity), It.From_Visibility)
+                 (Get_Ada_Type (It.Root_Entity.Entity), It.From_Visibility)
          then
             --  If we're on a tagged type, then the type contents will be
             --  handled directly through the type hierarchy package.
@@ -332,12 +335,14 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             declare
                Ref_Id : Normalized_Symbol;
             begin
-               Ref_Id := Get_Identifier
-                 (Get_Referenced_Identifiers (It.Current_Construct));
+               Ref_Id :=
+                 Get_Identifier
+                   (Get_Referenced_Identifiers (It.Current_Construct));
 
                if (not It.References_To_Follow (Dereferences)
-                   and then Get_Construct
-                     (It.Current_Construct).Attributes (Ada_Access_Attribute))
+                   and then
+                     Get_Construct (It.Current_Construct).Attributes
+                       (Ada_Access_Attribute))
                  or else
                    (Get_Construct (It.Current_Construct).Category
                     = Cat_Function
@@ -357,19 +362,21 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                      end loop;
                   else
 
-                     It.Decl_List := Find_Declarations
-                       ((From_File,
-                        It.Generic_Context,
-                        It.Current_File,
-                        String_Index_Type
-                          (Get_Construct
-                             (It.Current_Construct).Sloc_End.Index)),
-                        Expression           => Expression,
-                        Filter               => Null_Filter,
-                        Is_Partial           => False,
-                        Excluded_Entities    => It.Excluded_Entities,
-                        Analyzed_Expressions => It.Ignored_Expressions,
-                        From_Visibility      => It.From_Visibility);
+                     It.Decl_List :=
+                       Find_Declarations
+                         ((From_File,
+                           It.Generic_Context,
+                           It.Current_File,
+                           String_Index_Type
+                             (Get_Construct (It.Current_Construct)
+                                .Sloc_End
+                                .Index)),
+                          Expression           => Expression,
+                          Filter               => Null_Filter,
+                          Is_Partial           => False,
+                          Excluded_Entities    => It.Excluded_Entities,
+                          Analyzed_Expressions => It.Ignored_Expressions,
+                          From_Visibility      => It.From_Visibility);
 
                      It.Decl_It := First (It.Decl_List);
                   end if;
@@ -378,8 +385,9 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
                   if Get_Construct (It.Current_Construct).Category
                     = Cat_Function
-                    and then not Get_Construct
-                      (It.Current_Construct).Attributes (Ada_Renames_Attribute)
+                    and then
+                      not Get_Construct (It.Current_Construct).Attributes
+                            (Ada_Renames_Attribute)
                   then
                      --  If the referenced entity of a function is not a
                      --  renaming, then it's a returned and we don't want to
@@ -398,17 +406,14 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
             if At_End (It.Sub_It.all) then
                loop
-                  while At_End (It.Sub_It.all)
-                    and then not At_End (It.Decl_It)
+                  while At_End (It.Sub_It.all) and then not At_End (It.Decl_It)
                   loop
                      Next (It.Decl_It);
 
                      Set_Sub_It;
                   end loop;
 
-                  if At_End (It.Sub_It.all)
-                    and then At_End (It.Decl_It)
-                  then
+                  if At_End (It.Sub_It.all) and then At_End (It.Decl_It) then
                      exit;
                   end if;
 
@@ -446,17 +451,15 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             if (Get_Construct (It.Current_Construct).Category
                 in Cat_Class .. Cat_Subtype
                 or else
-                  Get_Construct (It.Current_Construct).Category
-                = Cat_Package
-               or else Get_Construct (It.Current_Construct).Category
-                = Cat_Protected
-               or else Get_Construct (It.Current_Construct).Category
-                = Cat_Task)
-              and then not Is_Enum_Type
-                (It.Current_Tree, It.Current_Construct)
+                  Get_Construct (It.Current_Construct).Category = Cat_Package
+                or else
+                  Get_Construct (It.Current_Construct).Category = Cat_Protected
+                or else
+                  Get_Construct (It.Current_Construct).Category = Cat_Task)
+              and then not Is_Enum_Type (It.Current_Tree, It.Current_Construct)
             then
-               It.Content_It := Next
-                 (It.Current_Tree, It.Current_Construct, Jump_Into);
+               It.Content_It :=
+                 Next (It.Current_Tree, It.Current_Construct, Jump_Into);
 
                It.Step_Has_Started := True;
             else
@@ -478,8 +481,8 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
                It.Content_It :=
                  Next (It.Current_Tree, It.Content_It, Jump_Into);
-            elsif
-              Get_Construct (It.Content_It).Category = Cat_Case_Inside_Record
+            elsif Get_Construct (It.Content_It).Category
+              = Cat_Case_Inside_Record
             then
                --  If we are on the case of a record, then jump in:
 
@@ -495,16 +498,15 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
          if It.Step /= Finished then
 
-            if Get_Construct (It.Content_It).Visibility
-              /= Visibility_Public
+            if Get_Construct (It.Content_It).Visibility /= Visibility_Public
               and then It.Package_Relation in None .. Public_Spec_Hierarchy
             then
                --  If we reached an non-public entity and are not allowed to
                --  return any, then move over.
 
                It.Step := Finished;
-            elsif It.Content_It = Next
-              (It.Current_Tree, It.Current_Construct, Jump_Over)
+            elsif It.Content_It
+              = Next (It.Current_Tree, It.Current_Construct, Jump_Over)
             then
                --  If we reached the end of the iteration, see if we have to
                --  look for the package body
@@ -513,11 +515,13 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                  and then It.Body_Entity /= Null_Construct_Tree_Iterator
                  and then
                    (It.From_Visibility.File = null
-                    or else Get_Location_Relation
-                      (Get_Tree (It.Current_File),
-                       It.Body_Entity,
-                       Get_Tree (It.From_Visibility.File),
-                       It.From_Visibility.Offset) = Package_Body)
+                    or else
+                      Get_Location_Relation
+                        (Get_Tree (It.Current_File),
+                         It.Body_Entity,
+                         Get_Tree (It.From_Visibility.File),
+                         It.From_Visibility.Offset)
+                      = Package_Body)
                then
                   --  If we should see the package body, then move to it.
 
@@ -546,10 +550,11 @@ package body Ada_Semantic_Tree.Entity_Iteration is
                --  If we are completing a unit name, then look for its
                --  children
 
-               It.Child_Pckg_It := Get_Children
-                 (Get_Unit_Access
-                    (To_Entity_Access
-                       (It.Current_File, It.Current_Construct)));
+               It.Child_Pckg_It :=
+                 Get_Children
+                   (Get_Unit_Access
+                      (To_Entity_Access
+                         (It.Current_File, It.Current_Construct)));
 
                It.Step_Has_Started := True;
             else
@@ -580,11 +585,12 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             end if;
 
             if It.From_Visibility.File /= null then
-               It.Package_Relation := Get_Location_Relation
-                 (Get_Tree (It.Current_File),
-                  It.Current_Construct,
-                  Get_Tree (It.From_Visibility.File),
-                  It.From_Visibility.Offset);
+               It.Package_Relation :=
+                 Get_Location_Relation
+                   (Get_Tree (It.Current_File),
+                    It.Current_Construct,
+                    Get_Tree (It.From_Visibility.File),
+                    It.From_Visibility.Offset);
             else
                It.Package_Relation := Full_Spec_Hierarchy;
             end if;
@@ -596,7 +602,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
       -------------------------------
 
       procedure Next_Tagged_Type_Contents is
-         Parent_Info : Ada_Type_Access;
+         Parent_Info       : Ada_Type_Access;
          Number_Of_Parents : Integer := 0;
       begin
          if not It.Step_Has_Started then
@@ -613,9 +619,9 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
             for J in reverse 1 .. Number_Of_Parents loop
                if Is_Accessible
-                 (Get_Entity (Parent_Info),
-                  It.From_Visibility.File,
-                  It.From_Visibility.Offset)
+                    (Get_Entity (Parent_Info),
+                     It.From_Visibility.File,
+                     It.From_Visibility.Offset)
                then
                   It.Parents (J) := Get_Entity (Parent_Info);
                else
@@ -630,27 +636,28 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
             if It.Parents (It.Parent_It) /= Null_Entity_Access then
                It.Parent_File := Get_File (It.Parent_Entity);
-               It.Parent_Field := Next
-                 (Get_Tree (It.Parent_File),
-                  To_Construct_Tree_Iterator (It.Parent_Entity), Jump_Into);
+               It.Parent_Field :=
+                 Next
+                   (Get_Tree (It.Parent_File),
+                    To_Construct_Tree_Iterator (It.Parent_Entity),
+                    Jump_Into);
             end if;
 
             It.Step_Has_Started := True;
          elsif It.Parent_It <= It.Parents'Last then
-            It.Parent_Field := Next
-              (Get_Tree (It.Parent_File),
-               It.Parent_Field,
-               Jump_Into);
+            It.Parent_Field :=
+              Next (Get_Tree (It.Parent_File), It.Parent_Field, Jump_Into);
          else
             It.Dotted_Subprograms_Index := It.Dotted_Subprograms_Index + 1;
          end if;
 
          if It.Parent_It <= It.Parents'Last then
             while It.Parents (It.Parent_It) = Null_Entity_Access
-              or else not Encloses
-                (Get_Tree (Get_File (It.Parent_Entity)),
-                 To_Construct_Tree_Iterator (It.Parent_Entity),
-                 It.Parent_Field)
+              or else
+                not Encloses
+                      (Get_Tree (Get_File (It.Parent_Entity)),
+                       To_Construct_Tree_Iterator (It.Parent_Entity),
+                       It.Parent_Field)
             loop
                It.Parent_It := It.Parent_It + 1;
 
@@ -660,9 +667,11 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
                if It.Parents (It.Parent_It) /= Null_Entity_Access then
                   It.Parent_File := Get_File (It.Parent_Entity);
-                  It.Parent_Field := Next
-                    (Get_Tree (It.Parent_File),
-                     To_Construct_Tree_Iterator (It.Parent_Entity), Jump_Into);
+                  It.Parent_Field :=
+                    Next
+                      (Get_Tree (It.Parent_File),
+                       To_Construct_Tree_Iterator (It.Parent_Entity),
+                       Jump_Into);
                end if;
             end loop;
          end if;
@@ -670,9 +679,10 @@ package body Ada_Semantic_Tree.Entity_Iteration is
          if It.Parent_It > It.Parents'Last
            and then It.Dotted_Subprograms = null
          then
-            It.Dotted_Subprograms := new Entity_Persistent_Array'
-              (Extract_Dotted_Notation_Sb
-                 (Get_Ada_Type (It.Root_Entity.Entity)));
+            It.Dotted_Subprograms :=
+              new Entity_Persistent_Array'
+                (Extract_Dotted_Notation_Sb
+                   (Get_Ada_Type (It.Root_Entity.Entity)));
             It.Dotted_Subprograms_Index := It.Dotted_Subprograms'First;
          end if;
 
@@ -686,22 +696,22 @@ package body Ada_Semantic_Tree.Entity_Iteration is
    begin
       loop
          case It.Step is
-            when All_Access =>
+            when All_Access                                               =>
                Next_All_Access;
 
-            when Referenced_Entity | Referenced_Entity_From_Package =>
+            when Referenced_Entity | Referenced_Entity_From_Package       =>
                Next_Referenced_Entity;
 
             when Contents | Package_Spec_Contents | Package_Body_Contents =>
                Next_Contents;
 
-            when Child_Packages =>
+            when Child_Packages                                           =>
                Next_Child_Packages;
 
-            when Tagged_Type_Contents =>
+            when Tagged_Type_Contents                                     =>
                Next_Tagged_Type_Contents;
 
-            when others =>
+            when others                                                   =>
                raise Program_Error;
 
          end case;
@@ -729,12 +739,14 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             --  the given location, then it's not valid to return it.
 
             if It.From_Visibility.File = It.Current_File
-              and then Natural (It.From_Visibility.Offset) < Get_Construct
-                (It.Content_It).Sloc_Start.Index
+              and then
+                Natural (It.From_Visibility.Offset)
+                < Get_Construct (It.Content_It).Sloc_Start.Index
             then
                return False;
             end if;
-         when others =>
+
+         when others                                        =>
             null;
       end case;
 
@@ -742,13 +754,14 @@ package body Ada_Semantic_Tree.Entity_Iteration is
          if (It.From_Visibility.Filter and All_Accessible_Units) /= 0 then
             case It.Step is
                when Contents | Package_Body_Contents | Package_Spec_Contents =>
-                  return Get_Construct (It.Content_It).Category = Cat_Package
+                  return
+                    Get_Construct (It.Content_It).Category = Cat_Package
                     or else Is_Compilation_Unit (It.Content_It);
 
-               when All_Access =>
+               when All_Access                                               =>
                   return False;
 
-               when others =>
+               when others                                                   =>
                   return True;
 
             end case;
@@ -764,15 +777,13 @@ package body Ada_Semantic_Tree.Entity_Iteration is
    -- Get --
    ---------
 
-   function Get
-     (It : Semantic_Tree_Iterator) return Semantic_Information
-   is
+   function Get (It : Semantic_Tree_Iterator) return Semantic_Information is
    begin
       case It.Step is
-         when All_Access =>
+         when All_Access                                               =>
             return Get (It.Sub_It.all);
 
-         when Referenced_Entity | Referenced_Entity_From_Package =>
+         when Referenced_Entity | Referenced_Entity_From_Package       =>
             if It.Is_All then
                return
                  (Get_Entity (It.Decl_It), All_Access, It.Generic_Context);
@@ -782,35 +793,35 @@ package body Ada_Semantic_Tree.Entity_Iteration is
 
          when Contents | Package_Body_Contents | Package_Spec_Contents =>
             return
-              (Entity =>
-               To_Entity_Access
-                 (File       => It.Current_File,
-                  Construct  => It.Content_It),
-               Kind => None,
+              (Entity          =>
+                 To_Entity_Access
+                   (File => It.Current_File, Construct => It.Content_It),
+               Kind            => None,
                Generic_Context => It.Generic_Context);
 
-         when Child_Packages =>
+         when Child_Packages                                           =>
             return
-              (Entity => Get (It.Child_Pckg_It),
-               Kind => None,
+              (Entity          => Get (It.Child_Pckg_It),
+               Kind            => None,
                Generic_Context => It.Generic_Context);
 
-         when Tagged_Type_Contents =>
+         when Tagged_Type_Contents                                     =>
             if It.Parent_It <= It.Parents'Last then
                return
-                 (Entity => To_Entity_Access
-                    (It.Parent_File, It.Parent_Field),
-                  Kind => None,
+                 (Entity          =>
+                    To_Entity_Access (It.Parent_File, It.Parent_Field),
+                  Kind            => None,
                   Generic_Context => It.Generic_Context);
             else
                return
-                 (Entity => To_Entity_Access
-                    (It.Dotted_Subprograms (It.Dotted_Subprograms_Index)),
-                  Kind => Prefix_Notation,
+                 (Entity          =>
+                    To_Entity_Access
+                      (It.Dotted_Subprograms (It.Dotted_Subprograms_Index)),
+                  Kind            => Prefix_Notation,
                   Generic_Context => It.Generic_Context);
             end if;
 
-         when others =>
+         when others                                                   =>
             raise Program_Error;
 
       end case;
@@ -852,12 +863,12 @@ package body Ada_Semantic_Tree.Entity_Iteration is
         or else Get_Construct (It.Current_Construct).Category = Cat_Protected
       then
          if Get_Construct (It.Current_Construct).Is_Declaration then
-            The_Body := Get_Second_Occurence
-              (To_Entity_Access (It.Current_File, It.Current_Construct));
+            The_Body :=
+              Get_Second_Occurence
+                (To_Entity_Access (It.Current_File, It.Current_Construct));
 
             if The_Body /= Null_Entity_Access then
-               It.Body_Entity :=
-                 To_Construct_Tree_Iterator (The_Body);
+               It.Body_Entity := To_Construct_Tree_Iterator (The_Body);
                It.Body_File := Get_File (The_Body);
                It.Body_Tree := Get_Tree (It.Current_File);
             end if;
@@ -866,9 +877,9 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             It.Body_File := It.Current_File;
             It.Body_Tree := It.Current_Tree;
 
-            The_Spec := Get_First_Occurence
-              (To_Entity_Access
-                 (It.Body_File, It.Body_Entity));
+            The_Spec :=
+              Get_First_Occurence
+                (To_Entity_Access (It.Body_File, It.Body_Entity));
 
             if To_Entity_Access (It.Body_File, It.Body_Entity) /= The_Spec then
                It.Current_Construct := To_Construct_Tree_Iterator (The_Spec);

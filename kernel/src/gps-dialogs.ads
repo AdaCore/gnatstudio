@@ -107,8 +107,7 @@ package GPS.Dialogs is
    --  Return the value from the combo box, and store it in the history.
 
    procedure Add_Choice
-     (Self   : not null access Combo_Box_Record;
-      Choice : String);
+     (Self : not null access Combo_Box_Record; Choice : String);
    --  Add a choice to the combo box.
 
    -------------------
@@ -148,8 +147,7 @@ package GPS.Dialogs is
    -----------
 
    procedure Add_Label
-     (Self    : not null access GPS_Dialog_Record'Class;
-      Message : String);
+     (Self : not null access GPS_Dialog_Record'Class; Message : String);
    --  Add a new static label to the dialog
 
    ----------------
@@ -179,7 +177,7 @@ package GPS.Dialogs is
    generic
       type Enumerated_Type is (<>);
 
-   function Display_Select_Dialog
+     function Display_Select_Dialog
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Title   : VSS.Strings.Virtual_String;
       Message : VSS.Strings.Virtual_String;

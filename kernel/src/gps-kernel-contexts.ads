@@ -23,7 +23,7 @@ with GNATCOLL.VFS;
 with Basic_Types;
 with String_List_Utils;
 with GPS.Kernel.Messages;
-with Gtkada.Canvas_View;      use Gtkada.Canvas_View;
+with Gtkada.Canvas_View; use Gtkada.Canvas_View;
 
 package GPS.Kernel.Contexts is
 
@@ -47,9 +47,9 @@ package GPS.Kernel.Contexts is
       Publish_Project   : Boolean := True;
       Line              : Integer := 0;
       Column            : Basic_Types.Visible_Column_Type := 0;
-      Revision          : String  := "";
-      Other_Revision    : String  := "";
-      Tag               : String  := "";
+      Revision          : String := "";
+      Other_Revision    : String := "";
+      Tag               : String := "";
       File_Line         : Natural := 0);
    --  Set the information in this context.
    --  ??? We should use non-ambiguous types for Line and Column
@@ -69,8 +69,7 @@ package GPS.Kernel.Contexts is
    --  if Has_Directory_Information is True.
    --  This directory name always ends with a directory separator.
 
-   function Has_File_Information
-     (Context : Selection_Context) return Boolean;
+   function Has_File_Information (Context : Selection_Context) return Boolean;
    --  Return True if Context has file information
    function File_Information
      (Context : Selection_Context) return GNATCOLL.VFS.Virtual_File;
@@ -80,11 +79,9 @@ package GPS.Kernel.Contexts is
    --  if Has_File_Information is True.
    --  This is the base file name for the file. This name is UTF8-encoded.
 
-   function Has_Line_Information
-     (Context : Selection_Context) return Boolean;
+   function Has_Line_Information (Context : Selection_Context) return Boolean;
    --  Return True if Context has line information
-   function Line_Information
-     (Context : Selection_Context) return Integer;
+   function Line_Information (Context : Selection_Context) return Integer;
    --  Return the location of the cursor in the file/buffer, when in an editor,
    --  or the location in the file from the messages window or the explorer for
    --  instance.
@@ -94,8 +91,7 @@ package GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has file's line information
 
-   function File_Line_Information
-     (Context : Selection_Context) return Natural;
+   function File_Line_Information (Context : Selection_Context) return Natural;
    --  Same as above but return the number of line in the file
 
    function Has_Column_Information
@@ -134,8 +130,7 @@ package GPS.Kernel.Contexts is
    function Has_Revision_Information
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has revision information
-   function Revision_Information
-     (Context : Selection_Context) return String;
+   function Revision_Information (Context : Selection_Context) return String;
    --  Return the revision information associated with the file. The revision
    --  is the number or tag used by the VCS to specify a uniq version of file.
 
@@ -147,20 +142,16 @@ package GPS.Kernel.Contexts is
    --  Return the other revision information associated with the file
 
    procedure Set_Commit_Id_Information
-     (Context : in out Selection_Context;
-      Commit  : String);
+     (Context : in out Selection_Context; Commit : String);
    function Has_Commit_Id_Information
      (Context : Selection_Context) return Boolean;
-   function Commit_Id_Information
-     (Context : Selection_Context) return String;
+   function Commit_Id_Information (Context : Selection_Context) return String;
    --  Return the commit id associated with the file
 
-   function Has_Tag_Information
-     (Context : Selection_Context) return Boolean;
+   function Has_Tag_Information (Context : Selection_Context) return Boolean;
    --  Return True if Context has information about the tag/branch name
    --  associated with the file returned by File_Information
-   function Tag_Information
-     (Context : Selection_Context) return String;
+   function Tag_Information (Context : Selection_Context) return String;
    --  Return the tag/branch name associated with the file returned by
    --  File_Information
 
@@ -196,14 +187,14 @@ package GPS.Kernel.Contexts is
       End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
    --  Return the area information in Context
 
-   function Text_Information
-     (Context : Selection_Context) return String;
+   function Text_Information (Context : Selection_Context) return String;
    --  Return the text belonging to the selection
 
    type Is_Area_Context is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_Area_Context;
-      Context : Selection_Context) return Boolean;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access Is_Area_Context; Context : Selection_Context)
+      return Boolean;
    --  Filter that checks that the user has clicked on a subprogram entity.
    --  This can be used for contextual menus for instance.
 
@@ -259,8 +250,7 @@ package GPS.Kernel.Contexts is
 
    function Has_Expression_Information
      (Context : Selection_Context) return Boolean;
-   function Expression_Information
-     (Context : Selection_Context) return String;
+   function Expression_Information (Context : Selection_Context) return String;
    --  Return expression context for the entity. See the description of
    --  From_Expression in the call to Set_Entity_Information.
 
@@ -290,19 +280,17 @@ package GPS.Kernel.Contexts is
    --  line on which the cursor currently is.
 
    function Get_Entity
-     (Context           : Selection_Context;
+     (Context                     : Selection_Context;
       Approximate_Search_Fallback : Boolean := True)
       return Xref.Root_Entity'Class;
    pragma Inline (Get_Entity);
    --  Return the xref entity stored in the context.
 
    function Get_Entity_Type_Of
-     (Context           : Selection_Context)
-      return Xref.Root_Entity'Class;
+     (Context : Selection_Context) return Xref.Root_Entity'Class;
    --  Return the type of the xref entity stored in the context.
 
-   function Has_Parent_Types
-     (Context : Selection_Context) return Boolean;
+   function Has_Parent_Types (Context : Selection_Context) return Boolean;
    --  Whether the entity has at least one parent type (and thus is itself a
    --  type)
 
@@ -328,8 +316,7 @@ package GPS.Kernel.Contexts is
    --  Return the Entity's locations
 
    procedure Get_Entity_Spec_Locations
-     (Context  : Selection_Context;
-      Location : out Xref.General_Location);
+     (Context : Selection_Context; Location : out Xref.General_Location);
    --  Return the Entity specification location
 
    ----------------------
@@ -372,13 +359,11 @@ package GPS.Kernel.Contexts is
    ------------------------
 
    procedure Set_Debugging_Variable
-     (Context  : in out Selection_Context;
-      Variable : Context_Item_Access);
+     (Context : in out Selection_Context; Variable : Context_Item_Access);
    function Has_Debugging_Variable
      (Context : Selection_Context) return Boolean;
    function Debugging_Variable
-     (Context : Selection_Context)
-      return Context_Item_Access;
+     (Context : Selection_Context) return Context_Item_Access;
    --  Store information about debugger variable.
 
    ------------------------
@@ -386,11 +371,9 @@ package GPS.Kernel.Contexts is
    ------------------------
 
    procedure Set_Refactoring_Variable
-     (Context  : Selection_Context;
-      Variable : Context_Item_Access);
+     (Context : Selection_Context; Variable : Context_Item_Access);
    function Get_Refactoring_Variable
-     (Context : Selection_Context)
-      return Context_Item_Access;
+     (Context : Selection_Context) return Context_Item_Access;
    --  Store information about debugger variable.
 
    ---------
@@ -398,18 +381,12 @@ package GPS.Kernel.Contexts is
    ---------
 
    procedure Set_VCS_Information
-     (Context  : Selection_Context;
-      Category : String;
-      Id       : String);
+     (Context : Selection_Context; Category : String; Id : String);
    --  Store information about VCS branch
 
-   function Get_VCS_Id
-     (Context : Selection_Context)
-      return String;
+   function Get_VCS_Id (Context : Selection_Context) return String;
 
-   function Get_VCS_Category
-     (Context : Selection_Context)
-      return String;
+   function Get_VCS_Category (Context : Selection_Context) return String;
 
 private
 

@@ -18,7 +18,7 @@
 --  This package describes the Welcome view which is the starting point
 --  when beginning with GNAT Studio.
 
-with GPS.Kernel;   use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package Welcome_View is
 

@@ -27,7 +27,8 @@ package body GNAThub.Loader.External is
    -- Remove_Messages --
    ---------------------
 
-   overriding procedure Remove_Messages
+   overriding
+   procedure Remove_Messages
      (Self : in out External_Loader_Type; Force : Boolean := False) is
    begin
       --  Don't remove the messages if there is no new data to load: this
@@ -42,8 +43,8 @@ package body GNAThub.Loader.External is
    -- Prepare_Loading --
    ---------------------
 
-   overriding procedure Prepare_Loading
-     (Self : in out External_Loader_Type) is
+   overriding
+   procedure Prepare_Loading (Self : in out External_Loader_Type) is
    begin
       --  Hide the messages: the filter will decide if we need
       --  to show them. Thus triggering the listerners.
@@ -83,8 +84,8 @@ package body GNAThub.Loader.External is
    -- Has_Data_To_Load --
    ----------------------
 
-   overriding function Has_Data_To_Load
-     (Self : External_Loader_Type) return Boolean is
+   overriding
+   function Has_Data_To_Load (Self : External_Loader_Type) return Boolean is
    begin
       return not Self.Messages_To_Process.Is_Empty;
    end Has_Data_To_Load;
@@ -93,19 +94,18 @@ package body GNAThub.Loader.External is
    -- Cleanup --
    -------------
 
-   overriding procedure Cleanup
-     (Self : in out External_Loader_Type) is null;
+   overriding
+   procedure Cleanup (Self : in out External_Loader_Type) is null;
 
    ---------------
    -- Load_Data --
    ---------------
 
-   overriding procedure Load_Data
-     (Self : in out External_Loader_Type)
-   is
-      M_Ref    : Message_Reference;
-      Message  : GNAThub_Message_Access;
-      Count    : Natural := 0;
+   overriding
+   procedure Load_Data (Self : in out External_Loader_Type) is
+      M_Ref   : Message_Reference;
+      Message : GNAThub_Message_Access;
+      Count   : Natural := 0;
    begin
       while not Self.Messages_To_Process.Is_Empty loop
          M_Ref := Self.Messages_To_Process.First_Element;
@@ -115,9 +115,7 @@ package body GNAThub.Loader.External is
 
             --  Insert the message in the module's tree
 
-            Insert_Message
-              (Self    => Self,
-               Message => Message);
+            Insert_Message (Self => Self, Message => Message);
          end if;
 
          Count := Count + 1;

@@ -18,24 +18,24 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNATCOLL.Any_Types;      use GNATCOLL.Any_Types;
 
-with GPS.Editors;             use GPS.Editors;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with String_Utils;            use String_Utils;
+with GPS.Editors;        use GPS.Editors;
+with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel.Actions; use GPS.Kernel.Actions;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with String_Utils;       use String_Utils;
 
 package body Completion.Python is
 
    function Create_Simple_Proposal
-     (Resolver : access Completion_Python;
-      Category : Language_Category;
+     (Resolver                                           :
+        access Completion_Python;
+      Category                                           : Language_Category;
       Name, Label, Documentation, Action_Name, Icon_Name : String)
       return Simple_Python_Completion_Proposal;
    --  Creates a simple completion proposal
 
    function Object_To_Proposal
-     (Resolver : access Completion_Python;
-      Object   : Class_Instance)
+     (Resolver : access Completion_Python; Object : Class_Instance)
       return Simple_Python_Completion_Proposal;
    --  Return a completion proposal, assuming Object is a CompletionProposal
 
@@ -46,8 +46,7 @@ package body Completion.Python is
    --  The following implements a virtual list binding to a python object
    --  which is capable of computing lazily a list of completion proposals.
 
-   type Python_Component is
-     new Completion_List_Pckg.Virtual_List_Component
+   type Python_Component is new Completion_List_Pckg.Virtual_List_Component
    with record
       Resolver : access Completion_Python;
       Object   : Class_Instance;
@@ -61,24 +60,28 @@ package body Completion.Python is
       Proposal : Simple_Python_Completion_Proposal := No_Proposal;
    end record;
 
-   overriding function First (List : Python_Component)
+   overriding
+   function First
+     (List : Python_Component)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class;
-   overriding function At_End (It : Python_Iterator) return Boolean;
-   overriding procedure Next (It : in out Python_Iterator);
-   overriding function Get
-     (It : in out Python_Iterator) return Completion_Proposal'Class;
+   overriding
+   function At_End (It : Python_Iterator) return Boolean;
+   overriding
+   procedure Next (It : in out Python_Iterator);
+   overriding
+   function Get (It : in out Python_Iterator) return Completion_Proposal'Class;
 
    -----------
    -- First --
    -----------
 
-   overriding function First
+   overriding
+   function First
      (List : Python_Component)
       return Completion_List_Pckg.Virtual_List_Component_Iterator'Class
    is
-      Sub    : Subprogram_Type := Get_Method
-        (List.Object, "_ada_first");
-      Script : constant Scripting_Language  := Get_Script (Sub.all);
+      Sub    : Subprogram_Type := Get_Method (List.Object, "_ada_first");
+      Script : constant Scripting_Language := Get_Script (Sub.all);
       Args   : Callback_Data'Class := Create (Script, 0);
 
       Iterator : Python_Iterator;
@@ -95,10 +98,10 @@ package body Completion.Python is
    -- At_End --
    ------------
 
-   overriding function At_End (It : Python_Iterator) return Boolean is
-      Sub    : Subprogram_Type := Get_Method
-        (It.Object, "_ada_at_end");
-      Script : constant Scripting_Language  := Get_Script (Sub.all);
+   overriding
+   function At_End (It : Python_Iterator) return Boolean is
+      Sub    : Subprogram_Type := Get_Method (It.Object, "_ada_at_end");
+      Script : constant Scripting_Language := Get_Script (Sub.all);
       Args   : Callback_Data'Class := Create (Script, 0);
       Res    : constant Boolean := Execute (Sub, Args);
    begin
@@ -111,10 +114,10 @@ package body Completion.Python is
    -- Next --
    ----------
 
-   overriding procedure Next (It : in out Python_Iterator) is
-      Sub     : Subprogram_Type := Get_Method
-        (It.Object, "_ada_next");
-      Script  : constant Scripting_Language  := Get_Script (Sub.all);
+   overriding
+   procedure Next (It : in out Python_Iterator) is
+      Sub     : Subprogram_Type := Get_Method (It.Object, "_ada_next");
+      Script  : constant Scripting_Language := Get_Script (Sub.all);
       Args    : Callback_Data'Class := Create (Script, 0);
       Ignored : Any_Type := Execute (Sub, Args);
    begin
@@ -126,12 +129,11 @@ package body Completion.Python is
    -- Get --
    ---------
 
-   overriding function Get
-     (It : in out Python_Iterator) return Completion_Proposal'Class
+   overriding
+   function Get (It : in out Python_Iterator) return Completion_Proposal'Class
    is
-      Sub    : Subprogram_Type := Get_Method
-        (It.Object, "_ada_get");
-      Script : constant Scripting_Language  := Get_Script (Sub.all);
+      Sub    : Subprogram_Type := Get_Method (It.Object, "_ada_get");
+      Script : constant Scripting_Language := Get_Script (Sub.all);
       Args   : Callback_Data'Class := Create (Script, 0);
       Object : Class_Instance;
 
@@ -139,12 +141,12 @@ package body Completion.Python is
       --  The code below can be used to implement a cache
       --  ??? and probably should
 
---        if It.Proposal = No_Proposal then
---           Object := Execute (Sub, Args);
---           It.Proposal := Object_To_Proposal (It.Resolver, Object);
---        end if;
---
---        return It.Proposal;
+      --        if It.Proposal = No_Proposal then
+      --           Object := Execute (Sub, Args);
+      --           It.Proposal := Object_To_Proposal (It.Resolver, Object);
+      --        end if;
+      --
+      --        return It.Proposal;
 
       Object := Execute (Sub, Args);
       Free (Args);
@@ -157,20 +159,22 @@ package body Completion.Python is
    ----------------------------
 
    function Create_Simple_Proposal
-     (Resolver : access Completion_Python;
-      Category : Language_Category;
+     (Resolver                                           :
+        access Completion_Python;
+      Category                                           : Language_Category;
       Name, Label, Documentation, Action_Name, Icon_Name : String)
       return Simple_Python_Completion_Proposal
    is
       Proposal : Simple_Python_Completion_Proposal;
    begin
-      Proposal := (Resolver => Resolver,
-                   Category => Category,
-                   Name     => new String'(Name),
-                   Label    => To_Unbounded_String (Label),
-                   Documentation => To_Unbounded_String (Documentation),
-                   Action_Name => To_Unbounded_String (Action_Name),
-                   Icon_Name => To_Unbounded_String (Icon_Name));
+      Proposal :=
+        (Resolver      => Resolver,
+         Category      => Category,
+         Name          => new String'(Name),
+         Label         => To_Unbounded_String (Label),
+         Documentation => To_Unbounded_String (Documentation),
+         Action_Name   => To_Unbounded_String (Action_Name),
+         Icon_Name     => To_Unbounded_String (Icon_Name));
 
       return Proposal;
    end Create_Simple_Proposal;
@@ -180,24 +184,24 @@ package body Completion.Python is
    ------------------------
 
    function Object_To_Proposal
-     (Resolver : access Completion_Python;
-      Object   : Class_Instance)
+     (Resolver : access Completion_Python; Object : Class_Instance)
       return Simple_Python_Completion_Proposal
    is
       Sub      : Subprogram_Type := Get_Method (Object, "get_data_as_list");
-      Script   : constant Scripting_Language  := Get_Script (Sub.all);
+      Script   : constant Scripting_Language := Get_Script (Sub.all);
       Proposal : Simple_Python_Completion_Proposal;
       Args     : Callback_Data'Class := Create (Script, 0);
       Fields   : List_Instance := Execute (Sub, Args);
    begin
-      Proposal := Create_Simple_Proposal
-        (Resolver,
-         Language_Category'Val (Nth_Arg (Fields, 6) - 1),
-         Nth_Arg (Fields, 1),
-         Nth_Arg (Fields, 2),
-         Nth_Arg (Fields, 3),
-         Nth_Arg (Fields, 4),
-         Nth_Arg (Fields, 5));
+      Proposal :=
+        Create_Simple_Proposal
+          (Resolver,
+           Language_Category'Val (Nth_Arg (Fields, 6) - 1),
+           Nth_Arg (Fields, 1),
+           Nth_Arg (Fields, 2),
+           Nth_Arg (Fields, 3),
+           Nth_Arg (Fields, 4),
+           Nth_Arg (Fields, 5));
       Free (Args);
       Free (Sub);
       Free (Fields);
@@ -208,26 +212,27 @@ package body Completion.Python is
    -- Get_Completion_Root --
    -------------------------
 
-   overriding procedure Get_Completion_Root
-     (Resolver   : access Completion_Python;
-      Offset     : String_Index_Type;
-      Context    : Completion_Context;
-      Result     : in out Completion_List)
+   overriding
+   procedure Get_Completion_Root
+     (Resolver : access Completion_Python;
+      Offset   : String_Index_Type;
+      Context  : Completion_Context;
+      Result   : in out Completion_List)
    is
       pragma Unreferenced (Offset);
    begin
       if Resolver.Lang_Name = ""
-        or else To_Lower (+Resolver.Lang_Name)
-        = To_Lower (Context.Lang.Get_Name)
+        or else
+          To_Lower (+Resolver.Lang_Name) = To_Lower (Context.Lang.Get_Name)
       then
          declare
-            Sub      : Subprogram_Type :=
+            Sub       : Subprogram_Type :=
               Get_Method (Resolver.Object, "get_completion_prefix");
-            Script   : constant Scripting_Language  := Get_Script (Sub.all);
-            Args     : Callback_Data'Class := Create (Script, 2);
-            Loc      : constant Editor_Location'Class :=
+            Script    : constant Scripting_Language := Get_Script (Sub.all);
+            Args      : Callback_Data'Class := Create (Script, 2);
+            Loc       : constant Editor_Location'Class :=
               Get_Current_Location (Get_Kernel (Script), Context.File);
-            Loc_Inst : constant Class_Instance :=
+            Loc_Inst  : constant Class_Instance :=
               Create_Instance (Loc, Script);
             Component : Python_Component;
          begin
@@ -260,9 +265,8 @@ package body Completion.Python is
    -- Get_Id --
    ------------
 
-   overriding function Get_Id
-     (Resolver : Completion_Python)
-      return String is
+   overriding
+   function Get_Id (Resolver : Completion_Python) return String is
    begin
       return "python" & Resolver.Id'Img;
    end Get_Id;
@@ -271,7 +275,8 @@ package body Completion.Python is
    -- Get_Documentation --
    -----------------------
 
-   overriding function Get_Documentation
+   overriding
+   function Get_Documentation
      (Proposal : Simple_Python_Completion_Proposal) return String is
    begin
       return To_String (Proposal.Documentation);
@@ -281,7 +286,8 @@ package body Completion.Python is
    -- Get_Custom_Icon_Name --
    --------------------------
 
-   overriding function Get_Custom_Icon_Name
+   overriding
+   function Get_Custom_Icon_Name
      (Proposal : Simple_Python_Completion_Proposal) return String is
    begin
       return To_String (Proposal.Icon_Name);
@@ -291,10 +297,10 @@ package body Completion.Python is
    -- Get_Label --
    ---------------
 
-   overriding function Get_Label
+   overriding
+   function Get_Label
      (Proposal : Simple_Python_Completion_Proposal;
-      Db       : access Xref.General_Xref_Database_Record'Class)
-      return String
+      Db       : access Xref.General_Xref_Database_Record'Class) return String
    is
       pragma Unreferenced (Db);
    begin
@@ -305,14 +311,17 @@ package body Completion.Python is
    -- To_Completion_Id --
    ----------------------
 
-   overriding function To_Completion_Id
-     (Proposal : Simple_Python_Completion_Proposal)
-      return Completion_Id is
+   overriding
+   function To_Completion_Id
+     (Proposal : Simple_Python_Completion_Proposal) return Completion_Id is
    begin
-      return (Proposal.Name'Length,
-              "PYTHON  ",
-              Proposal.Name.all,
-              GNATCOLL.VFS.No_File, 0, 0);
+      return
+        (Proposal.Name'Length,
+         "PYTHON  ",
+         Proposal.Name.all,
+         GNATCOLL.VFS.No_File,
+         0,
+         0);
    end To_Completion_Id;
 
    ------------
@@ -324,42 +333,45 @@ package body Completion.Python is
    --  resolvers. Positive overflow? unlikely.
 
    function Create
-     (Class : Class_Instance;
-      Lang_Name : String) return Completion_Python_Access
-   is
+     (Class : Class_Instance; Lang_Name : String)
+      return Completion_Python_Access is
    begin
       Counter := Counter + 1;
 
-      return new Completion_Python'
-        (Lang_Name => +Lang_Name,
-         Object    => Class,
-         Id        => Counter,
-         Manager   => <>);
+      return
+        new Completion_Python'
+          (Lang_Name => +Lang_Name,
+           Object    => Class,
+           Id        => Counter,
+           Manager   => <>);
    end Create;
 
    ---------------
    -- Deep_Copy --
    ---------------
 
-   overriding function Deep_Copy
+   overriding
+   function Deep_Copy
      (Proposal : Simple_Python_Completion_Proposal)
       return Completion_Proposal'Class is
    begin
-      return Simple_Python_Completion_Proposal'
-        (Resolver      => Proposal.Resolver,
-         Name          => new String'(Proposal.Name.all),
-         Category      => Proposal.Category,
-         Label         => Proposal.Label,
-         Documentation => Proposal.Documentation,
-         Icon_Name     => Proposal.Icon_Name,
-         Action_Name   => Proposal.Action_Name);
+      return
+        Simple_Python_Completion_Proposal'
+          (Resolver      => Proposal.Resolver,
+           Name          => new String'(Proposal.Name.all),
+           Category      => Proposal.Category,
+           Label         => Proposal.Label,
+           Documentation => Proposal.Documentation,
+           Icon_Name     => Proposal.Icon_Name,
+           Action_Name   => Proposal.Action_Name);
    end Deep_Copy;
 
    -----------------
    -- On_Selected --
    -----------------
 
-   overriding procedure On_Selected
+   overriding
+   procedure On_Selected
      (Proposal : Simple_Python_Completion_Proposal;
       Kernel   : not null Kernel_Handle)
    is
@@ -367,11 +379,12 @@ package body Completion.Python is
       pragma Unreferenced (Success);
    begin
       if Proposal.Action_Name /= Null_Unbounded_String then
-         Success := Execute_Action
-           (Kernel               => Kernel,
-            Action               => To_String (Proposal.Action_Name),
-            Error_Msg_In_Console => True,
-            Synchronous          => True);
+         Success :=
+           Execute_Action
+             (Kernel               => Kernel,
+              Action               => To_String (Proposal.Action_Name),
+              Error_Msg_In_Console => True,
+              Synchronous          => True);
       end if;
    end On_Selected;
 
@@ -379,13 +392,13 @@ package body Completion.Python is
    -- Get_Initial_Completion_List --
    ---------------------------------
 
-   overriding function Get_Initial_Completion_List
+   overriding
+   function Get_Initial_Completion_List
      (Manager : access Generic_Completion_Manager;
-      Context : Completion_Context)
-      return Completion_List
+      Context : Completion_Context) return Completion_List
    is
-      It       : Completion_Resolver_Lists.Cursor;
-      Result   : Completion_List;
+      It     : Completion_Resolver_Lists.Cursor;
+      Result : Completion_List;
 
       New_Context : constant Completion_Context :=
         new Completion_Context_Record;

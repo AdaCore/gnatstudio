@@ -21,13 +21,13 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
 
-with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with VSS.Strings;            use VSS.Strings;
+with VSS.Strings; use VSS.Strings;
 
-with Basic_Types;            use Basic_Types;
+with Basic_Types; use Basic_Types;
 
-with GPS.Markers;            use GPS.Markers;
+with GPS.Markers; use GPS.Markers;
 
 package DAP.Types.Breakpoints is
 
@@ -63,12 +63,12 @@ package DAP.Types.Breakpoints is
    --  These identifiers are set by the DAP server, in response of the
    --  breakpoint-related DAP requests.
 
-   package Breakpoint_Identifier_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
+   package Breakpoint_Identifier_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Breakpoint_Identifier);
    --  Lists of breakpoint identifiers.
 
-   package Breakpoint_Index_Lists is
-     new Ada.Containers.Doubly_Linked_Lists (Positive);
+   package Breakpoint_Index_Lists is new
+     Ada.Containers.Doubly_Linked_Lists (Positive);
    --  This type is used when doing the same debugger action on a list
    --  of breakpoints (delete/enable/disable).
    --  Indexes are different from breakpoint identifiers: breakpoint
@@ -77,38 +77,38 @@ package DAP.Types.Breakpoints is
    --  breakpoint in the holders' vectors used to store them.
 
    type Breakpoint_Location_Type is record
-      Marker  : Location_Marker := No_Marker;
+      Marker : Location_Marker := No_Marker;
       --  The editor's location.
 
       Address : Address_Type := Invalid_Address;
       --  The intruction's address.
    end record;
 
-   package Breakpoint_Location_Vectors is
-     new Ada.Containers.Vectors (Positive, Breakpoint_Location_Type);
+   package Breakpoint_Location_Vectors is new
+     Ada.Containers.Vectors (Positive, Breakpoint_Location_Type);
 
    type Breakpoint_Data (Kind : Breakpoint_Kind := On_Line) is record
-      Num         : Breakpoint_Identifier := No_Breakpoint;
+      Num : Breakpoint_Identifier := No_Breakpoint;
       --  The breakpoint's identifier set on DAP server's side.
 
       Disposition : Breakpoint_Disposition := Keep;
       --  What is done when the breakpoint is reached
 
-      Enabled     : Boolean := True;
+      Enabled : Boolean := True;
       --  The breakpoint's state. Disabled breakpoints are not known for the
       --  underlying DAP server
 
-      Condition   : Virtual_String := Empty_Virtual_String;
+      Condition : Virtual_String := Empty_Virtual_String;
       --  Condition on which this breakpoint is activated
 
-      Ignore      : Natural := 0;
+      Ignore : Natural := 0;
       --  Number of breakpoint hits that will be ignored before actually
       --  stopping.
 
-      Commands    : Virtual_String := Empty_Virtual_String;
+      Commands : Virtual_String := Empty_Virtual_String;
       --  Commands to execute when the debugger stops at this breakpoint
 
-      Verified    : Boolean := True;
+      Verified : Boolean := True;
       --  True if the breakpoint has been verified on server-side (e.g: if the
       --  specified SLOC actually maps the executable's source files).
 
@@ -139,12 +139,10 @@ package DAP.Types.Breakpoints is
      Breakpoint_Data'(others => <>);
 
    function "="
-     (Data : Breakpoint_Data;
-      Num  : Breakpoint_Identifier)
-      return Boolean;
+     (Data : Breakpoint_Data; Num : Breakpoint_Identifier) return Boolean;
 
-   function Breakpoint_Data_Equal
-     (L, R : Breakpoint_Data) return Boolean is (L.Num = R.Num);
+   function Breakpoint_Data_Equal (L, R : Breakpoint_Data) return Boolean
+   is (L.Num = R.Num);
 
    function Get_Location (Data : Breakpoint_Data) return Location_Marker;
    --  Get the breakpoint's location. This works only for line breakpoints:
@@ -157,17 +155,19 @@ package DAP.Types.Breakpoints is
    --  Return a location string representation to display for the given
    --  breakpoint.
 
-   package Breakpoint_Vectors is new Ada.Containers.Vectors
-     (Index_Type   => Positive,
-      Element_Type => Breakpoint_Data,
-      "="          => Breakpoint_Data_Equal);
+   package Breakpoint_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Breakpoint_Data,
+        "="          => Breakpoint_Data_Equal);
 
-   package Breakpoint_Hash_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Element_Type    => Breakpoint_Index_Lists.List,
-      Hash            => Full_Name_Hash,
-      Equivalent_Keys => "=",
-      "="             => Breakpoint_Index_Lists."=");
+   package Breakpoint_Hash_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Key_Type        => Virtual_File,
+        Element_Type    => Breakpoint_Index_Lists.List,
+        Hash            => Full_Name_Hash,
+        Equivalent_Keys => "=",
+        "="             => Breakpoint_Index_Lists."=");
 
    use Breakpoint_Hash_Maps;
 
@@ -192,18 +192,17 @@ package DAP.Types.Breakpoints is
    --  Return all the breakpoints stored in this holder.
 
    function Get_Breakpoints
-     (Self    : Breakpoint_Holder;
-      Indexes : Breakpoint_Index_Lists.List) return Breakpoint_Vectors.Vector;
+     (Self : Breakpoint_Holder; Indexes : Breakpoint_Index_Lists.List)
+      return Breakpoint_Vectors.Vector;
    --  Return all the breakpoints at the given indexes.
 
    function Get_Breakpoint_From_Index
-     (Self : Breakpoint_Holder;
-      Idx  : Positive) return Breakpoint_Data;
+     (Self : Breakpoint_Holder; Idx : Positive) return Breakpoint_Data;
    --  Return the breakpoint located at the given index in the holder
 
    function Get_Breakpoint_From_Id
-     (Self : Breakpoint_Holder;
-      Id   : Breakpoint_Identifier) return Breakpoint_Data;
+     (Self : Breakpoint_Holder; Id : Breakpoint_Identifier)
+      return Breakpoint_Data;
    --  Get the breakpoint stored with the given Id.
    --  An empty breakpoint is returned if it does not exist.
 
@@ -211,25 +210,18 @@ package DAP.Types.Breakpoints is
    --  Remove all breakpoints
 
    function Contains
-     (Self   : in out Breakpoint_Holder;
-      Marker : Location_Marker)
+     (Self : in out Breakpoint_Holder; Marker : Location_Marker)
       return Boolean;
    --  Do we already have a breakpoint for location?
 
-   procedure Append
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data);
+   procedure Append (Self : in out Breakpoint_Holder; Data : Breakpoint_Data);
    --  Append the given breakpoint.
 
-   procedure Replace
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data);
+   procedure Replace (Self : in out Breakpoint_Holder; Data : Breakpoint_Data);
    --  Replace the breakpoint using it's ID, if any.
 
    procedure Replace
-     (Self : in out Breakpoint_Holder;
-      Data : Breakpoint_Data;
-      Idx  : Positive);
+     (Self : in out Breakpoint_Holder; Data : Breakpoint_Data; Idx : Positive);
    --  Replace the breakpoint located at the given index, if any.
 
    procedure Replace
@@ -244,24 +236,21 @@ package DAP.Types.Breakpoints is
    --  to be persistent will be copied (e.g: breakpoint's type, SLOC...).
 
    procedure Delete
-     (Self : in out Breakpoint_Holder;
-      Id   : Breakpoint_Identifier);
+     (Self : in out Breakpoint_Holder; Id : Breakpoint_Identifier);
    --  Delete the breakpoint at the given index, if any.
 
    procedure Delete
-     (Self    : in out Breakpoint_Holder;
-      Indexes : Breakpoint_Index_Lists.List);
+     (Self : in out Breakpoint_Holder; Indexes : Breakpoint_Index_Lists.List);
    --  Delete the breakpoints at the given indexes, if any.
 
    procedure Delete
-     (Self    : in out Breakpoint_Holder;
-      File    : Virtual_File;
-      Line    : Editable_Line_Type);
+     (Self : in out Breakpoint_Holder;
+      File : Virtual_File;
+      Line : Editable_Line_Type);
    --  Delete the breakpoints sharing the given location, if any.
 
    function Get_For_Files
-     (Self         : Breakpoint_Holder;
-      Enabled_Only : Boolean := True)
+     (Self : Breakpoint_Holder; Enabled_Only : Boolean := True)
       return Breakpoint_Hash_Maps.Map;
    --  Get breakpoints ordered by files
    --  When Enabled_Only is True, only the enabled ones are returned.
@@ -269,24 +258,21 @@ package DAP.Types.Breakpoints is
    function Get_For_File
      (Self         : Breakpoint_Holder;
       File         : Virtual_File;
-      Enabled_Only : Boolean := True)
-      return Breakpoint_Vectors.Vector;
+      Enabled_Only : Boolean := True) return Breakpoint_Vectors.Vector;
    --  Get the breakpoints for the given file.
    --  When Enabled_Only is True, only the enabled ones are returned.
 
    function Get_For_File
      (Self         : Breakpoint_Holder;
       File         : Virtual_File;
-      Enabled_Only : Boolean := True)
-      return Breakpoint_Index_Lists.List;
+      Enabled_Only : Boolean := True) return Breakpoint_Index_Lists.List;
    --  Get breakpoints' indexes for the given file.
    --  When Enabled_Only is True, only the enabled ones are returned.
 
    function Get_For_Kind
      (Self         : Breakpoint_Holder;
       Kind         : Breakpoint_Kind;
-      Enabled_Only : Boolean := True)
-      return Breakpoint_Index_Lists.List;
+      Enabled_Only : Boolean := True) return Breakpoint_Index_Lists.List;
    --  Get the brekpoints of the given kind.
    --  When Enabled_Only is True, only the enabled ones are returned.
 
@@ -297,9 +283,9 @@ package DAP.Types.Breakpoints is
    --  Set the state of the breakpoints located at the given indexes.
 
    procedure Set_Ignore_Count
-     (Self    : in out Breakpoint_Holder;
-      Id      : Breakpoint_Identifier;
-      Count   : Natural);
+     (Self  : in out Breakpoint_Holder;
+      Id    : Breakpoint_Identifier;
+      Count : Natural);
    --  Set the 'ignore' count for the breakpoint refered by Id.
 
    function Is_Empty (Self : Breakpoint_Holder) return Boolean;

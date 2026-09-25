@@ -103,13 +103,13 @@ package body GPS.Kernel.Messages.Legacy is
    ---------------------
 
    procedure Set_Action_Item
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Category  : String;
-      File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Natural;
-      Column    : Natural;
-      Message   : String;
-      Action    : GPS.Editors.Line_Information.Line_Information_Access)
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Natural;
+      Column   : Natural;
+      Message  : String;
+      Action   : GPS.Editors.Line_Information.Line_Information_Access)
    is
       Container          : constant Messages_Container_Access :=
         Get_Messages_Container (Kernel);
@@ -148,8 +148,7 @@ package body GPS.Kernel.Messages.Legacy is
 
       Message_Position := File_Node.Children.First;
 
-      Primary_Messages_Loop :
-      while Has_Element (Message_Position) loop
+      Primary_Messages_Loop : while Has_Element (Message_Position) loop
          Message_Node := Message_Access (Element (Message_Position));
 
          if Message_Node.Line = Line
@@ -164,7 +163,7 @@ package body GPS.Kernel.Messages.Legacy is
             while Has_Element (Secondary_Position) loop
                exit Primary_Messages_Loop when
                  Message_Access (Element (Secondary_Position)).Get_Text
-                   = Message;
+                 = Message;
 
                Next (Secondary_Position);
             end loop;

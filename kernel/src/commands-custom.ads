@@ -57,13 +57,13 @@
 
 with GNAT.Expect;
 with GNATCOLL.Scripts;
-with GNAT.Strings;            use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 
 with XML_Utils;
 
-with Commands.Interactive;    use Commands.Interactive;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
+with Commands.Interactive; use Commands.Interactive;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
 with Interactive_Consoles;
 
 package Commands.Custom is
@@ -131,12 +131,14 @@ package Commands.Custom is
    --  This filter should be checked if the command is used as an action in
    --  GNAT Studio.
 
-   overriding procedure Primitive_Free (X : in out Custom_Command);
+   overriding
+   procedure Primitive_Free (X : in out Custom_Command);
    --  Free memory associated with X.
 
-   overriding function Execute
-     (Command : access Custom_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Custom_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Execute Command, and return Success if the command could be launched
    --  successfully.
    --  Context-related arguments (like "%f", "%p" and so on) are converted
@@ -148,25 +150,27 @@ package Commands.Custom is
    --  since they launch external processes in background mode and must wait
    --  for their output.
 
-   overriding procedure Interrupt (Command : in out Custom_Command);
+   overriding
+   procedure Interrupt (Command : in out Custom_Command);
    --  See doc from inherited subprograms
 
-   overriding function Is_Active_Command
-     (Command : access Custom_Command) return Boolean;
+   overriding
+   function Is_Active_Command (Command : access Custom_Command) return Boolean;
 
 private
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
 
-   overriding function Name (Command : access Custom_Command) return String;
+   overriding
+   function Name (Command : access Custom_Command) return String;
    --  See doc for inherited subprogram
 
    type Custom_Command_Execution_Record is record
-      In_Process  : Boolean := False;
+      In_Process : Boolean := False;
       --  True if we are processing the command, but there are some external
       --  process to run before completion.
 
-      Cmd_Index   : Natural;
+      Cmd_Index : Natural;
       --  The current command we are executing
 
       Current_Failure : Integer := -1;
@@ -182,7 +186,7 @@ private
       --  Where the output of the current external command should be sent
 
       External_Process_In_Progress : Boolean := False;
-      Process_Exit_Status : Integer;
+      Process_Exit_Status          : Integer;
       --  True if an external process is currently running
 
       Outputs : String_List_Access;
@@ -194,13 +198,13 @@ private
       Save_Output : Boolean_Array_Access;
       --  Whether we should save the output of the nth-command
 
-      Context  : Selection_Context := No_Context;
+      Context : Selection_Context := No_Context;
       --  The context we had at the beginning of the executing
 
       Check_Password : Boolean;
       --  Check for password/passphrase prompt
 
-      Nb_Password    : Natural;
+      Nb_Password : Natural;
       --  The count of user password asking
    end record;
    type Custom_Command_Execution is access Custom_Command_Execution_Record;
@@ -229,14 +233,14 @@ private
       --  then both commands 2 and 3 will have On_Failure_For set to 1
    end record;
 
-   type Components_Array is array (Natural range <>)
-      of Command_Component_Description;
+   type Components_Array is
+     array (Natural range <>) of Command_Component_Description;
    type Components_Array_Access is access Components_Array;
 
    type Custom_Command is new Interactive_Command with record
-      Kernel      : Kernel_Handle;
+      Kernel : Kernel_Handle;
 
-      Components  : Components_Array_Access;
+      Components : Components_Array_Access;
       --  The various components of the command
 
       Default_Output_Destination : String_Access;
@@ -250,7 +254,7 @@ private
       Name : String_Access;
       --  The name of the command
 
-      Execution   : Custom_Command_Execution;
+      Execution : Custom_Command_Execution;
       --  The current context for the execution of the command. If this is
       --  null, no command is currently executing
 

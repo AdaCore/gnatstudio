@@ -43,14 +43,28 @@ private
 
    function Hash (Item : CWE_Identifier) return Ada.Containers.Hash_Type;
 
-   package Message_Category_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Message_Category_Access, Hash, "=", "=");
+   package Message_Category_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Natural,
+        Message_Category_Access,
+        Hash,
+        "=",
+        "=");
 
-   package CWE_Category_Maps is new Ada.Containers.Hashed_Maps
-     (CWE_Identifier, CWE_Category_Access, Hash, "=", "=");
+   package CWE_Category_Maps is new
+     Ada.Containers.Hashed_Maps
+       (CWE_Identifier,
+        CWE_Category_Access,
+        Hash,
+        "=",
+        "=");
 
-   package Entry_Point_Maps is new Ada.Containers.Hashed_Maps
-     (Natural, Entry_Point_Information_Access, Hash, "=");
+   package Entry_Point_Maps is new
+     Ada.Containers.Hashed_Maps
+       (Natural,
+        Entry_Point_Information_Access,
+        Hash,
+        "=");
 
    --------------------------------
    -- Abstract_Inspection_Reader --
@@ -62,29 +76,33 @@ private
    type Inspection_Reader_Access is
      access all Abstract_Inspection_Reader'Class;
 
-   not overriding procedure Start_Element
+   not overriding
+   procedure Start_Element
      (Self  : in out Abstract_Inspection_Reader;
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class) is abstract;
 
-   not overriding procedure End_Element
-     (Self  : in out Abstract_Inspection_Reader;
-      Name  : String) is abstract;
+   not overriding
+   procedure End_Element
+     (Self : in out Abstract_Inspection_Reader; Name : String) is abstract;
 
-   not overriding function Get_Code_Analysis_Tree
+   not overriding
+   function Get_Code_Analysis_Tree
      (Self : Abstract_Inspection_Reader)
       return Code_Analysis.Code_Analysis_Tree is abstract;
 
-   not overriding function Get_Race_Category
+   not overriding
+   function Get_Race_Category
      (Self : Abstract_Inspection_Reader)
       return CodePeer.Message_Category_Access is abstract;
 
-   not overriding function Get_Annotation_Categories
+   not overriding
+   function Get_Annotation_Categories
      (Self : Abstract_Inspection_Reader)
       return Annotation_Category_Maps.Map is abstract;
 
-   not overriding procedure End_Document
-     (Self : in out Abstract_Inspection_Reader) is null;
+   not overriding
+   procedure End_Document (Self : in out Abstract_Inspection_Reader) is null;
    --  Called after processing of the XML data file.
 
    ------------
@@ -92,40 +110,42 @@ private
    ------------
 
    type Reader is new Sax.Readers.Reader with record
-      Kernel                : GPS.Kernel.Kernel_Handle;
+      Kernel : GPS.Kernel.Kernel_Handle;
 
-      Version               : Supported_Format_Version;
+      Version : Supported_Format_Version;
       --  Version number of interchange format.
       --
       --   1 - default value
       --   2 - is_warning attribute is reported by CodePeer
       --   3 - new content of audit records
 
-      Reader                : Inspection_Reader_Access;
-      Reader_Depth          : Natural := 0;
+      Reader       : Inspection_Reader_Access;
+      Reader_Depth : Natural := 0;
       --  Reader of the given version of exchange format and depth of nested
       --  XML elements.
 
-      Ignore_Depth          : Natural := 0;
+      Ignore_Depth : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
       --  of newer version when GNAT Studio module supports.
 
-      Base_Directory        : GNATCOLL.VFS.Virtual_File;
+      Base_Directory : GNATCOLL.VFS.Virtual_File;
       --  base directory to reconstruct full paths to referenced data files
       --  (values, backtraces, annotations). Added in version 5.
 
-      Root_Inspection       : Code_Analysis.CodePeer_Data_Access;
-      Messages              : access CodePeer.Message_Maps.Map;
+      Root_Inspection : Code_Analysis.CodePeer_Data_Access;
+      Messages        : access CodePeer.Message_Maps.Map;
    end record;
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;
       Qname         : Unicode.CES.Byte_Sequence;
       Attrs         : Sax.Attributes.Attributes'Class);
 
-   overriding procedure End_Element
+   overriding
+   procedure End_Element
      (Self          : in out Reader;
       Namespace_URI : Unicode.CES.Byte_Sequence;
       Local_Name    : Unicode.CES.Byte_Sequence;

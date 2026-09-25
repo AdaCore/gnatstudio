@@ -33,8 +33,8 @@ package GPS.Kernel.Search is
    end record;
 
    function Full
-      (Self : not null access Kernel_Search_Result)
-      return Gtk.Widget.Gtk_Widget is (null);
+     (Self : not null access Kernel_Search_Result) return Gtk.Widget.Gtk_Widget
+   is (null);
    --  Returns the full description for the result. This description might be
    --  displayed in a separate pane in the search popup. In most cases,
    --  GNAT Studio will not query or display this information at all.
@@ -46,8 +46,8 @@ package GPS.Kernel.Search is
    type Kernel_Search_Provider_Access is
      access all Kernel_Search_Provider'Class;
 
-   type On_Settings_Changed_Callback is access procedure
-     (Data : access Glib.Object.GObject_Record'Class);
+   type On_Settings_Changed_Callback is
+     access procedure (Data : access Glib.Object.GObject_Record'Class);
 
    procedure Register_Module (Self : not null access Kernel_Search_Provider)
    is null;
@@ -56,25 +56,27 @@ package GPS.Kernel.Search is
    --  search provider needs to store some global data in a module.
 
    procedure Edit_Settings
-     (Self : not null access Kernel_Search_Provider;
-      Box  : not null access Gtk.Box.Gtk_Box_Record'Class;
-      Data : not null access Glib.Object.GObject_Record'Class;
-      On_Change : On_Settings_Changed_Callback) is null;
+     (Self      : not null access Kernel_Search_Provider;
+      Box       : not null access Gtk.Box.Gtk_Box_Record'Class;
+      Data      : not null access Glib.Object.GObject_Record'Class;
+      On_Change : On_Settings_Changed_Callback)
+   is null;
    --  Add settings edition widgets to the box. Any change to the settings
    --  should result in a call to On_Change and pass Data as a parameter.
    --  For instance, each widget would connect its change callback to this, to
    --  ensure proper refresh of the completion entry.
 
    procedure Adjust_Score
-      (Self   : not null access Kernel_Search_Provider;
-       Result : not null access GPS.Search.Search_Result'Class);
+     (Self   : not null access Kernel_Search_Provider;
+      Result : not null access GPS.Search.Search_Result'Class);
    --  Adjust the score of Result, using various criteria. Among other
    --  things, this uses the list of most recent items selected for this
    --  provider so that they appear first
 
-   overriding procedure On_Result_Executed
-      (Self   : not null access Kernel_Search_Provider;
-       Result : not null access GPS.Search.Search_Result'Class);
+   overriding
+   procedure On_Result_Executed
+     (Self   : not null access Kernel_Search_Provider;
+      Result : not null access GPS.Search.Search_Result'Class);
    --  Change the list of recent items, after Result has been selected
    --  by the user.
 
@@ -103,8 +105,7 @@ package GPS.Kernel.Search is
    function Path_And_Name
      (Kernel  : Kernel_Handle;
       File    : Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type)
-      return String;
+      Project : GNATCOLL.Projects.Project_Type) return String;
    --  Return name and relative path of file if
    --  Key_Search_Displays_Relative_Paths is set and absolute path and name
    --  in other case.

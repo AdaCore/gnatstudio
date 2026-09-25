@@ -21,26 +21,26 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;           use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Vectors;
-with Ada.Exceptions;                    use Ada.Exceptions;
-with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
-with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with System.Address_Image;
-with System;                            use System;
+with System; use System;
 
-with GNAT.Debug_Utilities;              use GNAT.Debug_Utilities;
-with GNATCOLL.Mmap;                     use GNATCOLL.Mmap;
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with GNATCOLL.Scripts.Impl;             use GNATCOLL.Scripts.Impl;
-with GNATCOLL.Traces;                   use GNATCOLL.Traces;
-with GNATCOLL.Utils;                    use GNATCOLL.Utils;
+with GNAT.Debug_Utilities;  use GNAT.Debug_Utilities;
+with GNATCOLL.Mmap;         use GNATCOLL.Mmap;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNATCOLL.Scripts.Impl; use GNATCOLL.Scripts.Impl;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
 package body GNATCOLL.Scripts.Shell is
-   Me : constant Trace_Handle := Create ("SHELL_SCRIPT", Off);
+   Me     : constant Trace_Handle := Create ("SHELL_SCRIPT", Off);
    Me_Log : constant Trace_Handle := Create ("SCRIPTS.LOG", Off);
 
    Cst_Prefix : constant String := "@cst@";
@@ -61,13 +61,13 @@ package body GNATCOLL.Scripts.Shell is
    --  Return the string to display to report the instance in the shell
 
    function Instance_From_Name
-     (Script : access Shell_Scripting_Record'Class;
-      Name : String) return Class_Instance;
+     (Script : access Shell_Scripting_Record'Class; Name : String)
+      return Class_Instance;
    --  Opposite of Name_From_Instance
 
    function Instance_From_Address
-     (Script : access Shell_Scripting_Record'Class;
-      Add : System.Address) return Class_Instance;
+     (Script : access Shell_Scripting_Record'Class; Add : System.Address)
+      return Class_Instance;
    --  Return an instance from its address
 
    function Execute_GPS_Shell_Command
@@ -80,15 +80,14 @@ package body GNATCOLL.Scripts.Shell is
    --  If Errors is set to True on exit, then the return value is an error msg
 
    function Execute_GPS_Shell_Command
-     (Script  : access Shell_Scripting_Record'Class;
-      CL      : Arg_List;
-      Errors  : access Boolean) return String;
+     (Script : access Shell_Scripting_Record'Class;
+      CL     : Arg_List;
+      Errors : access Boolean) return String;
    --  Execute a command in the GPS shell and returns its result.
    --  Command must be a single command (no semicolon-separated list).
 
    procedure Module_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handles functions specific to the shell language
 
    ------------------------
@@ -96,20 +95,20 @@ package body GNATCOLL.Scripts.Shell is
    ------------------------
 
    function Nth_Arg
-     (Data    : Shell_Callback_Data;
-      N       : Positive;
-      Success : access Boolean) return String;
+     (Data : Shell_Callback_Data; N : Positive; Success : access Boolean)
+      return String;
    function Nth_Arg
-     (Data    : Shell_Callback_Data;
-      N       : Positive;
-      Success : access Boolean) return Unbounded_String;
+     (Data : Shell_Callback_Data; N : Positive; Success : access Boolean)
+      return Unbounded_String;
    function Nth_Arg
-     (Data    : Shell_Callback_Data;
-      N       : Positive;
-      Success : access Boolean) return Subprogram_Type;
+     (Data : Shell_Callback_Data; N : Positive; Success : access Boolean)
+      return Subprogram_Type;
    function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive; Class : Class_Type;
-      Allow_Null : Boolean; Success : access Boolean) return Class_Instance;
+     (Data       : Shell_Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
+      Allow_Null : Boolean;
+      Success    : access Boolean) return Class_Instance;
    --  These functions are called by the overridden Nth_Arg functions. They try
    --  to return the parameter at the location N. If no parameter is found,
    --  Success is false, true otherwise. It's the responsibility of the
@@ -120,7 +119,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Block_Commands --
    --------------------
 
-   overriding procedure Block_Commands
+   overriding
+   procedure Block_Commands
      (Script : access Shell_Scripting_Record; Block : Boolean) is
    begin
       Script.Blocked := Block;
@@ -133,8 +133,11 @@ package body GNATCOLL.Scripts.Shell is
    function Name_From_Instance
      (Instance : access Class_Instance_Record'Class) return String is
    begin
-      return '<' & Get_Name (Shell_Class_Instance (Instance).Class)
-        & "_0x" & System.Address_Image (Instance.all'Address)
+      return
+        '<'
+        & Get_Name (Shell_Class_Instance (Instance).Class)
+        & "_0x"
+        & System.Address_Image (Instance.all'Address)
         & '>';
    end Name_From_Instance;
 
@@ -143,8 +146,8 @@ package body GNATCOLL.Scripts.Shell is
    ------------------------
 
    function Instance_From_Name
-     (Script : access Shell_Scripting_Record'Class;
-      Name   : String) return Class_Instance
+     (Script : access Shell_Scripting_Record'Class; Name : String)
+      return Class_Instance
    is
       Index : Natural := Name'First;
    begin
@@ -152,14 +155,14 @@ package body GNATCOLL.Scripts.Shell is
          return No_Class_Instance;
       end if;
 
-      while Index <= Name'Last - 3
-        and then Name (Index .. Index + 2) /= "_0x"
+      while Index <= Name'Last - 3 and then Name (Index .. Index + 2) /= "_0x"
       loop
          Index := Index + 1;
       end loop;
 
-      return Instance_From_Address
-        (Script, Value ("16#" & Name (Index + 3 .. Name'Last - 1) & "#"));
+      return
+        Instance_From_Address
+          (Script, Value ("16#" & Name (Index + 3 .. Name'Last - 1) & "#"));
 
    exception
       when others =>
@@ -172,8 +175,8 @@ package body GNATCOLL.Scripts.Shell is
    ---------------------------
 
    function Instance_From_Address
-     (Script : access Shell_Scripting_Record'Class;
-      Add    : System.Address) return Class_Instance
+     (Script : access Shell_Scripting_Record'Class; Add : System.Address)
+      return Class_Instance
    is
       L : Instances_List.Cursor := First (Script.Instances);
    begin
@@ -191,9 +194,10 @@ package body GNATCOLL.Scripts.Shell is
    -- Is_Subclass --
    -----------------
 
-   overriding function Is_Subclass
-     (Instance : access Shell_Class_Instance_Record;
-      Base     : String) return Boolean
+   overriding
+   function Is_Subclass
+     (Instance : access Shell_Class_Instance_Record; Base : String)
+      return Boolean
    is
       pragma Unreferenced (Instance, Base);
    begin
@@ -205,35 +209,43 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Property --
    ------------------
 
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (Instance : access Shell_Class_Instance_Record;
-      Name : String; Value : Integer) is
+      Name     : String;
+      Value    : Integer) is
    begin
       --  We can only retrieve string constants later on, so convert here
       Set_Data
         (Instance, Cst_Prefix & Name, Create_Property (Image (Value, 0)));
    end Set_Property;
 
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (Instance : access Shell_Class_Instance_Record;
-      Name : String; Value : Float) is
+      Name     : String;
+      Value    : Float) is
    begin
       --  We can only retrieve string constants later on, so convert here
       Set_Data
         (Instance, Cst_Prefix & Name, Create_Property (Float'Image (Value)));
    end Set_Property;
 
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (Instance : access Shell_Class_Instance_Record;
-      Name : String; Value : Boolean) is
+      Name     : String;
+      Value    : Boolean) is
    begin
       Set_Data
         (Instance, Cst_Prefix & Name, Create_Property (Boolean'Image (Value)));
    end Set_Property;
 
-   overriding procedure Set_Property
+   overriding
+   procedure Set_Property
      (Instance : access Shell_Class_Instance_Record;
-      Name : String; Value : String) is
+      Name     : String;
+      Value    : String) is
    begin
       Set_Data (Instance, Cst_Prefix & Name, Create_Property (Value));
    end Set_Property;
@@ -242,8 +254,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Name_Parameters --
    ---------------------
 
-   overriding procedure Name_Parameters
-     (Data  : in out Shell_Callback_Data; Names : Cst_Argument_List)
+   overriding
+   procedure Name_Parameters
+     (Data : in out Shell_Callback_Data; Names : Cst_Argument_List)
    is
       pragma Unreferenced (Data, Names);
    begin
@@ -255,9 +268,7 @@ package body GNATCOLL.Scripts.Shell is
    ----------------------------
 
    procedure Module_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
-   is
+     (Data : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "load" then
          declare
@@ -272,7 +283,7 @@ package body GNATCOLL.Scripts.Shell is
                Ignored : constant String :=
                  Execute_GPS_Shell_Command
                    (Shell_Scripting (Get_Script (Data)),
-                    String (GNATCOLL.Mmap.Data (File)(1 .. Last (File))),
+                    String (GNATCOLL.Mmap.Data (File) (1 .. Last (File))),
                     Errors'Access);
                pragma Unreferenced (Ignored);
             begin
@@ -280,8 +291,7 @@ package body GNATCOLL.Scripts.Shell is
             end;
          exception
             when Name_Error =>
-               Set_Error_Msg
-                 (Data, "File not found: """ & Filename & '"');
+               Set_Error_Msg (Data, "File not found: """ & Filename & '"');
          end;
 
       elsif Command = "echo" or else Command = "echo_error" then
@@ -297,12 +307,10 @@ package body GNATCOLL.Scripts.Shell is
 
             if Command = "echo" then
                Insert_Text
-                 (Get_Script (Data),
-                  Txt => To_String (Result) & ASCII.LF);
+                 (Get_Script (Data), Txt => To_String (Result) & ASCII.LF);
             else
                Insert_Error
-                 (Get_Script (Data),
-                  Txt => To_String (Result) & ASCII.LF);
+                 (Get_Script (Data), Txt => To_String (Result) & ASCII.LF);
             end if;
          end;
 
@@ -316,13 +324,13 @@ package body GNATCOLL.Scripts.Shell is
    ----------------
 
    procedure Initialize
-     (Data            : in out Shell_Callback_Data'Class;
-      Script          : access Shell_Scripting_Record'Class) is
+     (Data   : in out Shell_Callback_Data'Class;
+      Script : access Shell_Scripting_Record'Class) is
    begin
-      Data.Script          := Shell_Scripting (Script);
-      Data.Return_Value    := null;
-      Data.Return_Dict     := null;
-      Data.Return_As_List  := False;
+      Data.Script := Shell_Scripting (Script);
+      Data.Return_Value := null;
+      Data.Return_Dict := null;
+      Data.Return_As_List := False;
       Data.Return_As_Error := False;
    end Initialize;
 
@@ -331,8 +339,7 @@ package body GNATCOLL.Scripts.Shell is
    ------------------------------
 
    procedure Register_Shell_Scripting
-     (Repo   : Scripts_Repository;
-      Script : Shell_Scripting := null)
+     (Repo : Scripts_Repository; Script : Shell_Scripting := null)
    is
       S : Shell_Scripting;
    begin
@@ -346,27 +353,31 @@ package body GNATCOLL.Scripts.Shell is
       Register_Scripting_Language (Repo, S);
 
       Register_Command
-        (Repo, "load",
+        (Repo,
+         "load",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Module_Command_Handler'Access,
          Language     => Shell_Name);
       Register_Command
-        (Repo, "echo",
+        (Repo,
+         "echo",
          Minimum_Args => 0,
          Maximum_Args => Natural'Last,
          Handler      => Module_Command_Handler'Access,
          Language     => Shell_Name);
       Register_Command
-        (Repo, "echo_error",
+        (Repo,
+         "echo_error",
          Minimum_Args => 0,
          Maximum_Args => Natural'Last,
          Handler      => Module_Command_Handler'Access,
          Language     => Shell_Name);
       Register_Command
-        (Repo, "clear_cache",
-         Handler => Module_Command_Handler'Access,
-         Language     => Shell_Name);
+        (Repo,
+         "clear_cache",
+         Handler  => Module_Command_Handler'Access,
+         Language => Shell_Name);
    end Register_Shell_Scripting;
 
    -------------------
@@ -377,8 +388,8 @@ package body GNATCOLL.Scripts.Shell is
      (Script  : access Shell_Scripting_Record'Class;
       Console : Virtual_Console := null)
    is
-      package Command_List is
-        new Ada.Containers.Indefinite_Vectors (Positive, String);
+      package Command_List is new
+        Ada.Containers.Indefinite_Vectors (Positive, String);
 
       package Ascending is new Command_List.Generic_Sorting ("<");
 
@@ -405,8 +416,7 @@ package body GNATCOLL.Scripts.Shell is
          C : Command_List.Cursor := V.First;
       begin
          while Command_List.Has_Element (C) loop
-            Insert_Text
-              (Script, Console, Command_List.Element (C) & ASCII.LF);
+            Insert_Text (Script, Console, Command_List.Element (C) & ASCII.LF);
             Command_List.Next (C);
          end loop;
       end;
@@ -416,9 +426,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Register_Property --
    -----------------------
 
-   overriding procedure Register_Property
-     (Script : access Shell_Scripting_Record;
-      Prop   : Property_Descr_Access)
+   overriding
+   procedure Register_Property
+     (Script : access Shell_Scripting_Record; Prop : Property_Descr_Access)
    is
       pragma Unreferenced (Script, Prop);
    begin
@@ -430,9 +440,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Register_Command --
    ----------------------
 
-   overriding procedure Register_Command
-     (Script  : access Shell_Scripting_Record;
-      Command : Command_Descr_Access)
+   overriding
+   procedure Register_Command
+     (Script : access Shell_Scripting_Record; Command : Command_Descr_Access)
    is
       Cmd    : GNAT.Strings.String_Access;
       Info_C : Command_Hash.Cursor;
@@ -450,9 +460,9 @@ package body GNATCOLL.Scripts.Shell is
             Cmd := new String'(Get_Name (Command.Class) & ".__delete");
 
          else
-            Cmd := new String'
-              (Get_Name (Command.Class) & "." & Command.Command);
-            --  First parameter is always the instance
+            Cmd :=
+              new String'(Get_Name (Command.Class) & "." & Command.Command);
+         --  First parameter is always the instance
          end if;
       else
          Cmd := new String'(Command.Command);
@@ -466,9 +476,7 @@ package body GNATCOLL.Scripts.Shell is
          raise Program_Error with "Command already registered " & Cmd.all;
 
       else
-         Info := new Command_Information'
-           (Command => Cmd,
-            Cmd     => Command);
+         Info := new Command_Information'(Command => Cmd, Cmd => Command);
          Include (Script.Commands_List, Cmd.all, Info);
       end if;
    end Register_Command;
@@ -477,7 +485,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Register_Class --
    --------------------
 
-   overriding procedure Register_Class
+   overriding
+   procedure Register_Class
      (Script : access Shell_Scripting_Record;
       Name   : String;
       Base   : Class_Type := No_Class;
@@ -493,7 +502,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Display_Prompt --
    --------------------
 
-   overriding procedure Display_Prompt
+   overriding
+   procedure Display_Prompt
      (Script  : access Shell_Scripting_Record;
       Console : Virtual_Console := null) is
    begin
@@ -504,8 +514,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_Prompt --
    ----------------
 
-   overriding function Get_Prompt
-     (Script : access Shell_Scripting_Record) return String is
+   overriding
+   function Get_Prompt (Script : access Shell_Scripting_Record) return String
+   is
    begin
       return Script.Prompt.all;
    end Get_Prompt;
@@ -514,7 +525,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Complete --
    --------------
 
-   overriding procedure Complete
+   overriding
+   procedure Complete
      (Script      : access Shell_Scripting_Record;
       Input       : String;
       Completions : out String_Lists.List)
@@ -547,7 +559,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute_Command --
    ---------------------
 
-   overriding procedure Execute_Command
+   overriding
+   procedure Execute_Command
      (Script       : access Shell_Scripting_Record;
       CL           : Arg_List;
       Console      : Virtual_Console := null;
@@ -565,8 +578,7 @@ package body GNATCOLL.Scripts.Shell is
 
       declare
          S : constant String :=
-               Execute_GPS_Shell_Command
-                 (Script, CL, Err'Unchecked_Access);
+           Execute_GPS_Shell_Command (Script, CL, Err'Unchecked_Access);
       begin
          Errors := Err;
          if S /= "" then
@@ -589,21 +601,21 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute_Command_With_Args --
    -------------------------------
 
-   overriding function Execute_Command_With_Args
-     (Script  : access Shell_Scripting_Record;
-      CL      : Arg_List) return String
+   overriding
+   function Execute_Command_With_Args
+     (Script : access Shell_Scripting_Record; CL : Arg_List) return String
    is
       Errors : aliased Boolean;
    begin
-      return Execute_GPS_Shell_Command
-        (Script, CL, Errors'Unchecked_Access);
+      return Execute_GPS_Shell_Command (Script, CL, Errors'Unchecked_Access);
    end Execute_Command_With_Args;
 
    ------------------
    -- Execute_File --
    ------------------
 
-   overriding procedure Execute_File
+   overriding
+   procedure Execute_File
      (Script       : access Shell_Scripting_Record;
       Filename     : String;
       Console      : Virtual_Console := null;
@@ -627,8 +639,8 @@ package body GNATCOLL.Scripts.Shell is
       end if;
 
       declare
-         S : constant String := Execute_GPS_Shell_Command
-           (Script, CL, Err'Unchecked_Access);
+         S : constant String :=
+           Execute_GPS_Shell_Command (Script, CL, Err'Unchecked_Access);
       begin
          Errors := Err;
          if S /= "" and then not Hide_Output then
@@ -647,8 +659,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Script : access Shell_Scripting_Record) return String is
+   overriding
+   function Get_Name (Script : access Shell_Scripting_Record) return String is
       pragma Unreferenced (Script);
    begin
       return Shell_Name;
@@ -659,8 +671,10 @@ package body GNATCOLL.Scripts.Shell is
    ----------
 
    procedure Free (Com : in out Command_Information_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Command_Information, Command_Information_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Command_Information,
+           Command_Information_Access);
    begin
       Free (Com.Command);
       Unchecked_Free (Com);
@@ -670,8 +684,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Free_Internal_Data --
    ------------------------
 
-   procedure Free_Internal_Data
-     (Script : access Shell_Scripting_Record'Class) is
+   procedure Free_Internal_Data (Script : access Shell_Scripting_Record'Class)
+   is
    begin
       for R in Script.Returns'Range loop
          Free (Script.Returns (R));
@@ -684,9 +698,10 @@ package body GNATCOLL.Scripts.Shell is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Script : access Shell_Scripting_Record) is
-      C    : Command_Hash.Cursor;
-      Com  : Command_Information_Access;
+   overriding
+   procedure Destroy (Script : access Shell_Scripting_Record) is
+      C   : Command_Hash.Cursor;
+      Com : Command_Information_Access;
    begin
       Free_Internal_Data (Script);
       Free (Script.Prompt);
@@ -707,8 +722,7 @@ package body GNATCOLL.Scripts.Shell is
    ----------------
 
    procedure Set_Prompt
-     (Script : access Shell_Scripting_Record'Class;
-      Prompt : String) is
+     (Script : access Shell_Scripting_Record'Class; Prompt : String) is
    begin
       Free (Script.Prompt);
       Script.Prompt := new String'(Prompt);
@@ -718,7 +732,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute_Command --
    ---------------------
 
-   overriding function Execute_Command
+   overriding
+   function Execute_Command
      (Script       : access Shell_Scripting_Record;
       CL           : Arg_List;
       Console      : Virtual_Console := null;
@@ -734,8 +749,8 @@ package body GNATCOLL.Scripts.Shell is
          Script.Console := Console;
       end if;
       declare
-         Result : constant String := Execute_GPS_Shell_Command
-           (Script, CL, Err'Unchecked_Access);
+         Result : constant String :=
+           Execute_GPS_Shell_Command (Script, CL, Err'Unchecked_Access);
       begin
          Errors.all := Err;
          if Result /= "" and then not Hide_Output then
@@ -755,7 +770,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute_Command --
    ---------------------
 
-   overriding function Execute_Command
+   overriding
+   function Execute_Command
      (Script      : access Shell_Scripting_Record;
       CL          : Arg_List;
       Console     : Virtual_Console := null;
@@ -770,9 +786,10 @@ package body GNATCOLL.Scripts.Shell is
       end if;
 
       declare
-         Result : constant String := Trim
-           (Execute_GPS_Shell_Command (Script, CL, Err'Unchecked_Access),
-            Ada.Strings.Both);
+         Result : constant String :=
+           Trim
+             (Execute_GPS_Shell_Command (Script, CL, Err'Unchecked_Access),
+              Ada.Strings.Both);
       begin
          Errors.all := Err;
 
@@ -795,9 +812,9 @@ package body GNATCOLL.Scripts.Shell is
    -------------------------------
 
    function Execute_GPS_Shell_Command
-     (Script  : access Shell_Scripting_Record'Class;
-      CL      : Arg_List;
-      Errors  : access Boolean) return String
+     (Script : access Shell_Scripting_Record'Class;
+      CL     : Arg_List;
+      Errors : access Boolean) return String
    is
       Data_C   : Command_Hash.Cursor;
       Data     : Command_Information_Access;
@@ -805,8 +822,8 @@ package body GNATCOLL.Scripts.Shell is
       Min, Max : Natural;
       Found    : Boolean;
 
-      Count    : Natural;
-      Command  : constant String := Get_Command (CL);
+      Count   : Natural;
+      Command : constant String := Get_Command (CL);
    begin
       Errors.all := False;
 
@@ -819,8 +836,12 @@ package body GNATCOLL.Scripts.Shell is
       end if;
 
       if Active (Me) then
-         Trace (Me, "Executing " & To_Display_String (CL)
-                & " blocked=" & Script.Blocked'Img);
+         Trace
+           (Me,
+            "Executing "
+            & To_Display_String (CL)
+            & " blocked="
+            & Script.Blocked'Img);
       end if;
 
       if Script.Blocked then
@@ -829,8 +850,9 @@ package body GNATCOLL.Scripts.Shell is
       end if;
 
       if Active (Me_Log) then
-         Trace (Me_Log,
-                "Executing " & To_Display_String (CL, Max_Arg_Length => 100));
+         Trace
+           (Me_Log,
+            "Executing " & To_Display_String (CL, Max_Arg_Length => 100));
       end if;
 
       --  Special case: access to instance constants
@@ -870,7 +892,7 @@ package body GNATCOLL.Scripts.Shell is
 
             declare
                Callback : Shell_Callback_Data'Class :=
-                            Shell_Callback_Data'Class (Create (Script, Count));
+                 Shell_Callback_Data'Class (Create (Script, Count));
                --  The call above allocates Callback.Args, no need to do that
                --  below
             begin
@@ -878,8 +900,7 @@ package body GNATCOLL.Scripts.Shell is
 
                Callback.CL := Create ("");
 
-               if Data /= null
-                 and then Data.Cmd.Command = Constructor_Method
+               if Data /= null and then Data.Cmd.Command = Constructor_Method
                then
                   Instance := New_Instance (Callback.Script, Data.Cmd.Class);
                   Append_Argument
@@ -892,14 +913,14 @@ package body GNATCOLL.Scripts.Shell is
                   declare
                      Args_A : constant String := Nth_Arg (CL, A);
                   begin
-                     if Args_A'Length > 0
-                       and then Args_A (Args_A'First) = '%'
+                     if Args_A'Length > 0 and then Args_A (Args_A'First) = '%'
                      then
                         declare
                            Num : Integer;
                         begin
-                           Num := Integer'Value
-                             (Args_A (Args_A'First + 1 .. Args_A'Last));
+                           Num :=
+                             Integer'Value
+                               (Args_A (Args_A'First + 1 .. Args_A'Last));
                            Append_Argument
                              (Callback.CL,
                               Script.Returns
@@ -925,34 +946,38 @@ package body GNATCOLL.Scripts.Shell is
 
                   declare
                      Prop : constant Instance_Property :=
-                              Get_Data
-                                (Instance,
-                                 Cst_Prefix
-                                 & Command
-                                   (Command'First + 1 .. Command'Last));
+                       Get_Data
+                         (Instance,
+                          Cst_Prefix
+                          & Command (Command'First + 1 .. Command'Last));
                      P    : Property_Descr_Access;
                   begin
                      if Prop /= null then
                         Trace (Me, "A simple property");
                         if Number_Of_Arguments (Callback) = 2 then
                            Errors.all := True;
-                           return "Property is read-only: "
+                           return
+                             "Property is read-only: "
                              & Command (Command'First + 1 .. Command'Last);
                         end if;
 
                         Set_Return_Value (Callback, As_String (Prop.all));
 
                      else
-                        Trace (Me, "A setter/getter property args="
-                               & Number_Of_Arguments (Callback)'Img);
+                        Trace
+                          (Me,
+                           "A setter/getter property args="
+                           & Number_Of_Arguments (Callback)'Img);
                         --  Does this correspond to a setter/getter property ?
 
                         P := Script.Repo.Properties;
                         while P /= null loop
-                           exit when P.Class =
-                             Shell_Class_Instance (Get_CIR (Instance)).Class
-                             and then P.Name =
-                               Command (Command'First + 1 .. Command'Last);
+                           exit when
+                             P.Class
+                             = Shell_Class_Instance (Get_CIR (Instance)).Class
+                             and then
+                               P.Name
+                               = Command (Command'First + 1 .. Command'Last);
                            P := P.Next;
                         end loop;
 
@@ -965,22 +990,24 @@ package body GNATCOLL.Scripts.Shell is
                            if P.Getter = null then
                               Trace (Me, "Property is read-only");
                               Errors.all := True;
-                              return "Property is write-only: "
+                              return
+                                "Property is write-only: "
                                 & Command (Command'First + 1 .. Command'Last);
                            end if;
 
                            P.Getter (Callback, P.Name);
-                           --  Already set the return value, nothing else to do
+                        --  Already set the return value, nothing else to do
 
                         else
                            if P.Setter = null then
                               Errors.all := True;
-                              return "Property is read-only: "
+                              return
+                                "Property is read-only: "
                                 & Command (Command'First + 1 .. Command'Last);
                            end if;
 
                            P.Setter (Callback, P.Name);
-                           --  Already set the value, nothing else to do
+                        --  Already set the value, nothing else to do
                         end if;
                      end if;
                   end;
@@ -1006,7 +1033,7 @@ package body GNATCOLL.Scripts.Shell is
                   if Callback.Return_Dict /= null then
                      Free (Callback.Return_Value);
                      Callback.Return_Value := Callback.Return_Dict;
-                     Callback.Return_Dict  := null;
+                     Callback.Return_Dict := null;
                   end if;
                end if;
 
@@ -1061,8 +1088,8 @@ package body GNATCOLL.Scripts.Shell is
       Command : String;
       Errors  : access Boolean) return String
    is
-      CL            : Arg_List;
-      First, Last   : Integer;
+      CL          : Arg_List;
+      First, Last : Integer;
 
       Quoted        : Boolean;
       Triple_Quoted : Boolean;
@@ -1073,8 +1100,8 @@ package body GNATCOLL.Scripts.Shell is
          First := Command'First;
          while First <= Command'Last loop
             while First <= Command'Last
-              and then (Command (First) = ' '
-                        or else Command (First) = ASCII.HT)
+              and then
+                (Command (First) = ' ' or else Command (First) = ASCII.HT)
             loop
                First := First + 1;
             end loop;
@@ -1090,10 +1117,11 @@ package body GNATCOLL.Scripts.Shell is
             --  Search until the beginning of the next command (separated by
             --  semicolon or newline).
             while Last <= Command'Last loop
-               exit when not Quoted
+               exit when
+                 not Quoted
                  and then not Triple_Quoted
-                 and then (Command (Last) = ';'
-                           or else Command (Last) = ASCII.LF);
+                 and then
+                   (Command (Last) = ';' or else Command (Last) = ASCII.LF);
 
                if Command (Last) = '"' then
                   if Last <= Command'Last - 2
@@ -1106,9 +1134,7 @@ package body GNATCOLL.Scripts.Shell is
                      Quoted := not Quoted;
                   end if;
 
-               elsif Command (Last) = '\'
-                 and then Last < Command'Last
-               then
+               elsif Command (Last) = '\' and then Last < Command'Last then
                   Last := Last + 1;
                end if;
 
@@ -1116,20 +1142,22 @@ package body GNATCOLL.Scripts.Shell is
             end loop;
 
             if Last - 1 >= First then
-               CL := Parse_String (Command (First .. Last - 1),
-                                   Command_Line_Treatment (Script));
+               CL :=
+                 Parse_String
+                   (Command (First .. Last - 1),
+                    Command_Line_Treatment (Script));
 
                if CL = Empty_Command_Line then
                   Errors.all := True;
-                  return "Couldn't parse argument string for "
+                  return
+                    "Couldn't parse argument string for "
                     & Command (First .. Last - 1);
 
                else
                   declare
-                     R : constant String := Execute_GPS_Shell_Command
-                       (Script,
-                        CL      => CL,
-                        Errors  => Errors);
+                     R : constant String :=
+                       Execute_GPS_Shell_Command
+                         (Script, CL => CL, Errors => Errors);
                   begin
                      if Last > Command'Last then
                         return R;
@@ -1149,8 +1177,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_Script --
    ----------------
 
-   overriding function Get_Script
-     (Data : Shell_Callback_Data) return Scripting_Language is
+   overriding
+   function Get_Script (Data : Shell_Callback_Data) return Scripting_Language
+   is
    begin
       return Scripting_Language (Data.Script);
    end Get_Script;
@@ -1159,7 +1188,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_Repository --
    --------------------
 
-   overriding function Get_Repository
+   overriding
+   function Get_Repository
      (Script : access Shell_Scripting_Record) return Scripts_Repository is
    begin
       return Script.Repo;
@@ -1169,7 +1199,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Current_Script --
    --------------------
 
-   overriding function Current_Script
+   overriding
+   function Current_Script
      (Script : access Shell_Scripting_Record) return String
    is
       pragma Unreferenced (Script);
@@ -1181,8 +1212,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Number_Of_Arguments --
    -------------------------
 
-   overriding function Number_Of_Arguments
-     (Data : Shell_Callback_Data) return Natural is
+   overriding
+   function Number_Of_Arguments (Data : Shell_Callback_Data) return Natural is
    begin
       return Args_Length (Data.CL);
    end Number_Of_Arguments;
@@ -1191,7 +1222,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Free --
    ----------
 
-   overriding procedure Free (Data : in out Shell_Callback_Data) is
+   overriding
+   procedure Free (Data : in out Shell_Callback_Data) is
    begin
       Free (Data.Return_Value);
       Free (Data.Return_Dict);
@@ -1201,40 +1233,44 @@ package body GNATCOLL.Scripts.Shell is
    -- Clone --
    -----------
 
-   overriding function Clone
-     (Data : Shell_Callback_Data) return Callback_Data'Class is
+   overriding
+   function Clone (Data : Shell_Callback_Data) return Callback_Data'Class is
       New_CL : Arg_List := Create (Get_Command (Data.CL));
    begin
       for A in 1 .. Args_Length (Data.CL) loop
          Append_Argument (New_CL, Nth_Arg (Data.CL, A), One_Arg);
       end loop;
 
-      return Shell_Callback_Data'
-        (Callback_Data with
-         CL              => New_CL,
-         Script          => Data.Script,
-         Return_Value    => null,
-         Return_Dict     => null,
-         Return_As_List  => False,
-         Return_As_Error => False);
+      return
+        Shell_Callback_Data'
+          (Callback_Data
+           with
+             CL              => New_CL,
+             Script          => Data.Script,
+             Return_Value    => null,
+             Return_Dict     => null,
+             Return_As_List  => False,
+             Return_As_Error => False);
    end Clone;
 
    ------------
    -- Create --
    ------------
 
-   overriding function Create
-     (Script          : access Shell_Scripting_Record;
-      Arguments_Count : Natural) return Callback_Data'Class
+   overriding
+   function Create
+     (Script : access Shell_Scripting_Record; Arguments_Count : Natural)
+      return Callback_Data'Class
    is
       Data : constant Shell_Callback_Data :=
-               (Callback_Data with
-                Script          => Shell_Scripting (Script),
-                CL              => Empty_Command_Line,
-                Return_Value    => null,
-                Return_Dict     => null,
-                Return_As_List  => False,
-                Return_As_Error => False);
+        (Callback_Data
+         with
+           Script          => Shell_Scripting (Script),
+           CL              => Empty_Command_Line,
+           Return_Value    => null,
+           Return_Dict     => null,
+           Return_As_List  => False,
+           Return_As_Error => False);
       pragma Unreferenced (Arguments_Count);
    begin
       return Data;
@@ -1244,20 +1280,21 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Nth_Arg --
    -----------------
 
-   overriding procedure Set_Nth_Arg
+   overriding
+   procedure Set_Nth_Arg
      (Data : in out Shell_Callback_Data; N : Positive; Value : Subprogram_Type)
    is
    begin
       Set_Nth_Arg
-        (Data.CL, N,
-         Shell_Subprogram_Record (Value.all).Command.all);
+        (Data.CL, N, Shell_Subprogram_Record (Value.all).Command.all);
    end Set_Nth_Arg;
 
    -----------------
    -- Set_Nth_Arg --
    -----------------
 
-   overriding procedure Set_Nth_Arg
+   overriding
+   procedure Set_Nth_Arg
      (Data : in out Shell_Callback_Data; N : Positive; Value : String) is
    begin
       Set_Nth_Arg (Data.CL, N, Value);
@@ -1267,7 +1304,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Nth_Arg --
    -----------------
 
-   overriding procedure Set_Nth_Arg
+   overriding
+   procedure Set_Nth_Arg
      (Data : in out Shell_Callback_Data; N : Positive; Value : Integer) is
    begin
       Set_Nth_Arg (Data.CL, N, Integer'Image (Value));
@@ -1277,7 +1315,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Nth_Arg --
    -----------------
 
-   overriding procedure Set_Nth_Arg
+   overriding
+   procedure Set_Nth_Arg
      (Data : in out Shell_Callback_Data; N : Positive; Value : Float) is
    begin
       Set_Nth_Arg (Data.CL, N, Float'Image (Value));
@@ -1287,7 +1326,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Nth_Arg --
    -----------------
 
-   overriding procedure Set_Nth_Arg
+   overriding
+   procedure Set_Nth_Arg
      (Data : in out Shell_Callback_Data; N : Positive; Value : Boolean) is
    begin
       Set_Nth_Arg (Data.CL, N, Boolean'Image (Value));
@@ -1297,9 +1337,10 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Nth_Arg --
    -----------------
 
-   overriding procedure Set_Nth_Arg
-     (Data : in out Shell_Callback_Data;
-      N : Positive; Value : Class_Instance) is
+   overriding
+   procedure Set_Nth_Arg
+     (Data : in out Shell_Callback_Data; N : Positive; Value : Class_Instance)
+   is
    begin
       Set_Nth_Arg (Data.CL, N, Name_From_Instance (Get_CIR (Value)));
    end Set_Nth_Arg;
@@ -1308,9 +1349,10 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Nth_Arg --
    -----------------
 
-   overriding procedure Set_Nth_Arg
-     (Data : in out Shell_Callback_Data;
-      N : Positive; Value : List_Instance) is
+   overriding
+   procedure Set_Nth_Arg
+     (Data : in out Shell_Callback_Data; N : Positive; Value : List_Instance)
+   is
    begin
       Set_Nth_Arg
         (Data.CL, N, '(' & Get_Command (Shell_Callback_Data (Value).CL) & ')');
@@ -1320,9 +1362,9 @@ package body GNATCOLL.Scripts.Shell is
    -- New_List --
    --------------
 
-   overriding function New_List
-     (Script : access Shell_Scripting_Record;
-      Class  : Class_Type := No_Class)
+   overriding
+   function New_List
+     (Script : access Shell_Scripting_Record; Class : Class_Type := No_Class)
       return List_Instance'Class
    is
       pragma Unreferenced (Class);
@@ -1337,9 +1379,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive)
-      return List_Instance'Class
+   overriding
+   function Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive) return List_Instance'Class
    is
       List : Shell_Callback_Data;
    begin
@@ -1347,6 +1389,7 @@ package body GNATCOLL.Scripts.Shell is
 
       if N > Args_Length (Data.CL) then
          List.CL := Empty_Command_Line;  --  An empty list
+
       else
          List.CL := Parse_String (Nth_Arg (Data.CL, N), Separate_Args);
       end if;
@@ -1358,7 +1401,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
+   overriding
+   function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive)
       return Dictionary_Instance'Class is
    begin
@@ -1372,8 +1416,7 @@ package body GNATCOLL.Scripts.Shell is
 
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive; Success : access Boolean)
-      return String
-   is
+      return String is
    begin
       if N > Args_Length (Data.CL) then
          Success.all := False;
@@ -1389,9 +1432,8 @@ package body GNATCOLL.Scripts.Shell is
    -------------
 
    function Nth_Arg
-     (Data    : Shell_Callback_Data;
-      N       : Positive;
-      Success : access Boolean) return Unbounded_String is
+     (Data : Shell_Callback_Data; N : Positive; Success : access Boolean)
+      return Unbounded_String is
    begin
       if N > Args_Length (Data.CL) then
          Success.all := False;
@@ -1427,8 +1469,8 @@ package body GNATCOLL.Scripts.Shell is
       end if;
 
       if Ins = No_Class_Instance
-        or else (Class /= Any_Class
-                 and then not Is_Subclass (Ins, Get_Name (Class)))
+        or else
+          (Class /= Any_Class and then not Is_Subclass (Ins, Get_Name (Class)))
       then
          raise Invalid_Parameter;
       else
@@ -1441,19 +1483,18 @@ package body GNATCOLL.Scripts.Shell is
    -------------
 
    function Nth_Arg
-     (Data    : Shell_Callback_Data;
-      N       : Positive;
-      Success : access Boolean) return Subprogram_Type
+     (Data : Shell_Callback_Data; N : Positive; Success : access Boolean)
+      return Subprogram_Type
    is
       Name : constant String := Nth_Arg (Data, N, Success);
    begin
       if not Success.all then
          return null;
       else
-         return new Shell_Subprogram_Record'
-           (Subprogram_Record with
-            Script  => Get_Script (Data),
-            Command => new String'(Name));
+         return
+           new Shell_Subprogram_Record'
+             (Subprogram_Record
+              with Script => Get_Script (Data), Command => new String'(Name));
       end if;
    end Nth_Arg;
 
@@ -1461,8 +1502,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive) return Boolean
+   overriding
+   function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Boolean
    is
       Success : aliased Boolean;
       S       : constant String := Nth_Arg (Data, N, Success'Access);
@@ -1481,8 +1522,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive) return Integer
+   overriding
+   function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Integer
    is
       Success : aliased Boolean;
       S       : constant String := Nth_Arg (Data, N, Success'Access);
@@ -1501,9 +1542,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive) return Float
-   is
+   overriding
+   function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Float is
       Success : aliased Boolean;
       S       : constant String := Nth_Arg (Data, N, Success'Access);
    begin
@@ -1521,9 +1561,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive) return String
-   is
+   overriding
+   function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return String is
       Success : aliased Boolean;
       Result  : constant String := Nth_Arg (Data, N, Success'Access);
    begin
@@ -1538,7 +1577,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
+   overriding
+   function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return Unbounded_String
    is
       Success : aliased Boolean;
@@ -1555,7 +1595,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
+   overriding
+   function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return Subprogram_Type
    is
       Success : aliased Boolean;
@@ -1572,13 +1613,16 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive; Class : Class_Type;
+   overriding
+   function Nth_Arg
+     (Data       : Shell_Callback_Data;
+      N          : Positive;
+      Class      : Class_Type;
       Allow_Null : Boolean := False) return Class_Instance
    is
       Success : aliased Boolean;
-      Result  : constant Class_Instance := Nth_Arg
-        (Data, N, Class, Allow_Null, Success'Access);
+      Result  : constant Class_Instance :=
+        Nth_Arg (Data, N, Class, Allow_Null, Success'Access);
    begin
       if not Success then
          raise No_Such_Parameter;
@@ -1591,9 +1635,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive; Default : String)
-      return String
+   overriding
+   function Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Default : String) return String
    is
       Success : aliased Boolean;
       Result  : constant String := Nth_Arg (Data, N, Success'Access);
@@ -1609,7 +1653,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
+   overriding
+   function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive; Default : Integer)
       return Integer
    is
@@ -1627,9 +1672,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data : Shell_Callback_Data; N : Positive; Default : Float)
-      return Float
+   overriding
+   function Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Default : Float) return Float
    is
       Success : aliased Boolean;
       Result  : constant String := Nth_Arg (Data, N, Success'Access);
@@ -1645,7 +1690,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
+   overriding
+   function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive; Default : Boolean)
       return Boolean
    is
@@ -1663,16 +1709,17 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data    : Shell_Callback_Data;
-      N       : Positive;
-      Class   : Class_Type := Any_Class;
-      Default : Class_Instance;
+   overriding
+   function Nth_Arg
+     (Data       : Shell_Callback_Data;
+      N          : Positive;
+      Class      : Class_Type := Any_Class;
+      Default    : Class_Instance;
       Allow_Null : Boolean := False) return Class_Instance
    is
       Success : aliased Boolean;
-      Result  : constant Class_Instance := Nth_Arg
-        (Data, N, Class, Allow_Null, Success'Access);
+      Result  : constant Class_Instance :=
+        Nth_Arg (Data, N, Class, Allow_Null, Success'Access);
    begin
       if not Success then
          return Default;
@@ -1685,10 +1732,10 @@ package body GNATCOLL.Scripts.Shell is
    -- Nth_Arg --
    -------------
 
-   overriding function Nth_Arg
-     (Data    : Shell_Callback_Data;
-      N       : Positive;
-      Default : Subprogram_Type) return Subprogram_Type
+   overriding
+   function Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Default : Subprogram_Type)
+      return Subprogram_Type
    is
       Success : aliased Boolean;
       Result  : constant Subprogram_Type := Nth_Arg (Data, N, Success'Access);
@@ -1704,8 +1751,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Error_Msg --
    -------------------
 
-   overriding procedure Set_Error_Msg
-     (Data : in out Shell_Callback_Data; Msg : String) is
+   overriding
+   procedure Set_Error_Msg (Data : in out Shell_Callback_Data; Msg : String) is
    begin
       Free (Data.Return_Value);
       Data.Return_As_Error := True;
@@ -1716,7 +1763,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value_As_List --
    ------------------------------
 
-   overriding procedure Set_Return_Value_As_List
+   overriding
+   procedure Set_Return_Value_As_List
      (Data  : in out Shell_Callback_Data;
       Size  : Natural := 0;
       Class : Class_Type := No_Class)
@@ -1730,7 +1778,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value_Key --
    --------------------------
 
-   overriding procedure Set_Return_Value_Key
+   overriding
+   procedure Set_Return_Value_Key
      (Data   : in out Shell_Callback_Data;
       Key    : String;
       Append : Boolean := False)
@@ -1749,12 +1798,13 @@ package body GNATCOLL.Scripts.Shell is
 
       else
          if Data.Return_Dict = null then
-            Data.Return_Dict := new String'
-              (Key & " => (" & Data.Return_Value.all & ')');
+            Data.Return_Dict :=
+              new String'(Key & " => (" & Data.Return_Value.all & ')');
          else
             Tmp := Data.Return_Dict;
-            Data.Return_Dict := new String'
-              (Tmp.all & ", " & Key & " => (" & Data.Return_Value.all & ')');
+            Data.Return_Dict :=
+              new String'
+                (Tmp.all & ", " & Key & " => (" & Data.Return_Value.all & ')');
             Free (Tmp);
          end if;
       end if;
@@ -1767,7 +1817,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value_Key --
    --------------------------
 
-   overriding procedure Set_Return_Value_Key
+   overriding
+   procedure Set_Return_Value_Key
      (Data   : in out Shell_Callback_Data;
       Key    : Integer;
       Append : Boolean := False) is
@@ -1779,7 +1830,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value_Key --
    --------------------------
 
-   overriding procedure Set_Return_Value_Key
+   overriding
+   procedure Set_Return_Value_Key
      (Data   : in out Shell_Callback_Data;
       Key    : Class_Instance;
       Append : Boolean := False) is
@@ -1791,7 +1843,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value --
    ----------------------
 
-   overriding procedure Set_Return_Value
+   overriding
+   procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : Integer) is
    begin
       if not Data.Return_As_List then
@@ -1801,8 +1854,9 @@ package body GNATCOLL.Scripts.Shell is
       Set_Return_Value (Data, Integer'Image (Value));
    end Set_Return_Value;
 
-   overriding procedure Set_Address_Return_Value
-     (Data   : in out Shell_Callback_Data; Value : System.Address) is
+   overriding
+   procedure Set_Address_Return_Value
+     (Data : in out Shell_Callback_Data; Value : System.Address) is
    begin
       if not Data.Return_As_List then
          Free (Data.Return_Value);
@@ -1815,7 +1869,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value --
    ----------------------
 
-   overriding procedure Set_Return_Value
+   overriding
+   procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : Float) is
    begin
       if not Data.Return_As_List then
@@ -1829,7 +1884,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value --
    ----------------------
 
-   overriding procedure Set_Return_Value
+   overriding
+   procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : Boolean) is
    begin
       if not Data.Return_As_List then
@@ -1843,7 +1899,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value --
    ----------------------
 
-   overriding procedure Set_Return_Value
+   overriding
+   procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : String)
    is
       Tmp : GNAT.Strings.String_Access;
@@ -1867,7 +1924,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value --
    ----------------------
 
-   overriding procedure Set_Return_Value
+   overriding
+   procedure Set_Return_Value
      (Data : in out Shell_Callback_Data; Value : Class_Instance) is
    begin
       if Value = No_Class_Instance then
@@ -1881,8 +1939,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Set_Return_Value --
    ----------------------
 
-   overriding procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data; Value : List_Instance) is
+   overriding
+   procedure Set_Return_Value
+     (Data : in out Shell_Callback_Data; Value : List_Instance) is
    begin
       Set_Return_Value
         (Data, '(' & Get_Command (Shell_Callback_Data (Value).CL) & ')');
@@ -1892,9 +1951,10 @@ package body GNATCOLL.Scripts.Shell is
    -- New_Instance --
    ------------------
 
-   overriding function New_Instance
-     (Script : access Shell_Scripting_Record;
-      Class  : Class_Type) return Class_Instance
+   overriding
+   function New_Instance
+     (Script : access Shell_Scripting_Record; Class : Class_Type)
+      return Class_Instance
    is
       Instance : Shell_Class_Instance;
    begin
@@ -1912,23 +1972,27 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_Method --
    ----------------
 
-   overriding function Get_Method
-     (Instance : access Shell_Class_Instance_Record;
-      Name : String) return Subprogram_Type
+   overriding
+   function Get_Method
+     (Instance : access Shell_Class_Instance_Record; Name : String)
+      return Subprogram_Type
    is
       Inst_Name : constant String := Name_From_Instance (Instance);
    begin
-      return new Shell_Subprogram_Record'
-        (Script  => Scripting_Language (Instance.Script),
-         Command => new String'
-           (Get_Name (Instance.Class) & "." & Name & " " & Inst_Name));
+      return
+        new Shell_Subprogram_Record'
+          (Script  => Scripting_Language (Instance.Script),
+           Command =>
+             new String'
+               (Get_Name (Instance.Class) & "." & Name & " " & Inst_Name));
    end Get_Method;
 
    --------------------
    -- Print_Refcount --
    --------------------
 
-   overriding function Print_Refcount
+   overriding
+   function Print_Refcount
      (Instance : access Shell_Class_Instance_Record) return String
    is
       pragma Unreferenced (Instance);
@@ -1940,7 +2004,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute_Expression --
    ------------------------
 
-   overriding procedure Execute_Expression
+   overriding
+   procedure Execute_Expression
      (Result      : in out Shell_Callback_Data;
       Expression  : String;
       Hide_Output : Boolean := True)
@@ -1951,23 +2016,25 @@ package body GNATCOLL.Scripts.Shell is
 
    begin
       Result.Set_Return_Value
-         (String'(Execute_GPS_Shell_Command
-            (Shell_Scripting (Get_Script (Result)),
-             Expression,
-             Errors'Unchecked_Access)));
+        (String'
+           (Execute_GPS_Shell_Command
+              (Shell_Scripting (Get_Script (Result)),
+               Expression,
+               Errors'Unchecked_Access)));
    end Execute_Expression;
 
    ---------------------
    -- Execute_Command --
    ---------------------
 
-   overriding function Execute_Command
+   overriding
+   function Execute_Command
      (Script  : access Shell_Scripting_Record;
       Command : String;
       Args    : Callback_Data'Class) return Boolean
    is
       Errors : aliased Boolean;
-      CL : Arg_List := Create (Command);
+      CL     : Arg_List := Create (Command);
    begin
       for J in 1 .. Args_Length (Shell_Callback_Data (Args).CL) loop
          Append_Argument
@@ -1975,9 +2042,10 @@ package body GNATCOLL.Scripts.Shell is
       end loop;
 
       declare
-         Result : constant String := Trim
-           (Execute_GPS_Shell_Command (Script, CL, Errors'Unchecked_Access),
-            Ada.Strings.Both);
+         Result : constant String :=
+           Trim
+             (Execute_GPS_Shell_Command (Script, CL, Errors'Unchecked_Access),
+              Ada.Strings.Both);
       begin
          return Result = "1" or else To_Lower (Result) = "true";
       end;
@@ -1987,28 +2055,28 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class;
-      Error      : not null access Boolean) return Boolean
-   is
+      Error      : not null access Boolean) return Boolean is
    begin
       Error.all := False;
-      return To_Lower
-        (Execute (Shell_Subprogram (Subprogram), Args)) = "true";
+      return To_Lower (Execute (Shell_Subprogram (Subprogram), Args)) = "true";
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class;
       Error      : not null access Boolean) return String
    is
-      D      : constant Shell_Callback_Data := Shell_Callback_Data (Args);
-      CL     : Arg_List;
+      D  : constant Shell_Callback_Data := Shell_Callback_Data (Args);
+      CL : Arg_List;
    begin
       CL := Create (Subprogram.Command.all);
 
@@ -2016,17 +2084,19 @@ package body GNATCOLL.Scripts.Shell is
          Append_Argument (CL, Nth_Arg (D.CL, Arg), One_Arg);
       end loop;
 
-      return Execute_GPS_Shell_Command
-        (Script  => Shell_Scripting (Subprogram.Script),
-         CL      => CL,
-         Errors  => Error);
+      return
+        Execute_GPS_Shell_Command
+          (Script => Shell_Scripting (Subprogram.Script),
+           CL     => CL,
+           Errors => Error);
    end Execute;
 
    -------------
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class;
       Error      : not null access Boolean) return Class_Instance
@@ -2040,7 +2110,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class;
       Error      : not null access Boolean) return List_Instance'Class
@@ -2048,8 +2119,8 @@ package body GNATCOLL.Scripts.Shell is
       List : Shell_Callback_Data;
    begin
       List.Script := Shell_Scripting (Subprogram.Script);
-      List.CL := Parse_String
-        (Execute (Subprogram, Args, Error), Separate_Args);
+      List.CL :=
+        Parse_String (Execute (Subprogram, Args, Error), Separate_Args);
       return List;
    end Execute;
 
@@ -2057,7 +2128,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class;
       Error      : not null access Boolean) return GNAT.Strings.String_List
@@ -2073,7 +2145,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
       Args       : Callback_Data'Class;
       Error      : not null access Boolean) return Any_Type
@@ -2090,7 +2163,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
+   overriding
+   function Get_Name
      (Subprogram : access Shell_Subprogram_Record) return String is
    begin
       return "command: " & Subprogram.Command.all;
@@ -2100,7 +2174,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Free --
    ----------
 
-   overriding procedure Free (Subprogram : in out Shell_Subprogram_Record) is
+   overriding
+   procedure Free (Subprogram : in out Shell_Subprogram_Record) is
    begin
       Free (Subprogram.Command);
    end Free;
@@ -2109,9 +2184,9 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_Script --
    ----------------
 
-   overriding function Get_Script
-     (Subprogram : Shell_Subprogram_Record) return Scripting_Language
-   is
+   overriding
+   function Get_Script
+     (Subprogram : Shell_Subprogram_Record) return Scripting_Language is
    begin
       return Subprogram.Script;
    end Get_Script;
@@ -2137,7 +2212,7 @@ package body GNATCOLL.Scripts.Shell is
    begin
       Free (Subprogram.Command);
       Subprogram.Command := new String'(Command);
-      Subprogram.Script  := Scripting_Language (Script);
+      Subprogram.Script := Scripting_Language (Script);
    end Initialize;
 
    --------------
@@ -2156,7 +2231,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Command_Line_Treatment --
    ----------------------------
 
-   overriding function Command_Line_Treatment
+   overriding
+   function Command_Line_Treatment
      (Script : access Shell_Scripting_Record) return Command_Line_Mode
    is
       pragma Unreferenced (Script);
@@ -2168,24 +2244,26 @@ package body GNATCOLL.Scripts.Shell is
    -- Execute_Command --
    ---------------------
 
-   overriding procedure Execute_Command
-     (Args    : in out Shell_Callback_Data;
-      Command : String;
+   overriding
+   procedure Execute_Command
+     (Args        : in out Shell_Callback_Data;
+      Command     : String;
       Hide_Output : Boolean := True)
    is
       pragma Unreferenced (Hide_Output);
       Script : constant Shell_Scripting := Shell_Scripting (Get_Script (Args));
       Errors : aliased Boolean;
-      CL : Arg_List := Create (Command);
+      CL     : Arg_List := Create (Command);
    begin
       for J in 1 .. Args_Length (Args.CL) loop
          Append_Argument (CL, Nth_Arg (Args.CL, J), One_Arg);
       end loop;
 
       declare
-         Result : constant String := Trim
-           (Execute_GPS_Shell_Command (Script, CL, Errors'Unchecked_Access),
-            Ada.Strings.Both);
+         Result : constant String :=
+           Trim
+             (Execute_GPS_Shell_Command (Script, CL, Errors'Unchecked_Access),
+              Ada.Strings.Both);
       begin
          Free (Args.Return_Value);
          Args.Return_Value := new String'(Result);
@@ -2196,8 +2274,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Return_Value --
    ------------------
 
-   overriding function Return_Value
-     (Data : Shell_Callback_Data) return String is
+   overriding
+   function Return_Value (Data : Shell_Callback_Data) return String is
    begin
       if Data.Return_Value = null then
          raise Invalid_Parameter with "No return value";
@@ -2210,8 +2288,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Return_Value --
    ------------------
 
-   overriding function Return_Value
-     (Data : Shell_Callback_Data) return Integer is
+   overriding
+   function Return_Value (Data : Shell_Callback_Data) return Integer is
    begin
       return Integer'Value (Return_Value (Data));
    end Return_Value;
@@ -2220,8 +2298,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Return_Value --
    ------------------
 
-   overriding function Return_Value
-     (Data : Shell_Callback_Data) return Float is
+   overriding
+   function Return_Value (Data : Shell_Callback_Data) return Float is
    begin
       return Float'Value (Return_Value (Data));
    end Return_Value;
@@ -2230,8 +2308,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Return_Value --
    ------------------
 
-   overriding function Return_Value
-     (Data : Shell_Callback_Data) return Boolean is
+   overriding
+   function Return_Value (Data : Shell_Callback_Data) return Boolean is
    begin
       return Boolean'Value (Return_Value (Data));
    end Return_Value;
@@ -2240,8 +2318,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Return_Value --
    ------------------
 
-   overriding function Return_Value
-     (Data : Shell_Callback_Data) return Class_Instance is
+   overriding
+   function Return_Value (Data : Shell_Callback_Data) return Class_Instance is
    begin
       return Instance_From_Name (Data.Script, Return_Value (Data));
    end Return_Value;
@@ -2250,7 +2328,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Return_Value --
    ------------------
 
-   overriding function Return_Value
+   overriding
+   function Return_Value
      (Data : Shell_Callback_Data) return List_Instance'Class
    is
       List : Shell_Callback_Data;
@@ -2264,7 +2343,8 @@ package body GNATCOLL.Scripts.Shell is
    -- Get_User_Data --
    -------------------
 
-   overriding function Get_User_Data
+   overriding
+   function Get_User_Data
      (Self : not null access Shell_Class_Instance_Record)
       return access User_Data_List is
    begin

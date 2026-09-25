@@ -18,13 +18,12 @@
 --  This package provides the entry point registering all assistants needed
 --  by the ada queries.
 
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package Ada_Semantic_Tree.Assistants is
 
    procedure Register_Ada_Assistants
-     (Db                 : Construct_Database_Access;
-      Std_Entities_Files : Virtual_File);
+     (Db : Construct_Database_Access; Std_Entities_Files : Virtual_File);
    --  This procedure will register all the assistants needed to compute ada
    --  semantics. It has to be invoked before any file is added to the
    --  database, and as soon as possible in the assistant registration. No

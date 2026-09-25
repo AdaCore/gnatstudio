@@ -21,34 +21,44 @@ package body DAP.Clients.Breakpoint_Managers.SetInstructionBreakpoints is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Instruction_Breakpoint_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       DAP.Requests.SetInstructionBreakpoints.On_Error_Message
-        (DAP.Requests.SetInstructionBreakpoints.
-           Instruction_Breakpoint_DAP_Request (Self), Client, Message);
+        (DAP
+           .Requests
+           .SetInstructionBreakpoints
+           .Instruction_Breakpoint_DAP_Request (Self),
+         Client,
+         Message);
    end On_Error_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Instruction_Breakpoint_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       DAP.Requests.SetInstructionBreakpoints.On_Rejected
-        (DAP.Requests.SetInstructionBreakpoints.
-           Instruction_Breakpoint_DAP_Request (Self), Client);
+        (DAP
+           .Requests
+           .SetInstructionBreakpoints
+           .Instruction_Breakpoint_DAP_Request (Self),
+         Client);
    end On_Rejected;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Instruction_Breakpoint_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetInstructionBreakpointsResponse;

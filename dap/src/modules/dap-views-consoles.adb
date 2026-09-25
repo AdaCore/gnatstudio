@@ -19,59 +19,58 @@ with Ada.Unchecked_Conversion;
 with DAP.Utils;
 with System;
 
-with GNAT.Expect;                use GNAT.Expect;
-with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
+with GNAT.Expect;     use GNAT.Expect;
+with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (Off, ".* is an internal GNAT unit");
 with GNAT.Expect.TTY.Temporary;
 pragma Warnings (On, ".* is an internal GNAT unit");
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Regpat;                use GNAT.Regpat;
-with GNAT.TTY;                   use GNAT.TTY;
+with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with GNAT.Regpat;     use GNAT.Regpat;
+with GNAT.TTY;        use GNAT.TTY;
 
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with Glib;                       use Glib;
-with Glib.Main;                  use Glib.Main;
-with Gdk.Types;                  use Gdk.Types;
-with Gdk.Types.Keysyms;          use Gdk.Types.Keysyms;
+with Glib;              use Glib;
+with Glib.Main;         use Glib.Main;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 
 with Gtk.Box;
 with Gtk.Clipboard;
-with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Menu;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Text_Buffer; use Gtk.Text_Buffer;
+with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Gtk.Widget;      use Gtk.Widget;
 
-with Gtkada.Handlers;            use Gtkada.Handlers;
-with Gtkada.MDI;                 use Gtkada.MDI;
+with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.MDI;      use Gtkada.MDI;
 
 with GPS.Kernel.Actions;
-with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 with DAP.Types;
 with DAP.Clients.Evaluate;
 with DAP.Module;
 with DAP.Modules.Preferences;
 
-with Commands;                   use Commands;
-with Commands.Interactive;       use Commands.Interactive;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
 
-with Default_Preferences;        use Default_Preferences;
-with Generic_Views;              use Generic_Views;
-with Histories;                  use Histories;
-with Remote;                     use Remote;
+with Default_Preferences; use Default_Preferences;
+with Generic_Views;       use Generic_Views;
+with Histories;           use Histories;
+with Remote;              use Remote;
 
 package body DAP.Views.Consoles is
 
    Me : constant Trace_Handle := Create ("GPS.DAP.Consoles", On);
 
-   type Console_Record is new DAP.Views.View_Record with
-      record
-         Console : Interactive_Console := null;
-      end record;
+   type Console_Record is new DAP.Views.View_Record with record
+      Console : Interactive_Console := null;
+   end record;
 
    type Debugger_Console_Record is new Console_Record with null record;
    type Debugger_Console is access all Debugger_Console_Record'Class;
@@ -80,39 +79,43 @@ package body DAP.Views.Consoles is
      (Self : access Debugger_Console_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Self   : not null access Debugger_Console_Record;
       Client : not null access DAP.Clients.DAP_Client'Class);
    --  Called when a new DAP client is spawned and attached to the debugger
    --  console.
    --  Used to reciprocally attach the debugger console to the DAP client.
 
-   overriding procedure Create_Menu
-     (View    : not null access Debugger_Console_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Create_Menu
+     (View : not null access Debugger_Console_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   package Console_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Debugger_Console",
-      View_Name                       => "Debugger Console",
-      Formal_View_Record              => Debugger_Console_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Consoles,
-      Position                        => Gtkada.MDI.Position_Bottom,
-      Initialize                      => Initialize,
-      Local_Toolbar                   => True,
-      Local_Config                    => True);
+   package Console_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Debugger_Console",
+        View_Name                       => "Debugger Console",
+        Formal_View_Record              => Debugger_Console_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Consoles,
+        Position                        => Gtkada.MDI.Position_Bottom,
+        Initialize                      => Initialize,
+        Local_Toolbar                   => True,
+        Local_Config                    => True);
 
    subtype Console_MDI is Console_MDI_Views.View_Access;
    use type Console_MDI;
 
-   package Console_Views is new DAP.Views.Simple_Views
-     (Formal_Views       => Console_MDI_Views,
-      Formal_View_Record => Debugger_Console_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record);
+   package Console_Views is new
+     DAP.Views.Simple_Views
+       (Formal_Views       => Console_MDI_Views,
+        Formal_View_Record => Debugger_Console_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    function Key_Handler
      (Console  : access Interactive_Console_Record'Class;
@@ -122,8 +125,8 @@ package body DAP.Views.Consoles is
       User     : System.Address) return Boolean;
    --  Console key handler.
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Debugger_Console);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Debugger_Console);
 
    function Interpret_Command_Handler
      (Console : access Interactive_Console_Record'Class;
@@ -137,38 +140,40 @@ package body DAP.Views.Consoles is
    --  Callback for the "grab_focus" signal on the console.
 
    type Clear_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Clear_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
+   overriding
+   function Execute
+     (Command : access Clear_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type;
    --  Clear a console
 
-   type No_Execution_Console_Filter is
-     new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access No_Execution_Console_Filter;
-      Context : Selection_Context) return Boolean;
+   type No_Execution_Console_Filter is new Action_Filter_Record
+   with null record;
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access No_Execution_Console_Filter; Context : Selection_Context)
+      return Boolean;
    --  True if Execution console doesn't exist
 
    -- Debuggee_Console_Record --
 
-   type Debuggee_Console_Record is new Console_Record with
-      record
-         Debuggee_Descriptor : GNAT.Expect.TTY.TTY_Process_Descriptor;
-         Debuggee_Id         : Glib.Main.G_Source_Id := 0;
-         TTY_Initialized     : Boolean := False;
-         Cleanup_TTY         : Boolean := False;
-      end record;
+   type Debuggee_Console_Record is new Console_Record with record
+      Debuggee_Descriptor : GNAT.Expect.TTY.TTY_Process_Descriptor;
+      Debuggee_Id         : Glib.Main.G_Source_Id := 0;
+      TTY_Initialized     : Boolean := False;
+      Cleanup_TTY         : Boolean := False;
+   end record;
    type Debuggee_Console is access all Debuggee_Console_Record'Class;
 
    function Initialize
-     (Self    : access Debuggee_Console_Record'Class) return Gtk_Widget;
+     (Self : access Debuggee_Console_Record'Class) return Gtk_Widget;
    --  Create each of the console types
 
    procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class);
    procedure Close_TTY (Console : access Debuggee_Console_Record'Class);
    --  Allocate or close, if not done yet, a new tty on the console
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Console : access Debuggee_Console_Record;
       Client  : not null access DAP_Client'Class);
    --  Requires initialized when attaching the console to a process
@@ -179,31 +184,34 @@ package body DAP.Views.Consoles is
       Debuggee_C : System.Address) return String;
    --  Handler of I/O for the debuggee console.
 
-   overriding procedure On_Detach
+   overriding
+   procedure On_Detach
      (Self   : not null access Debuggee_Console_Record;
       Client : not null access DAP.Clients.DAP_Client'Class);
    --  Callback for the "destroy" or debugger termination signal
    --  on the debuggee console.
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Debuggee_Console);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Debuggee_Console);
 
-   package Debuggee_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name                     => "Debugger_Execution",
-      View_Name                       => "Debugger Execution",
-      Formal_View_Record              => Debuggee_Console_Record,
-      Formal_MDI_Child                => GPS_MDI_Child_Record,
-      Reuse_If_Exist                  => False,
-      Save_Duplicates_In_Perspectives => False,
-      Commands_Category               => "",
-      Areas                           => Gtkada.MDI.Sides_Only,
-      Group                           => Group_Consoles,
-      Position                        => Gtkada.MDI.Position_Bottom,
-      Initialize                      => Initialize);
-   package Debuggee_Views is new DAP.Views.Simple_Views
-     (Formal_Views       => Debuggee_MDI_Views,
-      Formal_View_Record => Debuggee_Console_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record);
+   package Debuggee_MDI_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name                     => "Debugger_Execution",
+        View_Name                       => "Debugger Execution",
+        Formal_View_Record              => Debuggee_Console_Record,
+        Formal_MDI_Child                => GPS_MDI_Child_Record,
+        Reuse_If_Exist                  => False,
+        Save_Duplicates_In_Perspectives => False,
+        Commands_Category               => "",
+        Areas                           => Gtkada.MDI.Sides_Only,
+        Group                           => Group_Consoles,
+        Position                        => Gtkada.MDI.Position_Bottom,
+        Initialize                      => Initialize);
+   package Debuggee_Views is new
+     DAP.Views.Simple_Views
+       (Formal_Views       => Debuggee_MDI_Views,
+        Formal_View_Record => Debuggee_Console_Record,
+        Formal_MDI_Child   => GPS_MDI_Child_Record);
 
    procedure Attach_To_Debuggee_Console
      (Client              : not null access DAP.Clients.DAP_Client'Class;
@@ -222,13 +230,14 @@ package body DAP.Views.Consoles is
    function TTY_Cb (Console : Debuggee_Console) return Boolean;
    --  Callback for communication with a tty.
 
-   Timeout  : constant Guint := 50;
+   Timeout : constant Guint := 50;
    --  Timeout between updates of the debuggee console
 
    Null_TTY : GNAT.TTY.TTY_Handle;
 
    type Open_Execution_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Open_Execution_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Open execution console
@@ -278,7 +287,7 @@ package body DAP.Views.Consoles is
       Create_If_Necessary : Boolean;
       Update_On_Attach    : Boolean;
       Name                : String)
-     renames Debuggee_Views.Attach_To_View;
+   renames Debuggee_Views.Attach_To_View;
 
    --------------------------------
    -- Attach_To_Debugger_Console --
@@ -335,7 +344,8 @@ package body DAP.Views.Consoles is
    -- On_Attach --
    ---------------
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Self   : not null access Debugger_Console_Record;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
@@ -347,13 +357,14 @@ package body DAP.Views.Consoles is
    -- Create_Menu --
    -----------------
 
-   overriding procedure Create_Menu
-     (View    : not null access Debugger_Console_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   overriding
+   procedure Create_Menu
+     (View : not null access Debugger_Console_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu
         (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_Console);
-         Append_Menu
+      Append_Menu
         (Menu, View.Kernel, DAP.Modules.Preferences.Debugger_Console_In_Out);
    end Create_Menu;
 
@@ -397,15 +408,15 @@ package body DAP.Views.Consoles is
    ----------------
 
    function Initialize
-     (Self    : access Debuggee_Console_Record'Class) return Gtk_Widget is
+     (Self : access Debuggee_Console_Record'Class) return Gtk_Widget is
    begin
       Gtk.Box.Initialize_Vbox (Self);
       Gtk_New
         (Self.Console,
          Self.Kernel,
-         Prompt      => "",
-         Handler     => Debuggee_Console_Handler'Access,
-         User_Data   => Self.all'Address,
+         Prompt       => "",
+         Handler      => Debuggee_Console_Handler'Access,
+         User_Data    => Self.all'Address,
          History_List => null,
          Key          => "dap_tty_console",
          Toolbar_Name => "dap-tty-console",
@@ -446,14 +457,11 @@ package body DAP.Views.Consoles is
       when Process_Died =>
          Console.Console.Insert
            (Expect_Out (Console.Debuggee_Descriptor), Add_LF => False);
-         Find_MDI_Child
-           (Get_MDI (Console.Kernel), Console).Highlight_Child;
+         Find_MDI_Child (Get_MDI (Console.Kernel), Console).Highlight_Child;
 
          --  Reset the TTY linking with the debugger and the console
          Console.Close_TTY;
-         if Client /= null
-           and then Client.Get_Debuggee_TTY /= Null_TTY
-         then
+         if Client /= null and then Client.Get_Debuggee_TTY /= Null_TTY then
             Client.Close_TTY;
          end if;
          Console.Allocate_TTY;
@@ -500,7 +508,7 @@ package body DAP.Views.Consoles is
    is
       pragma Unreferenced (Uni, User);
 
-      Buffer      : constant Gtk_Text_Buffer := Console.Get_View.Get_Buffer;
+      Buffer : constant Gtk_Text_Buffer := Console.Get_View.Get_Buffer;
 
       Last_Iter   : Gtk_Text_Iter;
       Cursor_Iter : Gtk_Text_Iter;
@@ -530,7 +538,8 @@ package body DAP.Views.Consoles is
    -- On_Attach --
    ---------------
 
-   overriding procedure On_Attach
+   overriding
+   procedure On_Attach
      (Console : access Debuggee_Console_Record;
       Client  : not null access DAP_Client'Class) is
    begin
@@ -544,14 +553,15 @@ package body DAP.Views.Consoles is
    -- overriding procedure On_Detach --
    ------------------------------------
 
-   overriding procedure On_Detach
+   overriding
+   procedure On_Detach
      (Self   : not null access Debuggee_Console_Record;
       Client : not null access DAP.Clients.DAP_Client'Class)
    is
       use DAP.Types;
 
-      Quit : constant Boolean := Client /= null
-        and then Client.Get_Status /= Terminating;
+      Quit : constant Boolean :=
+        Client /= null and then Client.Get_Status /= Terminating;
    begin
       Self.Close_TTY;
 
@@ -564,15 +574,13 @@ package body DAP.Views.Consoles is
    -- On_Grab_Focus --
    -------------------
 
-   procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class) is
       C : constant Debugger_Console := Debugger_Console (Console);
    begin
       if C.Get_Client /= null then
          DAP.Module.Set_Current_Debugger (C.Get_Client);
          String_History.Wind
-           (C.Get_Client.Get_Command_History,
-            String_History.Forward);
+           (C.Get_Client.Get_Command_History, String_History.Forward);
       end if;
    end On_Grab_Focus;
 
@@ -580,9 +588,10 @@ package body DAP.Views.Consoles is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Command : access Clear_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
+   overriding
+   function Execute
+     (Command : access Clear_Command; Context : Interactive_Command_Context)
+      return Command_Return_Type
    is
       pragma Unreferenced (Command);
       View : constant Console_MDI :=
@@ -600,17 +609,15 @@ package body DAP.Views.Consoles is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Open_Execution_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Client : constant DAP_Client_Access :=
-        DAP.Module.Get_Current_Debugger;
+      Client : constant DAP_Client_Access := DAP.Module.Get_Current_Debugger;
    begin
-      if Client /= null
-        and then Client.Get_Debuggee_Console = null
-      then
+      if Client /= null and then Client.Get_Debuggee_Console = null then
          Create_Execution_Console (Client);
       end if;
 
@@ -631,8 +638,8 @@ package body DAP.Views.Consoles is
          Update_On_Attach    => True,
          Create_If_Necessary =>
            DAP.Modules.Preferences.Execution_Window.Get_Pref
-         and then Is_Local (Remote.Debug_Server)
-         and then GNAT.TTY.TTY_Supported);
+           and then Is_Local (Remote.Debug_Server)
+           and then GNAT.TTY.TTY_Supported);
    end Create_Execution_Console;
 
    ----------------
@@ -665,12 +672,10 @@ package body DAP.Views.Consoles is
         (Get_History (Self.Kernel).all, "dap_console", True, True);
 
       Widget_Callback.Object_Connect
-        (Self.Console.Get_View, Signal_Grab_Focus, On_Grab_Focus'Access,
-         Self);
+        (Self.Console.Get_View, Signal_Grab_Focus, On_Grab_Focus'Access, Self);
 
       Setup_Contextual_Menu
-        (Kernel          => Self.Kernel,
-         Event_On_Widget => Self.Console.Get_View);
+        (Kernel => Self.Kernel, Event_On_Widget => Self.Console.Get_View);
 
       return Gtk_Widget (Self.Console.Get_View);
    end Initialize;
@@ -679,9 +684,10 @@ package body DAP.Views.Consoles is
    -- Filter_Matches_Primitive --
    ------------------------------
 
-   overriding function Filter_Matches_Primitive
-     (Filter  : access No_Execution_Console_Filter;
-      Context : Selection_Context) return Boolean
+   overriding
+   function Filter_Matches_Primitive
+     (Filter : access No_Execution_Console_Filter; Context : Selection_Context)
+      return Boolean
    is
       pragma Unreferenced (Filter);
 
@@ -703,17 +709,21 @@ package body DAP.Views.Consoles is
       pragma Unreferenced (Console);
       C  : constant Debuggee_Console := Convert (Debuggee_C);
       NL : aliased Character := ASCII.LF;
-      N  : Integer with Unreferenced;
+      N  : Integer
+      with Unreferenced;
 
    begin
       if C.Get_Client /= null
         and then C.Get_Client.Get_Debuggee_TTY /= Null_TTY
       then
-         N := Write
-           (TTY_Descriptor (C.Get_Client.Get_Debuggee_TTY),
-            Input'Address, Input'Length);
-         N := Write
-           (TTY_Descriptor (C.Get_Client.Get_Debuggee_TTY), NL'Address, 1);
+         N :=
+           Write
+             (TTY_Descriptor (C.Get_Client.Get_Debuggee_TTY),
+              Input'Address,
+              Input'Length);
+         N :=
+           Write
+             (TTY_Descriptor (C.Get_Client.Get_Debuggee_TTY), NL'Address, 1);
       end if;
 
       return "";
@@ -755,10 +765,7 @@ package body DAP.Views.Consoles is
    begin
       if View /= null then
          Debuggee_Console (View).Console.Insert
-           (Text,
-            Add_LF         => False,
-            Mode           => Mode,
-            Add_To_History => False);
+           (Text, Add_LF => False, Mode => Mode, Add_To_History => False);
       else
          Display_In_Debugger_Console
            (Client         => Client,
@@ -781,7 +788,8 @@ package body DAP.Views.Consoles is
 
       GPS.Kernel.Actions.Register_Action
         (Kernel,
-         "debug clear console", new Clear_Command,
+         "debug clear console",
+         new Clear_Command,
          "Clear the debugger console",
          Icon_Name => "gps-clear-symbolic",
          Category  => "Debug");
@@ -791,11 +799,12 @@ package body DAP.Views.Consoles is
       Filter := new No_Execution_Console_Filter;
       Kernel.Register_Filter (Filter, "No Execution console");
 
-      if GNAT.TTY.TTY_Supported or else
-        GNATCOLL.Traces.Active (GPS.Kernel.Menu_Generation_Handle)
+      if GNAT.TTY.TTY_Supported
+        or else GNATCOLL.Traces.Active (GPS.Kernel.Menu_Generation_Handle)
       then
          GPS.Kernel.Actions.Register_Action
-           (Kernel, "open debugger execution",
+           (Kernel,
+            "open debugger execution",
             Command     => new Open_Execution_Command,
             Description => "Open the Debugger Execution console",
             Filter      => Filter,

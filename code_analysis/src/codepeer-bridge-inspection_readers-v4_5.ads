@@ -21,8 +21,8 @@ with CodePeer.Bridge.Inspection_Readers.Base;
 
 private package CodePeer.Bridge.Inspection_Readers.V4_5 is
 
-   type Inspection_Reader_V4_5 is
-     limited new Base.Base_Inspection_Reader with private;
+   type Inspection_Reader_V4_5 is limited
+     new Base.Base_Inspection_Reader with private;
 
    function Create_Inspection_Reader_V4_5
      (Kernel          : not null GPS.Kernel.Kernel_Handle;
@@ -35,25 +35,28 @@ private package CodePeer.Bridge.Inspection_Readers.V4_5 is
 
 private
 
-   type Inspection_Reader_V4_5 is
-     limited new Base.Base_Inspection_Reader with record
+   type Inspection_Reader_V4_5 is limited new Base.Base_Inspection_Reader
+   with record
       Subprogram_Node : Code_Analysis.Subprogram_Access;
    end record;
 
-   overriding procedure Start_Subprogram
+   overriding
+   procedure Start_Subprogram
      (Self  : in out Inspection_Reader_V4_5;
       Attrs : Sax.Attributes.Attributes'Class);
 
-   overriding function Subprogram_Node
-     (Self : Inspection_Reader_V4_5)
-      return Code_Analysis.Subprogram_Access;
+   overriding
+   function Subprogram_Node
+     (Self : Inspection_Reader_V4_5) return Code_Analysis.Subprogram_Access;
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self  : in out Inspection_Reader_V4_5;
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class);
 
-   overriding procedure Start_Message
+   overriding
+   procedure Start_Message
      (Self  : in out Inspection_Reader_V4_5;
       Attrs : Sax.Attributes.Attributes'Class);
 

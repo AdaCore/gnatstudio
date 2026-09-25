@@ -16,30 +16,30 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
 
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Canvas_View; use Gtkada.Canvas_View;
+with Gtkada.MDI;         use Gtkada.MDI;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Tools_Output;          use GPS.Tools_Output;
-with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel;            use GPS.Kernel;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
+with GPS.Tools_Output;      use GPS.Tools_Output;
+with GPS.Intl;              use GPS.Intl;
 
-with Browsers.Canvas;           use Browsers.Canvas;
-with Default_Preferences;       use Default_Preferences;
+with Browsers.Canvas;     use Browsers.Canvas;
+with Default_Preferences; use Default_Preferences;
 with Generic_Views;
-with Elaboration_Cycles;        use Elaboration_Cycles;
+with Elaboration_Cycles;  use Elaboration_Cycles;
 
 with Browsers.Elaborations.Cycle_Parser;
 with Browsers.Elaborations.Cycle_Parser_20;
@@ -60,21 +60,21 @@ package body Browsers.Elaborations is
    end record;
 
    function Initialize
-     (View   : access Elaboration_Browser_Record'Class)
-      return Gtk_Widget;
+     (View : access Elaboration_Browser_Record'Class) return Gtk_Widget;
    --  Initialize the view and returns the focus widget
 
-   package Elaboration_Views is new Generic_Views.Simple_Views
-     (Module_Name            => "Elaboration_Browser",
-      View_Name              => -"Elaboration Circularities",
-      Formal_View_Record     => Elaboration_Browser_Record,
-      Formal_MDI_Child       => Browser_Child_Record,
-      Reuse_If_Exist         => True,
-      Initialize             => Initialize,
-      Local_Toolbar          => True,
-      Local_Config           => True,
-      Position               => Position_Automatic,
-      Group                  => Group_Default);
+   package Elaboration_Views is new
+     Generic_Views.Simple_Views
+       (Module_Name        => "Elaboration_Browser",
+        View_Name          => -"Elaboration Circularities",
+        Formal_View_Record => Elaboration_Browser_Record,
+        Formal_MDI_Child   => Browser_Child_Record,
+        Reuse_If_Exist     => True,
+        Initialize         => Initialize,
+        Local_Toolbar      => True,
+        Local_Config       => True,
+        Position           => Position_Automatic,
+        Group              => Group_Default);
    subtype Elaboration_Browser is Elaboration_Views.View_Access;
 
    --  Node to represent compilation unit in browser
@@ -83,29 +83,31 @@ package body Browsers.Elaborations is
    end record;
    type Unit_Item is access all Unit_Item_Record'Class;
 
-   overriding procedure Set_Context
+   overriding
+   procedure Set_Context
      (Item    : not null access Unit_Item_Record;
-      Context : in out Selection_Context) is null;
+      Context : in out Selection_Context)
+   is null;
 
    type On_Compilation_Finished is new Compilation_Finished_Hooks_Function
-      with null record;
-   overriding procedure Execute
-     (Self   : On_Compilation_Finished;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+   with null record;
+   overriding
+   procedure Execute
+     (Self                   : On_Compilation_Finished;
+      Kernel                 :
+        not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
-      Shadow, Background : Boolean;
-      Status : Integer;
-      Cmd : GNATCOLL.Arg_Lists.Arg_List);
+      Shadow, Background     : Boolean;
+      Status                 : Integer;
+      Cmd                    : GNATCOLL.Arg_Lists.Arg_List);
    --  compilation finished hook callback
 
    procedure Fill_Browser
-     (Kernel : Kernel_Handle;
-      Cycle  : Elaboration_Cycles.Cycle);
+     (Kernel : Kernel_Handle; Cycle : Elaboration_Cycles.Cycle);
    --  Open browser and fill it with nodes correspond to Cycle data.
 
    function Get_Unit
-     (Browser   : Elaboration_Browser;
-      Unit_Name : String) return Unit_Item;
+     (Browser : Elaboration_Browser; Unit_Name : String) return Unit_Item;
    --  Find or create unit in Browser
 
    procedure Elaborations_Command_Handler
@@ -122,8 +124,7 @@ package body Browsers.Elaborations is
    --------------
 
    function Get_Unit
-     (Browser   : Elaboration_Browser;
-      Unit_Name : String) return Unit_Item
+     (Browser : Elaboration_Browser; Unit_Name : String) return Unit_Item
    is
       function Strip_Unit_Kind (Unit_Name : String) return String;
       --  Strip (spec) and (body) from Unit_Name
@@ -133,8 +134,8 @@ package body Browsers.Elaborations is
       ---------------------
 
       function Strip_Unit_Kind (Unit_Name : String) return String is
-         Space : constant Natural := Ada.Strings.Fixed.Index
-           (Unit_Name, " ", Ada.Strings.Backward);
+         Space : constant Natural :=
+           Ada.Strings.Fixed.Index (Unit_Name, " ", Ada.Strings.Backward);
       begin
          if Space in Unit_Name'Range then
             return Unit_Name (Unit_Name'First .. Space - 1);
@@ -144,8 +145,9 @@ package body Browsers.Elaborations is
       end Strip_Unit_Kind;
 
       Unit_Without_Kind : constant String := Strip_Unit_Kind (Unit_Name);
-      Item : Unit_Item := null;
-      S    : constant access Browser_Styles := Browser.Get_View.Get_Styles;
+      Item              : Unit_Item := null;
+      S                 : constant access Browser_Styles :=
+        Browser.Get_View.Get_Styles;
 
       procedure On_Item (It : not null access Abstract_Item_Record'Class);
       procedure On_Item (It : not null access Abstract_Item_Record'Class) is
@@ -160,8 +162,8 @@ package body Browsers.Elaborations is
         (On_Item'Access, Filter => Kind_Item);
 
       if Item = null then
-         Item         := new Unit_Item_Record;
-         Item.Name    := To_Unbounded_String (Unit_Without_Kind);
+         Item := new Unit_Item_Record;
+         Item.Name := To_Unbounded_String (Unit_Without_Kind);
          Item.Browser := General_Browser (Browser);
 
          Browser_Model (Browser.Get_View.Model).Add (Item);
@@ -179,13 +181,10 @@ package body Browsers.Elaborations is
    ----------------
 
    function Initialize
-     (View   : access Elaboration_Browser_Record'Class)
-      return Gtk_Widget is
+     (View : access Elaboration_Browser_Record'Class) return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (View);
-      Setup_Contextual_Menu
-        (Kernel          => View.Kernel,
-         Event_On_Widget => View);
+      Setup_Contextual_Menu (Kernel => View.Kernel, Event_On_Widget => View);
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
@@ -194,17 +193,14 @@ package body Browsers.Elaborations is
    ------------------
 
    procedure Fill_Browser
-     (Kernel : Kernel_Handle;
-      Cycle  : Elaboration_Cycles.Cycle)
+     (Kernel : Kernel_Handle; Cycle : Elaboration_Cycles.Cycle)
    is
       Browser : constant Elaboration_Browser :=
         Elaboration_Views.Get_Or_Create_View (Kernel, Focus => True);
-      Styles : constant access Browser_Styles :=
-        Browser.Get_View.Get_Styles;
+      Styles  : constant access Browser_Styles := Browser.Get_View.Get_Styles;
 
       procedure Fill_Elaborate_All
-        (Item_After    : Unit_Item;
-         Elaborate_All : Dependency);
+        (Item_After : Unit_Item; Elaborate_All : Dependency);
       --  Put all units of Elaborate_All dependency in browser
 
       function Kind_Image (Kind : Link_Kind) return String;
@@ -219,8 +215,9 @@ package body Browsers.Elaborations is
       function Kind_Image (Kind : Link_Kind) return String is
       begin
          case Kind is
-            when Withed =>
+            when Withed                  =>
                return "with";
+
             when Body_With_Specification =>
                return "body";
          end case;
@@ -236,8 +233,7 @@ package body Browsers.Elaborations is
          Already_Have : Boolean;
 
          procedure Look_For_Links
-           (Has_Exact   : out Boolean;
-            Total_Count : out Natural);
+           (Has_Exact : out Boolean; Total_Count : out Natural);
          --  Look for links between It1 and It2, count total count of them.
          --  Also check if there is a link with label = Descr already.
 
@@ -246,8 +242,7 @@ package body Browsers.Elaborations is
          --------------------
 
          procedure Look_For_Links
-           (Has_Exact   : out Boolean;
-            Total_Count : out Natural)
+           (Has_Exact : out Boolean; Total_Count : out Natural)
          is
 
             procedure On_Link
@@ -316,8 +311,7 @@ package body Browsers.Elaborations is
       ------------------------
 
       procedure Fill_Elaborate_All
-        (Item_After    : Unit_Item;
-         Elaborate_All : Dependency)
+        (Item_After : Unit_Item; Elaborate_All : Dependency)
       is
          Prev_Unit : Unit_Item := Item_After;
       begin
@@ -347,8 +341,7 @@ package body Browsers.Elaborations is
             Item_B : constant Unit_Item :=
               Get_Unit (Browser, Before_Unit_Name (Dep));
          begin
-            if Reason (Dep) in
-              Pragma_Elaborate_All .. Elaborate_All_Desirable
+            if Reason (Dep) in Pragma_Elaborate_All .. Elaborate_All_Desirable
             then
                Fill_Elaborate_All (Item_A, Dep);
             else
@@ -358,7 +351,7 @@ package body Browsers.Elaborations is
       end loop;
 
       Browser.Refresh_Layout
-        (Rescale => True,
+        (Rescale              => True,
          Space_Between_Items  => 40.0,
          Space_Between_Layers => 60.0);  --  long labels in this browser
    end Fill_Browser;
@@ -367,13 +360,15 @@ package body Browsers.Elaborations is
    -- Execute --
    -------------
 
-   overriding procedure Execute
-     (Self   : On_Compilation_Finished;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding
+   procedure Execute
+     (Self                   : On_Compilation_Finished;
+      Kernel                 :
+        not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Category, Target, Mode : String;
-      Shadow, Background : Boolean;
-      Status : Integer;
-      Cmd : GNATCOLL.Arg_Lists.Arg_List)
+      Shadow, Background     : Boolean;
+      Status                 : Integer;
+      Cmd                    : GNATCOLL.Arg_Lists.Arg_List)
    is
       pragma Unreferenced (Self, Category, Target, Mode, Shadow, Background);
       pragma Unreferenced (Cmd);
@@ -382,9 +377,7 @@ package body Browsers.Elaborations is
       Show  : constant Boolean := Get_Pref (Auto_Show_Preference);
 
    begin
-      if Show
-        and then Status /= 0
-        and then Dependencies_Count (Cycle) /= 0
+      if Show and then Status /= 0 and then Dependencies_Count (Cycle) /= 0
       then
          Fill_Browser (Kernel_Handle (Kernel), Cycle);
       end if;
@@ -408,9 +401,11 @@ package body Browsers.Elaborations is
                Dep : constant Dependency := Element (Browser.Cycle, Index);
             begin
                Data.Set_Return_Value
-                 (Before_Unit_Name (Dep) & ":" &
-                    After_Unit_Name (Dep) & ":" &
-                    Image (Reason (Dep)));
+                 (Before_Unit_Name (Dep)
+                  & ":"
+                  & After_Unit_Name (Dep)
+                  & ":"
+                  & Image (Reason (Dep)));
             end;
          end loop;
       end if;
@@ -427,24 +422,25 @@ package body Browsers.Elaborations is
 
       Compilation_Finished_Hook.Add (new On_Compilation_Finished);
 
-      Register_Output_Parser
-        (Output_Parser'Access, "elaboration_cycles");
+      Register_Output_Parser (Output_Parser'Access, "elaboration_cycles");
 
-      Output_Parser_20 := new Cycle_Parser_20.Output_Parser_Fabric
-        (GPS.Kernel.Kernel_Handle (Kernel));
+      Output_Parser_20 :=
+        new Cycle_Parser_20.Output_Parser_Fabric
+              (GPS.Kernel.Kernel_Handle (Kernel));
       Register_Output_Parser (Output_Parser_20, "elaboration_cycles_20");
 
-      Auto_Show_Preference := Create
-        (Get_Preferences (Kernel),
-         Path    => -"Browsers:Display",
-         Name    => "Auto-Show-Elaboration-Cycles",
-         Label   => -"Show elaboration cycles",
-         Doc    => -"Display elaboration cycles in browser after compilation.",
-         Default => True);
+      Auto_Show_Preference :=
+        Create
+          (Get_Preferences (Kernel),
+           Path    => -"Browsers:Display",
+           Name    => "Auto-Show-Elaboration-Cycles",
+           Label   => -"Show elaboration cycles",
+           Doc     =>
+             -"Display elaboration cycles in browser after compilation.",
+           Default => True);
 
       Kernel.Scripts.Register_Command
-        ("dump_elaborations",
-         Handler => Elaborations_Command_Handler'Access);
+        ("dump_elaborations", Handler => Elaborations_Command_Handler'Access);
    end Register_Module;
 
    ---------------------------

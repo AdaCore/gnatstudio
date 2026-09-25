@@ -25,7 +25,7 @@ with VSS.Strings.Formatters.Integers;
 with VSS.Strings.Formatters.Generic_Integers;
 with VSS.Strings.Templates;
 
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
 with Basic_Types;
@@ -33,9 +33,8 @@ with GPS.Editors.GtkAda;
 
 package body CodePeer.Race_Details_Models is
 
-   package Visible_Column_Type_Formatters is
-     new VSS.Strings.Formatters.Generic_Integers
-       (Basic_Types.Visible_Column_Type);
+   package Visible_Column_Type_Formatters is new
+     VSS.Strings.Formatters.Generic_Integers (Basic_Types.Visible_Column_Type);
 
    function To_Iter (Index : Natural) return Gtk.Tree_Model.Gtk_Tree_Iter;
 
@@ -47,8 +46,8 @@ package body CodePeer.Race_Details_Models is
 
    function From_Iter (Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Natural is
       pragma Warnings (Off);
-      function To_Integer is
-        new Ada.Unchecked_Conversion (System.Address, Integer);
+      function To_Integer is new
+        Ada.Unchecked_Conversion (System.Address, Integer);
       pragma Warnings (On);
 
    begin
@@ -64,9 +63,10 @@ package body CodePeer.Race_Details_Models is
    -- Get_Column_Type --
    ---------------------
 
-   overriding function Get_Column_Type
-     (Self  : access Race_Details_Model_Record;
-      Index : Glib.Gint) return Glib.GType
+   overriding
+   function Get_Column_Type
+     (Self : access Race_Details_Model_Record; Index : Glib.Gint)
+      return Glib.GType
    is
       pragma Unreferenced (Self);
 
@@ -75,13 +75,13 @@ package body CodePeer.Race_Details_Models is
          when Entry_Point_Name_Column =>
             return Glib.GType_String;
 
-         when Access_Kind_Column =>
+         when Access_Kind_Column      =>
             return Glib.GType_String;
 
-         when Mark_Column =>
+         when Mark_Column             =>
             return GPS.Editors.GtkAda.Get_Editor_Mark_Type;
 
-         when others =>
+         when others                  =>
             return Glib.GType_Invalid;
       end case;
    end Get_Column_Type;
@@ -90,10 +90,10 @@ package body CodePeer.Race_Details_Models is
    -- Get_Iter --
    --------------
 
-   overriding function Get_Iter
+   overriding
+   function Get_Iter
      (Self : access Race_Details_Model_Record;
-      Path : Gtk.Tree_Model.Gtk_Tree_Path)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Path : Gtk.Tree_Model.Gtk_Tree_Path) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Indices : constant Glib.Gint_Array := Gtk.Tree_Model.Get_Indices (Path);
       Index   : Natural;
@@ -114,7 +114,8 @@ package body CodePeer.Race_Details_Models is
    -- Get_N_Columns --
    -------------------
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Race_Details_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
@@ -127,10 +128,10 @@ package body CodePeer.Race_Details_Models is
    -- Get_Path --
    --------------
 
-   overriding function Get_Path
+   overriding
+   function Get_Path
      (Self : access Race_Details_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Path
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
       Index : constant Natural := From_Iter (Iter);
       Path  : Gtk.Tree_Model.Gtk_Tree_Path;
@@ -153,7 +154,8 @@ package body CodePeer.Race_Details_Models is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Race_Details_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
@@ -180,20 +182,25 @@ package body CodePeer.Race_Details_Models is
          Template : Virtual_String_Template := " {} {}:{}";
       begin
          if Object.Message /= null then
-            return To_UTF_8_String
-              (Template.Format
-                 (Image (To_Virtual_String
-                  (GNATCOLL.VFS."+" (Object.Message.Get_File.Base_Name))),
-                  Image (Object.Message.Get_Editor_Mark.Line),
-                  Image (Object.Message.Get_Editor_Mark.Column)));
+            return
+              To_UTF_8_String
+                (Template.Format
+                   (Image
+                      (To_Virtual_String
+                         (GNATCOLL.VFS."+"
+                            (Object.Message.Get_File.Base_Name))),
+                    Image (Object.Message.Get_Editor_Mark.Line),
+                    Image (Object.Message.Get_Editor_Mark.Column)));
 
          else
-            return To_UTF_8_String
-              (Template.Format
-                 (Image (To_Virtual_String
-                  (GNATCOLL.VFS."+" (Object.File.Base_Name))),
-                  Image (Object.Line),
-                  Image (Object.Column)));
+            return
+              To_UTF_8_String
+                (Template.Format
+                   (Image
+                      (To_Virtual_String
+                         (GNATCOLL.VFS."+" (Object.File.Base_Name))),
+                    Image (Object.Line),
+                    Image (Object.Column)));
          end if;
       end Get_Location;
 
@@ -209,18 +216,18 @@ package body CodePeer.Race_Details_Models is
                   To_String (Self.Data.Element (Index).Entry_Point.Name)
                   & Get_Location (Self.Data.Element (Index).Object_Access));
 
-            when Access_Kind_Column =>
+            when Access_Kind_Column      =>
                Glib.Values.Init (Value, Glib.GType_String);
 
                case Self.Data (Index).Object_Access.Kind is
-                  when Read =>
+                  when Read   =>
                      Glib.Values.Set_String (Value, "READ");
 
                   when Update =>
                      Glib.Values.Set_String (Value, "UPDATE");
                end case;
 
-            when Mark_Column =>
+            when Mark_Column             =>
                Glib.Values.Init
                  (Value, GPS.Editors.GtkAda.Get_Editor_Mark_Type);
                GPS.Editors.GtkAda.Set_Mark
@@ -230,7 +237,7 @@ package body CodePeer.Race_Details_Models is
                      Self.Data (Index).Object_Access.Line,
                      Self.Data (Index).Object_Access.Column));
 
-            when others =>
+            when others                  =>
                null;
          end case;
       end if;
@@ -264,10 +271,10 @@ package body CodePeer.Race_Details_Models is
    -- N_Children --
    ----------------
 
-   overriding function N_Children
+   overriding
+   function N_Children
      (Self : access Race_Details_Model_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Glib.Gint is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Glib.Gint is
    begin
       if Iter = Gtk.Tree_Model.Null_Iter then
          return Glib.Gint (Self.Data.Length);
@@ -281,7 +288,8 @@ package body CodePeer.Race_Details_Models is
    -- Next --
    ----------
 
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self : access Race_Details_Model_Record;
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
@@ -302,7 +310,8 @@ package body CodePeer.Race_Details_Models is
    -- Nth_Child --
    ---------------
 
-   overriding function Nth_Child
+   overriding
+   function Nth_Child
      (Self   : access Race_Details_Model_Record;
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
@@ -367,8 +376,8 @@ package body CodePeer.Race_Details_Models is
 
    function To_Iter (Index : Natural) return Gtk.Tree_Model.Gtk_Tree_Iter is
       pragma Warnings (Off);
-      function To_Address is
-        new Ada.Unchecked_Conversion (Integer, System.Address);
+      function To_Address is new
+        Ada.Unchecked_Conversion (Integer, System.Address);
       pragma Warnings (On);
 
    begin

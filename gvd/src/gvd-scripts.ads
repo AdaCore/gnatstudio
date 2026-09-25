@@ -17,7 +17,7 @@
 
 --  This package defines the hooks used in the GVD module
 
-with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel; use GPS.Kernel;
 
 package GVD.Scripts is
 

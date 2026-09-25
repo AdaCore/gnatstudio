@@ -15,19 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with VSS.Strings.Conversions;
 with VSS.String_Vectors;
 
-with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
-with Glib;                     use Glib;
+with Glib;              use Glib;
 with Glib.Convert;
-with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with Glib.Object;       use Glib.Object;
+with Glib.Values;       use Glib.Values;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Combo_Box;            use Gtk.Combo_Box;
@@ -49,14 +49,14 @@ with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Widget;               use Gtk.Widget;
 
-with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
 
-with GUI_Utils;                use GUI_Utils;
-with String_Utils;             use String_Utils;
+with GUI_Utils;    use GUI_Utils;
+with String_Utils; use String_Utils;
 
 with Build_Configurations.Gtkada.Dialogs;
 use Build_Configurations.Gtkada.Dialogs;
-with Informational_Popups; use Informational_Popups;
+with Informational_Popups;                use Informational_Popups;
 
 package body Build_Configurations.Gtkada is
 
@@ -111,7 +111,7 @@ package body Build_Configurations.Gtkada is
       Notebook : Gtk_Notebook;
       --  The main notebook
 
-      View     : Tree_View;
+      View : Tree_View;
       --  The tree
    end record;
    type Mode_UI_Access is access all Mode_UI_Record'Class;
@@ -144,8 +144,7 @@ package body Build_Configurations.Gtkada is
    --  If Single is True, do not display the options, the models combo, etc.
 
    function Get_Selected_Target
-     (UI : access Build_UI_Record'Class)
-      return Target_Access;
+     (UI : access Build_UI_Record'Class) return Target_Access;
    --  Return the currently selected target, or null
 
    procedure Set_Switches (UI : Target_UI_Access);
@@ -177,8 +176,7 @@ package body Build_Configurations.Gtkada is
    --  Saves the command lines and options of all targets into the registry
 
    procedure Refresh
-     (UI            : access Build_UI_Record'Class;
-      Select_Target : String);
+     (UI : access Build_UI_Record'Class; Select_Target : String);
    procedure Refresh (UI : access Mode_UI_Record'Class);
    --  Clear the variant areas of the UI (notebook and tree view) and fill
    --  them with the information contained in the Registry.
@@ -199,8 +197,7 @@ package body Build_Configurations.Gtkada is
    --  Return a History_Key for storing command line for T
 
    procedure On_Target_Renamed
-     (UI     : access Build_UI_Record'Class;
-      Params : Glib.Values.GValues);
+     (UI : access Build_UI_Record'Class; Params : Glib.Values.GValues);
    --  Called when a target was renamed
 
    -------------------
@@ -258,8 +255,8 @@ package body Build_Configurations.Gtkada is
    package Mode_UI_Callback is new Callback (Mode_UI_Record);
    use Mode_UI_Callback;
 
-   package Icon_Callback is new User_Callback
-     (Gtkada_Combo_Tool_Button_Record, Target_UI_Access);
+   package Icon_Callback is new
+     User_Callback (Gtkada_Combo_Tool_Button_Record, Target_UI_Access);
 
    ---------
    -- "-" --
@@ -319,7 +316,7 @@ package body Build_Configurations.Gtkada is
          end if;
 
          T.Target.Properties.In_Toolbar := Get_Active (T.Icon_Check);
-         T.Target.Properties.In_Menu    := Get_Active (T.Menu_Check);
+         T.Target.Properties.In_Menu := Get_Active (T.Menu_Check);
          T.Target.Properties.In_Contextual_Menu_For_Projects :=
            Get_Active (T.Project_Contextual_Menu_Check);
          T.Target.Properties.In_Contextual_Menu_For_Files :=
@@ -335,8 +332,7 @@ package body Build_Configurations.Gtkada is
    -------------------------
 
    function Get_Selected_Target
-     (UI : access Build_UI_Record'Class)
-      return Target_Access
+     (UI : access Build_UI_Record'Class) return Target_Access
    is
       T : Target_UI_Access;
       N : Gint;
@@ -361,8 +357,7 @@ package body Build_Configurations.Gtkada is
    begin
       if UI.Expand_Cmd_Line = null then
          Set_Text
-           (Get_Buffer (T.Expanded_Entry),
-            Get_Text (Get_Entry (T.Editor)));
+           (Get_Buffer (T.Expanded_Entry), Get_Text (Get_Entry (T.Editor)));
       else
          Set_Text
            (Get_Buffer (T.Expanded_Entry),
@@ -383,15 +378,16 @@ package body Build_Configurations.Gtkada is
       T : Target_UI_Access;
    begin
       if not Yes_No_Dialog
-        (UI, -"Revert to original settings for this target?")
+               (UI, -"Revert to original settings for this target?")
       then
          return;
       end if;
 
       --  Find the current target UI
 
-      T := Target_UI_Access
-        (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
+      T :=
+        Target_UI_Access
+          (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
 
       declare
          Target_Name : constant String := To_String (T.Target.Name);
@@ -423,8 +419,9 @@ package body Build_Configurations.Gtkada is
    begin
       --  Find the current target UI
 
-      T := Target_UI_Access
-        (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
+      T :=
+        Target_UI_Access
+          (Get_Nth_Page (UI.Notebook, Get_Current_Page (UI.Notebook)));
 
       --  If the selection is empty, reset it and do nothing
 
@@ -448,7 +445,8 @@ package body Build_Configurations.Gtkada is
       if T.Target.Properties.Icon_Name = "" then
          Get_Selected (Get_Selection (UI.View), M, It);
 
-         if It /= Null_Iter then --  It should not be null, but test for safety
+         if It /= Null_Iter then
+            --  It should not be null, but test for safety
             UI.View.Model.Set
               (It, Icon_Column, To_String (T.Target.Model.Icon));
          end if;
@@ -479,11 +477,12 @@ package body Build_Configurations.Gtkada is
       Editable : Boolean) is
    begin
       Set_And_Clear
-        (Model, Iter,
+        (Model,
+         Iter,
          (Icon_Column, Name_Column, Num_Column, Editable_Column),
-         (As_String  (Icon),
-          As_String  (Name),
-          As_Int     (Num),
+         (As_String (Icon),
+          As_String (Name),
+          As_Int (Num),
           As_Boolean (Editable)));
    end Set_Columns;
 
@@ -492,7 +491,7 @@ package body Build_Configurations.Gtkada is
    ------------------
 
    procedure Set_Switches (UI : Target_UI_Access) is
-      Help_Msg      : Unbounded_String := Null_Unbounded_String;
+      Help_Msg : Unbounded_String := Null_Unbounded_String;
    begin
       --  Get the appropriate help if available
       if UI.Target.Properties.Help /= Null_Unbounded_String then
@@ -563,18 +562,18 @@ package body Build_Configurations.Gtkada is
       History    : Histories.History;
       Fixed_Font : Pango_Font_Description) return Target_UI_Access
    is
-      Table         : Gtk_Table;
-      Hbox          : Gtk_Hbox;
-      Label         : Gtk_Label;
-      Main_Hbox     : Gtk_Hbox;
-      Box           : Gtk_Box;
-      Combo         : Gtk_Combo_Box_Text;
-      Top_Box       : Gtk_Hbox;
-      Options_Frame : Gtk_Frame;
+      Table           : Gtk_Table;
+      Hbox            : Gtk_Hbox;
+      Label           : Gtk_Label;
+      Main_Hbox       : Gtk_Hbox;
+      Box             : Gtk_Box;
+      Combo           : Gtk_Combo_Box_Text;
+      Top_Box         : Gtk_Hbox;
+      Options_Frame   : Gtk_Frame;
       Locations_Frame : Gtk_Frame;
-      Button        : Gtk_Button;
-      Buttons_Vbox  : Gtk_Vbox;
-      Scrolled      : Target_UI_Access;
+      Button          : Gtk_Button;
+      Buttons_Vbox    : Gtk_Vbox;
+      Scrolled        : Target_UI_Access;
    begin
       Gtk_New (Scrolled, UI.Registry, Fixed_Font);
 
@@ -595,8 +594,7 @@ package body Build_Configurations.Gtkada is
          --  target
 
          Gtk_New_From_Name_And_Label
-           (Button,
-            "gps-refresh-symbolic", " Revert ");
+           (Button, "gps-refresh-symbolic", " Revert ");
          Pack_End (Top_Box, Button, False, False, 0);
 
          Object_Connect
@@ -648,13 +646,14 @@ package body Build_Configurations.Gtkada is
          Set_Spacing (Hbox, 3);
          Gtk_New (Label, "Launch mode");
          Pack_Start (Hbox, Label, False, False, 0);
-         Attach (Table,
-                 Child         => Hbox,
-                 Left_Attach   => 0,
-                 Right_Attach  => 1,
-                 Top_Attach    => 0,
-                 Bottom_Attach => 1,
-                 Xoptions      => Expand or Fill);
+         Attach
+           (Table,
+            Child         => Hbox,
+            Left_Attach   => 0,
+            Right_Attach  => 1,
+            Top_Attach    => 0,
+            Bottom_Attach => 1,
+            Xoptions      => Expand or Fill);
 
          Gtk_New (Scrolled.Launch_Combo);
          for J in Launch_Mode_Type loop
@@ -663,41 +662,47 @@ package body Build_Configurations.Gtkada is
 
          Set_Tooltip_Text
            (Scrolled.Launch_Combo,
-            -("Specify the launch mode for this target:" & ASCII.LF &
-              "    Manually: target launched explicitly by the user, with" &
-              ASCII.LF &
-              "        an extra dialog showing command line if run via a menu,"
-              & ASCII.LF &
-              "        with no dialog if run via a button" & ASCII.LF &
-              "    Manually with dialog: Ditto, always using an extra dialog" &
-              ASCII.LF &
-              "    Manually with no dialog: Ditto, never using an extra dialog"
-              & ASCII.LF &
-              "    On file save: target launched automatically when a file is"
-              & ASCII.LF &
-              "        saved. Can be very useful for e.g. checking file syntax"
-             ));
+            -("Specify the launch mode for this target:"
+              & ASCII.LF
+              & "    Manually: target launched explicitly by the user, with"
+              & ASCII.LF
+              & "        an extra dialog showing command line if run via "
+              & "a menu,"
+              & ASCII.LF
+              & "        with no dialog if run via a button"
+              & ASCII.LF
+              & "    Manually with dialog: Ditto, always using an extra dialog"
+              & ASCII.LF
+              & "    Manually with no dialog: Ditto, never using an "
+              & "extra dialog"
+              & ASCII.LF
+              & "    On file save: target launched automatically when a"
+              & " file is"
+              & ASCII.LF
+              & "        saved. Can be very useful for e.g. checking file"
+              & " syntax"));
 
          Gtk_New_Hbox (Hbox);
          Pack_Start (Hbox, Scrolled.Launch_Combo, False, False, 0);
 
-         Attach (Table,
-                 Child         => Hbox,
-                 Left_Attach   => 1,
-                 Right_Attach  => 2,
-                 Top_Attach    => 0,
-                 Bottom_Attach => 1,
-                 Xoptions      => Expand or Fill);
+         Attach
+           (Table,
+            Child         => Hbox,
+            Left_Attach   => 1,
+            Right_Attach  => 2,
+            Top_Attach    => 0,
+            Bottom_Attach => 1,
+            Xoptions      => Expand or Fill);
 
          declare
             Descr : constant String :=
-              -("If set, GNAT Studio will create one menu/button per" &
-                  " subtarget as defined by the given name. If the value is" &
-                  " set to ""main"", one entry per main defined in your" &
-                  " project hierarchy will be created. See also" &
-                  " corresponding macros %T and %TT on command line, and" &
-                " compute_build_targets hook for advanced usage of this" &
-                " field");
+              -("If set, GNAT Studio will create one menu/button per"
+                & " subtarget as defined by the given name. If the value is"
+                & " set to ""main"", one entry per main defined in your"
+                & " project hierarchy will be created. See also"
+                & " corresponding macros %T and %TT on command line, and"
+                & " compute_build_targets hook for advanced usage of this"
+                & " field");
 
          begin
             Gtk_New_Hbox (Hbox);
@@ -705,13 +710,14 @@ package body Build_Configurations.Gtkada is
             Gtk_New (Label, "Target type");
             Set_Tooltip_Text (Label, Descr);
             Pack_Start (Hbox, Label, False, False, 0);
-            Attach (Table,
-                    Child         => Hbox,
-                    Left_Attach   => 0,
-                    Right_Attach  => 1,
-                    Top_Attach    => 2,
-                    Bottom_Attach => 3,
-                    Xoptions      => Expand or Fill);
+            Attach
+              (Table,
+               Child         => Hbox,
+               Left_Attach   => 0,
+               Right_Attach  => 1,
+               Top_Attach    => 2,
+               Bottom_Attach => 3,
+               Xoptions      => Expand or Fill);
 
             Gtk_New (Scrolled.Multiple_Targets);
             Set_Tooltip_Text (Scrolled.Multiple_Targets, Descr);
@@ -719,13 +725,14 @@ package body Build_Configurations.Gtkada is
             Gtk_New_Hbox (Hbox);
             Pack_Start (Hbox, Scrolled.Multiple_Targets, False, False, 0);
 
-            Attach (Table,
-                    Child         => Hbox,
-                    Left_Attach   => 1,
-                    Right_Attach  => 2,
-                    Top_Attach    => 2,
-                    Bottom_Attach => 3,
-                    Xoptions      => Expand or Fill);
+            Attach
+              (Table,
+               Child         => Hbox,
+               Left_Attach   => 1,
+               Right_Attach  => 2,
+               Top_Attach    => 2,
+               Bottom_Attach => 3,
+               Xoptions      => Expand or Fill);
          end;
 
          Gtk_New_Vbox (Buttons_Vbox);
@@ -743,28 +750,39 @@ package body Build_Configurations.Gtkada is
          Gtk_New (Scrolled.Menu_Check, "in the main menu");
          Pack_Start (Buttons_Vbox, Scrolled.Menu_Check, False, False, 3);
 
-         Gtk_New (Scrolled.Project_Contextual_Menu_Check,
-                  "in contextual menus for projects");
-         Pack_Start (Buttons_Vbox, Scrolled.Project_Contextual_Menu_Check,
-                     False, False, 3);
+         Gtk_New
+           (Scrolled.Project_Contextual_Menu_Check,
+            "in contextual menus for projects");
+         Pack_Start
+           (Buttons_Vbox,
+            Scrolled.Project_Contextual_Menu_Check,
+            False,
+            False,
+            3);
 
-         Gtk_New (Scrolled.File_Contextual_Menu_Check,
-                  "in contextual menus for files");
-         Pack_Start (Buttons_Vbox, Scrolled.File_Contextual_Menu_Check,
-                     False, False, 3);
+         Gtk_New
+           (Scrolled.File_Contextual_Menu_Check,
+            "in contextual menus for files");
+         Pack_Start
+           (Buttons_Vbox,
+            Scrolled.File_Contextual_Menu_Check,
+            False,
+            False,
+            3);
 
          Gtk_New_Hbox (Hbox);
          Set_Spacing (Hbox, 3);
 
          Gtk_New (Label, "Icon");
          Pack_Start (Hbox, Label, False, False, 0);
-         Attach (Table,
-                 Child         => Hbox,
-                 Left_Attach   => 0,
-                 Right_Attach  => 1,
-                 Top_Attach    => 1,
-                 Bottom_Attach => 2,
-                 Xoptions      => Expand or Fill);
+         Attach
+           (Table,
+            Child         => Hbox,
+            Left_Attach   => 0,
+            Right_Attach  => 1,
+            Top_Attach    => 1,
+            Bottom_Attach => 2,
+            Xoptions      => Expand or Fill);
 
          Gtk_New_Hbox (Hbox);
          Gtk_New
@@ -773,28 +791,35 @@ package body Build_Configurations.Gtkada is
          Pack_Start (Hbox, Scrolled.Icon_Button, False, False, 0);
 
          Icon_Callback.Connect
-           (Scrolled.Icon_Button, Signal_Selection_Changed,
-            On_Icon_Selected'Access, Scrolled);
+           (Scrolled.Icon_Button,
+            Signal_Selection_Changed,
+            On_Icon_Selected'Access,
+            Scrolled);
          for J in Icons_List'Range loop
             Add_Item
               (Scrolled.Icon_Button,
-               To_String (Icons_List (J)), To_String (Icons_List (J)));
+               To_String (Icons_List (J)),
+               To_String (Icons_List (J)));
          end loop;
-         Add_Item (Scrolled.Icon_Button, "custom",
-                   Icon_Name => "invalid-symbolic");  --  fallback
+         Add_Item
+           (Scrolled.Icon_Button,
+            "custom",
+            Icon_Name => "invalid-symbolic");  --  fallback
 
-         Attach (Table,
-                 Child         => Hbox,
-                 Left_Attach   => 1,
-                 Right_Attach  => 2,
-                 Top_Attach    => 1,
-                 Bottom_Attach => 2,
-                 Xoptions      => Expand or Fill);
+         Attach
+           (Table,
+            Child         => Hbox,
+            Left_Attach   => 1,
+            Right_Attach  => 2,
+            Top_Attach    => 1,
+            Bottom_Attach => 2,
+            Xoptions      => Expand or Fill);
 
          --  Initialize the options
 
-         Set_Active (Scrolled.Launch_Combo,
-                     Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
+         Set_Active
+           (Scrolled.Launch_Combo,
+            Launch_Mode_Type'Pos (Target.Properties.Launch_Mode));
 
          declare
             Icon : Unbounded_String;
@@ -810,8 +835,7 @@ package body Build_Configurations.Gtkada is
 
             --  If unsuccessful, then select the custom icon, and set the
             --  text in the entry.
-            if Get_Selected_Item (Scrolled.Icon_Button) /=
-              To_String (Icon)
+            if Get_Selected_Item (Scrolled.Icon_Button) /= To_String (Icon)
             then
                --  Selecting the "custom" item will create the Icon_Entry
                --  widget.
@@ -822,10 +846,12 @@ package body Build_Configurations.Gtkada is
 
          Set_Active (Scrolled.Icon_Check, Target.Properties.In_Toolbar);
          Set_Active (Scrolled.Menu_Check, Target.Properties.In_Menu);
-         Set_Active (Scrolled.Project_Contextual_Menu_Check,
-                     Target.Properties.In_Contextual_Menu_For_Projects);
-         Set_Active (Scrolled.File_Contextual_Menu_Check,
-                     Target.Properties.In_Contextual_Menu_For_Files);
+         Set_Active
+           (Scrolled.Project_Contextual_Menu_Check,
+            Target.Properties.In_Contextual_Menu_For_Projects);
+         Set_Active
+           (Scrolled.File_Contextual_Menu_Check,
+            Target.Properties.In_Contextual_Menu_For_Files);
          Scrolled.Multiple_Targets.Set_Text
            (To_String (Target.Properties.Target_Type));
       end if;
@@ -881,8 +907,10 @@ package body Build_Configurations.Gtkada is
             end if;
 
             if Length (Target.Properties.Project_Switches) /= 0 then
-               Gtk_New (Label, "Project switches: " &
-                        To_String (Target.Properties.Project_Switches));
+               Gtk_New
+                 (Label,
+                  "Project switches: "
+                  & To_String (Target.Properties.Project_Switches));
                Set_Line_Wrap (Label, True);
                Set_Halign (Label, Align_Start);
                Gtk_New (Options_Frame);
@@ -941,12 +969,11 @@ package body Build_Configurations.Gtkada is
    -----------------------
 
    procedure On_Target_Renamed
-     (UI     : access Build_UI_Record'Class;
-      Params : Glib.Values.GValues)
+     (UI : access Build_UI_Record'Class; Params : Glib.Values.GValues)
    is
-      Text        : constant String := Get_String (Nth (Params, 2));
-      Ignored     : Message_Dialog_Buttons;
-      Old_Target  : constant Target_Access := Get_Selected_Target (UI);
+      Text       : constant String := Get_String (Nth (Params, 2));
+      Ignored    : Message_Dialog_Buttons;
+      Old_Target : constant Target_Access := Get_Selected_Target (UI);
    begin
       --  If the new name is the same as the old name, nothing to do
       if To_String (Old_Target.Name) = Text then
@@ -956,11 +983,12 @@ package body Build_Configurations.Gtkada is
       --  Validate that we are not giving the name of a target that already
       --  exists.
       if Get_Target_From_Name (UI.Registry, Text) /= null then
-         Ignored := GPS_Message_Dialog
-           (Msg            => -"A target with this name already exists",
-            Buttons        => Button_OK,
-            Title          => -"Name conflict",
-            Parent         => Gtk_Window (Get_Toplevel (UI)));
+         Ignored :=
+           GPS_Message_Dialog
+             (Msg     => -"A target with this name already exists",
+              Buttons => Button_OK,
+              Title   => -"Name conflict",
+              Parent  => Gtk_Window (Get_Toplevel (UI)));
          return;
       end if;
 
@@ -979,24 +1007,24 @@ package body Build_Configurations.Gtkada is
    -------------
 
    procedure Gtk_New
-     (Config_UI : out Configuration_UI_Access;
-      Registry  : Build_Config_Registry_Access;
+     (Config_UI  : out Configuration_UI_Access;
+      Registry   : Build_Config_Registry_Access;
       Fixed_Font : Pango_Font_Description)
    is
-      Vbox          : Gtk_Vbox;
+      Vbox : Gtk_Vbox;
 
       Col           : Gtk_Tree_View_Column;
       Text_Renderer : Gtk_Cell_Renderer_Text;
       Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
 
-      Buttons       : Gtk_Hbox;
-      Button        : Gtk_Button;
-      Ignore        : Gtk_Button;
-      Image         : Gtk_Image;
+      Buttons : Gtk_Hbox;
+      Button  : Gtk_Button;
+      Ignore  : Gtk_Button;
+      Image   : Gtk_Image;
 
-      Scrolled      : Gtk_Scrolled_Window;
+      Scrolled : Gtk_Scrolled_Window;
 
-      Dummy         : Gint;
+      Dummy : Gint;
       pragma Unreferenced (Dummy, Ignore);
    begin
       Config_UI := new Configuration_UI_Record;
@@ -1071,8 +1099,7 @@ package body Build_Configurations.Gtkada is
 
       Gtk_New (Button);
       Gtk_New_From_Icon_Name
-        (Image, "gps-new-document-symbolic",
-         Icon_Size_Menu);
+        (Image, "gps-new-document-symbolic", Icon_Size_Menu);
       Button.Set_Image (Image);
       Button.Set_Relief (Relief_None);
       Button.Set_Tooltip_Text (-"Clone selected target");
@@ -1087,10 +1114,7 @@ package body Build_Configurations.Gtkada is
       Config_UI.Build_UI.Pack_Start (Vbox, Expand => False);
 
       Gtk_New_Vbox (Vbox);
-      Config_UI.Build_UI.Pack_Start
-        (Vbox,
-         Expand => True,
-         Fill   => True);
+      Config_UI.Build_UI.Pack_Start (Vbox, Expand => True, Fill => True);
 
       Config_UI.Pack_Start (Buttons, Expand => False);
 
@@ -1100,9 +1124,7 @@ package body Build_Configurations.Gtkada is
       Config_UI.Build_UI.Notebook.Set_Show_Tabs (False);
       Config_UI.Build_UI.Notebook.Set_Show_Border (False);
       Vbox.Pack_Start
-        (Config_UI.Build_UI.Notebook,
-         Expand => True,
-         Fill   => True);
+        (Config_UI.Build_UI.Notebook, Expand => True, Fill => True);
 
       --  Create page 0 in the notebook
       declare
@@ -1123,10 +1145,7 @@ package body Build_Configurations.Gtkada is
 
       --  Add everything to the dialog/window
 
-      Config_UI.Pack_Start
-        (Config_UI.Build_UI,
-         Expand => True,
-         Fill   => True);
+      Config_UI.Pack_Start (Config_UI.Build_UI, Expand => True, Fill => True);
 
       Config_UI.Build_UI.Fixed_Font := Fixed_Font;
       Refresh (Config_UI.Build_UI, "");
@@ -1159,11 +1178,12 @@ package body Build_Configurations.Gtkada is
    ------------------
 
    procedure Modes_Dialog
-     (Registry     : Build_Config_Registry_Access;
-      Parent       : Gtk_Window   := null;
-      Set_Default_Size_From_History : not null access procedure
-         (Win : not null access Gtk_Window_Record'Class);
-      Changes_Made : out Boolean)
+     (Registry                      : Build_Config_Registry_Access;
+      Parent                        : Gtk_Window := null;
+      Set_Default_Size_From_History :
+        not null access procedure
+          (Win : not null access Gtk_Window_Record'Class);
+      Changes_Made                  : out Boolean)
    is
       UI     : Mode_UI_Access;
       Dialog : Gtk_Dialog;
@@ -1173,10 +1193,10 @@ package body Build_Configurations.Gtkada is
       Text_Renderer : Gtk_Cell_Renderer_Text;
       Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
 
-      Buttons       : Gtk_Hbox;
-      Button, Temp  : Gtk_Button;
+      Buttons      : Gtk_Hbox;
+      Button, Temp : Gtk_Button;
       pragma Unreferenced (Temp);
-      Image         : Gtk_Image;
+      Image        : Gtk_Image;
 
       Scrolled : Gtk_Scrolled_Window;
 
@@ -1185,11 +1205,14 @@ package body Build_Configurations.Gtkada is
    begin
       Changes_Made := False;
 
-      Gtk_New (Dialog => Dialog,
-               Title  => -"Mode Configuration",
-               Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent
-                  or Use_Header_Bar_From_Settings (Parent));
+      Gtk_New
+        (Dialog => Dialog,
+         Title  => -"Mode Configuration",
+         Parent => Parent,
+         Flags  =>
+           Modal
+           or Destroy_With_Parent
+           or Use_Header_Bar_From_Settings (Parent));
       Set_Default_Size_From_History (Dialog);
 
       UI := new Mode_UI_Record;
@@ -1227,8 +1250,7 @@ package body Build_Configurations.Gtkada is
       Gtk_New_From_Icon_Name (Image, "gps-add-symbolic", Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
-      Set_Tooltip_Text (Widget => Button,
-                        Text   => -"Add new mode");
+      Set_Tooltip_Text (Widget => Button, Text => -"Add new mode");
       Pack_Start (Buttons, Button, False, False, 0);
       Object_Connect
         (Widget      => Button,
@@ -1241,15 +1263,14 @@ package body Build_Configurations.Gtkada is
       Gtk_New_From_Icon_Name (Image, "gps-remove-symbolic", Icon_Size_Menu);
       Set_Image (Button, Image);
       Set_Relief (Button, Relief_None);
-      Set_Tooltip_Text (Widget => Button,
-                        Text   => -"Remove selected mode");
+      Set_Tooltip_Text (Widget => Button, Text => -"Remove selected mode");
       Pack_Start (Buttons, Button, False, False, 0);
---        Object_Connect
---          (Widget      => Button,
---           Name        => Gtk.Button.Signal_Clicked,
---           Cb          => On_Remove_Target'Access,
---           Slot_Object => UI,
---           After       => True);
+      --        Object_Connect
+      --          (Widget      => Button,
+      --           Name        => Gtk.Button.Signal_Clicked,
+      --           Cb          => On_Remove_Target'Access,
+      --           Slot_Object => UI,
+      --           After       => True);
 
       Pack_Start (UI, Vbox, False, True, 0);
 
@@ -1285,10 +1306,8 @@ package body Build_Configurations.Gtkada is
       --  Create the dialog buttons
 
       Temp := Gtk_Button (Add_Button (Dialog, -"OK", Gtk_Response_OK));
-      Temp := Gtk_Button
-        (Add_Button (Dialog, -"Apply", Gtk_Response_Apply));
-      Temp := Gtk_Button
-        (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
+      Temp := Gtk_Button (Add_Button (Dialog, -"Apply", Gtk_Response_Apply));
+      Temp := Gtk_Button (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
 
@@ -1316,16 +1335,16 @@ package body Build_Configurations.Gtkada is
       loop
          case Run (Dialog) is
             when Gtk_Response_Apply =>
---                 Save_Modes (UI);
+               --                 Save_Modes (UI);
                Changes_Made := True;
 
-            when Gtk_Response_OK =>
---                 Save_Modes (UI);
+            when Gtk_Response_OK    =>
+               --                 Save_Modes (UI);
                Destroy (Dialog);
                Changes_Made := True;
                exit;
 
-            when others =>
+            when others             =>
                Destroy (Dialog);
                exit;
          end case;
@@ -1365,9 +1384,9 @@ package body Build_Configurations.Gtkada is
       Target    : Target_Access;
       Cancelled : Boolean;
 
-      Model     : Gtk_Tree_Model;
-      Iter      : Gtk_Tree_Iter;
-      Name      : Unbounded_String;
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
+      Name  : Unbounded_String;
    begin
       Target := Get_Selected_Target (UI);
       if Target = null then
@@ -1387,8 +1406,8 @@ package body Build_Configurations.Gtkada is
             Next (Model, Iter);
 
             if Iter /= Null_Iter then
-               Name := To_Unbounded_String
-                 (Get_String (Model, Iter, Name_Column));
+               Name :=
+                 To_Unbounded_String (Get_String (Model, Iter, Name_Column));
             end if;
          end if;
 
@@ -1412,17 +1431,15 @@ package body Build_Configurations.Gtkada is
    begin
       Set_Unbounded_String
         (Name,
-         Query_User (Parent        => Gtk_Window (Get_Toplevel (UI)),
-                     Prompt        => -"Mode Name",
-                     Password_Mode => False,
-                     Urgent        => False));
+         Query_User
+           (Parent        => Gtk_Window (Get_Toplevel (UI)),
+            Prompt        => -"Mode Name",
+            Password_Mode => False,
+            Urgent        => False));
 
       if Length (Name) > 0 then
          Mode.Name := Name;
-         Insert_Mode
-           (Registry => UI.Registry,
-            Name     => Name,
-            Mode     => Mode);
+         Insert_Mode (Registry => UI.Registry, Name => Name, Mode => Mode);
          Refresh (UI);
       end if;
 
@@ -1468,15 +1485,16 @@ package body Build_Configurations.Gtkada is
    --------------------------
 
    procedure Single_Target_Dialog
-     (Registry        : Build_Config_Registry_Access;
-      Parent          : Gtk_Window   := null;
-      Target          : String;
-      History         : Histories.History;
-      Expand_Cmd_Line : Cmd_Line_Expander;
-      Set_Default_Size_From_History : not null access procedure
-         (Win : not null access Gtk_Window_Record'Class);
-      Result          : out GNAT.OS_Lib.Argument_List_Access;
-      Fixed_Font      : Pango_Font_Description)
+     (Registry                      : Build_Config_Registry_Access;
+      Parent                        : Gtk_Window := null;
+      Target                        : String;
+      History                       : Histories.History;
+      Expand_Cmd_Line               : Cmd_Line_Expander;
+      Set_Default_Size_From_History :
+        not null access procedure
+          (Win : not null access Gtk_Window_Record'Class);
+      Result                        : out GNAT.OS_Lib.Argument_List_Access;
+      Fixed_Font                    : Pango_Font_Description)
    is
       UI               : Build_UI_Access;
       Dialog           : Gtk_Dialog;
@@ -1486,12 +1504,11 @@ package body Build_Configurations.Gtkada is
       Initial_Cmd_Line : Unbounded_String;
 
       function Exists
-        (List : VSS.String_Vectors.Virtual_String_Vector;
-         Item : String) return Boolean;
+        (List : VSS.String_Vectors.Virtual_String_Vector; Item : String)
+         return Boolean;
       --  Return true if Item is found in List
 
-      procedure On_Save
-        (Self : access Gtk_Button_Record'Class);
+      procedure On_Save (Self : access Gtk_Button_Record'Class);
       --  Save the build target's command line when clicking on the
       --  'Save' button.
 
@@ -1505,8 +1522,8 @@ package body Build_Configurations.Gtkada is
       ------------
 
       function Exists
-        (List : VSS.String_Vectors.Virtual_String_Vector;
-         Item : String) return Boolean is
+        (List : VSS.String_Vectors.Virtual_String_Vector; Item : String)
+         return Boolean is
       begin
          for S of List loop
             if VSS.Strings.Conversions.To_UTF_8_String (S) = Item then
@@ -1521,9 +1538,7 @@ package body Build_Configurations.Gtkada is
       -- On_Save --
       -------------
 
-      procedure On_Save
-        (Self : access Gtk_Button_Record'Class)
-      is
+      procedure On_Save (Self : access Gtk_Button_Record'Class) is
          pragma Unreferenced (Self);
          Editor : Switches_Editor renames UI.Target_UI.Editor;
          Target : Target_Access renames UI.Target_UI.Target;
@@ -1572,8 +1587,7 @@ package body Build_Configurations.Gtkada is
       is
          Button : constant Gtk_Button := Gtk_Button (Self);
       begin
-         Button.Set_Sensitive
-           (To_String (Initial_Cmd_Line) /= Ent.Get_Text);
+         Button.Set_Sensitive (To_String (Initial_Cmd_Line) /= Ent.Get_Text);
       end Update_Save_Button_Sensitivity;
 
       Dummy : Gint;
@@ -1586,11 +1600,14 @@ package body Build_Configurations.Gtkada is
          return;
       end if;
 
-      Gtk_New (Dialog => Dialog,
-               Title  => Target,
-               Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent
-                  or Use_Header_Bar_From_Settings (Parent));
+      Gtk_New
+        (Dialog => Dialog,
+         Title  => Target,
+         Parent => Parent,
+         Flags  =>
+           Modal
+           or Destroy_With_Parent
+           or Use_Header_Bar_From_Settings (Parent));
       Set_Default_Size_From_History (Dialog);
 
       UI := new Build_UI_Record;
@@ -1598,7 +1615,7 @@ package body Build_Configurations.Gtkada is
 
       UI.Expand_Cmd_Line := Expand_Cmd_Line;
       UI.Registry := Registry;
-      UI.History  := History;
+      UI.History := History;
 
       --  Add everything to the dialog/window
 
@@ -1606,12 +1623,13 @@ package body Build_Configurations.Gtkada is
 
       --  Create the target UI itself
 
-      UI.Target_UI := Switches_For_Target
-        (UI         => UI,
-         History    => UI.History,
-         Target     => Get_Target_From_Name (Registry, Target),
-         Single     => True,
-         Fixed_Font => Fixed_Font);
+      UI.Target_UI :=
+        Switches_For_Target
+          (UI         => UI,
+           History    => UI.History,
+           Target     => Get_Target_From_Name (Registry, Target),
+           Single     => True,
+           Fixed_Font => Fixed_Font);
 
       Pack_Start (UI, UI.Target_UI, True, True, 3);
 
@@ -1621,11 +1639,10 @@ package body Build_Configurations.Gtkada is
 
       declare
          List : String_List_Access :=
-                  UI.Target_UI.Target.Command_Line.To_String_List
-                    (Expanded => False);
+           UI.Target_UI.Target.Command_Line.To_String_List (Expanded => False);
       begin
-         Initial_Cmd_Line := To_Unbounded_String
-           (Argument_List_To_String (List.all));
+         Initial_Cmd_Line :=
+           To_Unbounded_String (Argument_List_To_String (List.all));
          Free (List);
       end;
 
@@ -1642,19 +1659,18 @@ package body Build_Configurations.Gtkada is
 
       --  Used to update the 'Save' button's sensitivity
       Gtk.Editable.On_Changed
-      (Self  => +UI.Target_UI.Editor.Get_Entry,
-       Call  => Update_Save_Button_Sensitivity'Unrestricted_Access,
-       Slot  => Save_Button,
-       After => True);
+        (Self  => +UI.Target_UI.Editor.Get_Entry,
+         Call  => Update_Save_Button_Sensitivity'Unrestricted_Access,
+         Slot  => Save_Button,
+         After => True);
 
       --  Create the other dialog buttons
 
-      Ignore := Gtk_Button
-        (Add_Button (Dialog, -"Execute", Gtk_Response_OK));
+      Ignore := Gtk_Button (Add_Button (Dialog, -"Execute", Gtk_Response_OK));
       Ignore.Set_Can_Focus (False);
 
-      Ignore := Gtk_Button
-        (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
+      Ignore :=
+        Gtk_Button (Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel));
       Ignore.Set_Can_Focus (False);
 
       Set_Default_Response (Dialog, Gtk_Response_OK);
@@ -1665,13 +1681,13 @@ package body Build_Configurations.Gtkada is
          declare
             List    : constant VSS.String_Vectors.Virtual_String_Vector :=
               Get_History (History.all, Target_To_Key (UI.Target_UI.Target));
-            Default : constant String := Argument_List_To_String
-              (UI.Target_UI.Target.Command_Line.To_String_List
-                 (Expanded => False).all);
+            Default : constant String :=
+              Argument_List_To_String
+                (UI.Target_UI.Target.Command_Line.To_String_List
+                   (Expanded => False).all);
 
          begin
-            if not List.First_Element.Is_Empty
-              and then Exists (List, Default)
+            if not List.First_Element.Is_Empty and then Exists (List, Default)
             then
                Set_Text
                  (Ent,
@@ -1734,27 +1750,21 @@ package body Build_Configurations.Gtkada is
    -------------
 
    procedure Refresh
-     (UI            : access Build_UI_Record'Class;
-      Select_Target : String)
+     (UI : access Build_UI_Record'Class; Select_Target : String)
    is
       Count : Gint := 1;
       --  Indicates the number of the target that we are currently adding
 
       Target_Iter : Gtk_Tree_Row_Reference;
 
-      procedure Add_Target
-        (View   : Tree_View;
-         Target : Target_Access);
+      procedure Add_Target (View : Tree_View; Target : Target_Access);
       --  Add Target to View
 
       ----------------
       -- Add_Target --
       ----------------
 
-      procedure Add_Target
-        (View   : Tree_View;
-         Target : Target_Access)
-      is
+      procedure Add_Target (View : Tree_View; Target : Target_Access) is
          function Get_Or_Create_Category
            (C : Unbounded_String) return Gtk_Tree_Iter;
          --  Return iter corresponding to category C, creating it if necessary
@@ -1794,7 +1804,8 @@ package body Build_Configurations.Gtkada is
 
             function Get_Category_Name (S : Unbounded_String) return String is
             begin
-               return "<b>"
+               return
+                 "<b>"
                  & Glib.Convert.Escape_Text (Strip_Underscores (To_String (S)))
                  & "</b>";
             end Get_Category_Name;
@@ -1819,11 +1830,12 @@ package body Build_Configurations.Gtkada is
             --  We have not found our iter, create it now
             Append (View.Model, Iter, Null_Iter);
             Set_Columns
-              (View.Model, Iter,
+              (View.Model,
+               Iter,
                Icon     => "gps-emblem-directory-open",
                Name     => Cat_Name,
                Num      => 0, --  Category iters correspond to
-                              --  page 0 in the main notebook
+               --  page 0 in the main notebook
                Editable => False);
 
             return Iter;
@@ -1847,17 +1859,19 @@ package body Build_Configurations.Gtkada is
 
          if Icon_Str /= "" then
             Set_Columns
-              (View.Model, Iter,
+              (View.Model,
+               Iter,
                Icon     => To_String (Icon_Str),
                Name     => Glib.Convert.Escape_Text (To_String (Target.Name)),
                Num      => Count,
                Editable => not Get_Properties (Target).Read_Only);
          else
             Set_And_Clear
-              (View.Model, Iter,
+              (View.Model,
+               Iter,
                (Name_Column, Num_Column, Editable_Column),
                (As_String (Glib.Convert.Escape_Text (To_String (Target.Name))),
-                As_Int     (Count),
+                As_Int (Count),
                 As_Boolean (not Get_Properties (Target).Read_Only)));
          end if;
 
@@ -1929,19 +1943,14 @@ package body Build_Configurations.Gtkada is
       Count : Gint := 1;
       --  Indicates the number of the target that we are currently adding
 
-      procedure Add_Mode
-        (View   : Tree_View;
-         Mode   : Mode_Record);
+      procedure Add_Mode (View : Tree_View; Mode : Mode_Record);
       --  Add Mode to View
 
       --------------
       -- Add_Mode --
       --------------
 
-      procedure Add_Mode
-        (View  : Tree_View;
-         Mode  : Mode_Record)
-      is
+      procedure Add_Mode (View : Tree_View; Mode : Mode_Record) is
          function Get_Mode_Name (S : Unbounded_String) return String;
          --  Return the string to store in model for mode S
 
@@ -1951,9 +1960,7 @@ package body Build_Configurations.Gtkada is
 
          function Get_Mode_Name (S : Unbounded_String) return String is
          begin
-            return "<b>"
-              & Glib.Convert.Escape_Text (To_String (S))
-              & "</b>";
+            return "<b>" & Glib.Convert.Escape_Text (To_String (S)) & "</b>";
          end Get_Mode_Name;
 
          Iter      : Gtk_Tree_Iter;
@@ -1982,7 +1989,8 @@ package body Build_Configurations.Gtkada is
          --  We have not found our iter, create it now
          Append (View.Model, Iter, Null_Iter);
          Set_Columns
-           (View.Model, Iter,
+           (View.Model,
+            Iter,
             Icon     => "gps-emblem-directory-open",
             Name     => Mode_Name,
             Num      => Count, --  Set the corresponding page in the notebook
@@ -1992,16 +2000,16 @@ package body Build_Configurations.Gtkada is
 
          Gtk_New (Label, -"Description");
          Set_Alignment (Label, 0.0, 0.5);
-         Attach (Table, Label, 0, 1, 0, 1, Fill, 0,
-                 Xpadding => 2, Ypadding => 2);
+         Attach
+           (Table, Label, 0, 1, 0, 1, Fill, 0, Xpadding => 2, Ypadding => 2);
          Gtk_New (Ent);
          Set_Text (Ent, To_String (Mode.Description));
          Attach (Table, Ent, 1, 2, 0, 1, Yoptions => 0);
 
          Gtk_New (Label, -"Models");
          Set_Alignment (Label, 0.0, 0.5);
-         Attach (Table, Label, 0, 1, 1, 2, Fill, 0,
-                 Xpadding => 2, Ypadding => 2);
+         Attach
+           (Table, Label, 0, 1, 1, 2, Fill, 0, Xpadding => 2, Ypadding => 2);
          Gtk_New (Ent);
 
          C := First (Mode.Models);
@@ -2022,8 +2030,8 @@ package body Build_Configurations.Gtkada is
 
          Gtk_New (Label, -"Arguments");
          Set_Alignment (Label, 0.0, 0.5);
-         Attach (Table, Label, 0, 1, 2, 3, Fill, 0,
-                 Xpadding => 2, Ypadding => 2);
+         Attach
+           (Table, Label, 0, 1, 2, 3, Fill, 0, Xpadding => 2, Ypadding => 2);
          Gtk_New (Ent);
 
          declare
@@ -2038,16 +2046,16 @@ package body Build_Configurations.Gtkada is
 
          Gtk_New (Label, -"Subdir");
          Set_Alignment (Label, 0.0, 0.5);
-         Attach (Table, Label, 0, 1, 3, 4, Fill, 0,
-                 Xpadding => 2, Ypadding => 2);
+         Attach
+           (Table, Label, 0, 1, 3, 4, Fill, 0, Xpadding => 2, Ypadding => 2);
          Gtk_New (Ent);
          Set_Text (Ent, To_String (Mode.Subdir));
          Attach (Table, Ent, 1, 2, 3, 4, Ypadding => 2, Yoptions => 0);
 
          Gtk_New (Label, -"Shadow");
          Set_Alignment (Label, 0.0, 0.5);
-         Attach (Table, Label, 0, 1, 4, 5, Fill, 0,
-                 Xpadding => 2, Ypadding => 2);
+         Attach
+           (Table, Label, 0, 1, 4, 5, Fill, 0, Xpadding => 2, Ypadding => 2);
          Gtk_New (Check);
          Set_Active (Check, Mode.Shadow);
          Attach (Table, Check, 1, 2, 4, 5, Ypadding => 2, Yoptions => 0);

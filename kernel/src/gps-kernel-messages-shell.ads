@@ -36,8 +36,7 @@ package GPS.Kernel.Messages.Shell is
    --  Returns message associated with instance.
 
    procedure Set_Data
-     (Instance : GNATCOLL.Scripts.Class_Instance;
-      Message  : Message_Access);
+     (Instance : GNATCOLL.Scripts.Class_Instance; Message : Message_Access);
    --  Set data in Instance to Message
 
 end GPS.Kernel.Messages.Shell;

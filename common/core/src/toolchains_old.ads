@@ -29,8 +29,7 @@ package Toolchains_Old is
    --  Get the compiler search path
 
    function Locate_Exec
-     (Exec_Name : Filesystem_String; Path : File_Array)
-      return Virtual_File;
+     (Exec_Name : Filesystem_String; Path : File_Array) return Virtual_File;
    --  Locate exec on specified Path.
 
    function Locate_Tool_Executable

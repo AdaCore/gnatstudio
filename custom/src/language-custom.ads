@@ -25,7 +25,7 @@ with XML_Utils;
 
 with Language_Handlers;
 with GPS.Kernel;
-with Ada.Strings.Wide_Wide_Maps;  use Ada.Strings.Wide_Wide_Maps;
+with Ada.Strings.Wide_Wide_Maps; use Ada.Strings.Wide_Wide_Maps;
 
 package Language.Custom is
 
@@ -40,61 +40,70 @@ package Language.Custom is
    --  The language and its extensions are automatically registered in the
    --  handler.
 
-   overriding procedure Free (Lang : in out Custom_Language);
+   overriding
+   procedure Free (Lang : in out Custom_Language);
 
    -------------
    -- Parsing --
    -------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access Custom_Language; Str : String) return Boolean;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Custom_Language) return Strings.String_Access;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Custom_Language) return GNAT.Expect.Pattern_Matcher_Access;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Custom_Language) return GNAT.Strings.String_List;
 
-   overriding function Is_Word_Char
-     (Lang : access Custom_Language;
-      Char : Wide_Wide_Character) return Boolean;
+   overriding
+   function Is_Word_Char
+     (Lang : access Custom_Language; Char : Wide_Wide_Character)
+      return Boolean;
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Custom_Language) return Language_Context_Access;
 
    --------------
    -- Explorer --
    --------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access Custom_Language) return Explorer_Categories;
 
    ------------------------
    -- Naming conventions --
    ------------------------
 
-   overriding function Dereference_Name
-     (Lang : access Custom_Language;
-      Name : String) return String;
+   overriding
+   function Dereference_Name
+     (Lang : access Custom_Language; Name : String) return String;
 
-   overriding function Array_Item_Name
-     (Lang  : access Custom_Language;
-      Name  : String;
-      Index : String) return String;
+   overriding
+   function Array_Item_Name
+     (Lang : access Custom_Language; Name : String; Index : String)
+      return String;
 
-   overriding function Record_Field_Name
-     (Lang  : access Custom_Language;
-      Name  : String;
-      Field : String) return String;
+   overriding
+   function Record_Field_Name
+     (Lang : access Custom_Language; Name : String; Field : String)
+      return String;
 
    ------------------
    -- Field access --
    ------------------
 
-   overriding function Get_Name (Lang : access Custom_Language) return String;
+   overriding
+   function Get_Name (Lang : access Custom_Language) return String;
    --  Return the name associated with Lang.
 
    ----------------------
@@ -105,13 +114,15 @@ package Language.Custom is
    --  implementation, or redefined using a shared library specified in the
    --  xml file.
 
-   overriding procedure Parse_Constructs
+   overriding
+   procedure Parse_Constructs
      (Lang   : access Custom_Language;
       File   : GNATCOLL.VFS.Virtual_File;
       Buffer : UTF8_String;
       Result : out Construct_List);
 
-   overriding procedure Format_Buffer
+   overriding
+   procedure Format_Buffer
      (Lang                : access Custom_Language;
       Buffer              : String;
       Replace             : Replace_Text_Callback;
@@ -119,15 +130,17 @@ package Language.Custom is
       Indent_Params       : Indent_Parameters := Default_Indent_Parameters;
       Case_Exceptions     : Case_Handling.Casing_Exceptions :=
         Case_Handling.No_Casing_Exception;
-      Is_Optional_Keyword : access function (S : String)
-                                             return Boolean := null);
+      Is_Optional_Keyword : access function (S : String) return Boolean :=
+        null);
 
-   overriding procedure Parse_Entities
+   overriding
+   procedure Parse_Entities
      (Lang     : access Custom_Language;
       Buffer   : String;
       Callback : Entity_Callback);
 
-   overriding procedure Get_Indentation_Parameters
+   overriding
+   procedure Get_Indentation_Parameters
      (Lang         : access Custom_Language;
       Params       : out Indent_Parameters;
       Indent_Style : out Indentation_Kind);
@@ -144,19 +157,20 @@ private
       Clean   : Boolean := False) return String;
 
    type Custom_Language is new Language_Root with record
-      Categories       : Explorer_Categories_Access;
-      Keywords         : GNAT.Expect.Pattern_Matcher_Access;
-      Keywords_Regexp  : Strings.String_Access;
-      Keywords_List    : GNAT.Strings.String_List_Access;
-      Context          : Language_Context_Access;
-      Name             : XML_Utils.String_Ptr;
-      Project_Fields   : Project_Field_Array_Access;
-      Parent           : Language_Access;
-      Next             : Custom_Language_Access;
-      Word_Chars       : Wide_Wide_Character_Set;
+      Categories      : Explorer_Categories_Access;
+      Keywords        : GNAT.Expect.Pattern_Matcher_Access;
+      Keywords_Regexp : Strings.String_Access;
+      Keywords_List   : GNAT.Strings.String_List_Access;
+      Context         : Language_Context_Access;
+      Name            : XML_Utils.String_Ptr;
+      Project_Fields  : Project_Field_Array_Access;
+      Parent          : Language_Access;
+      Next            : Custom_Language_Access;
+      Word_Chars      : Wide_Wide_Character_Set;
    end record;
 
-   overriding function Is_Interpolation_Char
+   overriding
+   function Is_Interpolation_Char
      (Lang : access Custom_Language; Char : Wide_Wide_Character) return Boolean
    is (False);
 

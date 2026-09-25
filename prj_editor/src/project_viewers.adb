@@ -16,87 +16,90 @@
 ------------------------------------------------------------------------------
 
 with Generic_Views;
-with GNAT.Strings;                 use GNAT.Strings;
-with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
-with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
-with GNATCOLL.Utils;               use GNATCOLL.Utils;
-with GNATCOLL.VFS;                 use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;          use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.VFS_Utils;           use GNATCOLL.VFS_Utils;
+with GNAT.Strings;        use GNAT.Strings;
+with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
+with GNATCOLL.Scripts;    use GNATCOLL.Scripts;
+with GNATCOLL.Utils;      use GNATCOLL.Utils;
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.VFS_Utils;  use GNATCOLL.VFS_Utils;
 
-with Gdk.RGBA;                     use Gdk.RGBA;
-with Gdk.Event;                    use Gdk.Event;
+with Gdk.RGBA;  use Gdk.RGBA;
+with Gdk.Event; use Gdk.Event;
 
-with Glib;                         use Glib;
-with Glib.Convert;                 use Glib.Convert;
-with Glib.Object;                  use Glib.Object;
-with Glib_Values_Utils;            use Glib_Values_Utils;
+with Glib;              use Glib;
+with Glib.Convert;      use Glib.Convert;
+with Glib.Object;       use Glib.Object;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
 with Gtk.Box;
-with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                    use Gtk.Enums;
-with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;               use Gtk.Tree_Model;
-with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
-with Gtk.Tree_Store;               use Gtk.Tree_Store;
-with Gtk.Tree_View;                use Gtk.Tree_View;
-with Gtk.Tree_View_Column;         use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 
-with Gtkada.Handlers;              use Gtkada.Handlers;
-with Gtkada.MDI;                   use Gtkada.MDI;
+with Gtkada.Handlers; use Gtkada.Handlers;
+with Gtkada.MDI;      use Gtkada.MDI;
 
-with Commands.Interactive;         use Commands, Commands.Interactive;
-with Default_Preferences;          use Default_Preferences;
-with GPS.Intl;                     use GPS.Intl;
-with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
-with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;           use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
-with GUI_Utils;                    use GUI_Utils;
-with Language_Handlers;            use Language_Handlers;
-with Projects;                     use Projects;
-with Remote;                       use Remote;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Default_Preferences;    use Default_Preferences;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
+with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
+with GUI_Utils;              use GUI_Utils;
+with Language_Handlers;      use Language_Handlers;
+with Projects;               use Projects;
+with Remote;                 use Remote;
 with System;
 
 package body Project_Viewers is
 
    type Prj_Editor_Module_Id_Record is new Module_ID_Record with null record;
-   type Prj_Editor_Module_Id_Access is access all
-     Prj_Editor_Module_Id_Record'Class;
+   type Prj_Editor_Module_Id_Access is
+     access all Prj_Editor_Module_Id_Record'Class;
 
    Prj_Editor_Module_ID : Prj_Editor_Module_Id_Access;
    --  Id for the project editor module
 
    Project_Switches_Name : constant String := "Switches";
 
-   Directory_Cst : aliased constant String := "directory";
-   Imported_Cst  : aliased constant String := "imported";
-   Src_Path_Cst  : aliased constant String := "sources";
-   Obj_Path_Cst  : aliased constant String := "objects";
-   Name_Cst      : aliased constant String := "name";
-   Path_Cst      : aliased constant String := "path";
+   Directory_Cst                 : aliased constant String := "directory";
+   Imported_Cst                  : aliased constant String := "imported";
+   Src_Path_Cst                  : aliased constant String := "sources";
+   Obj_Path_Cst                  : aliased constant String := "objects";
+   Name_Cst                      : aliased constant String := "name";
+   Path_Cst                      : aliased constant String := "path";
    Add_Source_Dir_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Directory_Cst'Access);
-   Remove_Dep_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Imported_Cst'Access);
-   Add_Predefined_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List
-     := (1 => Src_Path_Cst'Access, 2 => Obj_Path_Cst'Access);
-   Rename_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Name_Cst'Access, 2 => Path_Cst'Access);
-   Add_Dep_Cmd_Parameters : constant GNATCOLL.Scripts.Cst_Argument_List :=
-     (1 => Path_Cst'Access);
+   Remove_Dep_Cmd_Parameters     :
+     constant GNATCOLL.Scripts.Cst_Argument_List := (1 => Imported_Cst'Access);
+   Add_Predefined_Parameters     :
+     constant GNATCOLL.Scripts.Cst_Argument_List :=
+       (1 => Src_Path_Cst'Access, 2 => Obj_Path_Cst'Access);
+   Rename_Cmd_Parameters         :
+     constant GNATCOLL.Scripts.Cst_Argument_List :=
+       (1 => Name_Cst'Access, 2 => Path_Cst'Access);
+   Add_Dep_Cmd_Parameters        :
+     constant GNATCOLL.Scripts.Cst_Argument_List := (1 => Path_Cst'Access);
 
-   Display_File_Name_Column  : constant := 0;
+   Display_File_Name_Column : constant := 0;
    --  This columns contains the UTF8 representation of the file name
-   File_Column               : constant := 1;
+   File_Column              : constant := 1;
    --  This column contains the file itself
-   Compiler_Switches_Column  : constant := 2;
-   Compiler_Color_Column     : constant := 3;
+   Compiler_Switches_Column : constant := 2;
+   Compiler_Color_Column    : constant := 3;
 
    type Project_Viewer_Record is new Generic_Views.View_Record with record
       Tree  : Gtk.Tree_View.Gtk_Tree_View;
@@ -120,35 +123,35 @@ package body Project_Viewers is
    end record;
 
    function Initialize
-     (Viewer : access Project_Viewer_Record'Class)
-     return Gtk_Widget;
+     (Viewer : access Project_Viewer_Record'Class) return Gtk_Widget;
    --  Create a new project viewer, and return the focus widget.
    --  Every time the selection in Explorer changes, the info displayed in
    --  the viewer is changed.
 
    type Files_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Files_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context;
 
-   package File_Views is new Generic_Views.Simple_Views
-     (Formal_View_Record => Project_Viewer_Record,
-      Module_Name        => "File_Switches",
-      View_Name          => -"Switches editor",
-      Formal_MDI_Child   => Files_Child_Record,
-      Initialize         => Initialize,
-      Reuse_If_Exist     => True,
-      Local_Toolbar      => True,
-      Areas              => Gtkada.MDI.Sides_Only,
-      Position           => Position_Left);
+   package File_Views is new
+     Generic_Views.Simple_Views
+       (Formal_View_Record => Project_Viewer_Record,
+        Module_Name        => "File_Switches",
+        View_Name          => -"Switches editor",
+        Formal_MDI_Child   => Files_Child_Record,
+        Initialize         => Initialize,
+        Reuse_If_Exist     => True,
+        Local_Toolbar      => True,
+        Areas              => Gtkada.MDI.Sides_Only,
+        Position           => Position_Left);
    subtype Project_Viewer is File_Views.View_Access;
    use File_Views;
 
    procedure Show_Project
-     (Viewer              : access Project_Viewer_Record'Class;
-      Project_Filter      : Project_Type;
-      Directory_Filter    : Virtual_File := GNATCOLL.VFS.No_File);
+     (Viewer           : access Project_Viewer_Record'Class;
+      Project_Filter   : Project_Type;
+      Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File);
    --  Shows all the direct source files of Project_Filter (ie not including
    --  imported projects, but including all source directories).
    --  This clears the list first.
@@ -168,11 +171,12 @@ package body Project_Viewers is
 
    function Select_Row
      (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
-     return Boolean;
+      return Boolean;
    --  Callback when a row/column has been selected in the clist
 
    type On_Context_Changed is new Context_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : On_Context_Changed;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context);
@@ -200,22 +204,23 @@ package body Project_Viewers is
    --  Directory and File act as filters for the information that is displayed.
 
    procedure Project_Viewers_Set
-     (Viewer : access Project_Viewer_Record'Class;
-      Iter   : Gtk_Tree_Iter);
+     (Viewer : access Project_Viewer_Record'Class; Iter : Gtk_Tree_Iter);
    --  Set the contents of the line Iter in the model. It is assumed the file
    --  name has already been set on that line
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : access Project_Viewer_Record'Class;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
    --  Hook called when the preferences change
 
    type On_Project_View_Changed is new Simple_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Hook called when the project view changes
@@ -224,15 +229,17 @@ package body Project_Viewers is
    -- Contextual menus --
    ----------------------
 
-   type Edit_Project_Source_Command
-     is new Interactive_Command with null record;
-   overriding function Execute
+   type Edit_Project_Source_Command is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Edit_Configuration_File (Global : Boolean)
-     is new Interactive_Command with null record;
-   overriding function Execute
+   type Edit_Configuration_File (Global : Boolean) is new Interactive_Command
+   with null record;
+   overriding
+   function Execute
      (Command : access Edit_Configuration_File;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
@@ -241,27 +248,27 @@ package body Project_Viewers is
    -------------------------
 
    procedure Project_Viewers_Set
-     (Viewer : access Project_Viewer_Record'Class;
-      Iter   : Gtk_Tree_Iter)
+     (Viewer : access Project_Viewer_Record'Class; Iter : Gtk_Tree_Iter)
    is
       procedure Internal
         (Tree, Iter : System.Address;
-         Col2  : Gint; Value2 : String;
-         Col3  : Gint; Value3 : Gdk_RGBA);
+         Col2       : Gint;
+         Value2     : String;
+         Col3       : Gint;
+         Value3     : Gdk_RGBA);
       pragma Import (C, Internal, "ada_gtk_tree_store_set_ptr_ptr");
 
       File_Name  : constant Virtual_File :=
-                     Get_File (Viewer.Model, Iter, File_Column);
+        Get_File (Viewer.Model, Iter, File_Column);
       Language   : constant String :=
-                     Get_Language_From_File
-                       (Get_Language_Handler (Viewer.Kernel), File_Name);
+        Get_Language_From_File
+          (Get_Language_Handler (Viewer.Kernel), File_Name);
       Color      : Gdk_RGBA;
       Value      : String_List_Access;
       Is_Default : Boolean;
    begin
       Viewer.Current_Project.Switches
-        (Compiler_Package, File_Name,
-         Language, Value, Is_Default);
+        (Compiler_Package, File_Name, Language, Value, Is_Default);
 
       if Is_Default then
          Color := Viewer.Default_Switches_Color;
@@ -269,11 +276,13 @@ package body Project_Viewers is
          Color := Black_RGBA;
       end if;
 
-      Internal (Get_Object (Viewer.Model), Iter'Address,
-                Compiler_Switches_Column,
-                Locale_To_UTF8
-                  (Argument_List_To_String (Value.all)) & ASCII.NUL,
-                Compiler_Color_Column, Color);
+      Internal
+        (Get_Object (Viewer.Model),
+         Iter'Address,
+         Compiler_Switches_Column,
+         Locale_To_UTF8 (Argument_List_To_String (Value.all)) & ASCII.NUL,
+         Compiler_Color_Column,
+         Color);
       Free (Value);
    end Project_Viewers_Set;
 
@@ -294,10 +303,11 @@ package body Project_Viewers is
       then
          Append (Viewer.Model, Iter, Null_Iter);
          Set_And_Clear
-           (Viewer.Model, Iter,
+           (Viewer.Model,
+            Iter,
             (Display_File_Name_Column, File_Column),
             (0 => As_String (File_Name.Display_Base_Name),
-             1 => As_File   (File_Name)));
+             1 => As_File (File_Name)));
 
          Project_Viewers_Set (Viewer, Iter);
       end if;
@@ -327,9 +337,11 @@ package body Project_Viewers is
             V.Kernel.Context_Changed
               (File_Views.Child_From_View (V).Build_Context);
 
-            return Execute_Action
-              (V.Kernel, Action => "edit switches for file",
-               Error_Msg_In_Console => True);
+            return
+              Execute_Action
+                (V.Kernel,
+                 Action               => "edit switches for file",
+                 Error_Msg_In_Console => True);
          end if;
       end if;
 
@@ -340,7 +352,8 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -374,15 +387,17 @@ package body Project_Viewers is
 
       if Child /= null then
          if Directory = GNATCOLL.VFS.No_File then
-            Set_Title (Child,
-                       Title => -"Editing switches for project "
-                       & Project.Name,
-                       Short_Title => Project_Switches_Name);
+            Set_Title
+              (Child,
+               Title       => -"Editing switches for project " & Project.Name,
+               Short_Title => Project_Switches_Name);
          else
-            Set_Title (Child,
-                       Title => -"Editing switches for directory " &
-                         Directory.Display_Full_Name,
-                       Short_Title => Project_Switches_Name);
+            Set_Title
+              (Child,
+               Title       =>
+                 -"Editing switches for directory "
+                 & Directory.Display_Full_Name,
+               Short_Title => Project_Switches_Name);
          end if;
       end if;
 
@@ -415,8 +430,8 @@ package body Project_Viewers is
    --------------------------------
 
    procedure Explorer_Selection_Changed
-     (Viewer  : access Project_Viewer_Record'Class;
-      Context : Selection_Context) is
+     (Viewer : access Project_Viewer_Record'Class; Context : Selection_Context)
+   is
    begin
       --  If the context is invalid, keep the currently displayed lines, so
       --  that when a new MDI child is selected, the contents of the viewer is
@@ -437,7 +452,8 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self    : On_Context_Changed;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context)
@@ -449,9 +465,7 @@ package body Project_Viewers is
       --  Do nothing if we forced the selection change ourselves. For instance,
       --  when a new switch editor is created in On_Edit_Switches, to avoid
       --  doing extra work.
-      if Child = null
-        or else Get_Widget (Child) /= Gtk_Widget (View)
-      then
+      if Child = null or else Get_Widget (Child) /= Gtk_Widget (View) then
          Explorer_Selection_Changed (View, Context);
       end if;
    end Execute;
@@ -461,25 +475,24 @@ package body Project_Viewers is
    ----------------
 
    function Initialize
-     (Viewer : access Project_Viewer_Record'Class)
-      return Gtk_Widget
+     (Viewer : access Project_Viewer_Record'Class) return Gtk_Widget
    is
       Context : constant Selection_Context :=
         Get_Current_Context (Viewer.Kernel);
 
       Column_Types : constant GType_Array :=
-                       (Display_File_Name_Column => GType_String,
-                        File_Column              => Get_Virtual_File_Type,
-                        Compiler_Switches_Column => GType_String,
-                        Compiler_Color_Column    => Gdk.RGBA.Get_Type);
+        (Display_File_Name_Column => GType_String,
+         File_Column              => Get_Virtual_File_Type,
+         Compiler_Switches_Column => GType_String,
+         Compiler_Color_Column    => Gdk.RGBA.Get_Type);
 
-      Scrolled     : Gtk_Scrolled_Window;
-      Col          : Gtk_Tree_View_Column;
-      Render       : Gtk_Cell_Renderer_Text;
-      Col_Number   : Gint;
+      Scrolled   : Gtk_Scrolled_Window;
+      Col        : Gtk_Tree_View_Column;
+      Render     : Gtk_Cell_Renderer_Text;
+      Col_Number : Gint;
       pragma Unreferenced (Col_Number);
 
-      Hook         : Preferences_Hooks_Function_Access;
+      Hook : Preferences_Hooks_Function_Access;
 
    begin
       Gtk.Box.Initialize_Hbox (Viewer);
@@ -489,7 +502,7 @@ package body Project_Viewers is
       Add (Viewer, Scrolled);
 
       Gtk_New (Viewer.Model, Column_Types);
-      Gtk_New (Viewer.Tree,  Viewer.Model);
+      Gtk_New (Viewer.Tree, Viewer.Model);
       Set_Mode (Get_Selection (Viewer.Tree), Selection_Multiple);
       Set_Search_Column (Viewer.Tree, File_Column);
       Add (Scrolled, Viewer.Tree);
@@ -518,17 +531,18 @@ package body Project_Viewers is
       Add_Attribute (Col, Render, "foreground_rgba", Compiler_Color_Column);
 
       Setup_Contextual_Menu
-        (Kernel          => Viewer.Kernel,
-         Event_On_Widget => Viewer.Tree);
+        (Kernel => Viewer.Kernel, Event_On_Widget => Viewer.Tree);
 
       Return_Callback.Object_Connect
-        (Viewer.Tree, Signal_Button_Press_Event,
-         Return_Callback.To_Marshaller (Select_Row'Access), Viewer);
+        (Viewer.Tree,
+         Signal_Button_Press_Event,
+         Return_Callback.To_Marshaller (Select_Row'Access),
+         Viewer);
 
       Context_Changed_Hook.Add_Debounce
         (new On_Context_Changed, Watch => Viewer);
       Project_View_Changed_Hook.Add
-         (new On_Project_View_Changed, Watch => Viewer);
+        (new On_Project_View_Changed, Watch => Viewer);
 
       Hook := new On_Pref_Changed'(Hook_Function with View => Viewer);
       Preferences_Changed_Hook.Add (Obj => Hook, Watch => Viewer);
@@ -552,7 +566,8 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -577,14 +592,12 @@ package body Project_Viewers is
       Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Files                : File_Array_Access :=
-                               Project_Filter.Source_Files
-                                 (Recursive => False);
+        Project_Filter.Source_Files (Recursive => False);
       Same_Dir_And_Project : constant Boolean :=
-                               (Viewer.Current_Project = Project_Filter
-                                and then Directory_Filter /= No_File
-                                and then
-                                  Viewer.Current_Dir = Directory_Filter);
-      Sorted : Gint;
+        (Viewer.Current_Project = Project_Filter
+         and then Directory_Filter /= No_File
+         and then Viewer.Current_Dir = Directory_Filter);
+      Sorted               : Gint;
    begin
       Viewer.Current_Project := Project_Filter;
 
@@ -619,7 +632,8 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Edit_Project_Source_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -633,7 +647,7 @@ package body Project_Viewers is
          Project := Kernel.Registry.Tree.Root_Project;
       end if;
       Open_File_Action_Hook.Run
-         (Kernel, File => Project.Project_Path, Project => Project);
+        (Kernel, File => Project.Project_Path, Project => Project);
       return Success;
    end Execute;
 
@@ -641,7 +655,8 @@ package body Project_Viewers is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Edit_Configuration_File;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -687,16 +702,16 @@ package body Project_Viewers is
    -- Build_Context --
    -------------------
 
-   overriding function Build_Context
+   overriding
+   function Build_Context
      (Self  : not null access Files_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return Selection_Context
+      Event : Gdk.Event.Gdk_Event := null) return Selection_Context
    is
-      Child : constant GPS_MDI_Child :=
+      Child   : constant GPS_MDI_Child :=
         GPS_MDI_Child_Record (Self.all)'Unchecked_Access;
-      V    : constant Project_Viewer :=
+      V       : constant Project_Viewer :=
         Project_Viewer (Child.Get_Actual_Widget);
-      Iter : Gtk_Tree_Iter;
+      Iter    : Gtk_Tree_Iter;
       Context : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
 
@@ -714,7 +729,7 @@ package body Project_Viewers is
 
          declare
             File_Name : constant Virtual_File :=
-                          Get_File (V.Model, Iter, File_Column);
+              Get_File (V.Model, Iter, File_Column);
          begin
             Set_File_Information
               (Context,
@@ -778,13 +793,11 @@ package body Project_Viewers is
             Old_Obj : constant File_Array :=
               Get_Registry (Kernel).Environment.Predefined_Object_Path;
             New_Src : constant File_Array :=
-                        Remove_Redundant_Directories
-                          (Old_Src,
-                           From_Path (Nth_Arg (Data, 1, "")));
+              Remove_Redundant_Directories
+                (Old_Src, From_Path (Nth_Arg (Data, 1, "")));
             New_Obj : constant File_Array :=
-                        Remove_Redundant_Directories
-                          (Old_Obj,
-                           From_Path (+Nth_Arg (Data, 2, "")));
+              Remove_Redundant_Directories
+                (Old_Obj, From_Path (+Nth_Arg (Data, 2, "")));
          begin
             if New_Src'Length /= 0 then
                Get_Registry (Kernel).Environment.Set_Predefined_Source_Path
@@ -825,8 +838,8 @@ package body Project_Viewers is
    begin
       if Command = "add_main_unit" then
          declare
-            Args : GNAT.Strings.String_List
-              (1 .. Number_Of_Arguments (Data) - 1);
+            Args :
+              GNAT.Strings.String_List (1 .. Number_Of_Arguments (Data) - 1);
          begin
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
@@ -866,7 +879,7 @@ package body Project_Viewers is
       elsif Command = "remove_dependency" then
          Name_Parameters (Data, Remove_Dep_Cmd_Parameters);
          declare
-            Project2  : constant Project_Type := Get_Data (Data, 2);
+            Project2 : constant Project_Type := Get_Data (Data, 2);
          begin
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
@@ -878,44 +891,48 @@ package body Project_Viewers is
       elsif Command = "add_dependency" then
          Name_Parameters (Data, Add_Dep_Cmd_Parameters);
          declare
-            Project2 : constant Filesystem_String  := Normalize_Pathname
-              (Name => Nth_Arg (Data, 2));
+            Project2 : constant Filesystem_String :=
+              Normalize_Pathname (Name => Nth_Arg (Data, 2));
             Relative : constant Boolean :=
               Get_Paths_Type (Project) = Projects.Relative
-              or else (Get_Paths_Type (Project) = From_Pref
-                       and then Generate_Relative_Paths.Get_Pref);
+              or else
+                (Get_Paths_Type (Project) = From_Pref
+                 and then Generate_Relative_Paths.Get_Pref);
             Error    : Import_Project_Error;
             pragma Unreferenced (Error);
          begin
             if not Is_Editable (Project) then
                Set_Error_Msg (Data, -"Project is not editable");
             else
-               Error := Get_Registry (Kernel).Tree.Add_Imported_Project
-                 (Project            => Project,
-                  Imported_Project_Location => Create (Project2),
-                  Errors             => Set_Error_Tmp'Unrestricted_Access,
-                  Use_Base_Name      => False,
-                  Use_Relative_Path  => Relative);
+               Error :=
+                 Get_Registry (Kernel).Tree.Add_Imported_Project
+                   (Project                   => Project,
+                    Imported_Project_Location => Create (Project2),
+                    Errors                    =>
+                      Set_Error_Tmp'Unrestricted_Access,
+                    Use_Base_Name             => False,
+                    Use_Relative_Path         => Relative);
             end if;
          end;
 
       elsif Command = "remove_source_dir" then
          Name_Parameters (Data, Add_Source_Dir_Cmd_Parameters);
          declare
-            Dir : Virtual_File :=
+            Dir   : Virtual_File :=
               Create (Nth_Arg (Data, 2), Get_Nickname (Build_Server));
-            Dirs : String_List_Access := Project.Attribute_Value
-              (Source_Dirs_Attribute);
+            Dirs  : String_List_Access :=
+              Project.Attribute_Value (Source_Dirs_Attribute);
             Index : Natural := Dirs'Last;
          begin
             if not Is_Editable (Project) or else Dirs = null then
                Set_Error_Msg (Data, -"Project is not editable");
             else
                if not Is_Absolute_Path (Dir) then
-                  Dir := Create_From_Base
-                    (Nth_Arg (Data, 2),
-                     Get_Current_Dir
-                       (Get_Nickname (Build_Server)).Full_Name.all);
+                  Dir :=
+                    Create_From_Base
+                      (Nth_Arg (Data, 2),
+                       Get_Current_Dir (Get_Nickname (Build_Server))
+                         .Full_Name.all);
                end if;
 
                for D in Dirs'Range loop
@@ -924,10 +941,11 @@ package body Project_Viewers is
                        Create (+Dirs (D).all, Get_Nickname (Build_Server));
                   begin
                      if not Is_Absolute_Path (Tested_Dir) then
-                        Tested_Dir := Create_From_Base
-                          (+Dirs (D).all,
-                           Get_Current_Dir
-                             (Get_Nickname (Build_Server)).Full_Name.all);
+                        Tested_Dir :=
+                          Create_From_Base
+                            (+Dirs (D).all,
+                             Get_Current_Dir (Get_Nickname (Build_Server))
+                               .Full_Name.all);
                      end if;
 
                      if Dir = Tested_Dir then

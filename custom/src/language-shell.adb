@@ -15,15 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with GNAT.Strings;          use GNAT.Strings;
-with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-with GPS.Kernel.Project;    use GPS.Kernel.Project;
-with GNATCOLL.Any_Types;    use GNATCOLL.Any_Types;
-with Language_Handlers;     use Language_Handlers;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with GNAT.Strings;                    use GNAT.Strings;
+with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
+with GPS.Kernel.Project;              use GPS.Kernel.Project;
+with GNATCOLL.Any_Types;              use GNATCOLL.Any_Types;
+with Language_Handlers;               use Language_Handlers;
 with GPS.Scripts;
 with GPS.Scripts.Files;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Traces;                 use GNATCOLL.Traces;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Language.Shell is
@@ -36,94 +36,110 @@ package body Language.Shell is
    Semantic_Tree_Class_Name  : constant String := "SemanticTree";
 
    Null_Context : aliased Language_Context :=
-     (Syntax                        => (Comment_Start                 => null,
-                                        Comment_End                   => null,
-                                        New_Line_Comment_Start        => null,
-                                        New_Line_Comment_Start_Regexp => null),
-      String_Delimiter              => ASCII.NUL,
-      Quote_Character               => ASCII.NUL,
-      Constant_Character            => ASCII.NUL,
-      Can_Indent                    => False,
-      Syntax_Highlighting           => False,
-      Case_Sensitive                => True,
-      Accurate_Xref                 => False,
-      Use_Semicolon                 => False);
+     (Syntax              =>
+        (Comment_Start                 => null,
+         Comment_End                   => null,
+         New_Line_Comment_Start        => null,
+         New_Line_Comment_Start_Regexp => null),
+      String_Delimiter    => ASCII.NUL,
+      Quote_Character     => ASCII.NUL,
+      Constant_Character  => ASCII.NUL,
+      Can_Indent          => False,
+      Syntax_Highlighting => False,
+      Case_Sensitive      => True,
+      Accurate_Xref       => False,
+      Use_Semicolon       => False);
 
    type Shell_Language is new Language_Root with record
       Object : Class_Instance;
       Name   : Unbounded_String;
    end record;
    type Shell_Language_Access is access all Shell_Language;
-   overriding function Keywords
-     (Lang : access Shell_Language) return Strings.String_Access is (null);
-   overriding function Keywords
+   overriding
+   function Keywords
+     (Lang : access Shell_Language) return Strings.String_Access
+   is (null);
+   overriding
+   function Keywords
      (Lang : access Shell_Language) return GNAT.Expect.Pattern_Matcher_Access
-     is (null);
-   overriding function Get_Name (Lang : access Shell_Language) return String
-     is (To_String (Lang.Name));
-   overriding function Is_Simple_Type
-     (Lang : access Shell_Language; Str : String) return Boolean is (False);
-   overriding function Is_Interpolation_Char
-     (Lang : access Shell_Language; Char : Wide_Wide_Character)
-      return Boolean is (False);
-   overriding function Keywords
+   is (null);
+   overriding
+   function Get_Name (Lang : access Shell_Language) return String
+   is (To_String (Lang.Name));
+   overriding
+   function Is_Simple_Type
+     (Lang : access Shell_Language; Str : String) return Boolean
+   is (False);
+   overriding
+   function Is_Interpolation_Char
+     (Lang : access Shell_Language; Char : Wide_Wide_Character) return Boolean
+   is (False);
+   overriding
+   function Keywords
      (Lang : access Shell_Language) return GNAT.Strings.String_List
-     is ((1 .. 0 => null));
-   overriding function Dereference_Name
-     (Lang : access Shell_Language;
-      Name : String) return String is ("");
-   overriding function Array_Item_Name
-     (Lang  : access Shell_Language;
-      Name  : String;
-      Index : String) return String is ("");
-   overriding function Record_Field_Name
-     (Lang  : access Shell_Language;
-      Name  : String;
-      Field : String) return String is ("");
-   overriding function Get_Language_Context
+   is ((1 .. 0 => null));
+   overriding
+   function Dereference_Name
+     (Lang : access Shell_Language; Name : String) return String
+   is ("");
+   overriding
+   function Array_Item_Name
+     (Lang : access Shell_Language; Name : String; Index : String)
+      return String
+   is ("");
+   overriding
+   function Record_Field_Name
+     (Lang : access Shell_Language; Name : String; Field : String)
+      return String
+   is ("");
+   overriding
+   function Get_Language_Context
      (Lang : access Shell_Language) return Language_Context_Access
-     is (Null_Context'Access);
-   overriding procedure Parse_Constructs
-     (Lang    : access Shell_Language;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Buffer  : UTF8_String;
-      Result  : out Construct_List);
-   overriding function Should_Refresh_Constructs_Tree
-     (Lang   : not null access Shell_Language;
-      File   : GNATCOLL.VFS.Virtual_File)
+   is (Null_Context'Access);
+   overriding
+   procedure Parse_Constructs
+     (Lang   : access Shell_Language;
+      File   : GNATCOLL.VFS.Virtual_File;
+      Buffer : UTF8_String;
+      Result : out Construct_List);
+   overriding
+   function Should_Refresh_Constructs_Tree
+     (Lang : not null access Shell_Language; File : GNATCOLL.VFS.Virtual_File)
       return Boolean;
-   overriding function Clicked_On_Construct
+   overriding
+   function Clicked_On_Construct
      (Lang      : not null access Shell_Language;
       File      : GNATCOLL.VFS.Virtual_File;
       Unique_ID : String;
       Name      : String;
       Start_Loc : Sloc_T) return Boolean;
-   overriding procedure Parse_Entities
+   overriding
+   procedure Parse_Entities
      (Lang     : access Shell_Language;
       Buffer   : String;
       Callback : Entity_Callback);
-   overriding function Get_Last_Selected_Construct_ID
-     (Lang : not null access Shell_Language;
-      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol;
+   overriding
+   function Get_Last_Selected_Construct_ID
+     (Lang : not null access Shell_Language; File : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.Symbols.Symbol;
 
    type Construct_List_Properties_Record is new Instance_Property_Record
-     with record
+   with record
       CList : Construct_List;
-      Lang : access Shell_Language;
+      Lang  : access Shell_Language;
    end record;
-   type Construct_List_Properties
-      is access all Construct_List_Properties_Record;
+   type Construct_List_Properties is
+     access all Construct_List_Properties_Record;
 
    type Construct_Properties_Record is new Instance_Property_Record with record
-      Name       : Unbounded_String;
-      Unique_ID  : Unbounded_String;
-      Start_Loc  : Sloc_T;
-      File       : GNATCOLL.VFS.Virtual_File;
+      Name      : Unbounded_String;
+      Unique_ID : Unbounded_String;
+      Start_Loc : Sloc_T;
+      File      : GNATCOLL.VFS.Virtual_File;
    end record;
    type Construct_Properties is access all Construct_Properties_Record;
 
-   type Semantic_Tree_Properties_Record is new
-     Instance_Property_Record
+   type Semantic_Tree_Properties_Record is new Instance_Property_Record
    with record
       --  Note: we cannot store a Semantic_Tree_Access in this class, since
       --  the data contained in a Semantic_Tree can be freed at any time.
@@ -137,10 +153,10 @@ package body Language.Shell is
       Lang   : Shell_Language_Access) return Class_Instance;
 
    procedure Add_Construct
-      (Data : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
 
    procedure Language_Handler
-      (Data : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handlers for the python commands
 
    procedure Construct_Handler
@@ -173,8 +189,7 @@ package body Language.Shell is
          Data.Set_Return_Value (To_String (Prop.Name));
 
       elsif Command = "file" then
-         Data.Set_Return_Value
-           (Create_File (Get_Script (Data), Prop.File));
+         Data.Set_Return_Value (Create_File (Get_Script (Data), Prop.File));
 
       elsif Command = "start" then
          Data.Set_Return_Value_As_List (Size => 3);
@@ -201,25 +216,30 @@ package body Language.Shell is
 
       function Get_Tree return Semantic_Tree'Class is
          Ins : constant Class_Instance := Nth_Arg (Data, 1);
-         R   : constant Instance_Property := Get_Data
-           (Ins, Semantic_Tree_Class_Name);
+         R   : constant Instance_Property :=
+           Get_Data (Ins, Semantic_Tree_Class_Name);
       begin
-         return Kernel.Get_Abstract_Tree_For_File
-           ("SHELL", Semantic_Tree_Properties_Record (R.all).File);
+         return
+           Kernel.Get_Abstract_Tree_For_File
+             ("SHELL", Semantic_Tree_Properties_Record (R.all).File);
       end Get_Tree;
 
    begin
       if Command = Constructor_Method then
          declare
-            File : constant Class_Instance :=
-              Nth_Arg (Data, 2,
-                       GPS.Scripts.Files.Get_File_Class (Kernel),
-                       Default    => No_Class_Instance,
-                       Allow_Null => False);
+            File     : constant Class_Instance :=
+              Nth_Arg
+                (Data,
+                 2,
+                 GPS.Scripts.Files.Get_File_Class (Kernel),
+                 Default    => No_Class_Instance,
+                 Allow_Null => False);
             Instance : constant Class_Instance :=
-              Nth_Arg (Data, 1,
-                       New_Class (Kernel.Scripts, Semantic_Tree_Class_Name));
-            R : Semantic_Tree_Properties_Record :=
+              Nth_Arg
+                (Data,
+                 1,
+                 New_Class (Kernel.Scripts, Semantic_Tree_Class_Name));
+            R        : Semantic_Tree_Properties_Record :=
               (File => GPS.Scripts.Files.Get_Data (File));
          begin
             Set_Data (Instance, Semantic_Tree_Class_Name, R);
@@ -240,36 +260,40 @@ package body Language.Shell is
    -- Clicked_On_Construct --
    --------------------------
 
-   overriding function Clicked_On_Construct
+   overriding
+   function Clicked_On_Construct
      (Lang      : not null access Shell_Language;
       File      : GNATCOLL.VFS.Virtual_File;
       Unique_ID : String;
       Name      : String;
       Start_Loc : Sloc_T) return Boolean
    is
-      Sub    : Subprogram_Type :=
+      Sub : Subprogram_Type :=
         Get_Method (Lang.Object, "clicked_on_construct");
    begin
       if Sub = null then
          return False;  --  Not handled
+
       end if;
 
       declare
-         Script : constant Scripting_Language  := Get_Script (Sub.all);
+         Script : constant Scripting_Language := Get_Script (Sub.all);
          Inst   : Class_Instance;
          Args   : Callback_Data'Class := Create (Script, 1);
          Prop   : Construct_Properties;
       begin
          Trace (Me, "Running method " & Sub.Get_Name);
-         Inst := Script.New_Instance
-           (Script.Get_Repository.New_Class (Construct_Class_Name));
+         Inst :=
+           Script.New_Instance
+             (Script.Get_Repository.New_Class (Construct_Class_Name));
          Set_Data
-           (Inst, Construct_Class_Name,
+           (Inst,
+            Construct_Class_Name,
             Construct_Properties_Record'
-              (Name       => To_Unbounded_String (Name),
-               Unique_ID  => To_Unbounded_String (Unique_ID),
-               Start_Loc  => Start_Loc,
-               File       => File));
+              (Name      => To_Unbounded_String (Name),
+               Unique_ID => To_Unbounded_String (Unique_ID),
+               Start_Loc => Start_Loc,
+               File      => File));
          Args.Set_Nth_Arg (1, Inst);
 
          declare
@@ -286,9 +310,10 @@ package body Language.Shell is
    -- Get_Last_Selected_Construct_ID --
    ------------------------------------
 
-   overriding function Get_Last_Selected_Construct_ID
-     (Lang : not null access Shell_Language;
-      File : GNATCOLL.VFS.Virtual_File) return GNATCOLL.Symbols.Symbol
+   overriding
+   function Get_Last_Selected_Construct_ID
+     (Lang : not null access Shell_Language; File : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.Symbols.Symbol
    is
       Sub : Subprogram_Type :=
         Get_Method (Lang.Object, "get_last_selected_construct_id");
@@ -298,7 +323,7 @@ package body Language.Shell is
       end if;
 
       declare
-         Script : constant Scripting_Language  := Get_Script (Sub.all);
+         Script : constant Scripting_Language := Get_Script (Sub.all);
          Args   : Callback_Data'Class := Create (Script, 1);
       begin
          Args.Set_Nth_Arg (1, GPS.Scripts.Files.Create_File (Script, File));
@@ -329,54 +354,57 @@ package body Language.Shell is
 
       function Python_List_To_Sloc
         (L : List_Instance'Class) return Source_Location
-      is
-         (Source_Location'(L.Nth_Arg (1), L.Nth_Arg (2), L.Nth_Arg (3)));
+      is (Source_Location'(L.Nth_Arg (1), L.Nth_Arg (2), L.Nth_Arg (3)));
 
       List_Class : constant Class_Type :=
         New_Class (Get_Kernel (Data.Get_Script), Construct_List_Class_Name);
 
       CList : constant Construct_List_Properties :=
         Construct_List_Properties
-          (Get_Data (Data.Nth_Arg (1, List_Class, True),
-           Construct_List_Class_Name));
+          (Get_Data
+             (Data.Nth_Arg (1, List_Class, True), Construct_List_Class_Name));
 
-      Category : constant Integer := Data.Nth_Arg (2);
+      Category       : constant Integer := Data.Nth_Arg (2);
       Is_Declaration : constant Boolean := Data.Nth_Arg (3);
-      Visibility : constant Integer := Data.Nth_Arg (4);
+      Visibility     : constant Integer := Data.Nth_Arg (4);
 
-      Name : constant String := Data.Nth_Arg (5);
+      Name    : constant String := Data.Nth_Arg (5);
       Profile : constant String := Data.Nth_Arg (6);
 
-      Sloc_Start : constant Source_Location :=
+      Sloc_Start  : constant Source_Location :=
         Python_List_To_Sloc (Data.Nth_Arg (7));
-      Sloc_End : constant Source_Location :=
+      Sloc_End    : constant Source_Location :=
         Python_List_To_Sloc (Data.Nth_Arg (8));
       Sloc_Entity : constant Source_Location :=
         Python_List_To_Sloc (Data.Nth_Arg (9));
       Id          : constant String := Data.Nth_Arg (10, "");
 
-      CInfo : constant Construct_Access := new Construct_Information'
-        (Info     =>
-           (Category        => Language_Category'Val (Category),
-            Category_Name   => GNATCOLL.Symbols.Empty_String,
-            Is_Declaration  => Is_Declaration,
-            Is_Generic_Spec => False,
-            Visibility      => Construct_Visibility'Val (Visibility),
-            Name            =>
-              (if Name /= "" then CList.Lang.Symbols.Find (Name)
-               else GNATCOLL.Symbols.No_Symbol),
-            Profile         =>
-              (if Profile /= "" then CList.Lang.Symbols.Find (Profile)
-               else GNATCOLL.Symbols.No_Symbol),
-            Unique_Id       =>
-              (if Id /= "" then CList.Lang.Symbols.Find (Id)
-               else GNATCOLL.Symbols.No_Symbol),
-            Attributes      => (others => False),
-            Sloc_Start      => Sloc_Start,
-            Sloc_End        => Sloc_End,
-            Sloc_Entity     => Sloc_Entity),
-         Prev => CList.CList.Last,
-         Next => null);
+      CInfo : constant Construct_Access :=
+        new Construct_Information'
+          (Info =>
+             (Category        => Language_Category'Val (Category),
+              Category_Name   => GNATCOLL.Symbols.Empty_String,
+              Is_Declaration  => Is_Declaration,
+              Is_Generic_Spec => False,
+              Visibility      => Construct_Visibility'Val (Visibility),
+              Name            =>
+                (if Name /= ""
+                 then CList.Lang.Symbols.Find (Name)
+                 else GNATCOLL.Symbols.No_Symbol),
+              Profile         =>
+                (if Profile /= ""
+                 then CList.Lang.Symbols.Find (Profile)
+                 else GNATCOLL.Symbols.No_Symbol),
+              Unique_Id       =>
+                (if Id /= ""
+                 then CList.Lang.Symbols.Find (Id)
+                 else GNATCOLL.Symbols.No_Symbol),
+              Attributes      => (others => False),
+              Sloc_Start      => Sloc_Start,
+              Sloc_End        => Sloc_End,
+              Sloc_Entity     => Sloc_Entity),
+           Prev => CList.CList.Last,
+           Next => null);
    begin
       CList.CList.Last := CInfo;
 
@@ -395,16 +423,19 @@ package body Language.Shell is
 
    function Create_Python_Constructs_List
      (Script : access Scripting_Language_Record'Class;
-      Lang   : Shell_Language_Access)  return Class_Instance
+      Lang   : Shell_Language_Access) return Class_Instance
    is
       List_Class : constant Class_Type :=
         New_Class (Get_Kernel (Script), Construct_List_Class_Name);
-      Inst : constant Class_Instance := New_Instance (Script, List_Class);
+      Inst       : constant Class_Instance :=
+        New_Instance (Script, List_Class);
    begin
-      Set_Data (Inst, Construct_List_Class_Name,
-                Construct_List_Properties_Record'(
-                  CList => Construct_List'(Size => 0, others => null),
-                  Lang => Lang));
+      Set_Data
+        (Inst,
+         Construct_List_Class_Name,
+         Construct_List_Properties_Record'
+           (CList => Construct_List'(Size => 0, others => null),
+            Lang  => Lang));
       return Inst;
    end Create_Python_Constructs_List;
 
@@ -412,20 +443,21 @@ package body Language.Shell is
    -- Should_Refresh_Constructs_Tree --
    ------------------------------------
 
-   overriding function Should_Refresh_Constructs_Tree
-     (Lang   : not null access Shell_Language;
-      File   : GNATCOLL.VFS.Virtual_File)
+   overriding
+   function Should_Refresh_Constructs_Tree
+     (Lang : not null access Shell_Language; File : GNATCOLL.VFS.Virtual_File)
       return Boolean
    is
-      Sub    : constant Subprogram_Type :=
+      Sub : constant Subprogram_Type :=
         Get_Method (Lang.Object, "should_refresh_constructs");
    begin
       if Sub = null then
          return False;  --  unless the file's timestamp has changed on disk
+
       end if;
 
       declare
-         Script : constant Scripting_Language  := Get_Script (Sub.all);
+         Script : constant Scripting_Language := Get_Script (Sub.all);
          Args   : Callback_Data'Class := Create (Script, 1);
          Result : Boolean;
       begin
@@ -440,14 +472,14 @@ package body Language.Shell is
    -- Parse_Constructs --
    ----------------------
 
-   overriding procedure Parse_Constructs
-     (Lang    : access Shell_Language;
+   overriding
+   procedure Parse_Constructs
+     (Lang   : access Shell_Language;
       File   : GNATCOLL.VFS.Virtual_File;
-      Buffer  : UTF8_String;
-      Result  : out Construct_List)
+      Buffer : UTF8_String;
+      Result : out Construct_List)
    is
-      Sub    : Subprogram_Type :=
-        Get_Method (Lang.Object, "parse_constructs");
+      Sub : Subprogram_Type := Get_Method (Lang.Object, "parse_constructs");
    begin
       if Sub = null then
          Result := (null, null, null, 0);
@@ -455,7 +487,7 @@ package body Language.Shell is
       end if;
 
       declare
-         Script : constant Scripting_Language  := Get_Script (Sub.all);
+         Script : constant Scripting_Language := Get_Script (Sub.all);
          Args   : Callback_Data'Class := Create (Script, 3);
 
          Python_CList : constant Class_Instance :=
@@ -485,7 +517,8 @@ package body Language.Shell is
    -- Parse_Entities --
    --------------------
 
-   overriding procedure Parse_Entities
+   overriding
+   procedure Parse_Entities
      (Lang     : access Shell_Language;
       Buffer   : String;
       Callback : Entity_Callback) is
@@ -507,11 +540,12 @@ package body Language.Shell is
       Indent      : Indentation_Kind := Simple)
    is
       Lang : constant not null Language_Access :=
-        new Shell_Language'(Symbols       => GNATCOLL.Symbols.Allocate,
-                            Name          => To_Unbounded_String (Lang_Name),
-                            Object        => Instance,
-                            Indent_Params => Default_Indent_Parameters,
-                            Indent_Style  => Indent);
+        new Shell_Language'
+          (Symbols       => GNATCOLL.Symbols.Allocate,
+           Name          => To_Unbounded_String (Lang_Name),
+           Object        => Instance,
+           Indent_Params => Default_Indent_Parameters,
+           Indent_Style  => Indent);
 
    begin
       Kernel.Lang_Handler.Register_Language (Lang, null);
@@ -524,8 +558,7 @@ package body Language.Shell is
    ----------------------
 
    procedure Language_Handler
-     (Data    : in out Callback_Data'Class;
-      Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
       Lang : Language_Access;
       Inst : Class_Instance;
@@ -545,7 +578,7 @@ package body Language.Shell is
            (Create_Language_Info
               (Get_Script (Data),
                Get_Kernel (Data).Get_Language_Handler.Get_Language_By_Name
-               (Data.Nth_Arg (1))));
+                 (Data.Nth_Arg (1))));
       end if;
    end Language_Handler;
 
@@ -553,15 +586,13 @@ package body Language.Shell is
    -- Setup --
    -----------
 
-   procedure Setup
-     (Kernel : GPS.Kernel.Kernel_Handle)
-   is
-      List_Class : constant Class_Type :=
+   procedure Setup (Kernel : GPS.Kernel.Kernel_Handle) is
+      List_Class          : constant Class_Type :=
         Kernel.Scripts.New_Class (Construct_List_Class_Name);
-      Construct_Class : constant Class_Type :=
+      Construct_Class     : constant Class_Type :=
         Kernel.Scripts.New_Class (Construct_Class_Name);
-      Language_Class : constant Class_Type :=
-         Kernel.Scripts.New_Class (Language_Class_Name);
+      Language_Class      : constant Class_Type :=
+        Kernel.Scripts.New_Class (Language_Class_Name);
       Semantic_Tree_Class : constant Class_Type :=
         Kernel.Scripts.New_Class (Semantic_Tree_Class_Name);
    begin
@@ -573,15 +604,15 @@ package body Language.Shell is
           Param ("spec_suffix", True),
           Param ("obj_suffix", True),
           Param ("indentation_kind", True)),
-         Handler        => Language_Handler'Access,
-         Class          => Language_Class,
-         Static_Method  => True);
+         Handler       => Language_Handler'Access,
+         Class         => Language_Class,
+         Static_Method => True);
       Kernel.Scripts.Register_Command
         ("get",
-         Params         => (1 => Param ("name")),
-         Class          => Language_Class,
-         Static_Method  => True,
-         Handler        => Language_Handler'Access);
+         Params        => (1 => Param ("name")),
+         Class         => Language_Class,
+         Static_Method => True,
+         Handler       => Language_Handler'Access);
 
       --  Do not register the methods that are supposed to be overridden in
       --  plugins, like "clicked_on_construct" or "parse_constructs", since
@@ -591,38 +622,33 @@ package body Language.Shell is
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class     => Construct_Class,
-         Handler   => Construct_Handler'Access);
+         Class   => Construct_Class,
+         Handler => Construct_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("name",
-         Class     => Construct_Class,
-         Getter    => Construct_Handler'Access);
+        ("name", Class => Construct_Class, Getter => Construct_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("file",
-         Class     => Construct_Class,
-         Getter    => Construct_Handler'Access);
+        ("file", Class => Construct_Class, Getter => Construct_Handler'Access);
       Kernel.Scripts.Register_Property
         ("start",
-         Class     => Construct_Class,
-         Getter    => Construct_Handler'Access);
+         Class  => Construct_Class,
+         Getter => Construct_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("id",
-         Class     => Construct_Class,
-         Getter    => Construct_Handler'Access);
+        ("id", Class => Construct_Class, Getter => Construct_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("add_construct",
-         Params    => (Param ("category"),
-                       Param ("is_declaration"),
-                       Param ("visibility"),
-                       Param ("name"),
-                       Param ("profile"),
-                       Param ("sloc_start"),
-                       Param ("sloc_end"),
-                       Param ("sloc_entity"),
-                       Param ("id", Optional => True)),
-         Handler  => Add_Construct'Access,
-         Class     => List_Class);
+         Params  =>
+           (Param ("category"),
+            Param ("is_declaration"),
+            Param ("visibility"),
+            Param ("name"),
+            Param ("profile"),
+            Param ("sloc_start"),
+            Param ("sloc_end"),
+            Param ("sloc_entity"),
+            Param ("id", Optional => True)),
+         Handler => Add_Construct'Access,
+         Class   => List_Class);
 
       --  Tree class
 
@@ -630,16 +656,16 @@ package body Language.Shell is
         (Constructor_Method,
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Class       => Semantic_Tree_Class,
-         Handler     => Semantic_Tree_Handler'Access);
+         Class        => Semantic_Tree_Class,
+         Handler      => Semantic_Tree_Handler'Access);
       Kernel.Scripts.Register_Command
         ("is_ready",
-         Class     => Semantic_Tree_Class,
-         Handler   => Semantic_Tree_Handler'Access);
+         Class   => Semantic_Tree_Class,
+         Handler => Semantic_Tree_Handler'Access);
       Kernel.Scripts.Register_Command
         ("update",
-         Class     => Semantic_Tree_Class,
-         Handler   => Semantic_Tree_Handler'Access);
+         Class   => Semantic_Tree_Class,
+         Handler => Semantic_Tree_Handler'Access);
    end Setup;
 
 end Language.Shell;

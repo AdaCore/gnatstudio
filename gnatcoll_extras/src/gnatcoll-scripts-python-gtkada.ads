@@ -38,8 +38,7 @@ package GNATCOLL.Scripts.Python.Gtkada is
    --  application is run.
 
    procedure Add_PyWidget_Method
-     (Repo   : access Scripts_Repository_Record'Class;
-      Class  : Class_Type);
+     (Repo : access Scripts_Repository_Record'Class; Class : Class_Type);
    --  Adds a new method to Class:
    --     Class.pywidget
    --         Returns the pywidget corresponding to the GtkAda widget stored
@@ -47,11 +46,9 @@ package GNATCOLL.Scripts.Python.Gtkada is
    --         return a valid GObject (or null) when called on this instance
 
    function From_PyGtk
-     (Data : Callback_Data'Class;
-      N    : Positive) return Glib.Object.GObject;
+     (Data : Callback_Data'Class; N : Positive) return Glib.Object.GObject;
    function From_PyGtk
-     (Data : Callback_Data'Class;
-      N    : Positive) return Gdk.Gdk_Window;
+     (Data : Callback_Data'Class; N : Positive) return Gdk.Gdk_Window;
    --  Return the Gtk object encapsulated inside the pygtk object given in the
    --  N-th argument
 

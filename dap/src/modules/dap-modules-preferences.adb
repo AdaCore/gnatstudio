@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Config;           use Config;
+with Config; use Config;
 
 package body DAP.Modules.Preferences is
 
@@ -26,177 +26,203 @@ package body DAP.Modules.Preferences is
    procedure Register_Default_Preferences
      (Prefs : access Preferences_Manager_Record'Class) is
    begin
-      DAP_Adapter := Create
-        (Manager => Prefs,
-         Name    => "DAP-Adapter",
-         Label   => "DAP Adapter",
-         Doc     => "The adapter for the DAP protocol",
-         Default => "",
-         Path    => "Debugger:General");
+      DAP_Adapter :=
+        Create
+          (Manager => Prefs,
+           Name    => "DAP-Adapter",
+           Label   => "DAP Adapter",
+           Doc     => "The adapter for the DAP protocol",
+           Default => "",
+           Path    => "Debugger:General");
 
-      Break_On_Exception := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Break-On-Exception",
-         Path      => "Debugger:General",
-         Label     => "Break on exceptions",
-         Doc       =>
-           "Stop when an exception is raised. Changes to this setting are"
+      Break_On_Exception :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Break-On-Exception",
+           Path    => "Debugger:General",
+           Label   => "Break on exceptions",
+           Doc     =>
+             "Stop when an exception is raised. Changes to this setting are"
              & " ignored by debuggers already running.",
-         Default   => False);
+           Default => False);
 
-      Preserve_State_On_Exit := Create
-        (Manager    => Prefs,
-         Name       => "Debugger-Preserve_State-On-Exit",
-         Label      => "Preserve state on exit",
-         Path       => "Debugger:General",
-         Doc        =>
-            "Save breakpoints and data window on exit, and restore them"
-              & " when debugging the same executable.",
-         Default    => True);
+      Preserve_State_On_Exit :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Preserve_State-On-Exit",
+           Label   => "Preserve state on exit",
+           Path    => "Debugger:General",
+           Doc     =>
+             "Save breakpoints and data window on exit, and restore them"
+             & " when debugging the same executable.",
+           Default => True);
 
-      Execution_Window := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Execution-Window",
-         Label     => "Execution window",
-         Path      => (if Support_Execution_Window
-                       then "Debugger:General" else ":Debugger"),
-         Doc       => "Open a separate window to show output of debuggee.",
-         Default   => Support_Execution_Window);
+      Execution_Window :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Execution-Window",
+           Label   => "Execution window",
+           Path    =>
+             (if Support_Execution_Window
+              then "Debugger:General"
+              else ":Debugger"),
+           Doc     => "Open a separate window to show output of debuggee.",
+           Default => Support_Execution_Window);
 
-      Auto_Start_Debuggee := Debuggee_Start_Preferences.Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Launch-Setup-Command",
-         Label     => "Auto-start debuggee",
-         Path      => "Debugger:General",
-         Doc       => "How to start/continue the debuggee process when the" &
-           " debugger is initialized. 'Run' will start the debuggee" &
-           " immediately while 'Run with dialog' will display a dialog " &
-           " to specify arguments and options. 'Continue' will continue" &
-           " the debuggee execution on a board instead of stop it.",
-         Default   => None);
+      Auto_Start_Debuggee :=
+        Debuggee_Start_Preferences.Create
+          (Manager => Prefs,
+           Name    => "Debugger-Launch-Setup-Command",
+           Label   => "Auto-start debuggee",
+           Path    => "Debugger:General",
+           Doc     =>
+             "How to start/continue the debuggee process when the"
+             & " debugger is initialized. 'Run' will start the debuggee"
+             & " immediately while 'Run with dialog' will display a dialog "
+             & " to specify arguments and options. 'Continue' will continue"
+             & " the debuggee execution on a board instead of stop it.",
+           Default => None);
 
-      Frames_Limit := Create
-        (Manager  => Prefs,
-         Name     => "debugger-frames-limit",
-         Path     => "Debugger:Call Stack",
-         Label    => "Frames limit",
-         Doc      => "How many frames will be fetched at one time" &
-           " (unlimited - 0).",
-         Minimum  => 0,
-         Maximum  => Integer'Last,
-         Default  => 0);
+      Frames_Limit :=
+        Create
+          (Manager => Prefs,
+           Name    => "debugger-frames-limit",
+           Path    => "Debugger:Call Stack",
+           Label   => "Frames limit",
+           Doc     =>
+             "How many frames will be fetched at one time"
+             & " (unlimited - 0).",
+           Minimum => 0,
+           Maximum => Integer'Last,
+           Default => 0);
 
-      Assembly_Range_Size := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Assembly-Range-Size",
-         Path     => "Debugger:Assembly",
-         Label    => "Assembly range size",
-         Doc      =>
-         "Number of lines to display initially (0 to show whole subprogram).",
-         Minimum  => 0,
-         Maximum  => 100000,
-         Default  => 200);
+      Assembly_Range_Size :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Assembly-Range-Size",
+           Path    => "Debugger:Assembly",
+           Label   => "Assembly range size",
+           Doc     =>
+             "Number of lines to display initially "
+             & "(0 to show whole subprogram).",
+           Minimum => 0,
+           Maximum => 100000,
+           Default => 200);
 
-      Asm_Show_Addresses := Create_Invisible_Pref
-        (Manager  => Prefs,
-         Name     => "assembly_view-show-addresses",
-         Label    => "Show addresses",
-         Default  => True);
+      Asm_Show_Addresses :=
+        Create_Invisible_Pref
+          (Manager => Prefs,
+           Name    => "assembly_view-show-addresses",
+           Label   => "Show addresses",
+           Default => True);
 
-      Asm_Show_Offset := Create_Invisible_Pref
-        (Manager  => Prefs,
-         Name     => "assembly_view-show-offset",
-         Label    => "Show offsets",
-         Default  => True);
+      Asm_Show_Offset :=
+        Create_Invisible_Pref
+          (Manager => Prefs,
+           Name    => "assembly_view-show-offset",
+           Label   => "Show offsets",
+           Default => True);
 
-      Asm_Show_Opcodes := Create_Invisible_Pref
-        (Manager  => Prefs,
-         Name     => "assembly_view-show-opcodes",
-         Label    => "Show opcodes",
-         Default  => False);
+      Asm_Show_Opcodes :=
+        Create_Invisible_Pref
+          (Manager => Prefs,
+           Name    => "assembly_view-show-opcodes",
+           Label   => "Show opcodes",
+           Default => False);
 
-      Continue_To_Line_Buttons := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Continue-To-Line-Buttons",
-         Path      => "Debugger:Editors",
-         Label     => "Display 'Continue to line' buttons",
-         Doc       =>
-           "Display the 'Continue to line' buttons on the left-side of "
-           & "editors.",
-         Default   => True);
+      Continue_To_Line_Buttons :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Continue-To-Line-Buttons",
+           Path    => "Debugger:Editors",
+           Label   => "Display 'Continue to line' buttons",
+           Doc     =>
+             "Display the 'Continue to line' buttons on the left-side of "
+             & "editors.",
+           Default => True);
 
-      Debugger_Console_Console := Create_Invisible_Pref
-        (Manager  => Prefs,
-         Name     => "debugger-console-console",
-         Default  =>  True,
-         Label    => "Display console output category",
-         Doc      => "Display the DAP 'console' output category.");
+      Debugger_Console_Console :=
+        Create_Invisible_Pref
+          (Manager => Prefs,
+           Name    => "debugger-console-console",
+           Default => True,
+           Label   => "Display console output category",
+           Doc     => "Display the DAP 'console' output category.");
 
-      Debugger_Console_In_Out := Create_Invisible_Pref
-        (Manager  => Prefs,
-         Name     => "debugger-console-in-out",
-         Default  =>  False,
-         Label    => "Display DAP in/out JSON communication",
-         Doc      => "Display the IN/OUT JSON communication with the "
-         & "DAP server.");
+      Debugger_Console_In_Out :=
+        Create_Invisible_Pref
+          (Manager => Prefs,
+           Name    => "debugger-console-in-out",
+           Default => False,
+           Label   => "Display DAP in/out JSON communication",
+           Doc     =>
+             "Display the IN/OUT JSON communication with the "
+             & "DAP server.");
 
-      Pending_Breakpoints := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Pending-Breakpoints",
-         Path      => "Debugger:General",
-         Label     => "Pending breakpoints",
-         Doc       =>
-           "Enable pending breakpoints. A pending breakpoint will not be "
-           & "removed when debugger can't set it.",
-         Default   => True);
+      Pending_Breakpoints :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Pending-Breakpoints",
+           Path    => "Debugger:General",
+           Label   => "Pending breakpoints",
+           Doc     =>
+             "Enable pending breakpoints. A pending breakpoint will not be "
+             & "removed when debugger can't set it.",
+           Default => True);
 
-      Breakpoints_For_All_Debuggers  := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-For_All-Breakpoints",
-         Path      => "Debugger:General",
-         Label     => "Breakpoints for all debuggers",
-         Doc       =>
-           "Add/Edit/Delete breakpoints for all debuggers. "
-           & "Use only current debugger if not.",
-         Default   => False);
+      Breakpoints_For_All_Debuggers :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-For_All-Breakpoints",
+           Path    => "Debugger:General",
+           Label   => "Breakpoints for all debuggers",
+           Doc     =>
+             "Add/Edit/Delete breakpoints for all debuggers. "
+             & "Use only current debugger if not.",
+           Default => False);
 
-      Memory_View_Color := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Memory-View-Color",
-         Path     => "Debugger:Memory",
-         Label    => "Memory color",
-         Doc      => "Default color in memory view.",
-         Default  => "#333399");
+      Memory_View_Color :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Memory-View-Color",
+           Path    => "Debugger:Memory",
+           Label   => "Memory color",
+           Doc     => "Default color in memory view.",
+           Default => "#333399");
 
-      Memory_Highlighted_Color := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Memory-Highlighted-Color",
-         Path     => "Debugger:Memory",
-         Label    => "Memory highlighting",
-         Doc      => "Color used for highlighted items in the memory view.",
-         Default  => "#DDDDDD");
+      Memory_Highlighted_Color :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Memory-Highlighted-Color",
+           Path    => "Debugger:Memory",
+           Label   => "Memory highlighting",
+           Doc     => "Color used for highlighted items in the memory view.",
+           Default => "#DDDDDD");
 
-      Memory_Selected_Color := Create
-        (Manager  => Prefs,
-         Name     => "Debugger-Memory-Selected-Color",
-         Path     => "Debugger:Memory",
-         Label    => "Memory selection",
-         Doc      => "Color used for selected items in the memory view.",
-         Default  => "#FF0000");
+      Memory_Selected_Color :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Memory-Selected-Color",
+           Path    => "Debugger:Memory",
+           Label   => "Memory selection",
+           Doc     => "Color used for selected items in the memory view.",
+           Default => "#FF0000");
 
-      Memory_Auto_Refresh := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Memory-Auto-Refresh",
-         Label     => "Refresh memory view after each step",
-         Doc       => "Auto-refresh the contents of memory view.",
-         Path      => "Debugger:Memory",
-         Default   => True);
+      Memory_Auto_Refresh :=
+        Create
+          (Manager => Prefs,
+           Name    => "Debugger-Memory-Auto-Refresh",
+           Label   => "Refresh memory view after each step",
+           Doc     => "Auto-refresh the contents of memory view.",
+           Path    => "Debugger:Memory",
+           Default => True);
 
-      Registers_Type := Create_Invisible_Pref
-        (Manager  => Prefs,
-         Name     => "registers_view-type",
-         Label    => "Type",
-         Default  => False);
+      Registers_Type :=
+        Create_Invisible_Pref
+          (Manager => Prefs,
+           Name    => "registers_view-type",
+           Label   => "Type",
+           Default => False);
 
    end Register_Default_Preferences;
 

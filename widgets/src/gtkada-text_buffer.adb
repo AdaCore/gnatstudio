@@ -15,8 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Gtk.Text_Iter;   use Gtk.Text_Iter;
+with Glib;          use Glib;
+with Gtk.Text_Iter; use Gtk.Text_Iter;
 
 package body Gtkada.Text_Buffer is
 

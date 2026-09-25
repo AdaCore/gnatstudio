@@ -26,12 +26,14 @@ generic
    with procedure Free (Data : in out Data_Type) is <>;
    --  Free memory allocated to Data
 
-package Commands.Generic_Asynchronous is
+package Commands.Generic_Asynchronous
+is
 
-   type Iteration_Procedure is access procedure
-     (Data    : in out Data_Type;
-      Command : Command_Access;
-      Result  : out Command_Return_Type);
+   type Iteration_Procedure is
+     access procedure
+       (Data    : in out Data_Type;
+        Command : Command_Access;
+        Result  : out Command_Return_Type);
    --  Do one iteration. Initialize Data at first iteration if needed.
    --  Command points to the current command. Progress fields can be set
    --  accordingly
@@ -46,34 +48,34 @@ package Commands.Generic_Asynchronous is
       Data        : Data_Type;
       Iterate     : Iteration_Procedure);
 
-   overriding procedure Primitive_Free
-     (D : in out Generic_Asynchronous_Command);
+   overriding
+   procedure Primitive_Free (D : in out Generic_Asynchronous_Command);
    --  Free memory associated to D
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Generic_Asynchronous_Command)
       return Command_Return_Type;
    --  Execute Command. Will fail if Command has not been created using Create
 
-   overriding function Name
-     (Command : access Generic_Asynchronous_Command) return String;
+   overriding
+   function Name (Command : access Generic_Asynchronous_Command) return String;
    --  Return the name of the command
 
    procedure Set_Data
-     (Command : access Generic_Asynchronous_Command;
-      Data : Data_Type);
+     (Command : access Generic_Asynchronous_Command; Data : Data_Type);
    --  Change the data associated to a command
 
-   function Get_Data (Command : access Generic_Asynchronous_Command)
-      return Data_Type;
+   function Get_Data
+     (Command : access Generic_Asynchronous_Command) return Data_Type;
    --  Return the data associated to this command.
 
 private
 
    type Data_Access is access Data_Type;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Data_Type, Data_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Data_Type, Data_Access);
 
    type Generic_Asynchronous_Command is new Root_Command with record
       Data        : Data_Access;

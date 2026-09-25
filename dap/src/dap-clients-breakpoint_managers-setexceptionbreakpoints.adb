@@ -21,34 +21,40 @@ package body DAP.Clients.Breakpoint_Managers.SetExceptionBreakpoints is
    -- On_Error_Message --
    ----------------------
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Exception_Breakpoint_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String) is
    begin
       DAP.Requests.SetExceptionBreakpoints.On_Error_Message
-        (DAP.Requests.SetExceptionBreakpoints.
-           Exception_Breakpoints_DAP_Request (Self), Client, Message);
+        (DAP.Requests.SetExceptionBreakpoints.Exception_Breakpoints_DAP_Request
+           (Self),
+         Client,
+         Message);
    end On_Error_Message;
 
    -----------------
    -- On_Rejected --
    -----------------
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Exception_Breakpoint_Request;
       Client : not null access DAP.Clients.DAP_Client'Class) is
    begin
       DAP.Requests.SetExceptionBreakpoints.On_Rejected
-        (DAP.Requests.SetExceptionBreakpoints.
-           Exception_Breakpoints_DAP_Request (Self), Client);
+        (DAP.Requests.SetExceptionBreakpoints.Exception_Breakpoints_DAP_Request
+           (Self),
+         Client);
    end On_Rejected;
 
    -----------------------
    -- On_Result_Message --
    -----------------------
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Exception_Breakpoint_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetExceptionBreakpointsResponse;
@@ -60,7 +66,8 @@ package body DAP.Clients.Breakpoint_Managers.SetExceptionBreakpoints is
       Self.Manager.On_Breakpoint_Request_Response
         (Client          => Client,
          New_Breakpoints =>
-           (if Result.a_body.Is_Set then Result.a_body.Value.breakpoints
+           (if Result.a_body.Is_Set
+            then Result.a_body.Value.breakpoints
             else Empty_Breakpoints),
          Old_Breakpoints => Self.Breakpoints);
    end On_Result_Message;

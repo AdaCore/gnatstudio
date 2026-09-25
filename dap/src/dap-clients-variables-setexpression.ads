@@ -21,8 +21,7 @@ with DAP.Tools;
 private package DAP.Clients.Variables.SetExpression is
 
    type Set_Expression_Request (<>) is
-     new DAP.Requests.SetExpression.Set_Expression_DAP_Request
-   with private;
+     new DAP.Requests.SetExpression.Set_Expression_DAP_Request with private;
    type Set_Expression_Request_Access is access all Set_Expression_Request;
 
    procedure Send_Set_Expression_Request
@@ -34,24 +33,27 @@ private
 
    type Set_Expression_Request
      (Kernel : GPS.Kernel.Kernel_Handle;
-      Kind   : Request_Params_Kind) is
-     new DAP.Requests.SetExpression.Set_Expression_DAP_Request (Kernel)
+      Kind   : Request_Params_Kind)
+   is new DAP.Requests.SetExpression.Set_Expression_DAP_Request (Kernel)
    with record
       Params : Request_Parameters (Kind);
    end record;
 
-   overriding procedure On_Result_Message
+   overriding
+   procedure On_Result_Message
      (Self        : in out Set_Expression_Request;
       Client      : not null access DAP.Clients.DAP_Client'Class;
       Result      : in out DAP.Tools.SetExpressionResponse;
       New_Request : in out DAP.Requests.DAP_Request_Access);
 
-   overriding procedure On_Error_Message
+   overriding
+   procedure On_Error_Message
      (Self    : in out Set_Expression_Request;
       Client  : not null access DAP.Clients.DAP_Client'Class;
       Message : VSS.Strings.Virtual_String);
 
-   overriding procedure On_Rejected
+   overriding
+   procedure On_Rejected
      (Self   : in out Set_Expression_Request;
       Client : not null access DAP.Clients.DAP_Client'Class);
 

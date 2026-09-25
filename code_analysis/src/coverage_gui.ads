@@ -22,18 +22,18 @@
 
 with VSS.Strings;
 
-with GNATCOLL.Traces;     use GNATCOLL.Traces;
-with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel;    use GPS.Kernel;
 with GPS.Kernel.Messages;
-with GPS.Intl;            use GPS.Intl;
+with GPS.Intl;      use GPS.Intl;
 with Projects.Views;
-with Code_Analysis;       use Code_Analysis;
+with Code_Analysis; use Code_Analysis;
 
 package Coverage_GUI is
 
-   Gcov_Extension_Cst    : constant Filesystem_String := ".gcov";
+   Gcov_Extension_Cst : constant Filesystem_String := ".gcov";
    --  Constant String that represents the extension of GCOV files
 
    GNATcov_Extension_Cst : constant Filesystem_String := ".xcov";
@@ -53,17 +53,15 @@ package Coverage_GUI is
    Coverage_Message_Flags     : constant GPS.Kernel.Messages.Message_Flags :=
      GPS.Kernel.Messages.Side_And_Locations;
 
-   Binary_Coverage_Trace : constant Trace_Handle := Create
-     ("GPS.INTERNAL.BINARY_COVERAGE_MODE",
-      GNATCOLL.Traces.On);
+   Binary_Coverage_Trace : constant Trace_Handle :=
+     Create ("GPS.INTERNAL.BINARY_COVERAGE_MODE", GNATCOLL.Traces.On);
 
-   Binary_Coverage_Mode  : Boolean;
+   Binary_Coverage_Mode : Boolean;
    --  Boolean that allows to determine wether we are in binary coverage mode
    --  or not, if true no line execution coverage count will be displayed.
 
    procedure Add_Gcov_Project_Info
-     (Kernel   : Kernel_Handle;
-      Prj_Node : Project_Access);
+     (Kernel : Kernel_Handle; Prj_Node : Project_Access);
    --  Try to load Gcov information for every files of the given project
 
    procedure Add_Gcov_File_Info
@@ -75,15 +73,13 @@ package Coverage_GUI is
    --  provided by the given-gcov-file parsing.
 
    procedure Clear_Project_Locations
-     (Kernel       : Kernel_Handle;
-      Project_Node : Project_Access);
+     (Kernel : Kernel_Handle; Project_Node : Project_Access);
    --  Remove from the Locations view the uncovered lines of each files of the
    --  given Project_Node.
    --  Does nothing if the uncovered lines are not listed there.
 
    procedure Clear_File_Locations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access);
+     (Kernel : Kernel_Handle; File_Node : Code_Analysis.File_Access);
    --  Remove from the Locations view the uncovered lines of the given
    --  File_Node.
    --  Does nothing if the uncovered lines aren't listed there.
@@ -97,25 +93,22 @@ package Coverage_GUI is
    --  Does nothing if the uncovered lines aren't listed there.
 
    procedure Add_File_Coverage_Annotations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access);
+     (Kernel : Kernel_Handle; File_Node : Code_Analysis.File_Access);
    --  Add the coverage annotation columns to the corresponding src_editor
 
    procedure Remove_File_Coverage_Annotations
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access);
+     (Kernel : Kernel_Handle; File_Node : Code_Analysis.File_Access);
    --  Removes coverage annotations of src_editor of the given file
 
    procedure List_File_Uncovered_Lines
-     (Kernel    : Kernel_Handle;
-      File_Node : Code_Analysis.File_Access;
-      Quiet     : Boolean;
+     (Kernel                   : Kernel_Handle;
+      File_Node                : Code_Analysis.File_Access;
+      Quiet                    : Boolean;
       Allow_Auto_Jump_To_First : Boolean);
    --  Add to the Locations view the not covered lines of the given File_Node
 
    procedure List_Project_Uncovered_Lines
-     (Kernel       : Kernel_Handle;
-      Project_Node : Project_Access);
+     (Kernel : Kernel_Handle; Project_Node : Project_Access);
    --  Add to the location view the not covered lines of the given Project
 
    procedure Add_Project_Coverage_Annotations
@@ -133,27 +126,23 @@ package Coverage_GUI is
    --  Add to the Locations view the not covered lines of the given Subprogram
 
    procedure Show_All_Coverage_Information
-     (Kernel   : Kernel_Handle;
-      Projects : Code_Analysis_Tree);
+     (Kernel : Kernel_Handle; Projects : Code_Analysis_Tree);
    --  List uncovered lines and add coverage annotations for every projects of
    --  the given code analysis instance.
 
    procedure Hide_All_Coverage_Information
-     (Kernel   : Kernel_Handle;
-      Projects : Code_Analysis_Tree);
+     (Kernel : Kernel_Handle; Projects : Code_Analysis_Tree);
    --  Remove from the Locations view the listed uncovered lines of each files
    --  of each loaded projects.
    --  Does nothing if the lines are not listed in.
    --  Remove every coverage annotations of opened source file editors.
 
    procedure Clean_All_Expanded_Lines
-     (Kernel   : Kernel_Handle;
-      Projects : Code_Analysis_Tree);
+     (Kernel : Kernel_Handle; Projects : Code_Analysis_Tree);
    --  Remove from the editor the expanded coverage lines of the Projects
 
    procedure Clean_File_Expanded_Lines
-     (Kernel : Kernel_Handle;
-      File   : Code_Analysis.File_Access);
+     (Kernel : Kernel_Handle; File : Code_Analysis.File_Access);
    --  Remove the expanded coverage lines in File
 
    procedure Add_Expanded_Line
@@ -163,14 +152,14 @@ package Coverage_GUI is
    --  Add an expanded coverage line in File at Line_Number
 
    function Find_File_Node_In_Projects
-     (Projects : Code_Analysis_Tree;
-      File     : GNATCOLL.VFS.Virtual_File) return Code_Analysis.File_Access;
+     (Projects : Code_Analysis_Tree; File : GNATCOLL.VFS.Virtual_File)
+      return Code_Analysis.File_Access;
    --  Return the first node corresponding to File in the Projects or null if
    --  not found
 
    function Find_Gcov_File
-     (Kernel : Kernel_Handle;
-      Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File;
+     (Kernel : Kernel_Handle; Source : GNATCOLL.VFS.Virtual_File)
+      return GNATCOLL.VFS.Virtual_File;
    --  Return the gcov file associated with Source
    --  Raise GNATCOLL.VFS.VFS_Invalid_File_Error if GNAT Studio cannot find
    --  the coverage information.

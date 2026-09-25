@@ -17,38 +17,38 @@
 
 with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 pragma Warnings (Off, ".*is an internal GNAT unit");
-with Ada.Strings.Unbounded.Aux;  use Ada.Strings.Unbounded.Aux;
+with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
 pragma Warnings (On, ".*is an internal GNAT unit");
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Regexp;                use GNAT.Regexp;
-with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Regexp;               use GNAT.Regexp;
+with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
-with Glib;                       use Glib;
+with Glib;         use Glib;
 with Glib.Convert;
-with Glib.Error;                 use Glib.Error;
-with Glib.Unicode;               use Glib.Unicode;
+with Glib.Error;   use Glib.Error;
+with Glib.Unicode; use Glib.Unicode;
 
-with Gtk.Check_Button;           use Gtk.Check_Button;
+with Gtk.Check_Button;   use Gtk.Check_Button;
 with Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
 with Gtk.Editable;
-with Gtk.Enums;                  use Gtk.Enums;
-with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
-with Gtk.Text_Iter;              use Gtk.Text_Iter;
-with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
-with Gtk.Widget;                 use Gtk.Widget;
-with Gtk.Window;                 use Gtk.Window;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
+with Gtk.Text_Iter;      use Gtk.Text_Iter;
+with Gtk.Toggle_Button;  use Gtk.Toggle_Button;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtk.Window;         use Gtk.Window;
 
-with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
 
 with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
 with GPS.Default_Styles;         use GPS.Default_Styles;
@@ -84,11 +84,11 @@ package body Src_Contexts is
 
    Me : constant Trace_Handle := Create ("GPS.SOURCE_EDITOR.CONTEXTS");
 
-   package Match_Vectors is new Ada.Containers.Vectors
-     (Positive, GPS.Search.Search_Context);
+   package Match_Vectors is new
+     Ada.Containers.Vectors (Positive, GPS.Search.Search_Context);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GError, GError_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (GError, GError_Access);
 
    procedure Scan_Buffer
      (Buffer               : String;
@@ -150,15 +150,15 @@ package body Src_Contexts is
    --  example when the editor has no file yet.
 
    procedure Scan_And_Store
-     (Context  : access Root_Search_Context'Class;
-      Handler  : access Language_Handler_Record'Class;
-      Kernel   : Kernel_Handle;
-      Str      : String := "";
-      File     : Virtual_File := GNATCOLL.VFS.No_File;
-      Ref      : Buffer_Position;
-      Scope    : Search_Scope;
-      Lang     : Language_Access := null;
-      Result   : out Match_Vectors.Vector);
+     (Context : access Root_Search_Context'Class;
+      Handler : access Language_Handler_Record'Class;
+      Kernel  : Kernel_Handle;
+      Str     : String := "";
+      File    : Virtual_File := GNATCOLL.VFS.No_File;
+      Ref     : Buffer_Position;
+      Scope   : Search_Scope;
+      Lang    : Language_Access := null;
+      Result  : out Match_Vectors.Vector);
    --  Same as above, but behaves as if there was a default callback that
    --  stores the results in an array
    --  If Str is not the empty string, it is considered as a buffer to parse.
@@ -212,7 +212,7 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type;
       Start_Column  : Character_Offset_Type;
-      Result         : out GPS.Search.Search_Context;
+      Result        : out GPS.Search.Search_Context;
       Text          : out GNAT.Strings.String_Access;
       Force_Read    : Boolean := False);
    --  Lightweight interface that returns the first occurence of Context in the
@@ -230,7 +230,7 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Editable_Line_Type;
       Start_Column  : Character_Offset_Type;
-      Result         : out GPS.Search.Search_Context;
+      Result        : out GPS.Search.Search_Context;
       Text          : out GNAT.Strings.String_Access);
    --  Same as above, using an editor instead
 
@@ -258,8 +258,8 @@ package body Src_Contexts is
    --  Position of the first character of Match
 
    function Match_End
-     (Buffer : not null Source_Buffer;
-      Match  : GPS.Search.Search_Context) return Editor_Coordinates;
+     (Buffer : not null Source_Buffer; Match : GPS.Search.Search_Context)
+      return Editor_Coordinates;
    --  Position just after the last character of Match. Select_Region and the
    --  cursor location subprograms are given an exclusive end, and an empty
    --  match has no end of its own: it reports its start.
@@ -338,19 +338,22 @@ package body Src_Contexts is
 
    function Get_Project_Files
      (Projects : Standard.Projects.Project_Type_Array)
-      return GNATCOLL.VFS.File_Array with Unreferenced;
+      return GNATCOLL.VFS.File_Array
+   with Unreferenced;
    --  Return all the project files corresponding to the given projects.
 
    --------------
    -- Is_Equal --
    --------------
 
-   overriding function Is_Equal
+   overriding
+   function Is_Equal
      (Left  : not null access Source_Search_Occurrence_Record;
-      Right : not null access Source_Search_Occurrence_Record)
-      return Boolean is
+      Right : not null access Source_Search_Occurrence_Record) return Boolean
+   is
    begin
-      return Left.Match.Start = Right.Match.Start
+      return
+        Left.Match.Start = Right.Match.Start
         and then Left.Match.Finish = Right.Match.Finish;
    end Is_Equal;
 
@@ -359,8 +362,8 @@ package body Src_Contexts is
    ---------------
 
    function Match_End
-     (Buffer : not null Source_Buffer;
-      Match  : GPS.Search.Search_Context) return Editor_Coordinates
+     (Buffer : not null Source_Buffer; Match : GPS.Search.Search_Context)
+      return Editor_Coordinates
    is
       Line   : Editable_Line_Type;
       Column : Character_Index;
@@ -402,16 +405,17 @@ package body Src_Contexts is
       Was_Partial          : out Boolean;
       Display_Matched_Only : Boolean := False)
    is
-      Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
-        := (Statements     => Scope in Whole | All_But_Comments,
-            Strings        => Scope in Whole
-                              | Comments_And_Strings .. All_But_Comments,
-            Mono_Comments  => Scope in Whole .. Comments_And_Strings,
-            Multi_Comments => Scope in Whole .. Comments_And_Strings);
+      Scanning_Allowed :
+        constant array (Recognized_Lexical_States) of Boolean :=
+          (Statements     => Scope in Whole | All_But_Comments,
+           Strings        =>
+             Scope in Whole | Comments_And_Strings .. All_But_Comments,
+           Mono_Comments  => Scope in Whole .. Comments_And_Strings,
+           Multi_Comments => Scope in Whole .. Comments_And_Strings);
       --  Indicates what lexical states are valid, depending on the current
       --  scope.
 
-      Buffer_First  : Natural;
+      Buffer_First : Natural;
       --  Index of From character in Buffer
 
       procedure Next_Scope_Transition
@@ -441,18 +445,18 @@ package body Src_Contexts is
       is
          use type GNAT.Expect.Pattern_Matcher_Access;
 
-         Str_Delim     : Character renames Lang.String_Delimiter;
-         Quote_Char    : Character renames Lang.Quote_Character;
-         M_Comm_Start  : GNAT.Strings.String_Access
-            renames Lang.Syntax.Comment_Start;
-         M_Comm_End    : GNAT.Strings.String_Access
-            renames Lang.Syntax.Comment_End;
-         Char_Delim    : Character renames Lang.Constant_Character;
+         Str_Delim    : Character renames Lang.String_Delimiter;
+         Quote_Char   : Character renames Lang.Quote_Character;
+         M_Comm_Start : GNAT.Strings.String_Access renames
+           Lang.Syntax.Comment_Start;
+         M_Comm_End   : GNAT.Strings.String_Access renames
+           Lang.Syntax.Comment_End;
+         Char_Delim   : Character renames Lang.Constant_Character;
 
-         Looking_For   : constant Boolean := not Scanning_Allowed (State);
+         Looking_For : constant Boolean := not Scanning_Allowed (State);
          --  Whether the final range should or should not be scanned.
 
-         Matches       : Match_Array (0 .. 0);
+         Matches : Match_Array (0 .. 0);
 
       begin
          Section_End := Buffer'Last;
@@ -463,11 +467,12 @@ package body Src_Contexts is
             case State is
                --  Statements end on any other state
 
-               when Statements =>
+               when Statements     =>
                   while Pos <= Buffer'Last loop
                      if M_Comm_Start /= null
-                       and then Starts_With
-                         (Buffer (Pos .. Buffer'Last), M_Comm_Start.all)
+                       and then
+                         Starts_With
+                           (Buffer (Pos .. Buffer'Last), M_Comm_Start.all)
                      then
                         State := Multi_Comments;
                         Section_End := Pos - 1;
@@ -476,12 +481,13 @@ package body Src_Contexts is
 
                      else
                         if Lang.Syntax.New_Line_Comment_Start = null then
-                           if Lang.Syntax.New_Line_Comment_Start_Regexp /=
-                             null
+                           if Lang.Syntax.New_Line_Comment_Start_Regexp /= null
                            then
                               Match
                                 (Lang.Syntax.New_Line_Comment_Start_Regexp.all,
-                                 Buffer, Matches, Pos);
+                                 Buffer,
+                                 Matches,
+                                 Pos);
 
                               if Matches (0) /= GNAT.Regpat.No_Match then
                                  State := Mono_Comments;
@@ -492,22 +498,24 @@ package body Src_Contexts is
                            end if;
                         else
                            if Starts_With
-                             (Buffer (Pos .. Buffer'Last),
-                              Lang.Syntax.New_Line_Comment_Start.all)
+                                (Buffer (Pos .. Buffer'Last),
+                                 Lang.Syntax.New_Line_Comment_Start.all)
                            then
                               State := Mono_Comments;
                               Section_End := Pos - 1;
-                              Pos := Pos
+                              Pos :=
+                                Pos
                                 + Lang.Syntax.New_Line_Comment_Start'Length;
                               exit;
                            end if;
                         end if;
 
                         if Buffer (Pos) = Str_Delim
-                          and then (Pos = Buffer_First
-                                    or else Pos = Buffer'Last
-                                    or else Buffer (Pos - 1) /= Char_Delim
-                                    or else Buffer (Pos + 1) /= Char_Delim)
+                          and then
+                            (Pos = Buffer_First
+                             or else Pos = Buffer'Last
+                             or else Buffer (Pos - 1) /= Char_Delim
+                             or else Buffer (Pos + 1) /= Char_Delim)
                         then
                            State := Strings;
                            Section_End := Pos - 1;
@@ -521,13 +529,15 @@ package body Src_Contexts is
 
                --  Strings end on string delimiters
 
-               when Strings =>
+               when Strings        =>
                   while Pos <= Buffer'Last loop
                      if Buffer (Pos) = Str_Delim
-                       and then (Quote_Char = ASCII.NUL or else
-                                 (Pos > Buffer_First and then
-                                  Buffer (Pos - 1) /= Quote_Char)
-                                 or else Pos = Buffer_First)
+                       and then
+                         (Quote_Char = ASCII.NUL
+                          or else
+                            (Pos > Buffer_First
+                             and then Buffer (Pos - 1) /= Quote_Char)
+                          or else Pos = Buffer_First)
                      then
                         State := Statements;
                         Section_End := Pos - 1;
@@ -540,9 +550,8 @@ package body Src_Contexts is
 
                --  Single line comments end on ASCII.LF characters
 
-               when Mono_Comments =>
-                  while Pos <= Buffer'Last
-                    and then Buffer (Pos) /= ASCII.LF
+               when Mono_Comments  =>
+                  while Pos <= Buffer'Last and then Buffer (Pos) /= ASCII.LF
                   loop
                      Pos := Pos + 1;
                   end loop;
@@ -558,9 +567,9 @@ package body Src_Contexts is
                when Multi_Comments =>
                   while Pos <= Buffer'Last loop
                      if M_Comm_End /= null
-                       and then Starts_With
-                         (Buffer (Pos .. Buffer'Last),
-                          M_Comm_End.all)
+                       and then
+                         Starts_With
+                           (Buffer (Pos .. Buffer'Last), M_Comm_End.all)
                      then
                         State := Statements;
                         Section_End := Pos - 1;
@@ -578,19 +587,18 @@ package body Src_Contexts is
          end if;
       end Next_Scope_Transition;
 
-      Pos           : Positive;
-      Line_Start    : Positive;
-      Dummy         : Visible_Column_Type := 1;
-      Section_End   : Integer;
-      Old_State     : Recognized_Lexical_States;
-      Language      : Language_Context_Access;
-      Ignored       : Natural := 0;
+      Pos         : Positive;
+      Line_Start  : Positive;
+      Dummy       : Visible_Column_Type := 1;
+      Section_End : Integer;
+      Old_State   : Recognized_Lexical_States;
+      Language    : Language_Context_Access;
+      Ignored     : Natural := 0;
 
-      Indent_Level  : constant Natural :=
-        (if Lang = null
-         then 8
-         else Lang.Get_Indentation_Level);
-   begin  --  Scan_Buffer
+      Indent_Level : constant Natural :=
+        (if Lang = null then 8 else Lang.Get_Indentation_Level);
+   begin
+      --  Scan_Buffer
       Was_Partial := False;
 
       if Buffer'Length = 0 then
@@ -628,14 +636,17 @@ package body Src_Contexts is
 
       while Pos <= Buffer'Last loop
          Line_Start := Pos;
-         Old_State  := Lexical_State;
+         Old_State := Lexical_State;
 
          Next_Scope_Transition
            (Buffer, Pos, Lexical_State, Section_End, Language.all);
 
          if Scanning_Allowed (Old_State) then
             Context.Scan_Buffer_No_Scope
-              (Buffer, Integer (Line_Start), Section_End, Indent_Level,
+              (Buffer,
+               Integer (Line_Start),
+               Section_End,
+               Indent_Level,
                Callback,
                Ref                  => Ref,
                Was_Partial          => Was_Partial,
@@ -672,14 +683,14 @@ package body Src_Contexts is
       Was_Partial          : out Boolean;
       Display_Matched_Only : Boolean := False)
    is
-      Lang   : Language_Access;
-      Buffer : GNAT.Strings.String_Access;
-      Child  : MDI_Child;
+      Lang      : Language_Access;
+      Buffer    : GNAT.Strings.String_Access;
+      Child     : MDI_Child;
       UTF8, Tmp : GNAT.Strings.String_Access;
-      Valid  : Boolean;
-      Ref    : Buffer_Position;
-      Line   : Editable_Line_Type;
-      Start  : Integer;
+      Valid     : Boolean;
+      Ref       : Buffer_Position;
+      Line      : Editable_Line_Type;
+      Start     : Integer;
    begin
       Was_Partial := False;
 
@@ -726,11 +737,9 @@ package body Src_Contexts is
                Tmp := UTF8;
             end if;
 
-            Line  := 1;
+            Line := 1;
             Start := Tmp'First;
-            while Start <= Tmp'Last
-              and then Line < Start_Line
-            loop
+            while Start <= Tmp'Last and then Line < Start_Line loop
                if Tmp (Start) = ASCII.LF then
                   Line := Line + 1;
                end if;
@@ -739,9 +748,15 @@ package body Src_Contexts is
 
             Ref := At_Position (Start, Integer (Line));
             Scan_Buffer
-              (Tmp (Start .. Tmp'Last), 1, Context, Callback, Scope,
-               Lexical_State, Lang,
-               Ref => Ref, Was_Partial => Was_Partial,
+              (Tmp (Start .. Tmp'Last),
+               1,
+               Context,
+               Callback,
+               Scope,
+               Lexical_State,
+               Lang,
+               Ref                  => Ref,
+               Was_Partial          => Was_Partial,
                Display_Matched_Only => Display_Matched_Only);
 
             Free (UTF8);
@@ -771,9 +786,9 @@ package body Src_Contexts is
       Was_Partial          : out Boolean;
       Display_Matched_Only : Boolean := False)
    is
-      Lang   : Language_Access;
-      Box    : Source_Editor_Box;
-      Ref    : Buffer_Position;
+      Lang : Language_Access;
+      Box  : Source_Editor_Box;
+      Ref  : Buffer_Position;
    begin
       --  ??? Would be nice to handle backward search, which is extremely hard
       --  with regular expressions
@@ -784,7 +799,7 @@ package body Src_Contexts is
       Lang := Get_Language_From_File (Handler, Get_Filename (Box));
 
       if not Is_Valid_Position
-        (Get_Buffer (Box), Start_Line, Character_Index (Start_Column))
+               (Get_Buffer (Box), Start_Line, Character_Index (Start_Column))
       then
          return;
       end if;
@@ -806,8 +821,8 @@ package body Src_Contexts is
             Scope,
             Lexical_State,
             Lang,
-            Ref => Ref,
-            Was_Partial => Was_Partial,
+            Ref                  => Ref,
+            Was_Partial          => Was_Partial,
             Display_Matched_Only => Display_Matched_Only);
       end;
    end Scan_Editor;
@@ -857,12 +872,13 @@ package body Src_Contexts is
          if Interactive then
             Open_File_Action_Hook.Run
               (Kernel,
-               File => File_Name,
-               Project => GNATCOLL.Projects.No_Project,   --   ??? any project
-               Line    => Match.Start.Line,
-               Column  => Match.Start.Visible_Column,
+               File       => File_Name,
+               Project    =>
+                 GNATCOLL.Projects.No_Project,   --   ??? any project
+               Line       => Match.Start.Line,
+               Column     => Match.Start.Visible_Column,
                Column_End => Column_End,
-               Focus => Give_Focus);
+               Focus      => Give_Focus);
             Push_Current_Editor_Location_In_History (Kernel);
 
          else
@@ -872,8 +888,7 @@ package body Src_Contexts is
                    (Container  => Get_Messages_Container (Kernel),
                     Category   =>
                       Get_Search_Category_Name
-                        (Look_For,
-                         Interactive => Interactive),
+                        (Look_For, Interactive => Interactive),
                     File       => File_Name,
                     Line       => To_Positive (Match.Start.Line),
                     Column     => Match.Start.Visible_Column,
@@ -892,14 +907,14 @@ package body Src_Contexts is
          --  highlight and nothing to select: the character it is in front of
          --  is not part of it.
 
-         Do_Highlight
-           (Column_End => 0,
-            Length     => Highlight_None);
+         Do_Highlight (Column_End => 0, Length => Highlight_None);
       elsif Match.Start.Line = Match.Finish.Line then
          Do_Highlight
            (Column_End => Match.Finish.Visible_Column + 1,
-            Length     => Highlight_Length
-              (Match.Finish.Visible_Column - Match.Start.Visible_Column) + 1);
+            Length     =>
+              Highlight_Length
+                (Match.Finish.Visible_Column - Match.Start.Visible_Column)
+              + 1);
       else
          --  The match runs past the end of its first line, so what has to be
          --  highlighted on that line is all of it from the start of the
@@ -918,8 +933,9 @@ package body Src_Contexts is
 
          Do_Highlight
            (Column_End => 0,
-            Length     => Highlight_Length
-              (Byte_Index (Match.Finish) - Byte_Index (Match.Start) + 1));
+            Length     =>
+              Highlight_Length
+                (Byte_Index (Match.Finish) - Byte_Index (Match.Start) + 1));
       end if;
    end Highlight_Result;
 
@@ -952,21 +968,18 @@ package body Src_Contexts is
       --  depending On Failure_Response.
 
       function Stop_At_First_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean;
       --  Stop at the first match encountered
 
       function From_Beginning_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean;
       --  Used to restart the search from the beginning of the file.
       --
       --  Display an informational popup telling that the search restarted from
       --  the beginning if a match was encountered.
 
       function Backward_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean;
       --  Return the last match just before Current_Line and Current_Column
 
       ----------------------------
@@ -974,8 +987,7 @@ package body Src_Contexts is
       ----------------------------
 
       function Stop_At_First_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean
       is
          pragma Unreferenced (Text);
       begin
@@ -988,8 +1000,7 @@ package body Src_Contexts is
       -----------------------------
 
       function From_Beginning_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean
       is
          pragma Unreferenced (Text);
       begin
@@ -1012,8 +1023,7 @@ package body Src_Contexts is
       -----------------------
 
       function Backward_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean
       is
          pragma Unreferenced (Text);
       begin
@@ -1022,18 +1032,18 @@ package body Src_Contexts is
          --  current position but don't have any match yet, we have to return
          --  the last match.
          if Match.Start.Line > Integer (Current_Line)
-           or else (if Is_Empty_Match (Match)
-                    then
-                      --  An empty match has no end of its own: it ends
-                      --  where it starts.
-                      Match.Start.Line = Integer (Current_Line)
-                        and then Match.Start.Column >= Current_Column
-                    else
-                      Match.Finish.Line = Integer (Current_Line)
-                        and then Match.Finish.Column + 1 >= Current_Column)
+           or else
+             (if Is_Empty_Match (Match)
+              then
+                --  An empty match has no end of its own: it ends
+                --  where it starts.
+                Match.Start.Line = Integer (Current_Line)
+                and then Match.Start.Column >= Current_Column
+              else
+                Match.Finish.Line = Integer (Current_Line)
+                and then Match.Finish.Column + 1 >= Current_Column)
          then
-            if not Continue_Till_End
-              and then Result /= GPS.Search.No_Match
+            if not Continue_Till_End and then Result /= GPS.Search.No_Match
             then
                return False;
             end if;
@@ -1050,27 +1060,29 @@ package body Src_Contexts is
       -- Continue_Search_Response --
       ------------------------------
 
-      function Continue_Search_Response
-        (Message : String := "") return Boolean
+      function Continue_Search_Response (Message : String := "") return Boolean
       is
          Buttons : Message_Dialog_Buttons;
       begin
          case Failure_Response is
-            when Dialog =>
-               Buttons := GPS_Message_Dialog
-                 (Message,
-                  Confirmation,
-                  Button_Yes or Button_No,
-                  Button_Yes,
-                  "",
-                  -"Continue search ?",
-                  Justify_Center,
-                  Get_Current_Window (Kernel));
+            when Dialog              =>
+               Buttons :=
+                 GPS_Message_Dialog
+                   (Message,
+                    Confirmation,
+                    Button_Yes or Button_No,
+                    Button_Yes,
+                    "",
+                    -"Continue search ?",
+                    Justify_Center,
+                    Get_Current_Window (Kernel));
 
                return Buttons = Button_Yes;
+
             when Informational_Popup =>
                return True;
-            when None =>
+
+            when None                =>
                return False;
          end case;
       end Continue_Search_Response;
@@ -1108,8 +1120,9 @@ package body Src_Contexts is
          --  Start from the end if necessary.
 
          if Continue_Till_End
-           and then not Continue_Search_Response
-             (-"No more matches, restart from the end ?")
+           and then
+             not Continue_Search_Response
+                   (-"No more matches, restart from the end ?")
          then
             Stop_Macro_Action_Hook.Run (Kernel);
             Set_End_Notif_Done (Context.all, True);
@@ -1123,9 +1136,11 @@ package body Src_Contexts is
          --  restarted.
 
          if Failure_Response = Informational_Popup
-           and then (Result.Start.Line > Integer (Current_Line)
-                     or else (Result.Start.Line = Integer (Current_Line)
-                              and then Result.Start.Column >= Current_Column))
+           and then
+             (Result.Start.Line > Integer (Current_Line)
+              or else
+                (Result.Start.Line = Integer (Current_Line)
+                 and then Result.Start.Column >= Current_Column))
          then
             Display_Informational_Popup
               (Get_Window_For_Informational_Popup (Kernel),
@@ -1133,8 +1148,9 @@ package body Src_Contexts is
                No_Transparency_Color => Default_Style.Get_Pref_Bg);
          end if;
       else
-         if Current_Line > Begin_Line or else
-           (Current_Line = Begin_Line and Current_Column > Begin_Column)
+         if Current_Line > Begin_Line
+           or else
+             (Current_Line = Begin_Line and Current_Column > Begin_Column)
          then
             Begin_Line := Current_Line;
             Begin_Column := Current_Column;
@@ -1170,7 +1186,7 @@ package body Src_Contexts is
                if Current_Line = 1 and then Current_Column = 1 then
                   return;
                elsif not Continue_Search_Response
-                 (-"No more matches, restart from the beginning ?")
+                           (-"No more matches, restart from the beginning ?")
                then
                   Stop_Macro_Action_Hook.Run (Kernel);
                   Set_End_Notif_Done (Context.all, True);
@@ -1193,8 +1209,10 @@ package body Src_Contexts is
                  (Text (1 .. Len),
                   Start_Column,
                   Context,
-                  From_Beginning_Callback'Unrestricted_Access, Scope,
-                  Lexical_State, Lang,
+                  From_Beginning_Callback'Unrestricted_Access,
+                  Scope,
+                  Lexical_State,
+                  Lang,
                   Was_Partial => Was_Partial,
                   Ref         => Ref);
             end;
@@ -1207,19 +1225,18 @@ package body Src_Contexts is
    --------------------
 
    procedure Scan_And_Store
-     (Context  : access Root_Search_Context'Class;
-      Handler  : access Language_Handler_Record'Class;
-      Kernel   : Kernel_Handle;
-      Str      : String := "";
-      File     : Virtual_File := GNATCOLL.VFS.No_File;
-      Ref      : Buffer_Position;
-      Scope    : Search_Scope;
-      Lang     : Language_Access := null;
-      Result   : out Match_Vectors.Vector)
+     (Context : access Root_Search_Context'Class;
+      Handler : access Language_Handler_Record'Class;
+      Kernel  : Kernel_Handle;
+      Str     : String := "";
+      File    : Virtual_File := GNATCOLL.VFS.No_File;
+      Ref     : Buffer_Position;
+      Scope   : Search_Scope;
+      Lang    : Language_Access := null;
+      Result  : out Match_Vectors.Vector)
    is
       function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean;
       --  Save Match in the result array.
 
       --------------
@@ -1227,8 +1244,7 @@ package body Src_Contexts is
       --------------
 
       function Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean
       is
          pragma Unreferenced (Text);
       begin
@@ -1244,19 +1260,27 @@ package body Src_Contexts is
 
       if Str /= "" then
          R := Ref;
-         Scan_Buffer (Str, 1, Context,
-                      Callback'Unrestricted_Access, Scope,
-                      Lexical_State => State,
-                      Lang          => Lang,
-                      Ref           => R,
-                      Was_Partial   => Was_Partial);
+         Scan_Buffer
+           (Str,
+            1,
+            Context,
+            Callback'Unrestricted_Access,
+            Scope,
+            Lexical_State => State,
+            Lang          => Lang,
+            Ref           => R,
+            Was_Partial   => Was_Partial);
       elsif File /= GNATCOLL.VFS.No_File then
-         Scan_File (Context,
-                    Handler, Kernel,
-                    File, Callback'Unrestricted_Access, Scope,
-                    Lexical_State => State,
-                    Force_Read    => Kernel = null,
-                    Was_Partial   => Was_Partial);
+         Scan_File
+           (Context,
+            Handler,
+            Kernel,
+            File,
+            Callback'Unrestricted_Access,
+            Scope,
+            Lexical_State => State,
+            Force_Read    => Kernel = null,
+            Was_Partial   => Was_Partial);
       end if;
    end Scan_And_Store;
 
@@ -1278,8 +1302,7 @@ package body Src_Contexts is
       Force_Read    : Boolean := False)
    is
       function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Txt : String) return Boolean;
       --  Save Match in the result array.
 
       --------------
@@ -1287,22 +1310,28 @@ package body Src_Contexts is
       --------------
 
       function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean
-      is
+        (Match : GPS.Search.Search_Context; Txt : String) return Boolean is
       begin
          Result := Match;
-         Text   := new String'(Txt);
+         Text := new String'(Txt);
          return False;
       end Callback;
 
       Was_Partial : Boolean;
    begin
       Result := GPS.Search.No_Match;
-      Scan_File (Context, Handler, Kernel,
-                 Name, Callback'Unrestricted_Access, Scope,
-                 Lexical_State, Start_Line, Start_Column,
-                 Force_Read, Was_Partial);
+      Scan_File
+        (Context,
+         Handler,
+         Kernel,
+         Name,
+         Callback'Unrestricted_Access,
+         Scope,
+         Lexical_State,
+         Start_Line,
+         Start_Column,
+         Force_Read,
+         Was_Partial);
    end First_Match;
 
    -----------------
@@ -1321,8 +1350,7 @@ package body Src_Contexts is
       Text          : out GNAT.Strings.String_Access)
    is
       function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Txt : String) return Boolean;
       --  Save Match in the result array.
 
       --------------
@@ -1330,12 +1358,10 @@ package body Src_Contexts is
       --------------
 
       function Callback
-        (Match : GPS.Search.Search_Context;
-         Txt   : String) return Boolean
-      is
+        (Match : GPS.Search.Search_Context; Txt : String) return Boolean is
       begin
          Result := Match;
-         Text   := new String'(Txt);
+         Text := new String'(Txt);
          return False;
       end Callback;
 
@@ -1343,9 +1369,14 @@ package body Src_Contexts is
    begin
       Result := GPS.Search.No_Match;
       Scan_Editor
-        (Context, Handler,
-         Editor, Callback'Unrestricted_Access, Scope,
-         Lexical_State, Start_Line, Start_Column,
+        (Context,
+         Handler,
+         Editor,
+         Callback'Unrestricted_Access,
+         Scope,
+         Lexical_State,
+         Start_Line,
+         Start_Column,
          Was_Partial);
    end First_Match;
 
@@ -1353,7 +1384,8 @@ package body Src_Contexts is
    -- Free --
    ----------
 
-   overriding procedure Free (Context : in out Files_Context) is
+   overriding
+   procedure Free (Context : in out Files_Context) is
    begin
       Context.Dirs.Clear;
       Context.At_End := True;
@@ -1361,14 +1393,16 @@ package body Src_Contexts is
       Free (Root_Search_Context (Context));
    end Free;
 
-   overriding procedure Free (Context : in out Files_Project_Context) is
+   overriding
+   procedure Free (Context : in out Files_Project_Context) is
    begin
       Unchecked_Free (Context.Files);
       Free (Context.Replacement);
       Free (Root_Search_Context (Context));
    end Free;
 
-   overriding procedure Free (Context : in out Open_Files_Context) is
+   overriding
+   procedure Free (Context : in out Open_Files_Context) is
    begin
       Unchecked_Free (Context.Files);
       Free (Context.Replacement);
@@ -1436,7 +1470,8 @@ package body Src_Contexts is
    -- Get_Current_Progress --
    --------------------------
 
-   overriding function Get_Current_Progress
+   overriding
+   function Get_Current_Progress
      (Context : access Files_Project_Context) return Integer is
    begin
       return Context.Current_File;
@@ -1446,7 +1481,8 @@ package body Src_Contexts is
    -- Get_Total_Progress --
    ------------------------
 
-   overriding function Get_Total_Progress
+   overriding
+   function Get_Total_Progress
      (Context : access Files_Project_Context) return Integer is
    begin
       if Context.Files = null then
@@ -1461,8 +1497,7 @@ package body Src_Contexts is
    -------------------
 
    procedure Set_File_List
-     (Context : access Open_Files_Context;
-      Files   : File_Array_Access) is
+     (Context : access Open_Files_Context; Files : File_Array_Access) is
    begin
       Unchecked_Free (Context.Files);
       Context.Files := Files;
@@ -1474,8 +1509,7 @@ package body Src_Contexts is
    -------------------
 
    procedure Set_File_List
-     (Context : access Open_Files_Context;
-      Files   : File_Sets.Set)
+     (Context : access Open_Files_Context; Files : File_Sets.Set)
    is
       Idx : Integer;
    begin
@@ -1493,7 +1527,8 @@ package body Src_Contexts is
    -- Get_Current_Progress --
    --------------------------
 
-   overriding function Get_Current_Progress
+   overriding
+   function Get_Current_Progress
      (Context : access Open_Files_Context) return Integer is
    begin
       return Context.Current_File;
@@ -1503,7 +1538,8 @@ package body Src_Contexts is
    -- Get_Total_Progress --
    ------------------------
 
-   overriding function Get_Total_Progress
+   overriding
+   function Get_Total_Progress
      (Context : access Open_Files_Context) return Integer is
    begin
       if Context.Files = null then
@@ -1517,7 +1553,8 @@ package body Src_Contexts is
    -- Get_Current_Progress --
    --------------------------
 
-   overriding function Get_Current_Progress
+   overriding
+   function Get_Current_Progress
      (Context : access Files_Context) return Integer is
    begin
       return Context.Current_Dir;
@@ -1527,8 +1564,9 @@ package body Src_Contexts is
    -- Get_Total_Progress --
    ------------------------
 
-   overriding function Get_Total_Progress
-     (Context : access Files_Context) return Integer is
+   overriding
+   function Get_Total_Progress (Context : access Files_Context) return Integer
+   is
    begin
       return Context.Total_Dirs;
    end Get_Total_Progress;
@@ -1540,7 +1578,7 @@ package body Src_Contexts is
    procedure Set_File_List
      (Context       : access Files_Context;
       Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : Virtual_File  := No_File;
+      Directory     : Virtual_File := No_File;
       Recurse       : Boolean := False) is
    begin
       Context.Files_Pattern := Files_Pattern;
@@ -1558,17 +1596,20 @@ package body Src_Contexts is
    -- Create_Context --
    --------------------
 
-   overriding function Create_Context
+   overriding
+   function Create_Context
      (Module          : not null access Current_File_Search_Module;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access is
+      Selector        : Scope_Selector) return Root_Search_Context_Access
+   is
       pragma Unreferenced (Module);
    begin
-      return Current_File_Factory
-        (Kernel, All_Occurrences,
-         Scope => Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active));
+      return
+        Current_File_Factory
+          (Kernel,
+           All_Occurrences,
+           Scope => Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active));
    end Create_Context;
 
    --------------------------
@@ -1576,14 +1617,14 @@ package body Src_Contexts is
    --------------------------
 
    function Current_File_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences   : Boolean;
-      Scope             : Search_Scope := Whole)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Scope           : Search_Scope := Whole)
       return Root_Search_Context_Access
    is
       pragma Unreferenced (Kernel);
 
-      Context  : Current_File_Context_Access;
+      Context : Current_File_Context_Access;
    begin
       --  If we are looking for all the occurrences, we simply reuse another
       --  context, instead of the interactive Current_File_Context
@@ -1598,16 +1639,16 @@ package body Src_Contexts is
    -- Create_Context --
    --------------------
 
-   overriding function Create_Context
+   overriding
+   function Create_Context
      (Module          : not null access Current_Selection_Search_Module;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access
+      Selector        : Scope_Selector) return Root_Search_Context_Access
    is
       pragma Unreferenced (Module);
       Scope  : constant Search_Scope :=
-                 Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
+        Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Result : Current_Selection_Context_Access;
    begin
       Result := new Current_Selection_Context;
@@ -1639,10 +1680,7 @@ package body Src_Contexts is
    is
       Child    : constant MDI_Child := Find_Current_Editor (Kernel);
       Toplevel : constant Gtk_Widget :=
-                   (if Child /= null then
-                       Child.Get_Widget.Get_Toplevel
-                    else
-                       null);
+        (if Child /= null then Child.Get_Widget.Get_Toplevel else null);
    begin
       if Toplevel /= null and then Toplevel.Is_Toplevel then
          return Gtk_Window (Toplevel);
@@ -1655,7 +1693,8 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   overriding function Search
+   overriding
+   function Search
      (Context              : access Current_Selection_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
@@ -1667,8 +1706,7 @@ package body Src_Contexts is
    is
       pragma Unreferenced (Display_Matched_Only);
       function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean;
       --  Callbacks for the general search function
       --  ??? This should be factorized somehow with the Search fonction
       --  from the Abstract_File_Context.
@@ -1686,13 +1724,12 @@ package body Src_Contexts is
       --------------------------
 
       function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean is
       begin
-         if Match.Start.Line > Natural (End_Line) or else
-           (Match.Start.Line = Natural (End_Line) and then
-                Match.Start.Column > Character_Offset_Type (End_Column))
+         if Match.Start.Line > Natural (End_Line)
+           or else
+             (Match.Start.Line = Natural (End_Line)
+              and then Match.Start.Column > Character_Offset_Type (End_Column))
          then
             return False;
          end if;
@@ -1719,10 +1756,10 @@ package body Src_Contexts is
                Interactive => not Context.All_Occurrences);
          end if;
 
-         Occurrence := new Source_Search_Occurrence_Record'
-           (Search_Occurrence_Record with
-            Editor_Child => Child,
-            Match        => Match);
+         Occurrence :=
+           new Source_Search_Occurrence_Record'
+             (Search_Occurrence_Record
+              with Editor_Child => Child, Match => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -1753,18 +1790,21 @@ package body Src_Contexts is
 
          Begin_Line := Editable_Line_Type (Get_Line (Range_Start) + 1);
          End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
-         Begin_Column :=
-           Character_Index (Get_Line_Offset (Range_Start) + 1);
-         End_Column :=
-           Character_Index (Get_Line_Offset (Range_End) + 1);
+         Begin_Column := Character_Index (Get_Line_Offset (Range_Start) + 1);
+         End_Column := Character_Index (Get_Line_Offset (Range_End) + 1);
 
          if not Context.All_Occurrences then
-            Occurrence := Auxiliary_Search
-              (Context, Editor, Kernel, Search_Backward, From_Selection_Start,
-               Begin_Line,
-               Character_Offset_Type (Begin_Column),
-               End_Line,
-               As_Optional (End_Column));
+            Occurrence :=
+              Auxiliary_Search
+                (Context,
+                 Editor,
+                 Kernel,
+                 Search_Backward,
+                 From_Selection_Start,
+                 Begin_Line,
+                 Character_Offset_Type (Begin_Column),
+                 End_Line,
+                 As_Optional (End_Column));
             Found := Occurrence /= null;
 
             if not Found then
@@ -1772,6 +1812,7 @@ package body Src_Contexts is
             end if;
 
             Continue := False; --  ??? Dummy boolean.
+
          else
             declare
                State : Recognized_Lexical_States := Statements;
@@ -1805,7 +1846,8 @@ package body Src_Contexts is
    -- Replace --
    -------------
 
-   overriding function Replace
+   overriding
+   function Replace
      (Context         : access Current_Selection_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
@@ -1841,17 +1883,18 @@ package body Src_Contexts is
             End_Line := Editable_Line_Type (Get_Line (Range_End) + 1);
             Begin_Column :=
               Character_Index (Get_Line_Offset (Range_Start) + 1);
-            End_Column :=
-              Character_Index (Get_Line_Offset (Range_End) + 1);
+            End_Column := Character_Index (Get_Line_Offset (Range_End) + 1);
          end;
 
          declare
-            Text : constant String := To_String (Buffer.Get_Text
-              (Begin_Line,
-               Begin_Column,
-               End_Line,
-               As_Optional (End_Column)));
-            Ref          : constant Buffer_Position :=
+            Text : constant String :=
+              To_String
+                (Buffer.Get_Text
+                   (Begin_Line,
+                    Begin_Column,
+                    End_Line,
+                    As_Optional (End_Column)));
+            Ref  : constant Buffer_Position :=
               At_Position
                 (Index          => Text'First,
                  Line           => Integer (Begin_Line),
@@ -1888,12 +1931,13 @@ package body Src_Contexts is
          return False;
       else
          --  Parent's implementaion is fine in this case
-         return Current_File_Context (Context.all).Replace
-           (Kernel          => Kernel,
-            Replace_String  => Replace_String,
-            Case_Preserving => Case_Preserving,
-            Search_Backward => Search_Backward,
-            Give_Focus      => Give_Focus);
+         return
+           Current_File_Context (Context.all).Replace
+             (Kernel          => Kernel,
+              Replace_String  => Replace_String,
+              Case_Preserving => Case_Preserving,
+              Search_Backward => Search_Backward,
+              Give_Focus      => Give_Focus);
       end if;
    exception
       when E : others =>
@@ -1905,25 +1949,25 @@ package body Src_Contexts is
    -- Create_Context --
    --------------------
 
-   overriding function Create_Context
+   overriding
+   function Create_Context
      (Module          : not null access Files_From_Project_Search_Module;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access
+      Selector        : Scope_Selector) return Root_Search_Context_Access
    is
       pragma Unreferenced (Module);
-      Context  : constant Files_Project_Context_Access :=
+      Context : constant Files_Project_Context_Access :=
         new Files_Project_Context;
-      Project  : constant Project_Type := Get_Project (Kernel);
-      Files    : GNATCOLL.Projects.File_And_Project_Array_Access;
+      Project : constant Project_Type := Get_Project (Kernel);
+      Files   : GNATCOLL.Projects.File_And_Project_Array_Access;
    begin
       Context.Scope := Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
-      Files := Project.Source_Files
-        (Recursive             => True,
-         Include_Project_Files => True);
+      Context.Current := GPS.Search.No_Match;
+      Files :=
+        Project.Source_Files
+          (Recursive => True, Include_Project_Files => True);
       Set_File_List (Context, Files);
       return Root_Search_Context_Access (Context);
    end Create_Context;
@@ -1933,15 +1977,15 @@ package body Src_Contexts is
    --------------------------------
 
    function Files_From_Project_Factory
-     (Scope           : Search_Scope;
-      All_Occurrences : Boolean) return Files_Project_Context_Access
+     (Scope : Search_Scope; All_Occurrences : Boolean)
+      return Files_Project_Context_Access
    is
       Context : constant Files_Project_Context_Access :=
-                  new Files_Project_Context;
+        new Files_Project_Context;
    begin
-      Context.Scope           := Scope;
+      Context.Scope := Scope;
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Current := GPS.Search.No_Match;
       return Context;
    end Files_From_Project_Factory;
 
@@ -1966,36 +2010,35 @@ package body Src_Contexts is
    -- Create_Context --
    --------------------
 
-   overriding function Create_Context
+   overriding
+   function Create_Context
      (Module          : not null access Files_From_Root_Project_Search_Module;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access
+      Selector        : Scope_Selector) return Root_Search_Context_Access
    is
       pragma Unreferenced (Module);
-      Projects  : constant Standard.Projects.Project_Type_Array :=
+      Projects : constant Standard.Projects.Project_Type_Array :=
         Vsearch.Get_Selected_Project (Kernel);
-      Context   : constant Files_Project_Context_Access :=
+      Context  : constant Files_Project_Context_Access :=
         new Files_Project_Context;
-      Files     : GNATCOLL.Projects.File_And_Project_Array_Access;
+      Files    : GNATCOLL.Projects.File_And_Project_Array_Access;
    begin
-      Context.Scope           :=
-        Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
+      Context.Scope := Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Current := GPS.Search.No_Match;
 
       if Projects'Length /= 0 then
          --  Search in selected project if any
-         Files := Source_Files_Non_Recursive
-           (Projects              => Projects,
-            Include_Project_Files => True);
+         Files :=
+           Source_Files_Non_Recursive
+             (Projects => Projects, Include_Project_Files => True);
          Set_File_List (Context, Files);
       else
          --  Search in root project if no project selected
-         Files := Get_Project (Kernel).Source_Files
-           (Recursive             => False,
-            Include_Project_Files => True);
+         Files :=
+           Get_Project (Kernel).Source_Files
+             (Recursive => False, Include_Project_Files => True);
          Set_File_List (Context, Files);
       end if;
 
@@ -2006,19 +2049,19 @@ package body Src_Contexts is
    -- Create_Context --
    --------------------
 
-   overriding function Create_Context
+   overriding
+   function Create_Context
      (Module          : not null access Runtime_Files_Search_Module;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access
+      Selector        : Scope_Selector) return Root_Search_Context_Access
    is
       pragma Unreferenced (Module);
       Files   : GNATCOLL.VFS.File_Array :=
         Get_Registry (Kernel).Environment.Predefined_Source_Files;
       Last    : Natural := Files'First - 1;
       Context : constant Files_Project_Context_Access :=
-                  new Runtime_Files_Context;
+        new Runtime_Files_Context;
    begin
       --  Collect specification files in the begining of Files array
       for J in Files'Range loop
@@ -2028,10 +2071,9 @@ package body Src_Contexts is
          end if;
       end loop;
 
-      Context.Scope           :=
-        Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
+      Context.Scope := Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Current := GPS.Search.No_Match;
       Set_File_List (Context, new File_Array'(Files (Files'First .. Last)));
       return Root_Search_Context_Access (Context);
    end Create_Context;
@@ -2040,17 +2082,20 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   overriding function Get_Terminate_Message
-     (Context : access Files_Project_Context;
-      Kind    : Operation_Kind) return String is
+   overriding
+   function Get_Terminate_Message
+     (Context : access Files_Project_Context; Kind : Operation_Kind)
+      return String is
    begin
       case Kind is
          when Replace =>
-            return -("Finished replacing the string in files from project "
-                     & '('
-                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
-                     & " occurrences)");
-         when Search =>
+            return
+              -("Finished replacing the string in files from project "
+                & '('
+                & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                & " occurrences)");
+
+         when Search  =>
             return "";
       end case;
    end Get_Terminate_Message;
@@ -2059,12 +2104,12 @@ package body Src_Contexts is
    -- Create_Context --
    --------------------
 
-   overriding function Create_Context
+   overriding
+   function Create_Context
      (Module          : not null access Open_Files_Search_Module;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access
+      Selector        : Scope_Selector) return Root_Search_Context_Access
    is
       pragma Unreferenced (Module);
       Context : constant Open_Files_Context_Access := new Open_Files_Context;
@@ -2073,10 +2118,9 @@ package body Src_Contexts is
       --  takes a File_Array_Access. Memory will be properly freed in
       --  Set_File_List
 
-      Context.Scope           :=
-        Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
+      Context.Scope := Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Current := GPS.Search.No_Match;
       Set_File_List (Context, Kernel.Opened_Files);
       return Root_Search_Context_Access (Context);
    end Create_Context;
@@ -2085,17 +2129,20 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   overriding function Get_Terminate_Message
-     (Context : access Open_Files_Context;
-      Kind    : Operation_Kind) return String is
+   overriding
+   function Get_Terminate_Message
+     (Context : access Open_Files_Context; Kind : Operation_Kind) return String
+   is
    begin
       case Kind is
          when Replace =>
-            return -("Finished replacing the string in open files "
-                     & '('
-                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
-                     & " occurrences)");
-         when Search =>
+            return
+              -("Finished replacing the string in open files "
+                & '('
+                & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                & " occurrences)");
+
+         when Search  =>
             return "";
       end case;
    end Get_Terminate_Message;
@@ -2105,14 +2152,14 @@ package body Src_Contexts is
    -------------------
 
    function Files_Factory
-     (All_Occurrences : Boolean;
-      Scope           : Search_Scope) return Files_Context_Access
+     (All_Occurrences : Boolean; Scope : Search_Scope)
+      return Files_Context_Access
    is
       Context : constant Files_Context_Access := new Files_Context;
    begin
       Context.Scope := Scope;
       Context.All_Occurrences := All_Occurrences;
-      Context.Current         := GPS.Search.No_Match;
+      Context.Current := GPS.Search.No_Match;
       return Context;
    end Files_Factory;
 
@@ -2120,31 +2167,33 @@ package body Src_Contexts is
    -- Create_Context --
    --------------------
 
-   overriding function Create_Context
+   overriding
+   function Create_Context
      (Module          : not null access Files_Search_Module;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access
+      Selector        : Scope_Selector) return Root_Search_Context_Access
    is
       pragma Unreferenced (Kernel, Module);
 
       Context        : Files_Context_Access;
-      Extra          : constant Files_Extra_Scope := Files_Extra_Scope
-        (Selector);
+      Extra          : constant Files_Extra_Scope :=
+        Files_Extra_Scope (Selector);
       Files_Selector : constant Files_Extra_Info_Access :=
-                         Files_Extra_Info_Access (Extra.Get_Optional_Widget);
+        Files_Extra_Info_Access (Extra.Get_Optional_Widget);
       Re             : GNAT.Regexp.Regexp;
    begin
       if Get_Text (Files_Selector.Files_Entry) /= "" then
-         Context := Files_Factory
-           (All_Occurrences,
-            Search_Scope'Val (Extra.Get_Scope_Combo.Get_Active));
-         Re := Compile
-           (Get_Text (Files_Selector.Files_Entry),
-            Glob => True,
-            Case_Sensitive => Integer
-              (GPR.Osint.Get_File_Names_Case_Sensitive) /= 0);
+         Context :=
+           Files_Factory
+             (All_Occurrences,
+              Search_Scope'Val (Extra.Get_Scope_Combo.Get_Active));
+         Re :=
+           Compile
+             (Get_Text (Files_Selector.Files_Entry),
+              Glob           => True,
+              Case_Sensitive =>
+                Integer (GPR.Osint.Get_File_Names_Case_Sensitive) /= 0);
          Set_File_List
            (Context,
             Files_Pattern => Re,
@@ -2167,17 +2216,19 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   overriding function Get_Terminate_Message
-     (Context : access Files_Context;
-      Kind    : Operation_Kind) return String is
+   overriding
+   function Get_Terminate_Message
+     (Context : access Files_Context; Kind : Operation_Kind) return String is
    begin
       case Kind is
          when Replace =>
-            return -("Finished replacing the string in selected files "
-                     & '('
-                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
-                     & " occurrences)");
-         when Search =>
+            return
+              -("Finished replacing the string in selected files "
+                & '('
+                & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                & " occurrences)");
+
+         when Search  =>
             return "";
       end case;
    end Get_Terminate_Message;
@@ -2205,11 +2256,14 @@ package body Src_Contexts is
       Column : Character_Index;
       Line   : Editable_Line_Type;
    begin
-      Assert (Me, not Context.All_Occurrences,
-              "All occurrences not supported for current_file_context");
+      Assert
+        (Me,
+         not Context.All_Occurrences,
+         "All occurrences not supported for current_file_context");
 
-      Lang := Get_Language_From_File
-        (Get_Language_Handler (Kernel), Get_Filename (Editor));
+      Lang :=
+        Get_Language_From_File
+          (Get_Language_Handler (Kernel), Get_Filename (Editor));
       Get_Iter_Position (Editor, Start_At, Line, Column);
 
       --  If we had a previous selection, and it had a null length, move the
@@ -2231,7 +2285,8 @@ package body Src_Contexts is
       end if;
 
       Scan_Next
-        (Context, Kernel,
+        (Context,
+         Kernel,
          Editor           => Editor,
          Scope            => Context.Scope,
          Lexical_State    => Context.Current_Lexical,
@@ -2253,7 +2308,7 @@ package body Src_Contexts is
       Context.Replace_Valid := Found;
 
       if Found then
-         Match_From  := Match_Start (Context.Current);
+         Match_From := Match_Start (Context.Current);
          Match_Up_To := Match_End (Editor, Context.Current);
       end if;
    end Search_In_Editor;
@@ -2262,17 +2317,20 @@ package body Src_Contexts is
    -- Get_Terminate_Message --
    ---------------------------
 
-   overriding function Get_Terminate_Message
-     (Context : access Current_File_Context;
-      Kind    : Operation_Kind) return String is
+   overriding
+   function Get_Terminate_Message
+     (Context : access Current_File_Context; Kind : Operation_Kind)
+      return String is
    begin
       case Kind is
          when Replace =>
-            return -("Finished replacing the string in current file "
-                     & '('
-                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
-                     & " occurrences)");
-         when Search =>
+            return
+              -("Finished replacing the string in current file "
+                & '('
+                & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                & " occurrences)");
+
+         when Search  =>
             return "";
       end case;
    end Get_Terminate_Message;
@@ -2306,10 +2364,8 @@ package body Src_Contexts is
 
       Search_In_Editor
         (Context         => Context,
-         Start_At        => (if From_Selection_Start then
-                                Selection_Start
-                             else
-                                Selection_End),
+         Start_At        =>
+           (if From_Selection_Start then Selection_Start else Selection_End),
          Kernel          => Kernel,
          Search_Backward => Search_Backward,
          Match_From      => Match_From,
@@ -2321,25 +2377,29 @@ package body Src_Contexts is
          End_Column      => End_Column);
 
       if Found then
-         Occurrence := new Source_Search_Occurrence_Record'
-           (Search_Occurrence_Record with
-            Editor_Child => Find_Child (Kernel, Editor),
-            Match        => Context.Current);
+         Occurrence :=
+           new Source_Search_Occurrence_Record'
+             (Search_Occurrence_Record
+              with
+                Editor_Child => Find_Child (Kernel, Editor),
+                Match        => Context.Current);
          Initialize (Occurrence, Pattern => Context_Look_For (Context));
 
          Push_Current_Editor_Location_In_History (Kernel);
 
          Editor.Set_Cursor_Location
-           (Line        => Match_From.Line,
-            Column      => Match_From.Col,
-            Force_Focus => False,
-            Centering   => GPS.Editors.Minimal,
+           (Line             => Match_From.Line,
+            Column           => Match_From.Col,
+            Force_Focus      => False,
+            Centering        => GPS.Editors.Minimal,
             Extend_Selection => False);
 
          Select_Region
            (Get_Buffer (Editor),
-            Match_From.Line, Match_From.Col,
-            Match_Up_To.Line, Match_Up_To.Col);
+            Match_From.Line,
+            Match_From.Col,
+            Match_Up_To.Line,
+            Match_Up_To.Col);
 
          Center_Cursor (Get_View (Editor));
       end if;
@@ -2351,7 +2411,8 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   overriding function Search
+   overriding
+   function Search
      (Context              : access Current_File_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
@@ -2367,8 +2428,7 @@ package body Src_Contexts is
       Buffer     : Source_Buffer;
 
       function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean;
       --  Callbacks for the general search function
       --  ??? This should be factorized somehow with the Search fonction
       --  from the Abstract_File_Context.
@@ -2378,9 +2438,7 @@ package body Src_Contexts is
       --------------------------
 
       function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
-      is
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean is
       begin
          Found := True;
 
@@ -2404,10 +2462,10 @@ package body Src_Contexts is
                Interactive => not Context.All_Occurrences);
          end if;
 
-         Occurrence := new Source_Search_Occurrence_Record'
-           (Search_Occurrence_Record with
-            Editor_Child => Child,
-            Match        => Match);
+         Occurrence :=
+           new Source_Search_Occurrence_Record'
+             (Search_Occurrence_Record
+              with Editor_Child => Child, Match => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -2425,23 +2483,21 @@ package body Src_Contexts is
       Editor := Get_Source_Box_From_MDI (Child);
       Buffer := Get_Buffer (Editor);
 
-      Context.Current_File := To_Unbounded_String
-        (Get_Filename (Buffer).Display_Full_Name);
+      Context.Current_File :=
+        To_Unbounded_String (Get_Filename (Buffer).Display_Full_Name);
 
       if Give_Focus then
          Focus_To_Editor (Child);
       end if;
 
       if not Context.All_Occurrences then
-         Occurrence := Auxiliary_Search
-           (Context,
-            Editor,
-            Kernel,
-            Search_Backward,
-            From_Selection_Start);
+         Occurrence :=
+           Auxiliary_Search
+             (Context, Editor, Kernel, Search_Backward, From_Selection_Start);
          Found := Occurrence /= null;
 
          Continue := False; --  ??? Dummy boolean.
+
       else
          Search_From_Editor
            (Context,
@@ -2459,7 +2515,7 @@ package body Src_Contexts is
          Trace (Me, E);
          Found := False;
          Continue := False;
-         return  null;
+         return null;
    end Search;
 
    ---------------------
@@ -2502,12 +2558,14 @@ package body Src_Contexts is
                   Match_Up_To : constant Editor_Coordinates :=
                     Match_End (Buffer, M);
 
-                  Text        : constant String := To_String (Get_Text
-                    (Buffer,
-                     Editable_Line_Type (M.Start.Line),
-                     Character_Index (M.Start.Column),
-                     Match_Up_To.Line,
-                     As_Optional (Match_Up_To.Col)));
+                  Text : constant String :=
+                    To_String
+                      (Get_Text
+                         (Buffer,
+                          Editable_Line_Type (M.Start.Line),
+                          Character_Index (M.Start.Column),
+                          Match_Up_To.Line,
+                          As_Optional (Match_Up_To.Col)));
                begin
                   Replace_Slice
                     (Buffer,
@@ -2545,7 +2603,7 @@ package body Src_Contexts is
       Give_Focus      : Boolean;
       Child           : MDI_Child) return Boolean
    is
-      Editor          : Source_Editor_Box;
+      Editor : Source_Editor_Box;
    begin
       Context.Replacement.Initialize
         (Replace_String  => Replace_String,
@@ -2561,8 +2619,8 @@ package body Src_Contexts is
       if Context.All_Occurrences then
          Editor.Get_Buffer.Freeze_Context;
          declare
-            Text : constant String := Get_Buffer (Editor);
-            Ref  : constant Buffer_Position := At_Index (Text'First);
+            Text    : constant String := Get_Buffer (Editor);
+            Ref     : constant Buffer_Position := At_Index (Text'First);
             Matches : Match_Vectors.Vector;
          begin
             Scan_And_Store
@@ -2621,14 +2679,15 @@ package body Src_Contexts is
                  Match_End (Get_Buffer (Editor), Context.Current);
 
                Original : constant String :=
-                 (if Is_Empty_Match (Context.Current) then
-                     ""
+                 (if Is_Empty_Match (Context.Current)
+                  then ""
                   else
-                     To_String (Editor.Get_Buffer.Get_Text
-                       (Editable_Line_Type (Context.Current.Start.Line),
-                        Character_Index (Context.Current.Start.Column),
-                        Match_Up_To.Line,
-                        As_Optional (Match_Up_To.Col))));
+                    To_String
+                      (Editor.Get_Buffer.Get_Text
+                         (Editable_Line_Type (Context.Current.Start.Line),
+                          Character_Index (Context.Current.Start.Column),
+                          Match_Up_To.Line,
+                          As_Optional (Match_Up_To.Col))));
 
                Text : constant String :=
                  Context.Replacement.Replacement_Text
@@ -2642,8 +2701,8 @@ package body Src_Contexts is
                --  bytes, which is what Finish.Index below is expressed in,
                --  but Forward_Position advances by characters.
 
-               End_Line    : Editable_Line_Type;
-               End_Col     : Character_Index;
+               End_Line : Editable_Line_Type;
+               End_Col  : Character_Index;
                --  Position just after the replacement. The cursor
                --  subprograms are given an exclusive end, so this is not the
                --  position of the last character of the replacement.
@@ -2703,7 +2762,8 @@ package body Src_Contexts is
                        At_Position
                          (Index  =>
                             Byte_Index (Context.Current.Start)
-                              + Text'Length - 1,
+                            + Text'Length
+                            - 1,
                           Line   => Natural (Last_Line),
                           Column => Character_Offset_Type (Last_Col));
                   end;
@@ -2726,10 +2786,7 @@ package body Src_Contexts is
                end if;
 
                Set_Cursor_Position
-                 (Get_Buffer (Editor),
-                  End_Line,
-                  End_Col,
-                  Internal => True);
+                 (Get_Buffer (Editor), End_Line, End_Col, Internal => True);
 
                Get_View (Editor).Set_Position_Set_Explicitely;
 
@@ -2763,17 +2820,19 @@ package body Src_Contexts is
       Child := Find_Editor (Kernel, File, No_Project);  --  any project
 
       if Child /= null then
-         return Replace_From_Editor
-           (Context,
-            Kernel,
-            Replace_String,
-            Case_Preserving,
-            Search_Backward,
-            Give_Focus,
-            Child);
+         return
+           Replace_From_Editor
+             (Context,
+              Kernel,
+              Replace_String,
+              Case_Preserving,
+              Search_Backward,
+              Give_Focus,
+              Child);
 
-         --  Else, file isn't loaded, so we replace directly in the physical
-         --  file.
+      --  Else, file isn't loaded, so we replace directly in the physical
+      --  file.
+
       else
          --  Pre-compute all casings of the string to replace
 
@@ -2787,8 +2846,8 @@ package body Src_Contexts is
             File    => File,
             Scope   => Context.Scope,
             Ref     => Unknown_Position,  --  not used since Str unspecified
-            Lang    => Get_Language_From_File
-              (Get_Language_Handler (Kernel), File),
+            Lang    =>
+              Get_Language_From_File (Get_Language_Handler (Kernel), File),
             Result  => Matches);
 
          if not Matches.Is_Empty then
@@ -2796,11 +2855,11 @@ package body Src_Contexts is
               Context.Nb_Of_Replacements + Natural (Matches.Length);
 
             declare
-               Buffer   : GNAT.Strings.String_Access;
-               Last     : Positive := 1;
+               Buffer              : GNAT.Strings.String_Access;
+               Last                : Positive := 1;
                Previously_Was_UTF8 : Boolean := True;
-               Output_Buffer : Unbounded_String;
-               Writable : Writable_File;
+               Output_Buffer       : Unbounded_String;
+               Writable            : Writable_File;
             begin
                declare
                   UTF8  : GNAT.Strings.String_Access;
@@ -2830,17 +2889,19 @@ package body Src_Contexts is
                   for M of Matches loop
                      Append
                        (Output_Buffer,
-                          Buffer (Last .. Byte_Index (M.Start) - 1));
+                        Buffer (Last .. Byte_Index (M.Start) - 1));
                      Append
                        (Output_Buffer,
                         Context.Replacement.Replacement_Text
                           (Result       => M,
-                           Matched_Text => Buffer
-                             (Byte_Index (M.Start)
+                           Matched_Text =>
+                             Buffer
+                               (Byte_Index (M.Start)
                                 .. Index_After_Match (M) - 1),
                            Keywords     =>
                              Kernel.Get_Language_Handler.Get_Language_From_File
-                               (File).Keywords));
+                               (File)
+                               .Keywords));
 
                      Last := Index_After_Match (M);
                   end loop;
@@ -2854,9 +2915,12 @@ package body Src_Contexts is
                   else
                      declare
                         Error    : GError_Access := new GError'(null);
-                        Contents : constant String := Glib.Convert.Convert
-                          (To_String (Output_Buffer),
-                           Get_File_Charset (File), "UTF-8", Error);
+                        Contents : constant String :=
+                          Glib.Convert.Convert
+                            (To_String (Output_Buffer),
+                             Get_File_Charset (File),
+                             "UTF-8",
+                             Error);
                      begin
                         if Error.all = null then
                            Writable := Write_File (File);
@@ -2864,8 +2928,10 @@ package body Src_Contexts is
                            Close (Writable);
                         else
                            Kernel.Insert
-                             ("Could not save " & (+File.Full_Name.all)
-                              & " with encoding " & Get_File_Charset (File)
+                             ("Could not save "
+                              & (+File.Full_Name.all)
+                              & " with encoding "
+                              & Get_File_Charset (File)
                               & ", replace operation aborted for this file.",
                               Mode => GPS.Kernel.Error);
                            Error_Free (Error.all);
@@ -2888,7 +2954,8 @@ package body Src_Contexts is
    -- Replace --
    -------------
 
-   overriding function Replace
+   overriding
+   function Replace
      (Context         : access Current_File_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
@@ -2904,9 +2971,15 @@ package body Src_Contexts is
          return False;
       end if;
 
-      Found := Replace_From_Editor
-        (Context, Kernel, Replace_String,
-         Case_Preserving, Search_Backward, Give_Focus, Child);
+      Found :=
+        Replace_From_Editor
+          (Context,
+           Kernel,
+           Replace_String,
+           Case_Preserving,
+           Search_Backward,
+           Give_Focus,
+           Child);
 
       return not Context.All_Occurrences and then Found;
    exception
@@ -2919,13 +2992,14 @@ package body Src_Contexts is
    -- Highlight_Occurrence --
    ------------------------
 
-   overriding procedure Highlight_Occurrence
+   overriding
+   procedure Highlight_Occurrence
      (Module     : not null access Current_File_Search_Module;
       Occurrence : not null access Search_Occurrence_Record'Class)
    is
       pragma Unreferenced (Module);
       Source_Occurrence : constant Source_Search_Occurrence :=
-                            Source_Search_Occurrence (Occurrence);
+        Source_Search_Occurrence (Occurrence);
       Editor            : Source_Editor_Box;
    begin
       if Source_Occurrence.Editor_Child = null then
@@ -2950,8 +3024,10 @@ package body Src_Contexts is
 
          Select_Region
            (Get_Buffer (Editor),
-            Match_From.Line, Match_From.Col,
-            Match_Up_To.Line, Match_Up_To.Col);
+            Match_From.Line,
+            Match_From.Col,
+            Match_Up_To.Line,
+            Match_Up_To.Col);
       end;
 
       Center_Cursor (Get_View (Editor));
@@ -2961,12 +3037,14 @@ package body Src_Contexts is
    -- Give_Focus_To_Occurrence --
    ------------------------------
 
-   overriding procedure Give_Focus_To_Occurrence
+   overriding
+   procedure Give_Focus_To_Occurrence
      (Module     : not null access Current_File_Search_Module;
-      Occurrence : not null access Search_Occurrence_Record'Class) is
+      Occurrence : not null access Search_Occurrence_Record'Class)
+   is
       pragma Unreferenced (Module);
       Source_Occurrence : constant Source_Search_Occurrence :=
-                            Source_Search_Occurrence (Occurrence);
+        Source_Search_Occurrence (Occurrence);
       Editor            : Source_Editor_Box;
    begin
       if Source_Occurrence.Editor_Child = null then
@@ -3006,8 +3084,8 @@ package body Src_Contexts is
       Matches_Found        : out Boolean;
       Display_Matched_Only : Boolean := False)
    is
-      Match  : GPS.Search.Search_Context;
-      Text   : GNAT.Strings.String_Access;
+      Match : GPS.Search.Search_Context;
+      Text  : GNAT.Strings.String_Access;
    begin
       More_Matches := False;
       Matches_Found := False;
@@ -3046,16 +3124,19 @@ package body Src_Contexts is
 
          More_Matches := False;
 
-         --  Non interactive mode
+      --  Non interactive mode
+
       else
          declare
-            State : Recognized_Lexical_States := Statements;
+            State       : Recognized_Lexical_States := Statements;
             Was_Partial : Boolean;
          begin
             Scan_Editor
               (Context,
                Handler,
-               Editor, Callback, Context.Scope,
+               Editor,
+               Callback,
+               Context.Scope,
                Lexical_State        => State,
                Was_Partial          => Was_Partial,
                Display_Matched_Only => Display_Matched_Only);
@@ -3072,15 +3153,14 @@ package body Src_Contexts is
 
    function Search
      (Context              : access Abstract_Files_Context;
-      Handler              : access
-        Language_Handlers.Language_Handler_Record'Class;
+      Handler              :
+        access Language_Handlers.Language_Handler_Record'Class;
       Kernel               : GPS.Kernel.Kernel_Handle;
       Callback             : Scan_Callback;
-      Display_Matched_Only : Boolean := False)
-      return Boolean
+      Display_Matched_Only : Boolean := False) return Boolean
    is
-      C      : constant Abstract_Files_Context_Access :=
-                 Abstract_Files_Context_Access (Context);
+      C : constant Abstract_Files_Context_Access :=
+        Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
 
       Button         : Message_Dialog_Buttons;
@@ -3136,18 +3216,21 @@ package body Src_Contexts is
 
                if Current_File (C) = GNATCOLL.VFS.No_File then
                   if not Already_Looped then
-                     Button := GPS_Message_Dialog
-                       (Msg           => (-"No more occurrences of '")
-                        & Context_Look_For (C) &
-                        (-("' found."
-                           & ASCII.LF
-                           & (-"in ")
-                           & Context_Look_In (C.all) & ASCII.LF
-                           & "Search from the beginning ?")),
-                        Title         => -"Search",
-                        Buttons       => Button_Yes or Button_No,
-                        Justification => Justify_Left,
-                        Parent        => Get_Current_Window (Kernel));
+                     Button :=
+                       GPS_Message_Dialog
+                         (Msg           =>
+                            (-"No more occurrences of '")
+                            & Context_Look_For (C)
+                            & (-("' found."
+                                 & ASCII.LF
+                                 & (-"in ")
+                                 & Context_Look_In (C.all)
+                                 & ASCII.LF
+                                 & "Search from the beginning ?")),
+                          Title         => -"Search",
+                          Buttons       => Button_Yes or Button_No,
+                          Justification => Justify_Left,
+                          Parent        => Get_Current_Window (Kernel));
 
                      Already_Looped := True;
 
@@ -3169,6 +3252,7 @@ package body Src_Contexts is
          end loop;
 
       --  Non interactive mode
+
       else
          Move_To_Next_File (C);
 
@@ -3182,12 +3266,12 @@ package body Src_Contexts is
               (Context,
                Handler,
                Kernel,
-               Name          => Current_File (C),
-               Callback      => Callback,
-               Scope         => Context.Scope,
-               Lexical_State => State,
-               Force_Read    => Kernel = null,
-               Was_Partial   => Was_Partial,
+               Name                 => Current_File (C),
+               Callback             => Callback,
+               Scope                => Context.Scope,
+               Lexical_State        => State,
+               Force_Read           => Kernel = null,
+               Was_Partial          => Was_Partial,
                Display_Matched_Only => Display_Matched_Only);
             Matches_Found := True;
             exit when not Was_Partial;
@@ -3200,7 +3284,8 @@ package body Src_Contexts is
    -- Reset --
    -----------
 
-   overriding procedure Reset
+   overriding
+   procedure Reset
      (Context : access Abstract_Files_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
@@ -3217,7 +3302,8 @@ package body Src_Contexts is
    -- Reset --
    -----------
 
-   overriding procedure Reset
+   overriding
+   procedure Reset
      (Context : access File_Search_Context;
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
@@ -3230,7 +3316,8 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   overriding function Search
+   overriding
+   function Search
      (Context              : access Abstract_Files_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
@@ -3248,8 +3335,7 @@ package body Src_Contexts is
       Occurrence : Source_Search_Occurrence;
 
       function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean;
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean;
       --  Callbacks for the general search function
 
       --------------------------
@@ -3257,8 +3343,7 @@ package body Src_Contexts is
       --------------------------
 
       function Interactive_Callback
-        (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean
+        (Match : GPS.Search.Search_Context; Text : String) return Boolean
       is
          File : constant GNATCOLL.VFS.Virtual_File := Current_File (C);
       begin
@@ -3272,10 +3357,12 @@ package body Src_Contexts is
             Give_Focus  => Give_Focus,
             Interactive => not Context.All_Occurrences);
 
-         Occurrence := new Source_Search_Occurrence_Record'
-           (Search_Occurrence_Record with
-            Editor_Child => Find_Editor (Kernel, File, No_Project),
-            Match        => Match);
+         Occurrence :=
+           new Source_Search_Occurrence_Record'
+             (Search_Occurrence_Record
+              with
+                Editor_Child => Find_Editor (Kernel, File, No_Project),
+                Match        => Match);
          Initialize (Occurrence, Pattern => Text);
 
          return True;
@@ -3286,12 +3373,13 @@ package body Src_Contexts is
       Continue := False;
 
       if not Search_Backward then
-         Continue := Search
-           (Context,
-            Get_Language_Handler (Kernel),
-            Kernel_Handle (Kernel),
-            Interactive_Callback'Unrestricted_Access,
-            Display_Matched_Only => Display_Matched_Only);
+         Continue :=
+           Search
+             (Context,
+              Get_Language_Handler (Kernel),
+              Kernel_Handle (Kernel),
+              Interactive_Callback'Unrestricted_Access,
+              Display_Matched_Only => Display_Matched_Only);
       end if;
 
       return Search_Occurrence (Occurrence);
@@ -3301,7 +3389,8 @@ package body Src_Contexts is
    -- Replace --
    -------------
 
-   overriding function Replace
+   overriding
+   function Replace
      (Context         : access Abstract_Files_Context;
       Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
@@ -3309,15 +3398,15 @@ package body Src_Contexts is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
-      C            : constant Abstract_Files_Context_Access :=
-                       Abstract_Files_Context_Access (Context);
+      C : constant Abstract_Files_Context_Access :=
+        Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
 
-      Interactive  : constant Boolean := not Context.All_Occurrences;
+      Interactive : constant Boolean := not Context.All_Occurrences;
 
-      Child        : MDI_Child;
+      Child : MDI_Child;
 
-      Dummy        : Boolean;
+      Dummy : Boolean;
       pragma Unreferenced (Dummy);
    begin
       --  If we already have an occurrence, and the file is still open, the
@@ -3328,24 +3417,27 @@ package body Src_Contexts is
          if Context.Current /= GPS.Search.No_Match
            and then Is_Open (Kernel, Current_File (C))
          then
-            Child := Find_Editor
-              (Kernel, Current_File (C), No_Project);  --  any project
+            Child :=
+              Find_Editor
+                (Kernel, Current_File (C), No_Project);  --  any project
 
             if Child /= null then
-               return Replace_From_Editor
-                 (Context,
-                  Kernel,
-                  Replace_String,
-                  Case_Preserving,
-                  Search_Backward,
-                  Give_Focus,
-                  Child);
+               return
+                 Replace_From_Editor
+                   (Context,
+                    Kernel,
+                    Replace_String,
+                    Case_Preserving,
+                    Search_Backward,
+                    Give_Focus,
+                    Child);
             end if;
          end if;
 
          return True;
 
       --  Non interactive case
+
       else
          Move_To_Next_File (C);
 
@@ -3353,14 +3445,15 @@ package body Src_Contexts is
             return False;
          end if;
 
-         Dummy := Replace_From_File
-           (Context,
-            Kernel,
-            Replace_String,
-            Case_Preserving,
-            Search_Backward,
-            Give_Focus,
-            Current_File (C));
+         Dummy :=
+           Replace_From_File
+             (Context,
+              Kernel,
+              Replace_String,
+              Case_Preserving,
+              Search_Backward,
+              Give_Focus,
+              Current_File (C));
 
          return True;
       end if;
@@ -3370,7 +3463,8 @@ package body Src_Contexts is
    -- Current_File --
    ------------------
 
-   overriding function Current_File
+   overriding
+   function Current_File
      (Context : access Files_Project_Context) return GNATCOLL.VFS.Virtual_File
    is
    begin
@@ -3387,10 +3481,10 @@ package body Src_Contexts is
    -- Move_To_First_File --
    ------------------------
 
-   overriding procedure Move_To_First_File
-     (Context : access Files_Project_Context) is
+   overriding
+   procedure Move_To_First_File (Context : access Files_Project_Context) is
    begin
-      Context.Current_File    := 1;
+      Context.Current_File := 1;
       Context.Current_Lexical := Statements;
    end Move_To_First_File;
 
@@ -3398,10 +3492,10 @@ package body Src_Contexts is
    -- Move_To_Next_File --
    -----------------------
 
-   overriding procedure Move_To_Next_File
-     (Context : access Files_Project_Context) is
+   overriding
+   procedure Move_To_Next_File (Context : access Files_Project_Context) is
    begin
-      Context.Current_File    := Context.Current_File + 1;
+      Context.Current_File := Context.Current_File + 1;
       Context.Current_Lexical := Statements;
    end Move_To_Next_File;
 
@@ -3409,9 +3503,9 @@ package body Src_Contexts is
    -- Current_File --
    ------------------
 
-   overriding function Current_File
-     (Context : access Open_Files_Context) return GNATCOLL.VFS.Virtual_File
-   is
+   overriding
+   function Current_File
+     (Context : access Open_Files_Context) return GNATCOLL.VFS.Virtual_File is
    begin
       if Context.Files /= null
         and then Context.Current_File in Context.Files'Range
@@ -3426,10 +3520,10 @@ package body Src_Contexts is
    -- Move_To_First_File --
    ------------------------
 
-   overriding procedure Move_To_First_File
-     (Context : access Open_Files_Context) is
+   overriding
+   procedure Move_To_First_File (Context : access Open_Files_Context) is
    begin
-      Context.Current_File    := 1;
+      Context.Current_File := 1;
       Context.Current_Lexical := Statements;
    end Move_To_First_File;
 
@@ -3437,10 +3531,10 @@ package body Src_Contexts is
    -- Move_To_Next_File --
    -----------------------
 
-   overriding procedure Move_To_Next_File
-     (Context : access Open_Files_Context) is
+   overriding
+   procedure Move_To_Next_File (Context : access Open_Files_Context) is
    begin
-      Context.Current_File    := Context.Current_File + 1;
+      Context.Current_File := Context.Current_File + 1;
       Context.Current_Lexical := Statements;
    end Move_To_Next_File;
 
@@ -3448,8 +3542,9 @@ package body Src_Contexts is
    -- Current_File --
    ------------------
 
-   overriding function Current_File
-     (Context : access Files_Context) return Virtual_File is
+   overriding
+   function Current_File (Context : access Files_Context) return Virtual_File
+   is
    begin
       return Context.Current_File;
    end Current_File;
@@ -3458,7 +3553,8 @@ package body Src_Contexts is
    -- Move_To_First_File --
    ------------------------
 
-   overriding procedure Move_To_First_File (Context : access Files_Context) is
+   overriding
+   procedure Move_To_First_File (Context : access Files_Context) is
    begin
       --  ??? Can this function be called at any other place than when the end
       --  is reached ?
@@ -3472,9 +3568,10 @@ package body Src_Contexts is
    -- Move_To_Next_File --
    -----------------------
 
-   overriding procedure Move_To_Next_File (Context : access Files_Context) is
+   overriding
+   procedure Move_To_Next_File (Context : access Files_Context) is
       use Directory_List;
-      File      : Virtual_File;
+      File : Virtual_File;
 
    begin
       Context.Current_File := GNATCOLL.VFS.No_File;
@@ -3521,9 +3618,7 @@ package body Src_Contexts is
                      Prepend
                        (Context.Dirs,
                         new Dir_Data'
-                          (Name  => File,
-                           Files => File.Read_Dir,
-                           F_Idx => 1));
+                          (Name => File, Files => File.Read_Dir, F_Idx => 1));
                      Context.Total_Dirs := Context.Total_Dirs + 1;
                   end if;
 
@@ -3547,8 +3642,8 @@ package body Src_Contexts is
    ----------
 
    procedure Free (D : in out Dir_Data_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Dir_Data, Dir_Data_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Dir_Data, Dir_Data_Access);
    begin
       Unchecked_Free (D.Files);
       Unchecked_Free (D);
@@ -3560,8 +3655,7 @@ package body Src_Contexts is
 
    procedure Initialize_Scope_Combo
      (Combo  : access Gtk_Combo_Box_Text_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
-   is
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
       Add_Unique_Combo_Entry (Combo, -"Whole Text", True);
       Add_Unique_Combo_Entry (Combo, -"Comments Only");
@@ -3572,7 +3666,9 @@ package body Src_Contexts is
       Set_Tooltip_Text (Combo, -"Restrict the scope of the search");
 
       Kernel_Callback.Connect
-        (Combo, Gtk.Combo_Box.Signal_Changed, Vsearch.Reset_Search'Access,
+        (Combo,
+         Gtk.Combo_Box.Signal_Changed,
+         Vsearch.Reset_Search'Access,
          Kernel_Handle (Kernel));
    end Initialize_Scope_Combo;
 
@@ -3580,7 +3676,8 @@ package body Src_Contexts is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize
+   overriding
+   procedure Initialize
      (Selector : not null access Simple_Scope_Selector_Record;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
@@ -3592,35 +3689,35 @@ package body Src_Contexts is
    -- Get_Scope_Combo --
    ---------------------
 
-   overriding function Get_Scope_Combo
+   overriding
+   function Get_Scope_Combo
      (Selector : not null access Simple_Scope_Selector_Record)
       return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
-   is
-      (Selector.Combo);
+   is (Selector.Combo);
 
    -------------------------
    -- Get_Optional_Widget --
    -------------------------
 
-   overriding function Get_Optional_Widget
+   overriding
+   function Get_Optional_Widget
      (Selector : not null access Simple_Scope_Selector_Record)
       return Gtk.Widget.Gtk_Widget
-   is
-     (null);
+   is (null);
 
    ----------------
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize
+   overriding
+   procedure Initialize
      (Selector : not null access Files_Extra_Scope_Record;
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Initialize (Simple_Scope_Selector_Record (Selector.all)'Access, Kernel);
 
       Selector.File_Info_Widget := new Files_Extra_Info_Record;
-      Files_Extra_Info_Pkg.Initialize
-        (Selector.File_Info_Widget, Kernel, 1);
+      Files_Extra_Info_Pkg.Initialize (Selector.File_Info_Widget, Kernel, 1);
 
       Kernel_Callback.Connect
         (Selector.File_Info_Widget.Subdirs_Check,
@@ -3643,17 +3740,18 @@ package body Src_Contexts is
    -- Get_Optional_Widget --
    -------------------------
 
-   overriding function Get_Optional_Widget
+   overriding
+   function Get_Optional_Widget
      (Selector : not null access Files_Extra_Scope_Record)
       return Gtk.Widget.Gtk_Widget
-   is
-      (Gtk_Widget (Selector.File_Info_Widget));
+   is (Gtk_Widget (Selector.File_Info_Widget));
 
    ---------------------
    -- Context_Look_In --
    ---------------------
 
-   overriding function Context_Look_In (Self : Files_Context) return String is
+   overriding
+   function Context_Look_In (Self : Files_Context) return String is
       pragma Unreferenced (Self);
    begin
       return -"selected files";
@@ -3663,9 +3761,8 @@ package body Src_Contexts is
    -- Context_Look_In --
    ---------------------
 
-   overriding function Context_Look_In
-     (Self : Files_Project_Context) return String
-   is
+   overriding
+   function Context_Look_In (Self : Files_Project_Context) return String is
       pragma Unreferenced (Self);
    begin
       return -"any file in the project";
@@ -3675,9 +3772,8 @@ package body Src_Contexts is
    -- Context_Look_In --
    ---------------------
 
-   overriding function Context_Look_In
-     (Self : Open_Files_Context) return String
-   is
+   overriding
+   function Context_Look_In (Self : Open_Files_Context) return String is
       pragma Unreferenced (Self);
    begin
       return -"any opened file";
@@ -3687,8 +3783,8 @@ package body Src_Contexts is
    -- Context_Look_In --
    ---------------------
 
-   overriding function Context_Look_In
-     (Self : Current_File_Context) return String is
+   overriding
+   function Context_Look_In (Self : Current_File_Context) return String is
    begin
       return To_String (Self.Current_File);
    end Context_Look_In;
@@ -3697,9 +3793,8 @@ package body Src_Contexts is
    -- Context_Look_In --
    ---------------------
 
-   overriding function Context_Look_In
-     (Self : Current_Selection_Context) return String
-   is
+   overriding
+   function Context_Look_In (Self : Current_Selection_Context) return String is
       pragma Unreferenced (Self);
    begin
       return -"selected region";
@@ -3709,9 +3804,8 @@ package body Src_Contexts is
    -- Context_Look_In --
    ---------------------
 
-   overriding function Context_Look_In
-     (Self : Runtime_Files_Context) return String
-   is
+   overriding
+   function Context_Look_In (Self : Runtime_Files_Context) return String is
       pragma Unreferenced (Self);
    begin
       return -"any file in the runtime";

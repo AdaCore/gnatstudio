@@ -20,15 +20,16 @@ with Histories;
 package body CodePeer.Generic_Criteria_Models is
 
    function History_Key
-     (Self : not null access Criteria_Model_Record'Class;
-      Item : Item_Access) return Histories.History_Key;
+     (Self : not null access Criteria_Model_Record'Class; Item : Item_Access)
+      return Histories.History_Key;
    --  Constructs history key for specified category
 
    -----------
    -- Clear --
    -----------
 
-   overriding procedure Clear (Self : access Criteria_Model_Record) is
+   overriding
+   procedure Clear (Self : access Criteria_Model_Record) is
    begin
       Ordered_Set_Models.Ordered_Set_Model_Record (Self.all).Clear;
       Self.Selected_Items.Clear;
@@ -38,24 +39,24 @@ package body CodePeer.Generic_Criteria_Models is
    -- Get_Column_Type --
    ---------------------
 
-   overriding function Get_Column_Type
-     (Self  : access Criteria_Model_Record;
-      Index : Glib.Gint) return Glib.GType
+   overriding
+   function Get_Column_Type
+     (Self : access Criteria_Model_Record; Index : Glib.Gint) return Glib.GType
    is
       pragma Unreferenced (Self);
 
    begin
       case Index is
-         when Active_Column =>
+         when Active_Column  =>
             return Glib.GType_Boolean;
 
-         when Name_Column =>
+         when Name_Column    =>
             return Glib.GType_String;
 
          when Tooltip_Column =>
             return Glib.GType_String;
 
-         when others =>
+         when others         =>
             return Glib.GType_Invalid;
       end case;
    end Get_Column_Type;
@@ -64,7 +65,8 @@ package body CodePeer.Generic_Criteria_Models is
    -- Get_N_Columns --
    -------------------
 
-   overriding function Get_N_Columns
+   overriding
+   function Get_N_Columns
      (Self : access Criteria_Model_Record) return Glib.Gint
    is
       pragma Unreferenced (Self);
@@ -77,20 +79,20 @@ package body CodePeer.Generic_Criteria_Models is
    -- Get_Value --
    ---------------
 
-   overriding procedure Get_Value
+   overriding
+   procedure Get_Value
      (Self   : access Criteria_Model_Record;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint;
-      Value  : out Glib.Values.GValue)
-   is
+      Value  : out Glib.Values.GValue) is
    begin
       case Column is
-         when Active_Column =>
+         when Active_Column  =>
             Glib.Values.Init (Value, Glib.GType_Boolean);
             Glib.Values.Set_Boolean
               (Value, Self.Selected_Items.Contains (Self.Item_At (Iter)));
 
-         when Name_Column =>
+         when Name_Column    =>
             Glib.Values.Init (Value, Glib.GType_String);
             Glib.Values.Set_String (Value, Get_Name (Self.Item_At (Iter).all));
 
@@ -99,7 +101,7 @@ package body CodePeer.Generic_Criteria_Models is
             Glib.Values.Set_String
               (Value, Get_Tooltip (Self.Item_At (Iter).all));
 
-         when others =>
+         when others         =>
             Glib.Values.Init (Value, Glib.GType_Invalid);
       end case;
    end Get_Value;
@@ -134,8 +136,7 @@ package body CodePeer.Generic_Criteria_Models is
    ----------
 
    procedure Hide
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access) is
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access) is
    begin
       Self.Selected_Items.Exclude (Item);
       Histories.Set_History
@@ -174,14 +175,14 @@ package body CodePeer.Generic_Criteria_Models is
    -----------------
 
    function History_Key
-     (Self : not null access Criteria_Model_Record'Class;
-      Item : Item_Access) return Histories.History_Key is
+     (Self : not null access Criteria_Model_Record'Class; Item : Item_Access)
+      return Histories.History_Key is
    begin
       return
         Histories.History_Key
           (Ada.Strings.Unbounded.To_String (Self.History_Prefix)
-             & '-'
-             & Get_Name (Item.all));
+           & '-'
+           & Get_Name (Item.all));
    end History_Key;
 
    ----------------
@@ -210,7 +211,7 @@ package body CodePeer.Generic_Criteria_Models is
            (Self.Kernel.Get_History.all, Self.History_Key (Item), Default);
 
          if Histories.Get_History
-             (Self.Kernel.Get_History.all, Self.History_Key (Item))
+              (Self.Kernel.Get_History.all, Self.History_Key (Item))
          then
             Self.Selected_Items.Insert (Item);
          end if;
@@ -228,8 +229,8 @@ package body CodePeer.Generic_Criteria_Models is
    -- Is_Empty --
    --------------
 
-   function Is_Empty
-     (Self : access Criteria_Model_Record'Class) return Boolean is
+   function Is_Empty (Self : access Criteria_Model_Record'Class) return Boolean
+   is
    begin
       return Self.Selected_Items.Is_Empty;
    end Is_Empty;
@@ -238,8 +239,7 @@ package body CodePeer.Generic_Criteria_Models is
    -- Is_Full --
    -------------
 
-   function Is_Full
-     (Self : access Criteria_Model_Record'Class) return Boolean
+   function Is_Full (Self : access Criteria_Model_Record'Class) return Boolean
    is
       use type Ada.Containers.Count_Type;
 
@@ -252,8 +252,7 @@ package body CodePeer.Generic_Criteria_Models is
    ----------
 
    procedure Show
-     (Self : access Criteria_Model_Record'Class;
-      Item : Item_Access) is
+     (Self : access Criteria_Model_Record'Class; Item : Item_Access) is
    begin
       Self.Selected_Items.Include (Item);
       Histories.Set_History

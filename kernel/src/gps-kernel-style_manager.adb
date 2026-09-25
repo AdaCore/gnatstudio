@@ -16,14 +16,14 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Conversion;
-with Glib.Object;               use Glib.Object;
+with Glib.Object;     use Glib.Object;
 with Glib.Properties;
-with Pango.Enums;               use Pango.Enums;
-with Pango.Font;                use Pango.Font;
-with Gtkada.Style;              use Gtkada.Style;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with Pango.Enums;     use Pango.Enums;
+with Pango.Font;      use Pango.Font;
+with Gtkada.Style;    use Gtkada.Style;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 
 package body GPS.Kernel.Style_Manager is
 
@@ -40,14 +40,14 @@ package body GPS.Kernel.Style_Manager is
 
    use Style_Map;
 
-   function To_Style_Manager_Access is new Ada.Unchecked_Conversion
-     (System.Address, Style_Manager_Access);
+   function To_Style_Manager_Access is new
+     Ada.Unchecked_Conversion (System.Address, Style_Manager_Access);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Style_Record, Style_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Style_Record, Style_Access);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Root_Source'Class, Source_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Root_Source'Class, Source_Access);
 
    procedure Free (X : in out Style_Record);
    --  Free memory associated to X
@@ -55,14 +55,15 @@ package body GPS.Kernel.Style_Manager is
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       Manager : Style_Manager_Access;
    end record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Hook   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
 
    type Tag_And_Variant is record
-      Style   : Style_Access;
-      Tag     : Gtk_Text_Tag;
+      Style : Style_Access;
+      Tag   : Gtk_Text_Tag;
    end record;
 
    package Tag_Data is new Glib.Object.User_Data (Tag_And_Variant);
@@ -77,34 +78,38 @@ package body GPS.Kernel.Style_Manager is
    --  Styles following preference values
 
    type Source_From_Style_And_Variant_Prefs is new Root_Source with record
-      Style   : Style_Preference;
+      Style : Style_Preference;
       --  The root style pref from which this style is created
 
       Variant : Variant_Preference;
       --  The font variant applying to the root font
    end record;
-   overriding function Depends_On_Pref
+   overriding
+   function Depends_On_Pref
      (Source : Source_From_Style_And_Variant_Prefs;
       Pref   : access Preference_Record'Class) return Boolean;
-   overriding procedure Apply
+   overriding
+   procedure Apply
      (Source : Source_From_Style_And_Variant_Prefs;
       Style  : in out Style_Record);
-   overriding function Parent_Style
-     (Source : Source_From_Style_And_Variant_Prefs)
-      return Style_Access is (null);
+   overriding
+   function Parent_Style
+     (Source : Source_From_Style_And_Variant_Prefs) return Style_Access
+   is (null);
 
    type Source_From_Fg_Bg_Prefs is new Root_Source with record
       Fg_Pref, Bg_Pref : Color_Preference;
    end record;
-   overriding function Depends_On_Pref
-     (Source : Source_From_Fg_Bg_Prefs;
-      Pref   : access Preference_Record'Class) return Boolean;
-   overriding procedure Apply
-     (Source : Source_From_Fg_Bg_Prefs;
-      Style  : in out Style_Record);
-   overriding function Parent_Style
-     (Source : Source_From_Fg_Bg_Prefs)
-      return Style_Access is (null);
+   overriding
+   function Depends_On_Pref
+     (Source : Source_From_Fg_Bg_Prefs; Pref : access Preference_Record'Class)
+      return Boolean;
+   overriding
+   procedure Apply
+     (Source : Source_From_Fg_Bg_Prefs; Style : in out Style_Record);
+   overriding
+   function Parent_Style (Source : Source_From_Fg_Bg_Prefs) return Style_Access
+   is (null);
 
    --  Styles based on another style
 
@@ -115,36 +120,40 @@ package body GPS.Kernel.Style_Manager is
       Shade_Amount : Gdouble := 0.0;
       --  The amount of shading to do
    end record;
-   overriding function Depends_On_Pref
+   overriding
+   function Depends_On_Pref
      (Source     : Source_Shade_Or_Lighten;
-      Dummy_Pref : access Preference_Record'Class) return Boolean is (False);
-   overriding procedure Apply
-     (Source : Source_Shade_Or_Lighten;
-      Style  : in out Style_Record);
-   overriding function Parent_Style
-     (Source : Source_Shade_Or_Lighten)
-      return Style_Access;
+      Dummy_Pref : access Preference_Record'Class) return Boolean
+   is (False);
+   overriding
+   procedure Apply
+     (Source : Source_Shade_Or_Lighten; Style : in out Style_Record);
+   overriding
+   function Parent_Style
+     (Source : Source_Shade_Or_Lighten) return Style_Access;
 
    --  Styles overridden by code
 
    type Source_Override is new Root_Source with null record;
-   overriding function Depends_On_Pref
-     (Source     : Source_Override;
-      Dummy_Pref : access Preference_Record'Class) return Boolean is (False);
-   overriding procedure Apply
-     (Source : Source_Override;
-      Style  : in out Style_Record) is null;
-   overriding function Parent_Style
-     (Source : Source_Override)
-      return Style_Access is (null);
+   overriding
+   function Depends_On_Pref
+     (Source : Source_Override; Dummy_Pref : access Preference_Record'Class)
+      return Boolean
+   is (False);
+   overriding
+   procedure Apply (Source : Source_Override; Style : in out Style_Record)
+   is null;
+   overriding
+   function Parent_Style (Source : Source_Override) return Style_Access
+   is (null);
 
    -----------
    -- Apply --
    -----------
 
-   overriding procedure Apply
-     (Source : Source_Shade_Or_Lighten;
-      Style  : in out Style_Record)
+   overriding
+   procedure Apply
+     (Source : Source_Shade_Or_Lighten; Style : in out Style_Record)
    is
       C : Gdk_RGBA;
    begin
@@ -186,8 +195,8 @@ package body GPS.Kernel.Style_Manager is
       if Style.Is_Strikethrough_Inherited then
          Style.Strikethrough := Source.Source_Style.Strikethrough;
       else
-         Style.Strikethrough := GNATCOLL.Tribooleans.To_Boolean
-           (Style.Self_Strikethrough);
+         Style.Strikethrough :=
+           GNATCOLL.Tribooleans.To_Boolean (Style.Self_Strikethrough);
       end if;
 
       if Style.Is_Strikethrough_Color_Inherited then
@@ -202,9 +211,9 @@ package body GPS.Kernel.Style_Manager is
    -- Parent_Style --
    ------------------
 
-   overriding function Parent_Style
-     (Source : Source_Shade_Or_Lighten)
-      return Style_Access is
+   overriding
+   function Parent_Style (Source : Source_Shade_Or_Lighten) return Style_Access
+   is
    begin
       return Source.Source_Style;
    end Parent_Style;
@@ -213,29 +222,28 @@ package body GPS.Kernel.Style_Manager is
    -- Depends_On_Pref --
    ---------------------
 
-   overriding function Depends_On_Pref
+   overriding
+   function Depends_On_Pref
      (Source : Source_From_Style_And_Variant_Prefs;
-      Pref   : access Preference_Record'Class)
-      return Boolean
-   is
+      Pref   : access Preference_Record'Class) return Boolean is
    begin
       if Pref = null then
          return True;
       end if;
 
-      return Pref = Source.Style
-        or else Pref = Source.Variant;
+      return Pref = Source.Style or else Pref = Source.Variant;
    end Depends_On_Pref;
 
    -----------
    -- Apply --
    -----------
 
-   overriding procedure Apply
+   overriding
+   procedure Apply
      (Source : Source_From_Style_And_Variant_Prefs;
       Style  : in out Style_Record)
    is
-      Variant : Variant_Enum;
+      Variant           : Variant_Enum;
       Source_Style_Bg   : constant Gdk_RGBA := Source.Style.Get_Pref_Bg;
       Source_Variant_Bg : Gdk_RGBA;
 
@@ -296,25 +304,25 @@ package body GPS.Kernel.Style_Manager is
    -- Depends_On_Pref --
    ---------------------
 
-   overriding function Depends_On_Pref
-     (Source : Source_From_Fg_Bg_Prefs;
-      Pref   : access Preference_Record'Class) return Boolean is
+   overriding
+   function Depends_On_Pref
+     (Source : Source_From_Fg_Bg_Prefs; Pref : access Preference_Record'Class)
+      return Boolean is
    begin
       if Pref = null then
          return True;
       end if;
 
-      return Pref = Source.Fg_Pref
-        or else Pref = Source.Bg_Pref;
+      return Pref = Source.Fg_Pref or else Pref = Source.Bg_Pref;
    end Depends_On_Pref;
 
    -----------
    -- Apply --
    -----------
 
-   overriding procedure Apply
-     (Source : Source_From_Fg_Bg_Prefs;
-      Style  : in out Style_Record) is
+   overriding
+   procedure Apply
+     (Source : Source_From_Fg_Bg_Prefs; Style : in out Style_Record) is
    begin
       if Source.Fg_Pref /= null then
          Style.Foreground := Source.Fg_Pref.Get_Pref;
@@ -340,9 +348,9 @@ package body GPS.Kernel.Style_Manager is
       V := Self.Get_Or_Create (Key);
 
       Unchecked_Free (V.Source);
-      V.Source := new Source_From_Style_And_Variant_Prefs'
-        (Style   => Style,
-         Variant => Variant);
+      V.Source :=
+        new Source_From_Style_And_Variant_Prefs'
+          (Style => Style, Variant => Variant);
 
       Refresh_Values (V);
 
@@ -375,9 +383,9 @@ package body GPS.Kernel.Style_Manager is
    -----------------------
 
    function Create_From_Style
-     (Self   : Style_Manager_Record;
-      Key    : Style_Key;
-      Style  : Style_Key;
+     (Self                    : Style_Manager_Record;
+      Key                     : Style_Key;
+      Style                   : Style_Key;
       Shade_Or_Lighten_Amount : Gdouble) return Style_Access
    is
       use type Style_Vector.Cursor;
@@ -403,16 +411,16 @@ package body GPS.Kernel.Style_Manager is
       O.Children.Append (V);
 
       Unchecked_Free (V.Source);
-      V.Self_Foreground          := Null_RGBA;
-      V.Self_Background          := Null_RGBA;
-      V.Self_Variant             := (Is_Set => False);
-      V.Self_Underline           := (Is_Set => False);
-      V.Self_Strikethrough       := GNATCOLL.Tribooleans.Indeterminate;
+      V.Self_Foreground := Null_RGBA;
+      V.Self_Background := Null_RGBA;
+      V.Self_Variant := (Is_Set => False);
+      V.Self_Underline := (Is_Set => False);
+      V.Self_Strikethrough := GNATCOLL.Tribooleans.Indeterminate;
       V.Self_Strikethrough_Color := Null_RGBA;
 
-      V.Source := new Source_Shade_Or_Lighten'
-        (Source_Style => O,
-         Shade_Amount => Shade_Or_Lighten_Amount);
+      V.Source :=
+        new Source_Shade_Or_Lighten'
+          (Source_Style => O, Shade_Amount => Shade_Or_Lighten_Amount);
 
       Refresh_Values (V);
       return V;
@@ -425,8 +433,7 @@ package body GPS.Kernel.Style_Manager is
    Refresh_Stack_Count : Natural := 0;
    Circular_Dependency : exception;
 
-   procedure Refresh_Values (V : Style_Access)
-   is
+   procedure Refresh_Values (V : Style_Access) is
       use Default_Preferences;
 
       W : Weight := Pango_Weight_Normal;
@@ -456,22 +463,26 @@ package body GPS.Kernel.Style_Manager is
          --  Compute the settings to assign to each tag
 
          case V.Variant is
-            when Default =>
+            when Default     =>
                --  ??? Shouldn't happen
                null;
-            when Normal =>
+
+            when Normal      =>
                null;
-            when Bold =>
+
+            when Bold        =>
                W := Pango_Weight_Bold;
-            when Italic =>
+
+            when Italic      =>
                S := Pango_Style_Italic;
+
             when Bold_Italic =>
                W := Pango_Weight_Bold;
                S := Pango_Style_Italic;
          end case;
 
          case V.Underline is
-            when None =>
+            when None   =>
                null;
 
             when Single =>
@@ -480,7 +491,7 @@ package body GPS.Kernel.Style_Manager is
             when Double =>
                U := Pango.Enums.Pango_Underline_Double;
 
-            when Error =>
+            when Error  =>
                U := Pango.Enums.Pango_Underline_Error;
          end case;
 
@@ -495,26 +506,26 @@ package body GPS.Kernel.Style_Manager is
 
                Glib.Properties.Set_Property
                  (V.Tags (J),
-                  Foreground_Property, Gdk.RGBA.To_String (V.Foreground));
+                  Foreground_Property,
+                  Gdk.RGBA.To_String (V.Foreground));
 
                Glib.Properties.Set_Property
                  (V.Tags (J),
-                  Background_Property, Gdk.RGBA.To_String (V.Background));
+                  Background_Property,
+                  Gdk.RGBA.To_String (V.Background));
 
             else
-               Set_Property (V.Tags (J),
-                             Foreground_Rgba_Property, V.Foreground);
-               Set_Property (V.Tags (J),
-                             Background_Rgba_Property, V.Background);
+               Set_Property
+                 (V.Tags (J), Foreground_Rgba_Property, V.Foreground);
+               Set_Property
+                 (V.Tags (J), Background_Rgba_Property, V.Background);
             end if;
 
             Set_Property (V.Tags (J), Weight_Property, W);
             Set_Property (V.Tags (J), Style_Property, S);
             Set_Property (V.Tags (J), Underline_Property, U);
 
-            if U /= Pango_Underline_None
-              and then not No_GdkRGBA.Active
-            then
+            if U /= Pango_Underline_None and then not No_GdkRGBA.Active then
                if V.Underline_Color = Null_RGBA then
                   Set_Property
                     (V.Tags (J), Underline_Rgba_Property, V.Foreground);
@@ -527,15 +538,14 @@ package body GPS.Kernel.Style_Manager is
             Glib.Properties.Set_Property
               (V.Tags (J), Strikethrough_Property, V.Strikethrough);
 
-            if V.Strikethrough
-              and then not No_GdkRGBA.Active
-            then
+            if V.Strikethrough and then not No_GdkRGBA.Active then
                if V.Self_Strikethrough_Color = Null_RGBA then
                   Set_Property
                     (V.Tags (J), Strikethrough_Rgba_Property, V.Foreground);
                else
                   Set_Property
-                    (V.Tags (J), Strikethrough_Rgba_Property,
+                    (V.Tags (J),
+                     Strikethrough_Rgba_Property,
                      V.Self_Strikethrough_Color);
                end if;
             end if;
@@ -606,8 +616,7 @@ package body GPS.Kernel.Style_Manager is
    -----------------------
 
    function Get_Style_Manager
-     (Handle : Kernel_Handle)
-     return not null access Style_Manager_Record'Class
+     (Handle : Kernel_Handle) return not null access Style_Manager_Record'Class
    is
    begin
       return To_Style_Manager_Access (Handle.Style_Manager);
@@ -618,11 +627,10 @@ package body GPS.Kernel.Style_Manager is
    -----------------
 
    function List_Styles
-     (Self : Style_Manager_Record)
-      return Style_Vector.Vector
+     (Self : Style_Manager_Record) return Style_Vector.Vector
    is
       Result : Style_Vector.Vector;
-      C : Style_Map.Cursor;
+      C      : Style_Map.Cursor;
    begin
       C := Self.Variants.First;
 
@@ -642,8 +650,8 @@ package body GPS.Kernel.Style_Manager is
      (Handle  : Kernel_Handle;
       Manager : not null access Style_Manager_Record'Class)
    is
-      function To_Address is new Ada.Unchecked_Conversion
-        (Style_Manager_Access, System.Address);
+      function To_Address is new
+        Ada.Unchecked_Conversion (Style_Manager_Access, System.Address);
    begin
       Handle.Style_Manager := To_Address (Style_Manager_Access (Manager));
    end Set_Style_Manager;
@@ -668,14 +676,16 @@ package body GPS.Kernel.Style_Manager is
    ------------------------
 
    procedure Free_Style_Manager (Handle : Kernel_Handle) is
-      X : Style_Manager_Access := To_Style_Manager_Access
-        (Handle.Style_Manager);
+      X : Style_Manager_Access :=
+        To_Style_Manager_Access (Handle.Style_Manager);
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Style_Map.Map, Map_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Style_Map.Map, Map_Access);
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Style_Manager_Record'Class, Style_Manager_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Style_Manager_Record'Class,
+           Style_Manager_Access);
 
       procedure U (Position : Style_Map.Cursor);
       --  Utility to walk the container and free memory.
@@ -804,27 +814,32 @@ package body GPS.Kernel.Style_Manager is
 
       --  Watch tag.
 
-      Tag_Data.Set (Object       => Tag,
-                    Data         => (Style, Tag),
-                    Id           => "tag_data" & Style.Name.all,
-                    On_Destroyed => On_Tag_Destroyed'Access);
+      Tag_Data.Set
+        (Object       => Tag,
+         Data         => (Style, Tag),
+         Id           => "tag_data" & Style.Name.all,
+         On_Destroyed => On_Tag_Destroyed'Access);
 
       case Style.Variant is
-         when Default =>
+         when Default     =>
             null;
-         when Normal =>
+
+         when Normal      =>
             null;
-         when Bold =>
+
+         when Bold        =>
             W := Pango_Weight_Bold;
-         when Italic =>
+
+         when Italic      =>
             S := Pango_Style_Italic;
+
          when Bold_Italic =>
             W := Pango_Weight_Bold;
             S := Pango_Style_Italic;
       end case;
 
       case Style.Underline is
-         when None =>
+         when None   =>
             null;
 
          when Single =>
@@ -833,7 +848,7 @@ package body GPS.Kernel.Style_Manager is
          when Double =>
             U := Pango.Enums.Pango_Underline_Double;
 
-         when Error =>
+         when Error  =>
             U := Pango.Enums.Pango_Underline_Error;
       end case;
 
@@ -857,9 +872,7 @@ package body GPS.Kernel.Style_Manager is
       Set_Property (Tag, Style_Property, S);
       Set_Property (Tag, Underline_Property, U);
 
-      if U /= Pango_Underline_None
-        and then not No_GdkRGBA.Active
-      then
+      if U /= Pango_Underline_None and then not No_GdkRGBA.Active then
          if Style.Underline_Color = Null_RGBA then
             C := Style.Foreground;
          else
@@ -872,13 +885,10 @@ package body GPS.Kernel.Style_Manager is
       Glib.Properties.Set_Property
         (Tag, Strikethrough_Property, Style.Strikethrough);
 
-      if Style.Strikethrough
-        and then not No_GdkRGBA.Active
-      then
+      if Style.Strikethrough and then not No_GdkRGBA.Active then
          if Style.Self_Strikethrough_Color = Null_RGBA then
             C := Style.Foreground;
-            Set_Property
-              (Tag, Strikethrough_Rgba_Property, Style.Foreground);
+            Set_Property (Tag, Strikethrough_Rgba_Property, Style.Foreground);
          else
             C := Style.Self_Strikethrough_Color;
          end if;
@@ -893,7 +903,8 @@ package body GPS.Kernel.Style_Manager is
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Hook   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -1015,8 +1026,8 @@ package body GPS.Kernel.Style_Manager is
    --------------------------
 
    function Get_Color_Preference
-     (Style      : Style_Access;
-      Background : Boolean := True) return Color_Preference is
+     (Style : Style_Access; Background : Boolean := True)
+      return Color_Preference is
    begin
       if Style.Source = null
         or else Style.Source.all not in Source_From_Fg_Bg_Prefs'Class
@@ -1099,8 +1110,8 @@ package body GPS.Kernel.Style_Manager is
    -- Set_Underline --
    -------------------
 
-   procedure Set_Underline
-     (Style : Style_Access; Underline : Underline_Enum) is
+   procedure Set_Underline (Style : Style_Access; Underline : Underline_Enum)
+   is
    begin
       Style.Self_Underline := (Is_Set => True, Underline => Underline);
 
@@ -1151,8 +1162,8 @@ package body GPS.Kernel.Style_Manager is
    -- Set_Strikethrough_Color --
    -----------------------------
 
-   procedure Set_Strikethrough_Color
-     (Style : Style_Access; Color : Gdk_RGBA) is
+   procedure Set_Strikethrough_Color (Style : Style_Access; Color : Gdk_RGBA)
+   is
    begin
       Style.Self_Strikethrough_Color := Color;
 
@@ -1205,8 +1216,8 @@ package body GPS.Kernel.Style_Manager is
    -- Is_Underline_Color_Inherited --
    ----------------------------------
 
-   function Is_Underline_Color_Inherited
-     (Style : Style_Record) return Boolean is
+   function Is_Underline_Color_Inherited (Style : Style_Record) return Boolean
+   is
    begin
       return Style.Self_Underline_Color = Null_RGBA;
    end Is_Underline_Color_Inherited;
@@ -1215,8 +1226,7 @@ package body GPS.Kernel.Style_Manager is
    -- Is_Strikethrough_Inherited --
    --------------------------------
 
-   function Is_Strikethrough_Inherited (Style : Style_Record) return Boolean
-   is
+   function Is_Strikethrough_Inherited (Style : Style_Record) return Boolean is
       use GNATCOLL.Tribooleans;
    begin
       return Style.Self_Strikethrough = GNATCOLL.Tribooleans.Indeterminate;
@@ -1261,8 +1271,9 @@ package body GPS.Kernel.Style_Manager is
    procedure Initialize_Style_Manager (Kernel : Kernel_Handle) is
    begin
       Preferences_Changed_Hook.Add
-        (new On_Pref_Changed'(Preferences_Hooks_Function with
-             Manager => Get_Style_Manager (Kernel)));
+        (new On_Pref_Changed'
+           (Preferences_Hooks_Function
+            with Manager => Get_Style_Manager (Kernel)));
    end Initialize_Style_Manager;
 
 end GPS.Kernel.Style_Manager;

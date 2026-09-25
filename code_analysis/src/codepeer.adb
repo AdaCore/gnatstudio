@@ -29,7 +29,8 @@ package body CodePeer is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : access Project_Data) is
+   overriding
+   procedure Finalize (Self : access Project_Data) is
 
       procedure Process_Message_Category
         (Position : Message_Category_Sets.Cursor);
@@ -57,10 +58,12 @@ package body CodePeer is
         (Position : Annotation_Category_Sets.Cursor)
       is
          Element : Annotation_Category_Access :=
-                     Annotation_Category_Sets.Element (Position);
+           Annotation_Category_Sets.Element (Position);
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Annotation_Category, Annotation_Category_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation
+             (Annotation_Category,
+              Annotation_Category_Access);
 
       begin
          Free (Element);
@@ -73,11 +76,13 @@ package body CodePeer is
       procedure Process_Entry_Point
         (Position : Entry_Point_Information_Sets.Cursor)
       is
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Entry_Point_Information, Entry_Point_Information_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation
+             (Entry_Point_Information,
+              Entry_Point_Information_Access);
 
-         Element : Entry_Point_Information_Access
-           := Entry_Point_Information_Sets.Element (Position);
+         Element : Entry_Point_Information_Access :=
+           Entry_Point_Information_Sets.Element (Position);
 
       begin
          Free (Element);
@@ -91,10 +96,12 @@ package body CodePeer is
         (Position : Message_Category_Sets.Cursor)
       is
          Element : Message_Category_Access :=
-                     Message_Category_Sets.Element (Position);
+           Message_Category_Sets.Element (Position);
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Message_Category, Message_Category_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation
+             (Message_Category,
+              Message_Category_Access);
 
       begin
          Free (Element);
@@ -108,10 +115,10 @@ package body CodePeer is
         (Position : Lifeage_Kinds_Sets.Cursor)
       is
          Element : Lifeage_Kind_Access :=
-                     Lifeage_Kinds_Sets.Element (Position);
+           Lifeage_Kinds_Sets.Element (Position);
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Lifeage_Kinds, Lifeage_Kind_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation (Lifeage_Kinds, Lifeage_Kind_Access);
 
       begin
          Free (Element);
@@ -125,10 +132,10 @@ package body CodePeer is
         (Position : Ranking_Kinds_Sets.Cursor)
       is
          Element : Ranking_Kind_Access :=
-                     Ranking_Kinds_Sets.Element (Position);
+           Ranking_Kinds_Sets.Element (Position);
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Ranking_Kinds, Ranking_Kind_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation (Ranking_Kinds, Ranking_Kind_Access);
 
       begin
          Free (Element);
@@ -150,7 +157,8 @@ package body CodePeer is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : access Subprogram_Data) is
+   overriding
+   procedure Finalize (Self : access Subprogram_Data) is
 
       procedure Process_Annotations (Position : Annotation_Maps.Cursor);
 
@@ -163,8 +171,8 @@ package body CodePeer is
       procedure Process_Annotation (Position : Annotation_Vectors.Cursor) is
          Element : Annotation_Access := Annotation_Vectors.Element (Position);
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Annotation, Annotation_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation (Annotation, Annotation_Access);
 
       begin
          Free (Element);
@@ -176,10 +184,12 @@ package body CodePeer is
 
       procedure Process_Annotations (Position : Annotation_Maps.Cursor) is
          Element : Annotation_Vector_Access :=
-                     Annotation_Maps.Element (Position);
+           Annotation_Maps.Element (Position);
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Annotation_Vectors.Vector, Annotation_Vector_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation
+             (Annotation_Vectors.Vector,
+              Annotation_Vector_Access);
 
       begin
          Element.Iterate (Process_Annotation'Access);
@@ -197,13 +207,14 @@ package body CodePeer is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : not null access Message) is
+   overriding
+   procedure Finalize (Self : not null access Message) is
 
-      procedure Free is
-        new Ada.Unchecked_Deallocation (Audit_Record, Audit_Record_Access);
+      procedure Free is new
+        Ada.Unchecked_Deallocation (Audit_Record, Audit_Record_Access);
 
-      procedure Free_GNATSAS_Id is
-        new Ada.Unchecked_Deallocation (GNATSAS_Id_Type, GNATSAS_Id_Access);
+      procedure Free_GNATSAS_Id is new
+        Ada.Unchecked_Deallocation (GNATSAS_Id_Type, GNATSAS_Id_Access);
 
    begin
       for J of Self.Audit loop
@@ -221,12 +232,14 @@ package body CodePeer is
    -- Get_Markup --
    ----------------
 
-   overriding function Get_Markup
+   overriding
+   function Get_Markup
      (Self : not null access constant Message)
       return Ada.Strings.Unbounded.Unbounded_String is
    begin
-      return Result : Ada.Strings.Unbounded.Unbounded_String :=
-        GPS.Kernel.Messages.Abstract_Message (Self.all).Get_Markup
+      return
+         Result : Ada.Strings.Unbounded.Unbounded_String :=
+           GPS.Kernel.Messages.Abstract_Message (Self.all).Get_Markup
       do
          if Self.Lifeage = Removed then
             Insert
@@ -254,7 +267,8 @@ package body CodePeer is
    -- Get_Tooltip_Markup --
    ------------------------
 
-   overriding function Get_Tooltip_Markup
+   overriding
+   function Get_Tooltip_Markup
      (Self : not null access Message)
       return Ada.Strings.Unbounded.Unbounded_String
    is
@@ -317,7 +331,8 @@ package body CodePeer is
    -- Get_Text --
    --------------
 
-   overriding function Get_Text
+   overriding
+   function Get_Text
      (Self : not null access constant Message)
       return Ada.Strings.Unbounded.Unbounded_String
    is
@@ -392,8 +407,8 @@ package body CodePeer is
         (Category : Message_Category_Access) return Unbounded_String
       is
          Aux       : Unbounded_String;
-         Previous  : CWE_Identifier        := 0;
-         Delimiter : Natural               := 0;
+         Previous  : CWE_Identifier := 0;
+         Delimiter : Natural := 0;
          --  Position of range delimiter.
 
       begin
@@ -401,13 +416,12 @@ package body CodePeer is
             for CWE of Category.CWEs loop
                declare
                   Image : constant String :=
-                            CWE_Identifier'Image (CWE.Identifier);
+                    CWE_Identifier'Image (CWE.Identifier);
 
                begin
                   if Length (Aux) = 0 then
                      Append (Aux, " [CWE ");
-                     Append
-                       (Aux, Image (Image'First + 1 .. Image'Last));
+                     Append (Aux, Image (Image'First + 1 .. Image'Last));
                      Delimiter := 0;
 
                   else
@@ -417,9 +431,7 @@ package body CodePeer is
                         if Delimiter = 0 then
                            Append (Aux, '-');
                            Delimiter := Length (Aux);
-                           Append
-                             (Aux,
-                              Image (Image'First + 1 .. Image'Last));
+                           Append (Aux, Image (Image'First + 1 .. Image'Last));
 
                         else
                            Replace_Slice
@@ -432,9 +444,7 @@ package body CodePeer is
                      else
                         Delimiter := 0;
                         Append (Aux, ',');
-                        Append
-                          (Aux,
-                           Image (Image'First + 1 .. Image'Last));
+                        Append (Aux, Image (Image'First + 1 .. Image'Last));
                      end if;
                   end if;
 
@@ -474,19 +484,19 @@ package body CodePeer is
 
       begin
          case Self.Ranking is
-            when CodePeer.High =>
+            when CodePeer.High         =>
                return Decorate ("high");
 
-            when CodePeer.Medium =>
+            when CodePeer.Medium       =>
                return Decorate ("medium");
 
-            when CodePeer.Low =>
+            when CodePeer.Low          =>
                return Decorate ("low");
 
-            when CodePeer.Info =>
+            when CodePeer.Info         =>
                return "info";
 
-            when CodePeer.Suppressed =>
+            when CodePeer.Suppressed   =>
                return "suppressed";
 
             when CodePeer.Not_An_Error =>
@@ -503,9 +513,7 @@ package body CodePeer is
          Append (Text, Checks_Image);
          Append (Text, CWE_Image (Self.Category));
 
-         if Length (Self.Text) /= 0
-           and then Element (Self.Text, 1) /= ':'
-         then
+         if Length (Self.Text) /= 0 and then Element (Self.Text, 1) /= ':' then
             Append (Text, ' ');
          end if;
 
@@ -549,19 +557,19 @@ package body CodePeer is
    function Image (Level : CodePeer.Message_Ranking_Level) return String is
    begin
       case Level is
-         when CodePeer.Info =>
+         when CodePeer.Info         =>
             return "Info";
 
-         when CodePeer.Low =>
+         when CodePeer.Low          =>
             return "Low";
 
-         when CodePeer.Medium =>
+         when CodePeer.Medium       =>
             return "Medium";
 
-         when CodePeer.High =>
+         when CodePeer.High         =>
             return "High";
 
-         when CodePeer.Suppressed =>
+         when CodePeer.Suppressed   =>
             return "Suppressed";
 
          when CodePeer.Not_An_Error =>
@@ -579,20 +587,23 @@ package body CodePeer is
    ----------
 
    function Less
-     (Left  : Annotation_Category_Access;
-      Right : Annotation_Category_Access) return Boolean
+     (Left : Annotation_Category_Access; Right : Annotation_Category_Access)
+      return Boolean
    is
-      function Weight (Text : String) return Positive is
-        (if Text in "Pre" then 1
-         elsif Text in "Presumption" then 2
-         elsif Text in "Post" then 3
-         else 4);
+      function Weight (Text : String) return Positive
+      is (if Text in "Pre"
+          then 1
+          elsif Text in "Presumption"
+          then 2
+          elsif Text in "Post"
+          then 3
+          else 4);
 
       Text_L : constant String := To_String (Left.Text);
       Text_R : constant String := To_String (Right.Text);
    begin
-      if Text_L in "Pre" | "Presumption" | "Post" and then
-        Text_R in "Pre" | "Presumption" | "Post"
+      if Text_L in "Pre" | "Presumption" | "Post"
+        and then Text_R in "Pre" | "Presumption" | "Post"
       then
          return Weight (Text_L) < Weight (Text_R);
       else
@@ -605,8 +616,8 @@ package body CodePeer is
    ----------
 
    function Less
-     (Left  : CWE_Category_Access;
-      Right : CWE_Category_Access) return Boolean is
+     (Left : CWE_Category_Access; Right : CWE_Category_Access) return Boolean
+   is
    begin
       return Left.Identifier < Right.Identifier;
    end Less;
@@ -625,8 +636,7 @@ package body CodePeer is
    -- Less --
    ----------
 
-   function Less
-     (Left, Right : CodePeer.Lifeage_Kind_Access) return Boolean is
+   function Less (Left, Right : CodePeer.Lifeage_Kind_Access) return Boolean is
    begin
       return Left.all < Right.all;
    end Less;
@@ -635,8 +645,7 @@ package body CodePeer is
    -- Less --
    ----------
 
-   function Less
-     (Left, Right : CodePeer.Ranking_Kind_Access) return Boolean is
+   function Less (Left, Right : CodePeer.Ranking_Kind_Access) return Boolean is
    begin
       return Left.all < Right.all;
    end Less;
@@ -645,8 +654,7 @@ package body CodePeer is
    -- Less --
    ----------
 
-   function Less
-     (Left, Right : CodePeer.Audit_Status_Access) return Boolean is
+   function Less (Left, Right : CodePeer.Audit_Status_Access) return Boolean is
    begin
       return Left.Name < Right.Name;
    end Less;
@@ -703,23 +711,20 @@ package body CodePeer is
    -- Clear_Audit_Statuses --
    --------------------------
 
-   procedure Clear_Audit_Statuses
-   is
+   procedure Clear_Audit_Statuses is
       --------------------------
       -- Process_Audit_Status --
       --------------------------
 
-      procedure Process_Audit_Status
-        (Position : Audit_Status_Sets.Cursor);
+      procedure Process_Audit_Status (Position : Audit_Status_Sets.Cursor);
 
-      procedure Process_Audit_Status
-        (Position : Audit_Status_Sets.Cursor)
-      is
-         Element : Audit_Status_Access :=
-                     Audit_Status_Sets.Element (Position);
+      procedure Process_Audit_Status (Position : Audit_Status_Sets.Cursor) is
+         Element : Audit_Status_Access := Audit_Status_Sets.Element (Position);
 
-         procedure Free is new Ada.Unchecked_Deallocation
-           (Audit_Status_Kinds, Audit_Status_Access);
+         procedure Free is new
+           Ada.Unchecked_Deallocation
+             (Audit_Status_Kinds,
+              Audit_Status_Access);
 
       begin
          Free (Element);
@@ -774,9 +779,9 @@ package body CodePeer is
    -- Get_Status --
    ----------------
 
-   function Get_Status (Name : String; Category : Audit_Status_Category)
-                       return Audit_Status_Kinds
-   is
+   function Get_Status
+     (Name : String; Category : Audit_Status_Category)
+      return Audit_Status_Kinds is
    begin
       for Status of Audit_Statuses loop
          if Standardize (To_String (Status.Name)) = Standardize (Name) then

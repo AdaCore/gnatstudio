@@ -41,7 +41,7 @@ package Files_Extra_Info_Pkg is
 
    procedure Gtk_New
      (Files_Extra_Info : out Files_Extra_Info_Access;
-      Handle : access GPS.Kernel.Kernel_Handle_Record'Class);
+      Handle           : access GPS.Kernel.Kernel_Handle_Record'Class);
    procedure Initialize
      (Files_Extra_Info : access Files_Extra_Info_Record'Class;
       Handle           : access GPS.Kernel.Kernel_Handle_Record'Class;

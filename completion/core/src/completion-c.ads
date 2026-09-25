@@ -23,14 +23,14 @@ package Completion.C is
 
    type C_Completion_Manager is new Completion_Manager with private;
 
-   overriding function Get_Initial_Completion_List
-     (Manager : access C_Completion_Manager;
-      Context : Completion_Context) return Completion_List;
+   overriding
+   function Get_Initial_Completion_List
+     (Manager : access C_Completion_Manager; Context : Completion_Context)
+      return Completion_List;
    --  See inherited documentation
 
 private
-   type C_Completion_Manager is
-      new Completion_Manager with null record;
+   type C_Completion_Manager is new Completion_Manager with null record;
 
    type C_Completion_Context is new Completion_Context_Record with record
       Expression : Parsed_Expression;

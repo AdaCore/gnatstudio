@@ -21,8 +21,9 @@ package body DAP.Modules.Variables.Items.Arguments is
    -- Get_Special_Kind --
    ----------------------
 
-   overriding function Get_Special_Kind
-     (Info : Arguments_Item_Info) return Variable_Kind is
+   overriding
+   function Get_Special_Kind (Info : Arguments_Item_Info) return Variable_Kind
+   is
    begin
       return DAP.Types.Arguments;
    end Get_Special_Kind;
@@ -31,8 +32,8 @@ package body DAP.Modules.Variables.Items.Arguments is
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Self : Arguments_Item_Info) return Virtual_String is
+   overriding
+   function Get_Name (Self : Arguments_Item_Info) return Virtual_String is
    begin
       return "Arguments";
    end Get_Name;
@@ -41,8 +42,8 @@ package body DAP.Modules.Variables.Items.Arguments is
    -- Get_Full_Name --
    -------------------
 
-   overriding function Get_Full_Name
-     (Self : Arguments_Item_Info) return Virtual_String is
+   overriding
+   function Get_Full_Name (Self : Arguments_Item_Info) return Virtual_String is
    begin
       return "Arguments";
    end Get_Full_Name;
@@ -51,7 +52,8 @@ package body DAP.Modules.Variables.Items.Arguments is
    -- Find_DAP_Item --
    -------------------
 
-   overriding procedure Find_DAP_Item
+   overriding
+   procedure Find_DAP_Item
      (Info  : Arguments_Item_Info;
       C     : in out DAP.Types.Variables_References_Trees.Cursor;
       Found : out Boolean) is
@@ -63,9 +65,9 @@ package body DAP.Modules.Variables.Items.Arguments is
    -- Store --
    -----------
 
-   overriding procedure Store
-     (Info  : Arguments_Item_Info;
-      Value : in out GNATCOLL.JSON.JSON_Value) is
+   overriding
+   procedure Store
+     (Info : Arguments_Item_Info; Value : in out GNATCOLL.JSON.JSON_Value) is
    begin
       Value.Set_Field ("tag", "arguments");
    end Store;
@@ -74,8 +76,7 @@ package body DAP.Modules.Variables.Items.Arguments is
    -- Load --
    ----------
 
-   function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class
-   is
+   function Load (Value : GNATCOLL.JSON.JSON_Value) return Item_Info'Class is
       pragma Unreferenced (Value);
    begin
       return Create;
@@ -85,14 +86,10 @@ package body DAP.Modules.Variables.Items.Arguments is
    -- Create --
    ------------
 
-   function Create
-     (Format : DAP.Tools.ValueFormat)
-      return Item_Info'Class is
+   function Create (Format : DAP.Tools.ValueFormat) return Item_Info'Class is
    begin
-      return Item_Info'Class
-        (Arguments_Item_Info'
-           (Format => Format,
-            others => <>));
+      return
+        Item_Info'Class (Arguments_Item_Info'(Format => Format, others => <>));
    end Create;
 
 end DAP.Modules.Variables.Items.Arguments;

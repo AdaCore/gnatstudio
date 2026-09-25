@@ -22,48 +22,49 @@ with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Strings;
 
-with Glib;                  use Glib;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Button;            use Gtk.Button;
-with Gtk.Dialog;            use Gtk.Dialog;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Progress_Bar;      use Gtk.Progress_Bar;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtkada.Handlers;       use Gtkada.Handlers;
-with Gtkada.Stock_Labels;   use Gtkada.Stock_Labels;
+with Glib;                use Glib;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Progress_Bar;    use Gtk.Progress_Bar;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.Stock_Labels; use Gtkada.Stock_Labels;
 
-with GPS.Intl;              use GPS.Intl;
-with GPS.Kernel.Console;    use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
-with GPS.Scripts.Commands;  use GPS.Scripts.Commands;
+with GPS.Intl;             use GPS.Intl;
+with GPS.Kernel.Console;   use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;   use GPS.Kernel.Modules;
+with GPS.Kernel.Timeout;   use GPS.Kernel.Timeout;
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
 
-with Commands;              use Commands;
-with Password_Manager;      use Password_Manager;
-with Remote.Db;             use Remote.Db;
-with Remote_Module;         use Remote_Module;
-with String_Utils;          use String_Utils;
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GNATCOLL.VFS_Types;    use GNATCOLL.VFS_Types;
+with Commands;           use Commands;
+with Password_Manager;   use Password_Manager;
+with Remote.Db;          use Remote.Db;
+with Remote_Module;      use Remote_Module;
+with String_Utils;       use String_Utils;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.VFS_Types; use GNATCOLL.VFS_Types;
 
-with Gexpect.Db;            use Gexpect, Gexpect.Db;
+with Gexpect.Db;
+use Gexpect, Gexpect.Db;
 
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body Remote.Rsync is
 
    Me : constant Trace_Handle := Create ("GPS.REMOTE.remote_sync_module");
 
-   Progress_Regexp         : constant Pattern_Matcher := Compile
-     ("^.*\(([0-9]*), [0-9.%]* of ([0-9]*)", Multiple_Lines);
-   File_Regexp             : constant Pattern_Matcher := Compile
-     ("^([^ ][^\n\r]*[^\n\r/])$", Multiple_Lines or Single_Line);
-   File_Progress_Regexp    : constant Pattern_Matcher := Compile
-     ("^ *[0-9]* *([0-9]*)%", Multiple_Lines);
-   Files_Considered_Regexp : constant Pattern_Matcher := Compile
-     ("^ *[0-9]+ *files[.]*", Multiple_Lines or Single_Line);
+   Progress_Regexp         : constant Pattern_Matcher :=
+     Compile ("^.*\(([0-9]*), [0-9.%]* of ([0-9]*)", Multiple_Lines);
+   File_Regexp             : constant Pattern_Matcher :=
+     Compile ("^([^ ][^\n\r]*[^\n\r/])$", Multiple_Lines or Single_Line);
+   File_Progress_Regexp    : constant Pattern_Matcher :=
+     Compile ("^ *[0-9]* *([0-9]*)%", Multiple_Lines);
+   Files_Considered_Regexp : constant Pattern_Matcher :=
+     Compile ("^ *[0-9]+ *files[.]*", Multiple_Lines or Single_Line);
 
    type Return_Data is record
       Status : Integer;
@@ -76,7 +77,8 @@ package body Remote.Rsync is
    end record;
    type Rsync_Module_ID is access all Rsync_Module_Record'Class;
 
-   overriding procedure Destroy (Module : in out Rsync_Module_Record);
+   overriding
+   procedure Destroy (Module : in out Rsync_Module_Record);
 
    Rsync_Module : Rsync_Module_ID := null;
 
@@ -88,9 +90,10 @@ package body Remote.Rsync is
    end record;
    type Rsync_Dialog is access all Rsync_Dialog_Record'Class;
 
-   procedure Gtk_New (Dialog : out Rsync_Dialog;
-                      Kernel : access Kernel_Handle_Record'Class;
-                      Src_Path, Dest_Path : Virtual_File);
+   procedure Gtk_New
+     (Dialog              : out Rsync_Dialog;
+      Kernel              : access Kernel_Handle_Record'Class;
+      Src_Path, Dest_Path : Virtual_File);
    --  Creates a new Rsync_Dialog
 
    type Rsync_Callback_Data is new External_Process_Data with record
@@ -104,21 +107,26 @@ package body Remote.Rsync is
       Buffer            : GNAT.Strings.String_Access;
    end record;
    type Rsync_Callback_Data_Access is access all Rsync_Callback_Data'Class;
-   overriding procedure On_Output
+   overriding
+   procedure On_Output
      (Self    : not null access Rsync_Callback_Data;
       Command : not null access Root_Command'Class;
       Output  : String);
-   overriding procedure On_Exit
+   overriding
+   procedure On_Exit
      (Self    : not null access Rsync_Callback_Data;
       Command : not null access Root_Command'Class);
 
    type On_Rsync is new Rsync_Hooks_Function with null record;
-   overriding function Execute
-     (Self   : On_Rsync;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   function Execute
+     (Self                                                   : On_Rsync;
+      Kernel                                                 :
+        not null access Kernel_Handle_Record'Class;
       Synchronous, Force, To_Remote, Print_Output, Print_Cmd : Boolean;
-      Tool_Name, Host_Name, Queue_Id : String;
-      File : Virtual_File) return Boolean;
+      Tool_Name, Host_Name, Queue_Id                         : String;
+      File                                                   : Virtual_File)
+      return Boolean;
    --  run RSync hook
 
    procedure On_Abort_Clicked (Dialog : access Gtk_Widget_Record'Class);
@@ -149,9 +157,10 @@ package body Remote.Rsync is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Rsync_Module_Record) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Return_Data, Return_Data_Access);
+   overriding
+   procedure Destroy (Module : in out Rsync_Module_Record) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation (Return_Data, Return_Data_Access);
    begin
       Unchecked_Free (Module.Ret_Data);
    end Destroy;
@@ -168,19 +177,29 @@ package body Remote.Rsync is
       Label : Gtk_Label;
    begin
       Dialog := new Rsync_Dialog_Record;
-      Initialize (Dialog, -"Synchronisation in progress",
-                  Get_Main_Window (Kernel),
-                  Destroy_With_Parent
-                  or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
+      Initialize
+        (Dialog,
+         -"Synchronisation in progress",
+         Get_Main_Window (Kernel),
+         Destroy_With_Parent
+         or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
       Gtk_New (Label, -"Synchronisation with remote host in progress.");
       Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);
-      Set_Markup (Label, (-"From: ") & "<span foreground=""blue"">" &
-                  Src_Path.Display_Full_Name & "</span>");
+      Set_Markup
+        (Label,
+         (-"From: ")
+         & "<span foreground=""blue"">"
+         & Src_Path.Display_Full_Name
+         & "</span>");
       Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Label);
-      Set_Markup (Label, (-"To: ") & "<span foreground=""blue"">" &
-                  Dest_Path.Display_Full_Name & "</span>");
+      Set_Markup
+        (Label,
+         (-"To: ")
+         & "<span foreground=""blue"">"
+         & Dest_Path.Display_Full_Name
+         & "</span>");
       Pack_Start (Get_Content_Area (Dialog), Label);
       Gtk_New (Dialog.Progress);
       Pack_Start (Get_Content_Area (Dialog), Dialog.Progress);
@@ -196,12 +215,15 @@ package body Remote.Rsync is
    -- Execute --
    -------------
 
-   overriding function Execute
-     (Self   : On_Rsync;
-      Kernel : not null access Kernel_Handle_Record'Class;
+   overriding
+   function Execute
+     (Self                                                   : On_Rsync;
+      Kernel                                                 :
+        not null access Kernel_Handle_Record'Class;
       Synchronous, Force, To_Remote, Print_Output, Print_Cmd : Boolean;
-      Tool_Name, Host_Name, Queue_Id : String;
-      File : Virtual_File) return Boolean
+      Tool_Name, Host_Name, Queue_Id                         : String;
+      File                                                   : Virtual_File)
+      return Boolean
    is
       pragma Unreferenced (Self);
       Remote_Path         : GNAT.OS_Lib.String_Access;
@@ -222,7 +244,7 @@ package body Remote.Rsync is
       function Build_Arg return GNAT.Strings.String_List is
 
          Rsync_Args : constant GNAT.Strings.String_List :=
-                        Clone (Machine.Sync_Tool_Args);
+           Clone (Machine.Sync_Tool_Args);
 
          function Transport_Arg return GNAT.Strings.String_List;
          --  Argument for transport
@@ -237,8 +259,7 @@ package body Remote.Rsync is
          -- Protect --
          -------------
 
-         procedure Protect (S : in out GNAT.OS_Lib.String_Access)
-         is
+         procedure Protect (S : in out GNAT.OS_Lib.String_Access) is
             Out_Str : Unbounded_String;
             Ignore  : Boolean;
 
@@ -294,8 +315,8 @@ package body Remote.Rsync is
       begin
          Protect (Src_Path);
          Protect (Dest_Path);
-         return Rsync_Args & Use_Links_Arg & Transport_Arg &
-           Src_Path & Dest_Path;
+         return
+           Rsync_Args & Use_Links_Arg & Transport_Arg & Src_Path & Dest_Path;
       end Build_Arg;
 
       Src : Ada.Strings.Unbounded.Unbounded_String;
@@ -309,43 +330,52 @@ package body Remote.Rsync is
 
       --  Check the module configuration
       if Rsync_Module = null then
-         Insert (Kernel, "Invalid rsync configuration. Cannot use rsync.",
-                 Mode => Error);
+         Insert
+           (Kernel,
+            "Invalid rsync configuration. Cannot use rsync.",
+            Mode => Error);
          return False;
       end if;
 
       if not Is_Configured (Host_Name) then
-         Insert (Kernel, "Invalid configuration : " & Host_Name &
-                 " is not configured",
-                 Mode => Error);
+         Insert
+           (Kernel,
+            "Invalid configuration : " & Host_Name & " is not configured",
+            Mode => Error);
          return False;
       end if;
 
       Machine := Get_Server (Host_Name);
 
       if Machine.Sync_Tool_Args'Length = 0 then
-         Insert (Kernel, "Invalid rsync configuration. Cannot use rsync.",
-                 Mode => Error);
+         Insert
+           (Kernel,
+            "Invalid rsync configuration. Cannot use rsync.",
+            Mode => Error);
          return False;
       end if;
 
       declare
          M_Points : constant Mount_Point_Array :=
-                      Get_Mount_Points (Get_Database.all, Host_Name);
+           Get_Mount_Points (Get_Database.all, Host_Name);
          Do_Sync  : Boolean;
       begin
          for J in M_Points'Range loop
 
             Do_Sync := False;
             case M_Points (J).Sync is
-               when Always =>
+               when Always              =>
                   Do_Sync := True;
-               when On_Request =>
+
+               when On_Request          =>
                   Do_Sync := Force;
-               when Never =>
+
+               when Never               =>
                   Do_Sync := False;
-               when To_Local =>
+
+               when To_Local            =>
                   Do_Sync := not To_Remote;
+
                when Remote.Db.To_Remote =>
                   Do_Sync := To_Remote;
             end case;
@@ -353,33 +383,38 @@ package body Remote.Rsync is
             if Do_Sync then
                if File /= No_File then
                   if M_Points (J).Local_Root.Is_Parent (File) then
-                     Src := To_Unbounded_String
-                       (+File.Unix_Style_Full_Name (True));
-                     Dst := To_Unbounded_String
-                       (+File.To_Remote
-                          (Host_Name).Unix_Style_Full_Name (True));
+                     Src :=
+                       To_Unbounded_String (+File.Unix_Style_Full_Name (True));
+                     Dst :=
+                       To_Unbounded_String
+                         (+File.To_Remote (Host_Name).Unix_Style_Full_Name
+                             (True));
                   else
                      Do_Sync := False;
                   end if;
                else
-                  Src := To_Unbounded_String
-                    (+M_Points (J).Local_Root.Unix_Style_Full_Name (True));
-                  Dst := To_Unbounded_String
-                    (+M_Points (J).Remote_Root.Unix_Style_Full_Name (True));
+                  Src :=
+                    To_Unbounded_String
+                      (+M_Points (J).Local_Root.Unix_Style_Full_Name (True));
+                  Dst :=
+                    To_Unbounded_String
+                      (+M_Points (J).Remote_Root.Unix_Style_Full_Name (True));
                end if;
             end if;
 
             if Do_Sync then
                if Machine.User_Name /= "" then
-                  Remote_Path := new String'
-                    (Machine.User_Name & "@" &
-                     Machine.Network_Name & ":" &
-                     To_String (Dst));
+                  Remote_Path :=
+                    new String'
+                      (Machine.User_Name
+                       & "@"
+                       & Machine.Network_Name
+                       & ":"
+                       & To_String (Dst));
 
                else
-                  Remote_Path := new String'
-                    (Machine.Network_Name & ":" &
-                     To_String (Dst));
+                  Remote_Path :=
+                    new String'(Machine.Network_Name & ":" & To_String (Dst));
                end if;
 
                if To_Remote then
@@ -392,31 +427,38 @@ package body Remote.Rsync is
 
                Rsync_Module.Ret_Data.Status := 0;
 
-               Data := new Rsync_Callback_Data'
-                 (External_Process_Data with
-                  Network_Name      => new String'(Machine.Network_Name),
-                  User_Name         => new String'(Machine.User_Name),
-                  Nb_Password_Tries => 0,
-                  Synchronous       => Synchronous,
-                  Dialog            => null,
-                  Dialog_Running    => False,
-                  Ret_Data          => Rsync_Module.Ret_Data,
-                  Buffer            => null);
+               Data :=
+                 new Rsync_Callback_Data'
+                   (External_Process_Data
+                    with
+                      Network_Name      => new String'(Machine.Network_Name),
+                      User_Name         => new String'(Machine.User_Name),
+                      Nb_Password_Tries => 0,
+                      Synchronous       => Synchronous,
+                      Dialog            => null,
+                      Dialog_Running    => False,
+                      Ret_Data          => Rsync_Module.Ret_Data,
+                      Buffer            => null);
 
                if Synchronous then
                   --  We create the dialog that will be updated as rsync runs.
                   if To_Remote then
                      Gtk_New
-                       (Data.Dialog, Kernel,
-                        M_Points (J).Local_Root, M_Points (J).Remote_Root);
+                       (Data.Dialog,
+                        Kernel,
+                        M_Points (J).Local_Root,
+                        M_Points (J).Remote_Root);
                   else
                      Gtk_New
-                       (Data.Dialog, Kernel,
-                        M_Points (J).Remote_Root, M_Points (J).Local_Root);
+                       (Data.Dialog,
+                        Kernel,
+                        M_Points (J).Remote_Root,
+                        M_Points (J).Local_Root);
                   end if;
 
                   Gtkada.Handlers.Widget_Callback.Object_Connect
-                    (Data.Dialog.Abort_Button, Signal_Clicked,
+                    (Data.Dialog.Abort_Button,
+                     Signal_Clicked,
                      On_Abort_Clicked'Access,
                      Data.Dialog);
                   Data.Dialog.Grab_Add;
@@ -445,20 +487,20 @@ package body Remote.Rsync is
                   end loop;
 
                   Launch_Process
-                    (Scheduled         => Scheduled,
-                     Success           => Success,
-                     Kernel            => Kernel,
-                     CL                => CL,
-                     Console           => Get_Console (Kernel),
-                     Show_Command      => Print_Cmd,
-                     Show_Output       => Real_Print_Output,
-                     Line_By_Line      => False,
-                     Data              => Data,
-                     Queue_Id          => Queue_Id,
-                     Synchronous       => Synchronous,
-                     Timeout           => Machine.Timeout,
-                     Strip_CR          => False,
-                     Use_Pipes         => True);
+                    (Scheduled    => Scheduled,
+                     Success      => Success,
+                     Kernel       => Kernel,
+                     CL           => CL,
+                     Console      => Get_Console (Kernel),
+                     Show_Command => Print_Cmd,
+                     Show_Output  => Real_Print_Output,
+                     Line_By_Line => False,
+                     Data         => Data,
+                     Queue_Id     => Queue_Id,
+                     Synchronous  => Synchronous,
+                     Timeout      => Machine.Timeout,
+                     Strip_CR     => False,
+                     Use_Pipes    => True);
 
                   All_Success := All_Success and Success;
 
@@ -477,8 +519,7 @@ package body Remote.Rsync is
    -- On_Abort_Clicked --
    ----------------------
 
-   procedure On_Abort_Clicked
-     (Dialog : access Gtk_Widget_Record'Class) is
+   procedure On_Abort_Clicked (Dialog : access Gtk_Widget_Record'Class) is
    begin
       Rsync_Dialog (Dialog).Aborted := True;
    end On_Abort_Clicked;
@@ -513,19 +554,20 @@ package body Remote.Rsync is
    -- On_Output --
    ---------------
 
-   overriding procedure On_Output
+   overriding
+   procedure On_Output
      (Self    : not null access Rsync_Callback_Data;
       Command : not null access Root_Command'Class;
       Output  : String)
    is
-      Matched              : Match_Array (0 .. 2);
-      Last_Matched         : Match_Array (0 .. 2);
-      File_Nb              : Natural;
-      Total_Files          : Natural;
-      Force                : Boolean;
-      Old_Buff             : GNAT.Strings.String_Access;
-      LF_Index             : Integer;
-      Last                 : Natural;
+      Matched      : Match_Array (0 .. 2);
+      Last_Matched : Match_Array (0 .. 2);
+      File_Nb      : Natural;
+      Total_Files  : Natural;
+      Force        : Boolean;
+      Old_Buff     : GNAT.Strings.String_Access;
+      LF_Index     : Integer;
+      Last         : Natural;
 
    begin
       Old_Buff := Self.Buffer;
@@ -534,9 +576,7 @@ package body Remote.Rsync is
       LF_Index := Output'First - 1;
 
       for J in reverse Output'Range loop
-         if Output (J) = ASCII.LF
-           or else Output (J) = ASCII.CR
-         then
+         if Output (J) = ASCII.LF or else Output (J) = ASCII.CR then
             if J /= Output'Last then
                Self.Buffer := new String'(Output (J + 1 .. Output'Last));
             end if;
@@ -559,17 +599,14 @@ package body Remote.Rsync is
 
          declare
             Stripped_Buffer : constant String :=
-                                Cat (Old_Buff,
-                                     Output (Output'First .. LF_Index));
+              Cat (Old_Buff, Output (Output'First .. LF_Index));
             Buffer          : constant String :=
-                                Cat (Stripped_Buffer, Self.Buffer);
+              Cat (Stripped_Buffer, Self.Buffer);
          begin
             Trace (Me, "Parse_Rsync_Output: " & ASCII.LF & Buffer);
 
             --  Retrieve password prompt if any
-            Match (Get_Default_Password_Regexp,
-                   Buffer,
-                   Matched);
+            Match (Get_Default_Password_Regexp, Buffer, Matched);
 
             if Matched (0) /= No_Match then
                Force := Self.Nb_Password_Tries > 0;
@@ -577,9 +614,8 @@ package body Remote.Rsync is
 
                declare
                   Password : constant String :=
-                               Get_Password (Self.Network_Name.all,
-                                             Self.User_Name.all,
-                                             Force);
+                    Get_Password
+                      (Self.Network_Name.all, Self.User_Name.all, Force);
                begin
                   if Password = "" then
                      Interrupt (Self.Descriptor.all);
@@ -594,9 +630,7 @@ package body Remote.Rsync is
             end if;
 
             --  Retrieve passphrase prompt if any
-            Match (Get_Default_Passphrase_Regexp,
-                   Buffer,
-                   Matched);
+            Match (Get_Default_Passphrase_Regexp, Buffer, Matched);
 
             if Matched (0) /= No_Match then
                Force := Self.Nb_Password_Tries > 0;
@@ -604,10 +638,8 @@ package body Remote.Rsync is
 
                declare
                   Password : constant String :=
-                               Get_Passphrase
-                                 (Buffer
-                                    (Matched (1).First .. Matched (1).Last),
-                                  Force);
+                    Get_Passphrase
+                      (Buffer (Matched (1).First .. Matched (1).Last), Force);
                begin
                   if Password = "" then
                      Interrupt (Self.Descriptor.all);
@@ -626,9 +658,10 @@ package body Remote.Rsync is
             Last := Stripped_Buffer'First;
 
             loop
-               Match (Progress_Regexp,
-                      Stripped_Buffer (Last .. Stripped_Buffer'Last),
-                      Matched);
+               Match
+                 (Progress_Regexp,
+                  Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                  Matched);
 
                if Matched (0) = No_Match then
                   --  Set back last match
@@ -642,23 +675,29 @@ package body Remote.Rsync is
 
             if Matched (0) /= No_Match then
                Self.Dialog_Running := True;
-               File_Nb := Natural'Value
-                 (Stripped_Buffer (Matched (1).First .. Matched (1).Last));
-               Total_Files := Natural'Value
-                 (Stripped_Buffer (Matched (2).First .. Matched (2).Last));
+               File_Nb :=
+                 Natural'Value
+                   (Stripped_Buffer (Matched (1).First .. Matched (1).Last));
+               Total_Files :=
+                 Natural'Value
+                   (Stripped_Buffer (Matched (2).First .. Matched (2).Last));
 
                if Self.Synchronous then
-                  Set_Fraction (Self.Dialog.Progress,
-                                Gdouble (File_Nb) / Gdouble (Total_Files));
-                  Set_Text (Self.Dialog.Progress,
-                            Natural'Image (File_Nb) & "/" &
-                            Natural'Image (Total_Files));
+                  Set_Fraction
+                    (Self.Dialog.Progress,
+                     Gdouble (File_Nb) / Gdouble (Total_Files));
+                  Set_Text
+                    (Self.Dialog.Progress,
+                     Natural'Image (File_Nb)
+                     & "/"
+                     & Natural'Image (Total_Files));
 
                else
                   Command.Set_Progress
-                    (Progress => (Activity => Running,
-                                  Current  => File_Nb,
-                                  Total    => Total_Files));
+                    (Progress =>
+                       (Activity => Running,
+                        Current  => File_Nb,
+                        Total    => Total_Files));
                end if;
             end if;
 
@@ -669,9 +708,10 @@ package body Remote.Rsync is
                   Last := Stripped_Buffer'First;
 
                   loop
-                     Match (Files_Considered_Regexp,
-                            Stripped_Buffer (Last .. Stripped_Buffer'Last),
-                            Matched);
+                     Match
+                       (Files_Considered_Regexp,
+                        Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                        Matched);
 
                      if Matched (0) = No_Match then
                         --  Set back last match
@@ -687,9 +727,9 @@ package body Remote.Rsync is
                      Set_Fraction (Self.Dialog.Progress, 0.0);
                      Set_Text
                        (Self.Dialog.File_Progress,
-                        -"Files to consider: " &
-                        Stripped_Buffer
-                          (Matched (0).First .. Matched (0).Last));
+                        -"Files to consider: "
+                        & Stripped_Buffer
+                            (Matched (0).First .. Matched (0).Last));
                   end if;
 
                else
@@ -699,9 +739,10 @@ package body Remote.Rsync is
                   Last := Stripped_Buffer'First;
 
                   loop
-                     Match (File_Regexp,
-                            Stripped_Buffer (Last .. Stripped_Buffer'Last),
-                            Matched);
+                     Match
+                       (File_Regexp,
+                        Stripped_Buffer (Last .. Stripped_Buffer'Last),
+                        Matched);
 
                      if Matched (0) = No_Match then
                         --  Set back last match
@@ -714,9 +755,10 @@ package body Remote.Rsync is
                   end loop;
 
                   if Matched (0) /= No_Match then
-                     Set_Text (Self.Dialog.File_Progress,
-                               Stripped_Buffer
-                                 (Matched (1).First .. Matched (1).Last));
+                     Set_Text
+                       (Self.Dialog.File_Progress,
+                        Stripped_Buffer
+                          (Matched (1).First .. Matched (1).Last));
                   end if;
 
                   --  Get file transfered progression
@@ -724,9 +766,10 @@ package body Remote.Rsync is
 
                   if Matched (0) /= No_Match then
                      declare
-                        Percent : constant Natural := Natural'Value
-                          (Stripped_Buffer
-                             (Matched (1).First .. Matched (1).Last));
+                        Percent : constant Natural :=
+                          Natural'Value
+                            (Stripped_Buffer
+                               (Matched (1).First .. Matched (1).Last));
                      begin
                         Set_Fraction
                           (Self.Dialog.File_Progress,
@@ -745,7 +788,8 @@ package body Remote.Rsync is
    -- On_Exit --
    -------------
 
-   overriding procedure On_Exit
+   overriding
+   procedure On_Exit
      (Self    : not null access Rsync_Callback_Data;
       Command : not null access Root_Command'Class)
    is

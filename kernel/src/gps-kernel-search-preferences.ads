@@ -22,28 +22,30 @@ with GPS.Search;
 
 package GPS.Kernel.Search.Preferences is
 
-   type Preferences_Search_Provider is new Kernel_Search_Provider
-   with private;
+   type Preferences_Search_Provider is new Kernel_Search_Provider with private;
 
-   overriding function Documentation
-     (Self    : not null access Preferences_Search_Provider) return String;
-   overriding procedure Free (Self : in out Preferences_Search_Provider);
-   overriding procedure Set_Pattern
+   overriding
+   function Documentation
+     (Self : not null access Preferences_Search_Provider) return String;
+   overriding
+   procedure Free (Self : in out Preferences_Search_Provider);
+   overriding
+   procedure Set_Pattern
      (Self    : not null access Preferences_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last);
-   overriding procedure Next
+   overriding
+   procedure Next
      (Self     : not null access Preferences_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean);
-   overriding function Display_Name
-     (Self     : not null access Preferences_Search_Provider) return String
-   is
-     (Provider_Preferences);
+   overriding
+   function Display_Name
+     (Self : not null access Preferences_Search_Provider) return String
+   is (Provider_Preferences);
 
    procedure Set_Search_Among_Hidden
-     (Self  : not null access Preferences_Search_Provider;
-      Value : Boolean);
+     (Self : not null access Preferences_Search_Provider; Value : Boolean);
    --  Set whether the provider should search among hidden preferences or not.
 
    type Preferences_Search_Result is new Kernel_Search_Result with record
@@ -60,11 +62,12 @@ package GPS.Kernel.Search.Preferences is
    --  Return a GPS.Search.Search_Result_Access according to the matched
    --  preference, a short description and the calculated score for this match.
 
-   overriding procedure Execute
-     (Self       : not null access Preferences_Search_Result;
-      Give_Focus : Boolean);
-   overriding function Full
-     (Self       : not null access Preferences_Search_Result)
+   overriding
+   procedure Execute
+     (Self : not null access Preferences_Search_Result; Give_Focus : Boolean);
+   overriding
+   function Full
+     (Self : not null access Preferences_Search_Result)
       return Gtk.Widget.Gtk_Widget;
 
 private

@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.VFS;                   use GNATCOLL.VFS;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 package body Codefix.Errors_Manager is
 
@@ -30,8 +30,10 @@ package body Codefix.Errors_Manager is
    ----------
 
    procedure Free (This : in out Ptr_Correction_Manager) is
-      procedure Free_Pool is new Ada.Unchecked_Deallocation
-        (Correction_Manager, Ptr_Correction_Manager);
+      procedure Free_Pool is new
+        Ada.Unchecked_Deallocation
+          (Correction_Manager,
+           Ptr_Correction_Manager);
    begin
       if This /= null then
          Free (This.all);
@@ -43,7 +45,8 @@ package body Codefix.Errors_Manager is
    -- Next --
    ----------
 
-   overriding function Next (This : Error_Id) return Error_Id is
+   overriding
+   function Next (This : Error_Id) return Error_Id is
    begin
       return Error_Id (Std_Vectors.Next (Std_Vectors.Cursor (This)));
    end Next;
@@ -99,8 +102,8 @@ package body Codefix.Errors_Manager is
    -- Undo --
    ----------
 
-   procedure Undo
-     (This : Error_Id; Current_Text : Text_Navigator_Abstr'Class) is
+   procedure Undo (This : Error_Id; Current_Text : Text_Navigator_Abstr'Class)
+   is
    begin
       null;
    end Undo;
@@ -139,10 +142,10 @@ package body Codefix.Errors_Manager is
                while Previous_Message /= Invalid_Error_Message
                  and then Is_Style_Or_Warning (Previous_Message)
                  and then not Is_Style_Or_Warning (Current_Message)
-                 and then Get_Line (Previous_Message)
-                 = Get_Line (Current_Message)
-                 and then Get_File (Previous_Message)
-                 = Get_File (Current_Message)
+                 and then
+                   Get_Line (Previous_Message) = Get_Line (Current_Message)
+                 and then
+                   Get_File (Previous_Message) = Get_File (Current_Message)
                loop
                   --  Remove previous from list
 
@@ -150,8 +153,8 @@ package body Codefix.Errors_Manager is
 
                   if not This.Potential_Corrections.Is_Empty then
                      Previous_Message :=
-                       Std_Vectors.Element
-                         (This.Potential_Corrections.Last).Message;
+                       Std_Vectors.Element (This.Potential_Corrections.Last)
+                         .Message;
                   else
                      Previous_Message := Invalid_Error_Message;
                   end if;
@@ -169,16 +172,10 @@ package body Codefix.Errors_Manager is
 
             else
                Solutions := Null_Solution_List;
-               Get_Solutions
-                 (Processor,
-                  Source_Text,
-                  It,
-                  Options,
-                  Solutions);
+               Get_Solutions (Processor, Source_Text, It, Options, Solutions);
 
                if Length (Solutions) > 0 then
-                  Add_Error
-                    (This, Current_Message, Solutions, New_Error);
+                  Add_Error (This, Current_Message, Solutions, New_Error);
 
                   if Callback /= null then
                      Callback (New_Error, Source_Text, This);
@@ -221,13 +218,9 @@ package body Codefix.Errors_Manager is
      (This         : in out Correction_Manager;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error        : Error_Id;
-      Choice       : Text_Command'Class)
-   is
+      Choice       : Text_Command'Class) is
    begin
-      Secured_Execute
-        (Choice,
-         Current_Text,
-         This.Error_Cb);
+      Secured_Execute (Choice, Current_Text, This.Error_Cb);
 
       Element (Error).Fixed.all := True;
    end Validate_And_Commit;
@@ -255,7 +248,7 @@ package body Codefix.Errors_Manager is
       New_Error_Record : Error_Id_Record;
    begin
       New_Error_Record.Solutions := Solutions;
-      New_Error_Record.Message   := Clone (Message);
+      New_Error_Record.Message := Clone (Message);
 
       Append (This.Potential_Corrections, New_Error_Record);
       New_Error := Error_Id (This.Potential_Corrections.Last);
@@ -284,19 +277,19 @@ package body Codefix.Errors_Manager is
    ------------------
 
    function Search_Error
-     (This         : Correction_Manager;
-      File         : GNATCOLL.VFS.Virtual_File;
-      Line         : Integer;
-      Column       : Visible_Column_Type;
-      Message      : String := "")
-      return Error_Id
+     (This    : Correction_Manager;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Line    : Integer;
+      Column  : Visible_Column_Type;
+      Message : String := "") return Error_Id
    is
       Current_Id : Error_Id := Get_First_Error (This);
       Error      : Error_Message;
    begin
       while Current_Id /= Null_Error_Id loop
          Error := Get_Error_Message (Current_Id);
-         exit when Get_Line (Error) = Line
+         exit when
+           Get_Line (Error) = Line
            and then Get_Column (Error) = Column
            and then Get_File (Error) = File
            and then (Message = "" or else Get_Message (Error) = Message);

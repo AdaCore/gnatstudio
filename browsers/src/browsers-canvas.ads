@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Default_Preferences;      use Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 with GPS.Kernel;
-with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
 with Gdk.Event;
 with Generic_Views;
 with Gtk.Menu;
@@ -34,7 +34,8 @@ package Browsers.Canvas is
    type Browser_Model is access all Browser_Model_Record'Class;
    --  which type of model we are using
 
-   overriding function Is_Selectable
+   overriding
+   function Is_Selectable
      (Self : not null access Browser_Model_Record;
       Item : not null access Gtkada.Canvas_View.Abstract_Item_Record'Class)
       return Boolean;
@@ -44,20 +45,22 @@ package Browsers.Canvas is
    --  Encapsulates a browser, based either on Gtkada.Canvas or
    --  Gtk.Canvas_View.
 
-   overriding procedure Create_Toolbar
+   overriding
+   procedure Create_Toolbar
      (View    : not null access General_Browser_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Create_Menu
-     (View    : not null access General_Browser_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
-   overriding procedure Save_To_XML
-     (View : access General_Browser_Record;
-      XML  : in out XML_Utils.Node_Ptr);
-   overriding procedure Load_From_XML
+   overriding
+   procedure Create_Menu
+     (View : not null access General_Browser_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding
+   procedure Save_To_XML
+     (View : access General_Browser_Record; XML : in out XML_Utils.Node_Ptr);
+   overriding
+   procedure Load_From_XML
      (View : in out General_Browser_Record; XML : XML_Utils.Node_Ptr);
 
-   procedure Initialize
-     (Browser         : access General_Browser_Record'Class);
+   procedure Initialize (Browser : access General_Browser_Record'Class);
    --  Initialize a new browser.
    --  It sets up all the contextual menu for this browser, as well as the key
    --  shortcuts to manipulate the browser.
@@ -73,8 +76,8 @@ package Browsers.Canvas is
      (Browser : access General_Browser_Record) return GPS_Canvas_View;
    --  Return the canvas embedded in Browser
 
-   function Get_Kernel (Browser : access General_Browser_Record)
-      return GPS.Kernel.Kernel_Handle;
+   function Get_Kernel
+     (Browser : access General_Browser_Record) return GPS.Kernel.Kernel_Handle;
    --  Return the kernel associated with the browser
 
    function Horizontal_Layout
@@ -98,7 +101,8 @@ package Browsers.Canvas is
 
    procedure Preferences_Changed
      (Self : not null access General_Browser_Record;
-      Pref : Default_Preferences.Preference) is null;
+      Pref : Default_Preferences.Preference)
+   is null;
    --  Override if you need to monitor preferences
 
    -----------
@@ -117,7 +121,7 @@ package Browsers.Canvas is
    with record
       Outline : Outline_Mode := Outline_None;
 
-      Browser     : General_Browser;
+      Browser : General_Browser;
       --  The browser in which the item is displayed.
 
       Left, Right : Gtkada.Canvas_View.Abstract_Item;
@@ -127,19 +131,21 @@ package Browsers.Canvas is
 
    procedure Set_Context
      (Item    : not null access GPS_Item_Record;
-      Context : in out GPS.Kernel.Selection_Context) is null;
+      Context : in out GPS.Kernel.Selection_Context)
+   is null;
    --  Set the GNAT Studio context from a selected item.
 
    function Save_To_XML
-     (Self : not null access GPS_Item_Record)
-      return XML_Utils.Node_Ptr is (null);
+     (Self : not null access GPS_Item_Record) return XML_Utils.Node_Ptr
+   is (null);
    --  Override this function to save an item in the GNAT Studio desktop, so
    --  that it is restored in the next GNAT Studio session.
    --  By default, items are not saved in the desktop, so a browser is restored
    --  empty.
    --  You will also need to override the browser's Load_From_ML
 
-   overriding procedure Draw
+   overriding
+   procedure Draw
      (Self    : not null access GPS_Item_Record;
       Context : Gtkada.Canvas_View.Draw_Context);
 
@@ -150,12 +156,13 @@ package Browsers.Canvas is
 
    function Load_From_XML
      (Self       : not null access General_Browser_Record;
-      Dummy_Node : XML_Utils.Node_Ptr)
-      return access GPS_Item_Record'Class is (null);
+      Dummy_Node : XML_Utils.Node_Ptr) return access GPS_Item_Record'Class
+   is (null);
    procedure Load_From_XML
      (Self     : not null access General_Browser_Record;
       Node     : XML_Utils.Node_Ptr;
-      From, To : not null access GPS_Item_Record'Class) is null;
+      From, To : not null access GPS_Item_Record'Class)
+   is null;
    --  Recreates an item from information saved in the desktop.
    --  In both cases, the item or the link *must* be added to the browser
    --  before returning. This allows the reuse of existing items and links.
@@ -169,8 +176,8 @@ package Browsers.Canvas is
       Oriented  : Boolean := True) return Natural;
    --  Whether there is already a link between the two items
 
-   type Button_Array
-     is array (Natural range <>)
+   type Button_Array is
+     array (Natural range <>)
      of access Gtkada.Canvas_View.Container_Item_Record'Class;
    No_Buttons : constant Button_Array := (1 .. 0 => null);
 
@@ -178,9 +185,9 @@ package Browsers.Canvas is
      (Item    : not null access GPS_Item_Record'Class;
       Browser : not null access General_Browser_Record'Class;
       Name    : String;
-      Left    : Left_Arrow_Access  := null;
+      Left    : Left_Arrow_Access := null;
       Right   : Right_Arrow_Access := null;
-      Buttons : Button_Array       := No_Buttons);
+      Buttons : Button_Array := No_Buttons);
    --  Add the title bar items (title, arrows, close button,...)
    --  The two arrows should have been created and passed as argument, so that
    --  the proper callback is set on them. There Initialize primitive operation
@@ -200,8 +207,8 @@ package Browsers.Canvas is
      (Self : not null access GPS_Item_Record; Text : Glib.UTF8_String);
 
    procedure Highlight_Related_Items
-     (Self   : not null access GPS_Canvas_View_Record'Class;
-      Item   : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null);
+     (Self : not null access GPS_Canvas_View_Record'Class;
+      Item : access Gtkada.Canvas_View.Abstract_Item_Record'Class := null);
    --  Mark related items specially so that they are outlined on the display.
 
    ---------
@@ -209,13 +216,15 @@ package Browsers.Canvas is
    ---------
 
    type Browser_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Has_Menu_Bar_When_Floating
+   overriding
+   function Has_Menu_Bar_When_Floating
      (Child : not null access Browser_Child_Record) return Boolean
-      is (True) with Inline;
-   overriding function Build_Context
+   is (True)
+   with Inline;
+   overriding
+   function Build_Context
      (Self  : not null access Browser_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return GPS.Kernel.Selection_Context;
+      Event : Gdk.Event.Gdk_Event := null) return GPS.Kernel.Selection_Context;
    --  The base type for putting browsers in the MDI.
 
    ----------------
@@ -223,17 +232,16 @@ package Browsers.Canvas is
    ----------------
 
    procedure Add_Navigation_Location
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Title  : String);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Title : String);
    --  Add a location command to open the browser named Title
 
 private
 
-   package List_Rtree is new Gtkada.Canvas_View.Models.Rtree_Models
-     (Browser_Model_Record);
+   package List_Rtree is new
+     Gtkada.Canvas_View.Models.Rtree_Models (Browser_Model_Record);
 
    type General_Browser_Record is new Generic_Views.View_Record with record
-      View     : GPS_Canvas_View;
-      Model    : List_Rtree.Rtree_Model;
+      View  : GPS_Canvas_View;
+      Model : List_Rtree.Rtree_Model;
    end record;
 end Browsers.Canvas;

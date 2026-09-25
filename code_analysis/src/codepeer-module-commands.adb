@@ -15,12 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Box;                        use Gtk.Box;
-with Gtk.Enums;                      use Gtk.Enums;
-with Gtk.Image;                      use Gtk.Image;
-with Gtk.Label;                      use Gtk.Label;
-with Gtk.Menu;                       use Gtk.Menu;
-with Gtk.Menu_Item;                  use Gtk.Menu_Item;
+with Gtk.Box;       use Gtk.Box;
+with Gtk.Enums;     use Gtk.Enums;
+with Gtk.Image;     use Gtk.Image;
+with Gtk.Label;     use Gtk.Label;
+with Gtk.Menu;      use Gtk.Menu;
+with Gtk.Menu_Item; use Gtk.Menu_Item;
 
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
@@ -35,12 +35,11 @@ package body CodePeer.Module.Commands is
    type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
    --  Is used for showing multiple actions
 
-   procedure On_Menu_Item_Activated
-     (Self : access Gtk_Menu_Item_Record'Class);
+   procedure On_Menu_Item_Activated (Self : access Gtk_Menu_Item_Record'Class);
    --  An action is selected form multiple actions, exetute it.
 
-   package Message_Reference_Vectors is
-     new Ada.Containers.Vectors (Positive, Message_Reference);
+   package Message_Reference_Vectors is new
+     Ada.Containers.Vectors (Positive, Message_Reference);
 
    procedure Review_Messages (Module : CodePeer_Module_Id);
    --  Initiate showing the review dialog for manual reviewing GNATSAS message
@@ -58,7 +57,8 @@ package body CodePeer.Module.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Review_Message_Command) return Command_Return_Type
    is
       Context  : constant GPS.Kernel.Selection_Context :=
@@ -83,7 +83,8 @@ package body CodePeer.Module.Commands is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Self : access Multiple_Message_Command) return Command_Return_Type
    is
       Context : constant GPS.Kernel.Selection_Context :=
@@ -110,7 +111,7 @@ package body CodePeer.Module.Commands is
          Gtk.Menu_Item.Initialize (Item);
 
          Item.Module := Self.Module;
-         Item.Index  := Index;
+         Item.Index := Index;
 
          Item.On_Activate (On_Menu_Item_Activated'Access);
 
@@ -144,21 +145,23 @@ package body CodePeer.Module.Commands is
       end if;
 
       case Review_Methods_Type'(Self.Module.Review_Methods.Get_Pref) is
-         when Both =>
-            Msg := Standard.CodePeer.Message_Access
-              (Messages.First_Element.Message);
+         when Both     =>
+            Msg :=
+              Standard.CodePeer.Message_Access
+                (Messages.First_Element.Message);
 
             Create_Menu_Item
               (Index => Manual_Review_Position,
-               Text  => (if Msg.Status.Category = Uncategorized
-                         then "Manual review"
-                         else Image (Msg.Status) & ASCII.LF &
-                           "Update manual review"),
-               Image => (case Msg.Status.Category is
-                            when Uncategorized => Grey_Analysis_Cst,
-                            when Pending       => Purple_Analysis_Cst,
-                            when Bug           => Red_Analysis_Cst,
-                            when Not_A_Bug     => Blue_Analysis_Cst));
+               Text  =>
+                 (if Msg.Status.Category = Uncategorized
+                  then "Manual review"
+                  else Image (Msg.Status) & ASCII.LF & "Update manual review"),
+               Image =>
+                 (case Msg.Status.Category is
+                    when Uncategorized => Grey_Analysis_Cst,
+                    when Pending       => Purple_Analysis_Cst,
+                    when Bug           => Red_Analysis_Cst,
+                    when Not_A_Bug     => Blue_Analysis_Cst));
 
             Create_Menu_Item
               (Index => Annotate_Position,
@@ -170,7 +173,7 @@ package body CodePeer.Module.Commands is
             GPS.Kernel.Modules.UI.Popup_Custom_Contextual_Menu
               (Menu, Self.Module.Kernel);
 
-         when Review =>
+         when Review   =>
             Review_Messages (Self.Module);
 
          when Annotate =>
@@ -184,8 +187,7 @@ package body CodePeer.Module.Commands is
    -- On_Menu_Item_Activated --
    ----------------------------
 
-   procedure On_Menu_Item_Activated
-     (Self : access Gtk_Menu_Item_Record'Class)
+   procedure On_Menu_Item_Activated (Self : access Gtk_Menu_Item_Record'Class)
    is
       Item : constant Action_Menu_Item := Action_Menu_Item (Self);
    begin
@@ -223,8 +225,7 @@ package body CodePeer.Module.Commands is
    begin
       for Message of Messages loop
          if not Message.Is_Empty then
-            Vector.Append
-              (Standard.CodePeer.Message_Access (Message.Message));
+            Vector.Append (Standard.CodePeer.Message_Access (Message.Message));
          end if;
       end loop;
 

@@ -25,20 +25,20 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 
-with Glib;                                  use Glib;
-with Glib.Object;                           use Glib.Object;
+with Glib;        use Glib;
+with Glib.Object; use Glib.Object;
 
-with Gtk.Box;                               use Gtk.Box;
-with Gtk.Button;                            use Gtk.Button;
-with Gtk.Enums;                             use Gtk.Enums;
-with Gtk.Frame;                             use Gtk.Frame;
-with Gtk.Flow_Box;                          use Gtk.Flow_Box;
-with Gtk.Flow_Box_Child;                    use Gtk.Flow_Box_Child;
-with Gtk.Label;                             use Gtk.Label;
-with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
-with Gtk.Separator;                         use Gtk.Separator;
-with Gtk.Size_Group;                        use Gtk.Size_Group;
-with Gtk.Widget;                            use Gtk.Widget;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Button;          use Gtk.Button;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Frame;           use Gtk.Frame;
+with Gtk.Flow_Box;        use Gtk.Flow_Box;
+with Gtk.Flow_Box_Child;  use Gtk.Flow_Box_Child;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Separator;       use Gtk.Separator;
+with Gtk.Size_Group;      use Gtk.Size_Group;
+with Gtk.Widget;          use Gtk.Widget;
 
 package Dialog_Utils is
 
@@ -61,8 +61,7 @@ package Dialog_Utils is
    --  It can also be used as a general container for standalone widgets
    --  (e.g : a tree view).
 
-   procedure Initialize
-     (Self : not null access Dialog_View_Record'Class);
+   procedure Initialize (Self : not null access Dialog_View_Record'Class);
    --  Initialize the common attributes for all the dialog views
 
    function Get_Number_Of_Children
@@ -104,13 +103,12 @@ package Dialog_Utils is
    --  Remove all the children that have been appended to the dialog view
 
    function Has_Child
-     (Self      : not null access Dialog_View_Record'Class;
-      Child_Key : String) return Boolean;
+     (Self : not null access Dialog_View_Record'Class; Child_Key : String)
+      return Boolean;
    --  Return True if a child with the given key exists
 
    procedure Remove_Child
-     (Self      : not null access Dialog_View_Record'Class;
-      Child_Key : String);
+     (Self : not null access Dialog_View_Record'Class; Child_Key : String);
    --  Remove the child identified by Child_Key, if found.
 
    procedure Set_Child_Visible
@@ -139,8 +137,7 @@ package Dialog_Utils is
    --  made on the child widget to indicate that there is an error.
 
    procedure Remove_Information_On_Child
-     (Self      : not null access Dialog_View_Record'Class;
-      Child_Key : String);
+     (Self : not null access Dialog_View_Record'Class; Child_Key : String);
    --  Remove the tooltip and revert the graphical changes that have been set
    --  via the 'Display_Information_On_Child', if any.
 
@@ -152,8 +149,8 @@ package Dialog_Utils is
    -- Dialog Views With Button Boxes --
    ------------------------------------
 
-   type Dialog_View_With_Button_Box_Record is new Dialog_View_Record
-   with private;
+   type Dialog_View_With_Button_Box_Record is
+     new Dialog_View_Record with private;
    type Dialog_View_With_Button_Box is
      access all Dialog_View_With_Button_Box_Record'Class;
    --  Type representing a dialog view with its associated button box.
@@ -199,8 +196,7 @@ package Dialog_Utils is
    --------------------------
 
    type Dialog_Group_Widget_Record is new Gtk_Frame_Record with private;
-   type Dialog_Group_Widget is
-     access all Dialog_Group_Widget_Record'Class;
+   type Dialog_Group_Widget is access all Dialog_Group_Widget_Record'Class;
    --  Type used to represent group widgets with dialog views.
    --
    --  This type should be used to gather and align related widgets within a
@@ -210,9 +206,9 @@ package Dialog_Utils is
    procedure Initialize
      (Self                : not null access Dialog_Group_Widget_Record'Class;
       Parent_View         : not null access Dialog_View_Record'Class;
-      Group_Name          : String                 := "";
-      Allow_Multi_Columns : Boolean                := True;
-      Selection           : Gtk_Selection_Mode     := Selection_None;
+      Group_Name          : String := "";
+      Allow_Multi_Columns : Boolean := True;
+      Selection           : Gtk_Selection_Mode := Selection_None;
       Sorting_Function    : Gtk_Flow_Box_Sort_Func := null;
       Filtering_Function  : Gtk_Flow_Box_Filter_Func := null);
    --  Initialize a group widget, associating it with it's parent dialog view.
@@ -370,27 +366,27 @@ package Dialog_Utils is
 
 private
 
-   package Gtk_Flow_Box_Child_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Gtk_Flow_Box_Child,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=",
-      "="             => "=");
+   package Gtk_Flow_Box_Child_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Gtk_Flow_Box_Child,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
 
-   type Dialog_View_Record is new Gtk_Scrolled_Window_Record
-   with record
-      Main_Box           : Gtk_Vbox;
+   type Dialog_View_Record is new Gtk_Scrolled_Window_Record with record
+      Main_Box : Gtk_Vbox;
       --  The main container of the dialog view
 
-      Label_Size_Group   : Gtk_Size_Group;
-      Widget_Size_Group  : Gtk_Size_Group;
-      Button_Size_Group  : Gtk_Size_Group;
+      Label_Size_Group  : Gtk_Size_Group;
+      Widget_Size_Group : Gtk_Size_Group;
+      Button_Size_Group : Gtk_Size_Group;
       --  Used to align the children created via the 'Create_Child' subprograms
 
       Number_Of_Children : Natural := 0;
       --  The current number of children of the dialog view
 
-      Children_Map       : Gtk_Flow_Box_Child_Maps.Map;
+      Children_Map : Gtk_Flow_Box_Child_Maps.Map;
       --  Contains all the flow box children that have been associated with a
       --  key.
    end record;
@@ -400,31 +396,31 @@ private
       Button_Box : Gtk_Box;
       --  The button box containing all the appended buttons
 
-      Separator  : Gtk_Separator;
+      Separator : Gtk_Separator;
       --  The separator that separates the button box from the actual view
 
-      Scrolled   : Gtk_Scrolled_Window;
+      Scrolled : Gtk_Scrolled_Window;
       --  The scrolled window that embeds the actual view
    end record;
 
    type Dialog_Group_Widget_Record is new Gtk_Frame_Record with record
-      Parent_View          : Dialog_View;
+      Parent_View : Dialog_View;
       --  The parent dialog view of the group
 
-      Flow_Box             : Gtk_Flow_Box;
+      Flow_Box : Gtk_Flow_Box;
       --  The main container of the group widget
 
-      Number_Of_Children   : Natural := 0;
+      Number_Of_Children : Natural := 0;
       --  The current number of children of the group widget
 
-      Filter_Func          : Gtk_Flow_Box_Filter_Func;
+      Filter_Func : Gtk_Flow_Box_Filter_Func;
       --  The filtering function
 
       Has_Children_Visible : Boolean := False;
       --  Used to hide the group widget itself if all its children are not
       --  visible anymore after some filtering.
 
-      Is_Filter_Func_Set   : Boolean := False;
+      Is_Filter_Func_Set : Boolean := False;
       --  Used to know if the filtering function has been already set
    end record;
 

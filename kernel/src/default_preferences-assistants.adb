@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;              use Glib;
+with Glib; use Glib;
 
 with Gtk.Assistant;     use Gtk.Assistant;
 with Gtk.Arrow;         use Gtk.Arrow;
@@ -26,8 +26,8 @@ with Gtk.Label;         use Gtk.Label;
 with Gtk.Main;
 with Gtk.Style_Context; use Gtk.Style_Context;
 
-with Dialog_Utils;      use Dialog_Utils;
-with GPS.Main_Window;   use GPS.Main_Window;
+with Dialog_Utils;    use Dialog_Utils;
+with GPS.Main_Window; use GPS.Main_Window;
 
 with Glib.Main;
 
@@ -37,10 +37,10 @@ package body Default_Preferences.Assistants is
       Running_Main_Loop : Boolean := True;
       --  True if the preferences assistant is running a nested main loop
 
-      Skip_Button        : Gtk_Button;
-      Back_Button        : Gtk_Button;
-      Next_Button        : Gtk_Button;
-      Apply_Button       : Gtk_Button;
+      Skip_Button  : Gtk_Button;
+      Back_Button  : Gtk_Button;
+      Next_Button  : Gtk_Button;
+      Apply_Button : Gtk_Button;
       --  The buttons used to navigate in the preferences assistant
    end record;
    type Preferences_Assistant is access all Preferences_Assistant_Record;
@@ -56,10 +56,9 @@ package body Default_Preferences.Assistants is
    -- On_Finish --
    ---------------
 
-   procedure On_Finish (Self : access GObject_Record'Class)
-   is
+   procedure On_Finish (Self : access GObject_Record'Class) is
       Assistant : constant Preferences_Assistant :=
-                    Preferences_Assistant (Self);
+        Preferences_Assistant (Self);
    begin
       --  Quit the preferences assistant's main loop only if it's still running
       if Assistant.Running_Main_Loop then
@@ -101,7 +100,7 @@ package body Default_Preferences.Assistants is
    is
       pragma Unreferenced (Page);
       Assistant  : constant Preferences_Assistant :=
-                     Preferences_Assistant (Self);
+        Preferences_Assistant (Self);
       First_Page : constant Gint := 0;
       Last_Page  : constant Gint := Assistant.Get_N_Pages - 1;
       Page_Index : constant Gint := Assistant.Get_Current_Page;
@@ -132,11 +131,10 @@ package body Default_Preferences.Assistants is
      (Pref_Page : not null access Preferences_Page_Record'Class;
       Label     : String;
       Message   : String) return Preferences_Assistant_Page
-   is
-     (Preferences_Assistant_Page'
-        (Pref_Page  => Preferences_Page (Pref_Page),
-         Label      => To_Unbounded_String (Label),
-         Message    => To_Unbounded_String (Message)));
+   is (Preferences_Assistant_Page'
+         (Pref_Page => Preferences_Page (Pref_Page),
+          Label     => To_Unbounded_String (Label),
+          Message   => To_Unbounded_String (Message)));
 
    -----------------------------------
    -- Display_Preferences_Assistant --
@@ -146,8 +144,8 @@ package body Default_Preferences.Assistants is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Pages  : Preferences_Assistant_Page_Array)
    is
-      Manager       : constant Preferences_Manager := Kernel.Get_Preferences;
-      Assistant     : Preferences_Assistant;
+      Manager   : constant Preferences_Manager := Kernel.Get_Preferences;
+      Assistant : Preferences_Assistant;
 
       procedure Create_Assistant_Page_View (Page_Index : Integer);
       --  Create and append a page refered by Page_Index to the assistant
@@ -190,12 +188,13 @@ package body Default_Preferences.Assistants is
          Page_View      : Dialog_View;
          Group_Widget   : Dialog_Group_Widget;
          Pref_Page_View : constant Gtk_Widget :=
-                            Page.Pref_Page.Get_Widget (Manager);
+           Page.Pref_Page.Get_Widget (Manager);
          Progress_Box   : Gtk_Box;
          Page_Label     : Gtk_Label;
          Right_Arrow    : Gtk_Arrow;
          Message_Label  : Gtk_Label;
-         Page_Num       : Gint with Unreferenced;
+         Page_Num       : Gint
+         with Unreferenced;
          Page_Type      : constant Gtk_Assistant_Page_Type :=
            Gtk_Assistant_Page_Custom;
       begin
@@ -247,9 +246,7 @@ package body Default_Preferences.Assistants is
             Parent_View         => Page_View,
             Allow_Multi_Columns => False);
          Group_Widget.Append_Child
-           (Pref_Page_View,
-            Expand => True,
-            Fill   => True);
+           (Pref_Page_View, Expand => True, Fill => True);
 
          --  Add the message label
 
@@ -313,8 +310,8 @@ package body Default_Preferences.Assistants is
          declare
             Ignored : Glib.Main.G_Source_Id;
          begin
-            Ignored := Glib.Main.Timeout_Add
-              (500, Auto_Next'Unrestricted_Access);
+            Ignored :=
+              Glib.Main.Timeout_Add (500, Auto_Next'Unrestricted_Access);
          end;
       end if;
 

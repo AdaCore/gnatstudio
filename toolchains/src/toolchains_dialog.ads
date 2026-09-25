@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Button;  use Gtk.Button;
-with Gtk.Frame;   use Gtk.Frame;
-with Gtk.GEntry;  use Gtk.GEntry;
+with Gtk.Button; use Gtk.Button;
+with Gtk.Frame;  use Gtk.Frame;
+with Gtk.GEntry; use Gtk.GEntry;
 
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 with GPS.Kernel;
-with GPS.Dialogs;     use GPS.Dialogs;
+with GPS.Dialogs; use GPS.Dialogs;
 
 package Toolchains_Dialog is
 
@@ -30,15 +30,15 @@ package Toolchains_Dialog is
    type Dialog is access all Dialog_Record;
 
    procedure Gtk_New
-     (Widget           : out Dialog;
-      Kernel           : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Active           : Boolean;
-      Tools_Path       : Virtual_File;
+     (Widget            : out Dialog;
+      Kernel            :
+        not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Active            : Boolean;
+      Tools_Path        : Virtual_File;
       Use_Xrefs_Subdirs : Boolean;
       Compiler_Path     : Virtual_File);
 
-   function Get_Active
-     (Widget : access Dialog_Record'Class) return Boolean;
+   function Get_Active (Widget : access Dialog_Record'Class) return Boolean;
    --  Whether the dual compilation mode should be activated
 
    function Get_Use_Xrefs_Subdir

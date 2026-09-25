@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;        use Ada.Characters.Handling;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Unchecked_Conversion;
-with GNAT.OS_Lib;                    use GNAT.OS_Lib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with VSS.Strings.Conversions;
 
@@ -26,50 +26,50 @@ with GNATCOLL.Scripts;               use GNATCOLL.Scripts;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.VFS;                   use GNATCOLL.VFS;
 
-with Gdk.Device;                     use Gdk.Device;
-with Gdk.Event;                      use Gdk.Event;
-with Gdk.Types.Keysyms;              use Gdk.Types.Keysyms;
-with Gdk.Types;                      use Gdk.Types;
-with Gdk.Window;                     use Gdk.Window;
-with Glib.Convert;                   use Glib.Convert;
-with Glib;                           use Glib;
-with Gtk.Accel_Group;                use Gtk.Accel_Group;
+with Gdk.Device;        use Gdk.Device;
+with Gdk.Event;         use Gdk.Event;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Types;         use Gdk.Types;
+with Gdk.Window;        use Gdk.Window;
+with Glib.Convert;      use Glib.Convert;
+with Glib;              use Glib;
+with Gtk.Accel_Group;   use Gtk.Accel_Group;
 with Gtk.Main;
-with Gtk.Widget;                     use Gtk.Widget;
-with Gtk.Window;                     use Gtk.Window;
-with Gtkada.MDI;                     use Gtkada.MDI;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtk.Window;        use Gtk.Window;
+with Gtkada.MDI;        use Gtkada.MDI;
 with Gtkada.Style;
-with Gtkada.Types;                   use Gtkada.Types;
+with Gtkada.Types;      use Gtkada.Types;
 
-with Commands.Interactive;           use Commands, Commands.Interactive;
-with Config;                         use Config;
-with Default_Preferences;            use Default_Preferences;
-with GPS.Customizable_Modules;       use GPS.Customizable_Modules;
-with GPS.Intl;                       use GPS.Intl;
-with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;                 use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
-with GPS.Kernel;                     use GPS.Kernel;
-with GPS.Main_Window;                use GPS.Main_Window;
-with GUI_Utils;                      use GUI_Utils;
-with Histories;                      use Histories;
+with Commands.Interactive;
+use Commands, Commands.Interactive;
+with Config;                   use Config;
+with Default_Preferences;      use Default_Preferences;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Main_Window;          use GPS.Main_Window;
+with GUI_Utils;                use GUI_Utils;
+with Histories;                use Histories;
 with KeyManager_Module.GUI;
-with System.Assertions;              use System.Assertions;
+with System.Assertions;        use System.Assertions;
 with XML_Parsers;
-with XML_Utils;                      use XML_Utils;
+with XML_Utils;                use XML_Utils;
 
 package body KeyManager_Module is
 
-   Me : constant Trace_Handle := Create
-     ("GPS.KEY_MANAGER.MODULE", GNATCOLL.Traces.Off);
-   Debug : constant Trace_Handle := Create
-     ("GPS.KEY_MANAGER.MODULE_DEBUG");
-   Event_Debug_Trace : constant Trace_Handle := Create
-     ("GPS.KEY_MANAGER.MODULE_EVENT_DEBUG",
-      GNATCOLL.Traces.Off);
+   Me                : constant Trace_Handle :=
+     Create ("GPS.KEY_MANAGER.MODULE", GNATCOLL.Traces.Off);
+   Debug             : constant Trace_Handle :=
+     Create ("GPS.KEY_MANAGER.MODULE_DEBUG");
+   Event_Debug_Trace : constant Trace_Handle :=
+     Create ("GPS.KEY_MANAGER.MODULE_EVENT_DEBUG", GNATCOLL.Traces.Off);
 
    use Key_Htable;
 
@@ -79,8 +79,8 @@ package body KeyManager_Module is
 
    Hist_Key_Theme : constant History_Key := "key-theme";
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Key_Description, Key_Description_List);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Key_Description, Key_Description_List);
 
    procedure Free_Non_Recursive (Element : in out Key_Description_List);
    --  Free Element, but not its sibling.
@@ -91,8 +91,8 @@ package body KeyManager_Module is
      (From : Key_Description_List; To : out Key_Description_List);
    --  Deep-copy of From
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Keymap_Record, Keymap_Access);
+   procedure Unchecked_Free is new
+     Ada.Unchecked_Deallocation (Keymap_Record, Keymap_Access);
 
    procedure Get_Normalized_Key
      (Event    : Gdk.Event.Gdk_Event;
@@ -105,18 +105,17 @@ package body KeyManager_Module is
    --  keyboard-specific shortcuts into account.
 
    function Is_Numeric_Key
-     (Key      : Gdk_Key_Type;
-      Modifier : Gdk_Modifier_Type) return Boolean;
+     (Key : Gdk_Key_Type; Modifier : Gdk_Modifier_Type) return Boolean;
    --  Whether Key is one of the numeric keys
 
-   type Argument_Key_Validator is access function
-     (Key : Gdk_Key_Type; Modifier : Gdk_Modifier_Type) return Boolean;
+   type Argument_Key_Validator is
+     access function
+       (Key : Gdk_Key_Type; Modifier : Gdk_Modifier_Type) return Boolean;
    --  Return True if Key is still valid for the current action argument we
    --  are reading
 
-   type Argument_Read_Callback is access procedure
-     (Command  : Interactive_Command'Class;
-      Argument : String);
+   type Argument_Read_Callback is
+     access procedure (Command : Interactive_Command'Class; Argument : String);
    --  Called when the user has finished entering the argument for the
    --  command (ie when Argument_Key_Validator returned False).
 
@@ -135,15 +134,12 @@ package body KeyManager_Module is
       Next    : Event_Handler_Access;
    end record;
 
-   package Event_Handler_Kernel is new Handler_Set_User_Data
-     (Kernel_Handle);
+   package Event_Handler_Kernel is new Handler_Set_User_Data (Kernel_Handle);
 
-   procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : Kernel_Handle);
+   procedure General_Event_Handler (Event : Gdk_Event; Kernel : Kernel_Handle);
    --  General event handler for GNAT Studio
 
-   procedure Debug_Event_Handler
-     (Event : Gdk_Event; Kernel : Kernel_Handle);
+   procedure Debug_Event_Handler (Event : Gdk_Event; Kernel : Kernel_Handle);
    --  General event handler used for event-level debugging
 
    procedure Load_XML_Keys
@@ -153,14 +149,13 @@ package body KeyManager_Module is
    --  Load an XML file that contains key definitions
 
    procedure Remove_In_Keymap
-     (Table  : in out Key_Htable.Instance;
-      Action : String);
+     (Table : in out Key_Htable.Instance; Action : String);
    --  Remove all bindings to Action in Table and its secondary keymaps
 
    type Keymanager_Module_Record is new Module_ID_Record with record
-      Handlers         : Event_Handler_Access;
+      Handlers : Event_Handler_Access;
 
-      Table            : HTable_Access;
+      Table : HTable_Access;
 
       Custom_Keys_Loaded : Boolean := False;
       --  Whether the user's custom keys have been loaded
@@ -168,14 +163,14 @@ package body KeyManager_Module is
       Secondary_Keymap : Keymap_Access := null;
       --  The secondary keymap currently in use, or null if using the primary
 
-      Active           : Boolean := True;
+      Active : Boolean := True;
       --  Whether the key manager should process the key events. This is only
       --  deactivated while editing the key bindings through the GUI.
 
       Menus_Created : Boolean := False;
       --  Indicates whether the initial set of menus has been created
 
-      Repeat_Count     : Positive := 1;
+      Repeat_Count : Positive := 1;
       --  Number of times that the next command should be repeated
 
       Argument_Validator : Argument_Key_Validator;
@@ -187,7 +182,7 @@ package body KeyManager_Module is
       --  user has finished entering the argument. Both callbacks are set to
       --  null when we are not reading an argument.
 
-      Last_Command  : Cst_String_Access;
+      Last_Command : Cst_String_Access;
       --  The last action that was executed by the user. It can either be a
       --  precise action name when executed through a key binding, or null if
       --  the command is not known precisely.
@@ -212,20 +207,22 @@ package body KeyManager_Module is
    end record;
    type Keymanager_Module_ID is access all Keymanager_Module_Record'Class;
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Keymanager_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
-   overriding procedure Destroy (Module : in out Keymanager_Module_Record);
+   overriding
+   procedure Destroy (Module : in out Keymanager_Module_Record);
    --  See doc for inherited subprogram
 
    --  ??? Global variable, could be queries from the kernel
    Keymanager_Module : Keymanager_Module_ID;
 
    function Process_Key_Event
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Event   : Gdk_Event) return Boolean;
+     (Kernel : access Kernel_Handle_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Process the event and call the appropriate actions if needed
 
    procedure Get_Secondary_Keymap
@@ -238,14 +235,15 @@ package body KeyManager_Module is
 
    pragma Warnings (Off);
    --  These two UCs are safe aliasing-wise, so kill warning
-   function Convert is new Ada.Unchecked_Conversion
-     (Kernel_Handle, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Kernel_Handle);
+   function Convert is new
+     Ada.Unchecked_Conversion (Kernel_Handle, System.Address);
+   function Convert is new
+     Ada.Unchecked_Conversion (System.Address, Kernel_Handle);
    pragma Warnings (On);
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference);
@@ -256,13 +254,13 @@ package body KeyManager_Module is
    --  Process shell commands associated with this module
 
    type Repeat_Next_Command is new Interactive_Command with null record;
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Repeat_Next_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    procedure On_Repeat_Next_Argument_Read
-     (Command  : Interactive_Command'Class;
-      Argument : String);
+     (Command : Interactive_Command'Class; Argument : String);
    --  This command reads a numeric argument, and will then execute the next
    --  action a number of times.
 
@@ -295,8 +293,7 @@ package body KeyManager_Module is
 
    function User_Key_Theme_Directory
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNATCOLL.VFS.Virtual_File
-   is
+      return GNATCOLL.VFS.Virtual_File is
    begin
       return Create_From_Dir (Kernel.Get_Home_Dir, "key_themes/");
    end User_Key_Theme_Directory;
@@ -321,8 +318,8 @@ package body KeyManager_Module is
       Save_All : Boolean;
       Filename : GNATCOLL.VFS.Virtual_File)
    is
-      File     : Node_Ptr;
-      Success  : Boolean;
+      File    : Node_Ptr;
+      Success : Boolean;
 
       procedure Save_Table
         (Table       : in out Key_Htable.Instance;
@@ -362,14 +359,15 @@ package body KeyManager_Module is
                   --  Key will be 0 if we have voluntarily saved an invalid
                   --  binding to indicate the binding should be disabled on the
                   --  next startup.
-                  if Get_Key (Iter).Key /= 0
-                    or else Get_Key (Iter).Button /= 0
+                  if Get_Key (Iter).Key /= 0 or else Get_Key (Iter).Button /= 0
                   then
-                     Child.Value := new String'
-                       (Prefix
-                        & Image (Get_Key (Iter).Key,
-                          Get_Key (Iter).Button,
-                          Get_Key (Iter).Modifier));
+                     Child.Value :=
+                       new String'
+                         (Prefix
+                          & Image
+                              (Get_Key (Iter).Key,
+                               Get_Key (Iter).Button,
+                               Get_Key (Iter).Modifier));
                   end if;
 
                   Add_Child (File, Child, Append => True);
@@ -379,11 +377,15 @@ package body KeyManager_Module is
                      if N < Level then
                         Save_Table
                           (Binding.Keymap.Table,
-                           Prefix & Image
-                             (Get_Key (Iter).Key,
-                              Get_Key (Iter).Button,
-                              Get_Key (Iter).Modifier) & ' ',
-                           N + 1, Level, More_Levels);
+                           Prefix
+                           & Image
+                               (Get_Key (Iter).Key,
+                                Get_Key (Iter).Button,
+                                Get_Key (Iter).Modifier)
+                           & ' ',
+                           N + 1,
+                           Level,
+                           More_Levels);
                      else
                         More_Levels := True;
                         exit Save_Binding;
@@ -399,7 +401,7 @@ package body KeyManager_Module is
       end Save_Table;
 
    begin
-      File     := new Node;
+      File := new Node;
       File.Tag := new String'("Keys");
 
       declare
@@ -430,7 +432,8 @@ package body KeyManager_Module is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Module : in out Keymanager_Module_Record) is
+   overriding
+   procedure Destroy (Module : in out Keymanager_Module_Record) is
    begin
       Reset (Module.Table.all);
       Unchecked_Free (Module.Table);
@@ -447,9 +450,9 @@ package body KeyManager_Module is
    is
       pragma Unreferenced (Kernel);
    begin
-      Keymanager_Module.Handlers := new Event_Handler_Record'
-        (Handler => Handler,
-         Next    => Keymanager_Module.Handlers);
+      Keymanager_Module.Handlers :=
+        new Event_Handler_Record'
+          (Handler => Handler, Next => Keymanager_Module.Handlers);
    end Add_Event_Handler;
 
    --------------------------
@@ -460,8 +463,10 @@ package body KeyManager_Module is
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Handler : General_Event_Handler_Callback)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Event_Handler_Record, Event_Handler_Access);
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Event_Handler_Record,
+           Event_Handler_Access);
       pragma Unreferenced (Kernel);
       Tmp : Event_Handler_Access := Keymanager_Module.Handlers;
       N   : Event_Handler_Access;
@@ -490,8 +495,7 @@ package body KeyManager_Module is
    -- General_Event_Handler --
    ---------------------------
 
-   procedure General_Event_Handler
-     (Event : Gdk_Event; Kernel : Kernel_Handle)
+   procedure General_Event_Handler (Event : Gdk_Event; Kernel : Kernel_Handle)
    is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
 
@@ -506,17 +510,14 @@ package body KeyManager_Module is
       Call_Handlers : declare
          EH : Event_Handler_Access := Keymanager_Module.Handlers;
       begin
-         while EH /= null
-           and then not EH.Handler (Event, Kernel)
-         loop
+         while EH /= null and then not EH.Handler (Event, Kernel) loop
             EH := EH.Next;
          end loop;
       end Call_Handlers;
 
       if Event_Type = Key_Press
         or else Event_Type = Key_Release
-        or else (Event_Type = Button_Press
-                 and then Get_Button (Event) > 3)
+        or else (Event_Type = Button_Press and then Get_Button (Event) > 3)
       then
          --  Check that the current input window is not modal.
          --  In the case that we have a modal dialog, we do not want to
@@ -528,8 +529,9 @@ package body KeyManager_Module is
             Current : constant Gtk_Widget := Get_Current_Focus_Widget (Kernel);
          begin
             if Current = null
-              or else (Current.Get_Realized and then
-                         not Get_Modal (Gtk_Window (Get_Toplevel (Current))))
+              or else
+                (Current.Get_Realized
+                 and then not Get_Modal (Gtk_Window (Get_Toplevel (Current))))
             then
                if Process_Key_Event (Kernel, Event) then
                   return;
@@ -552,9 +554,9 @@ package body KeyManager_Module is
       --  Dispatch the event in the standard gtk+ main loop
       Gtk.Main.Main_Do_Event (Event);
 
-   --  We do not put a global exception handler in this procedure since
-   --  it is called very often, so when using setjmp/longjmp, the cost
-   --  may not be negligible.
+      --  We do not put a global exception handler in this procedure since
+      --  it is called very often, so when using setjmp/longjmp, the cost
+      --  may not be negligible.
 
    end General_Event_Handler;
 
@@ -574,17 +576,17 @@ package body KeyManager_Module is
       null;
    end Break_Me_State;
 
-   procedure Debug_Event_Handler
-     (Event : Gdk_Event; Kernel : Kernel_Handle)
-   is
+   procedure Debug_Event_Handler (Event : Gdk_Event; Kernel : Kernel_Handle) is
       Event_Type : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
       case Event_Type is
-         when Configure =>
+         when Configure    =>
             Break_Me_Configure;
+
          when Window_State =>
             Break_Me_State;
-         when others =>
+
+         when others       =>
             null;
       end case;
 
@@ -602,11 +604,12 @@ package body KeyManager_Module is
 
    function Hash (Key : Key_Binding) return Keys_Header_Num is
    begin
-      return Keys_Header_Num
-        ((Long_Integer (Key.Key)
-         + Long_Integer (if Key.Button /= 0 then 1000 + Key.Button else 0)
-         + Long_Integer (Key.Modifier) * 16#FFFF#)
-          mod Long_Integer (Keys_Header_Num'Last + 1));
+      return
+        Keys_Header_Num
+          ((Long_Integer (Key.Key)
+            + Long_Integer (if Key.Button /= 0 then 1000 + Key.Button else 0)
+            + Long_Integer (Key.Modifier) * 16#FFFF#)
+           mod Long_Integer (Keys_Header_Num'Last + 1));
    end Hash;
 
    ------------------------
@@ -645,8 +648,7 @@ package body KeyManager_Module is
    -- Clone --
    -----------
 
-   procedure Clone
-     (From : Key_Description_List; To : out Key_Description_List)
+   procedure Clone (From : Key_Description_List; To : out Key_Description_List)
    is
       Tmp    : Key_Description_List := From;
       Tmp_To : Key_Description_List;
@@ -655,10 +657,10 @@ package body KeyManager_Module is
       while Tmp /= null loop
          if To = null then
             Tmp_To := new Key_Description;
-            To     := Tmp_To;
+            To := Tmp_To;
          else
             Tmp_To.Next := new Key_Description;
-            Tmp_To      := Tmp_To.Next;
+            Tmp_To := Tmp_To.Next;
          end if;
 
          if Tmp.Action /= null then
@@ -679,8 +681,7 @@ package body KeyManager_Module is
    -- Clone --
    -----------
 
-   procedure Clone
-     (From : Key_Htable.Instance; To : out Key_Htable.Instance)
+   procedure Clone (From : Key_Htable.Instance; To : out Key_Htable.Instance)
    is
       Iter : Key_Htable.Cursor;
       List : Key_Description_List;
@@ -727,16 +728,19 @@ package body KeyManager_Module is
          Default_Mod    : Gdk.Types.Gdk_Modifier_Type)
       is
          Tmp, Binding3, Binding2 : Key_Description_List;
-         Success : Boolean;
+         Success                 : Boolean;
          pragma Unreferenced (Success);
       begin
          if not Remove_Existing_Actions_For_Shortcut
-           or else (Default_Key = 0
-                    and then Default_Button = 0
-                    and then Default_Mod = 0)
+           or else
+             (Default_Key = 0
+              and then Default_Button = 0
+              and then Default_Mod = 0)
          then
-            Binding3 := Get
-              (Table, Key_Binding'(Default_Key, Default_Button, Default_Mod));
+            Binding3 :=
+              Get
+                (Table,
+                 Key_Binding'(Default_Key, Default_Button, Default_Mod));
 
             --  Check whether the same action is already attached to this key.
             --  ??? When we have a menu, we should check the underlying action
@@ -746,8 +750,8 @@ package body KeyManager_Module is
             Tmp := Binding3;
             while Tmp /= null loop
                if Tmp.Action /= null
-                 and then Equal
-                   (Tmp.Action.all, Real_Action, Case_Sensitive => False)
+                 and then
+                   Equal (Tmp.Action.all, Real_Action, Case_Sensitive => False)
                then
                   return;
                end if;
@@ -768,17 +772,22 @@ package body KeyManager_Module is
                Tmp := null;
             end if;
 
-            Binding2 := new Key_Description'
-              (Action  => new String'(Real_Action),
-               User_Defined => Save_In_Keys_XML,
-               Keymap  => null,
-               Next    => Tmp);
-            Set (Table, Key_Binding'
-                   (Default_Key, Default_Button, Default_Mod), Binding2);
+            Binding2 :=
+              new Key_Description'
+                (Action       => new String'(Real_Action),
+                 User_Defined => Save_In_Keys_XML,
+                 Keymap       => null,
+                 Next         => Tmp);
+            Set
+              (Table,
+               Key_Binding'(Default_Key, Default_Button, Default_Mod),
+               Binding2);
             Update_Shortcuts_For_Action (Kernel, Real_Action);
          else
-            Binding2 := Get
-              (Table, Key_Binding'(Default_Key, Default_Button, Default_Mod));
+            Binding2 :=
+              Get
+                (Table,
+                 Key_Binding'(Default_Key, Default_Button, Default_Mod));
             while Binding2 /= null loop
                if Binding2.Action /= null then
                   Update_Shortcuts_For_Action (Kernel, Binding2.Action.all);
@@ -791,12 +800,12 @@ package body KeyManager_Module is
          end if;
       end Bind_Internal;
 
-      Partial_Key           : Gdk_Key_Type;
-      Partial_Button        : Guint;
-      Modif                 : Gdk_Modifier_Type;
-      First, Last           : Integer;
-      Keymap                : Keymap_Access;
-      Success               : Boolean;
+      Partial_Key    : Gdk_Key_Type;
+      Partial_Button : Guint;
+      Modif          : Gdk_Modifier_Type;
+      First, Last    : Integer;
+      Keymap         : Keymap_Access;
+      Success        : Boolean;
       pragma Unreferenced (Success);
 
    begin
@@ -819,7 +828,7 @@ package body KeyManager_Module is
       then
          Kernel.Insert
            (-("Warning: binding Ctrl-C is unreliable on Windows,"
-            & " external actions can have unexpected results."));
+              & " external actions can have unexpected results."));
       end if;
 
       if Key = "" or else Key = -Disabled_String then
@@ -857,14 +866,17 @@ package body KeyManager_Module is
                B : Key_Description_List;
             begin
                if Keymap = null then
-                  B := Get
-                    (Table, Key_Binding'(Partial_Key, Partial_Button, Modif));
+                  B :=
+                    Get
+                      (Table,
+                       Key_Binding'(Partial_Key, Partial_Button, Modif));
                   Get_Secondary_Keymap
                     (Table, Partial_Key, Partial_Button, Modif, Keymap);
                else
-                  B := Get
-                    (Keymap.Table, Key_Binding'
-                       (Partial_Key, Partial_Button, Modif));
+                  B :=
+                    Get
+                      (Keymap.Table,
+                       Key_Binding'(Partial_Key, Partial_Button, Modif));
                   Get_Secondary_Keymap
                     (Keymap.Table, Partial_Key, Partial_Button, Modif, Keymap);
                end if;
@@ -902,17 +914,13 @@ package body KeyManager_Module is
       use Ada.Strings.Unbounded;
 
       function Contains
-        (List : Unbounded_String_Array;
-         S    : Unbounded_String) return Boolean
-      is
-        (for some Val of List => S = Val);
+        (List : Unbounded_String_Array; S : Unbounded_String) return Boolean
+      is (for some Val of List => S = Val);
       --  Return True if List contains S
 
       Keys : constant Unbounded_String_Array :=
-                     Lookup_Keys_From_Action
-                       (Table       => Table,
-                        Action      => Action,
-                        For_Display => False);
+        Lookup_Keys_From_Action
+          (Table => Table, Action => Action, For_Display => False);
    begin
       --  Remove all the key shortcuts associated to the action
       Remove_In_Keymap (Table.all, Action);
@@ -953,8 +961,7 @@ package body KeyManager_Module is
    ----------------------
 
    procedure Remove_In_Keymap
-     (Table  : in out Key_Htable.Instance;
-      Action : String)
+     (Table : in out Key_Htable.Instance; Action : String)
    is
       Iter                : Key_Htable.Cursor;
       List, Previous, Tmp : Key_Description_List;
@@ -973,8 +980,7 @@ package body KeyManager_Module is
                List := List.Next;
 
             elsif List.Action /= null
-              and then Equal
-                (List.Action.all, Action, Case_Sensitive => False)
+              and then Equal (List.Action.all, Action, Case_Sensitive => False)
             then
                if Previous = null then
                   if List.Next /= null then
@@ -1033,29 +1039,31 @@ package body KeyManager_Module is
    begin
       if Binding = null then
          Keymap := new Keymap_Record;
-         Binding := new Key_Description'
-           (Action  => null,
-            User_Defined => False,
-            Keymap  => Keymap,
-            Next    => null);
+         Binding :=
+           new Key_Description'
+             (Action       => null,
+              User_Defined => False,
+              Keymap       => Keymap,
+              Next         => null);
          Set (Table, (Key, Button, Modif), Binding);
 
       else
          Binding2 := Binding;
 
          while Binding2 /= null and then Binding2.Keymap = null loop
-            Binding  := Binding2;  --  Last value where Next /= null
+            Binding := Binding2;  --  Last value where Next /= null
             Binding2 := Binding2.Next;
          end loop;
 
          --  If there is no secondary keymap yet, create one
          if Binding2 = null then
             Keymap := new Keymap_Record;
-            Binding.Next := new Key_Description'
-              (Action  => null,
-               User_Defined => False,
-               Keymap  => Keymap,
-               Next    => null);
+            Binding.Next :=
+              new Key_Description'
+                (Action       => null,
+                 User_Defined => False,
+                 Keymap       => Keymap,
+                 Next         => null);
          else
             Keymap := Binding2.Keymap;
          end if;
@@ -1075,7 +1083,7 @@ package body KeyManager_Module is
    is
       State : constant Gdk_Modifier_Type := Get_State (Event);
    begin
-      Key    := 0;
+      Key := 0;
       Button := 0;
 
       if Get_Event_Type (Event) in Key_Press | Key_Release then
@@ -1091,21 +1099,27 @@ package body KeyManager_Module is
       --  If Caps lock in on, and the key is an upper-case character,
       --  lower-case it.
 
-      if (State and Lock_Mask) > 0
-        and then Key >= GDK_A
-        and then Key <= GDK_Z
+      if (State and Lock_Mask) > 0 and then Key >= GDK_A and then Key <= GDK_Z
       then
          Key := Key + GDK_LC_a - GDK_A;
       end if;
 
       if Active (Me) then
-         Trace (Me, Msg & " Key=" & Key'Img & " Modif=" & Modifier'Img
-                & " Code=" & Event.Key.Hardware_Keycode'Img
-                & " => " & Image (Key, Button, Modifier)
-                & " / "
-                & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modifier)
-                & " / "
-                & Gtk.Accel_Group.Accelerator_Name (Key, Modifier));
+         Trace
+           (Me,
+            Msg
+            & " Key="
+            & Key'Img
+            & " Modif="
+            & Modifier'Img
+            & " Code="
+            & Event.Key.Hardware_Keycode'Img
+            & " => "
+            & Image (Key, Button, Modifier)
+            & " / "
+            & Gtk.Accel_Group.Accelerator_Get_Label (Key, Modifier)
+            & " / "
+            & Gtk.Accel_Group.Accelerator_Name (Key, Modifier));
       end if;
 
       --  Quartz backend maps the following:
@@ -1125,15 +1139,15 @@ package body KeyManager_Module is
    -----------------------
 
    function Process_Key_Event
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Event    : Gdk.Event.Gdk_Event) return Boolean
+     (Kernel : access Kernel_Handle_Record'Class; Event : Gdk.Event.Gdk_Event)
+      return Boolean
    is
       Key              : Gdk_Key_Type := 0;
       Button           : Guint := 0;
       Modif            : Gdk_Modifier_Type;
       Binding          : Key_Description_List;
       Has_Secondary    : constant Boolean :=
-                           Keymanager_Module.Secondary_Keymap /= null;
+        Keymanager_Module.Secondary_Keymap /= null;
       Context          : Selection_Context;
       Context_Computed : Boolean := False;
       Found_Action     : Boolean := False;
@@ -1168,9 +1182,7 @@ package body KeyManager_Module is
 
          --  If we are pressing down CTRL, enter Hyper Mode
 
-         if Key = GDK_Control_L
-           or Key = GDK_Control_R
-         then
+         if Key = GDK_Control_L or Key = GDK_Control_R then
             Enter_Hyper_Mode (Kernel);
          end if;
 
@@ -1191,9 +1203,9 @@ package body KeyManager_Module is
                      Keymanager_Module.Argument_Current :=
                        new String'(Tmp.all & Character'Val (Key));
                   else
-                     Keymanager_Module.Argument_Current := new String'
-                       (Tmp.all
-                        & Gtkada.Types.Value (Event.Key.String));
+                     Keymanager_Module.Argument_Current :=
+                       new String'
+                         (Tmp.all & Gtkada.Types.Value (Event.Key.String));
                   end if;
                   Free (Tmp);
                end;
@@ -1201,23 +1213,23 @@ package body KeyManager_Module is
                --  No longer process the current key
                return True;
             else
-               Trace (Me, "Finished reading argument: "
-                        & Keymanager_Module.Argument_Current.all);
+               Trace
+                 (Me,
+                  "Finished reading argument: "
+                  & Keymanager_Module.Argument_Current.all);
                Keymanager_Module.Argument_Callback
                  (Keymanager_Module.Argument_Data.all,
                   Keymanager_Module.Argument_Current.all);
                Keymanager_Module.Argument_Validator := null;
                Free (Keymanager_Module.Argument_Current);
-               --  Process the current key as usual
+            --  Process the current key as usual
             end if;
          end if;
 
          --  Ignore when the key is just one of the modifier. No binding can
          --  be associated to them anyway, so this is slightly more efficient,
          --  and this also avoids resetting the last command.
-         if Key >= GDK_Shift_L
-           and then Key <= GDK_Hyper_R
-         then
+         if Key >= GDK_Shift_L and then Key <= GDK_Hyper_R then
             Trace (Me, "Key is just a modifier, ignored");
             return False;
          end if;
@@ -1225,8 +1237,10 @@ package body KeyManager_Module is
          if Keymanager_Module.Secondary_Keymap = null then
             Binding := Get (Keymanager_Module.Table.all, (Key, Button, Modif));
          else
-            Binding := Get
-              (Keymanager_Module.Secondary_Keymap.Table, (Key, Button, Modif));
+            Binding :=
+              Get
+                (Keymanager_Module.Secondary_Keymap.Table,
+                 (Key, Button, Modif));
          end if;
 
          --  If we didn't find anything in the first attempt but the
@@ -1244,21 +1258,24 @@ package body KeyManager_Module is
          if Binding = No_Key
            and then (Modif and Shift_Mask) > 0
 
-         --  Do this only for actual graphical keys, so we let Gtk+ take
-         --  care of shift + <arrow> to extend the selection, for instance.
-         --  ??? This is temporary: we do need to react to shift + <arrows>
-         --  ourselves to handle extending selections for multi cursors
-           and then Key >= 32 and then Key <= 128
+           --  Do this only for actual graphical keys, so we let Gtk+ take
+           --  care of shift + <arrow> to extend the selection, for instance.
+           --  ??? This is temporary: we do need to react to shift + <arrows>
+           --  ourselves to handle extending selections for multi cursors
+           and then Key >= 32
+           and then Key <= 128
 
          then
             if Keymanager_Module.Secondary_Keymap = null then
-               Binding := Get
-                 (Keymanager_Module.Table.all,
-                  (Key, Button, Modif - Shift_Mask));
+               Binding :=
+                 Get
+                   (Keymanager_Module.Table.all,
+                    (Key, Button, Modif - Shift_Mask));
             else
-               Binding := Get
-                 (Keymanager_Module.Secondary_Keymap.Table,
-                  (Key, Button, Modif - Shift_Mask));
+               Binding :=
+                 Get
+                   (Keymanager_Module.Secondary_Keymap.Table,
+                    (Key, Button, Modif - Shift_Mask));
             end if;
          end if;
 
@@ -1288,44 +1305,43 @@ package body KeyManager_Module is
 
                Compute_Context;
 
-               Keymanager_Module.Last_Command       :=
+               Keymanager_Module.Last_Command :=
                  Keymanager_Module.Current_Command;
-               Keymanager_Module.Current_Command    := null;
+               Keymanager_Module.Current_Command := null;
 
-               if not GPS_Application
-                 (Kernel.Get_Application).Is_Any_Menu_Open
+               if not GPS_Application (Kernel.Get_Application).Is_Any_Menu_Open
                then
                   declare
                      Focus_Child : constant MDI_Child :=
-                                     Get_Focus_Child (Get_MDI (Kernel));
+                       Get_Focus_Child (Get_MDI (Kernel));
                      Action      : constant Action_Access :=
-                                     Lookup_Action
-                                       (Kernel, Binding.Action.all);
+                       Lookup_Action (Kernel, Binding.Action.all);
                   begin
                      if Is_Key_Shortcut_Active
-                       (Action,
-                        Child  => Focus_Child,
-                        Key    => Key,
-                        Button => Button,
-                        Modif  => Modif)
-                       and then Execute_Action
-                         (Kernel               => Kernel,
-                          Action               => Binding.Action.all,
-                          Context              => Context,
-                          Event                => Event,
-                          Error_Msg_In_Console => False,
-                          Repeat               =>
-                            Keymanager_Module.Repeat_Count)
+                          (Action,
+                           Child  => Focus_Child,
+                           Key    => Key,
+                           Button => Button,
+                           Modif  => Modif)
+                       and then
+                         Execute_Action
+                           (Kernel               => Kernel,
+                            Action               => Binding.Action.all,
+                            Context              => Context,
+                            Event                => Event,
+                            Error_Msg_In_Console => False,
+                            Repeat               =>
+                              Keymanager_Module.Repeat_Count)
                      then
-                        if Keymanager_Module.Last_Command /=
-                          Cst_String_Access (Binding.Action)
+                        if Keymanager_Module.Last_Command
+                          /= Cst_String_Access (Binding.Action)
                         then
                            Free (Keymanager_Module.Last_User_Command);
                         end if;
                         Keymanager_Module.Current_Command :=
                           Cst_String_Access (Binding.Action);
-                        Found_Action                      := True;
-                        Keymanager_Module.Repeat_Count    := 1;
+                        Found_Action := True;
+                        Keymanager_Module.Repeat_Count := 1;
                      end if;
                   end;
                end if;
@@ -1395,16 +1411,14 @@ package body KeyManager_Module is
    --------------
 
    function Get_Name (Theme : Key_Theme_Type) return String
-   is
-      (Ada.Strings.Unbounded.To_String (Theme.Name));
+   is (Ada.Strings.Unbounded.To_String (Theme.Name));
 
    ---------------------
    -- Is_User_Defined --
    ---------------------
 
    function Is_User_Defined (Theme : Key_Theme_Type) return Boolean
-   is
-      (Theme.User_Defined);
+   is (Theme.User_Defined);
 
    -------------------------
    -- Get_First_Reference --
@@ -1412,8 +1426,7 @@ package body KeyManager_Module is
 
    function Get_First_Reference
      (Themes_List : Key_Theme_Type_List) return Key_Theme_Type_Cursor
-   is
-      (Key_Theme_Type_Cursor'(C => Themes_List.First));
+   is (Key_Theme_Type_Cursor'(C => Themes_List.First));
 
    ----------
    -- Next --
@@ -1430,13 +1443,10 @@ package body KeyManager_Module is
 
    function Get_Key_Theme
      (Theme_Cursor : Key_Theme_Type_Cursor) return Key_Theme_Type
-   is
-     (if Theme_Cursor /= Null_Key_Theme_Type_Cursor
-      and then Key_Theme_Type_Maps.Has_Element (Theme_Cursor.C)
-      then
-         Key_Theme_Type_Maps.Element (Theme_Cursor.C)
-      else
-         Null_Key_Theme);
+   is (if Theme_Cursor /= Null_Key_Theme_Type_Cursor
+         and then Key_Theme_Type_Maps.Has_Element (Theme_Cursor.C)
+       then Key_Theme_Type_Maps.Element (Theme_Cursor.C)
+       else Null_Key_Theme);
 
    -------------------
    -- Get_Key_Theme --
@@ -1456,13 +1466,11 @@ package body KeyManager_Module is
    ------------------
 
    function Find_By_Name
-     (Themes_List : Key_Theme_Type_List;
-      Name        : String) return Key_Theme_Type_Cursor
-   is
-     (if Themes_List.Contains (Name) then
-         (C => Themes_List.Find (Name))
-      else
-         Null_Key_Theme_Type_Cursor);
+     (Themes_List : Key_Theme_Type_List; Name : String)
+      return Key_Theme_Type_Cursor
+   is (if Themes_List.Contains (Name)
+       then (C => Themes_List.Find (Name))
+       else Null_Key_Theme_Type_Cursor);
 
    -------------------
    -- Set_Key_Theme --
@@ -1470,8 +1478,7 @@ package body KeyManager_Module is
 
    procedure Set_Key_Theme
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name   : String)
-   is
+      Name   : String) is
    begin
       Add_To_History
         (Get_History (Kernel).all,
@@ -1483,8 +1490,7 @@ package body KeyManager_Module is
    -- Is_Empty --
    --------------
 
-   function Is_Empty (Keymap : not null access Keymap_Record) return Boolean
-   is
+   function Is_Empty (Keymap : not null access Keymap_Record) return Boolean is
    begin
       return Keymap.all = Empty_Keymap;
    end Is_Empty;
@@ -1497,9 +1503,9 @@ package body KeyManager_Module is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Theme  : String := "")
    is
-      T : constant String :=
+      T            : constant String :=
         (if Theme /= "" then Theme else Get_Key_Theme (Kernel));
-      User_Theme : constant Virtual_File :=
+      User_Theme   : constant Virtual_File :=
         Create_From_Dir (User_Key_Theme_Directory (Kernel), +T & ".xml");
       System_Theme : constant Virtual_File :=
         Create_From_Dir (Kernel.Get_Share_Dir, +("key_themes/" & T & ".xml"));
@@ -1519,7 +1525,8 @@ package body KeyManager_Module is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Key_Theme_Type_List
    is
-      User_Theme : constant Virtual_File := User_Key_Theme_Directory (Kernel);
+      User_Theme   : constant Virtual_File :=
+        User_Key_Theme_Directory (Kernel);
       System_Theme : constant Virtual_File :=
         Create_From_Dir (Kernel.Get_Share_Dir, +"key_themes");
 
@@ -1542,14 +1549,15 @@ package body KeyManager_Module is
                if Files (F).File_Extension = ".xml" then
                   declare
                      Key_Theme_Name : constant String :=
-                                        Files (F).Display_Base_Name (".xml");
+                       Files (F).Display_Base_Name (".xml");
                   begin
                      Result.Include
                        (Key      => Key_Theme_Name,
-                        New_Item => Key_Theme_Type'
-                          (Name         =>
+                        New_Item =>
+                          Key_Theme_Type'
+                            (Name         =>
                                To_Unbounded_String (Key_Theme_Name),
-                           User_Defined => User_Defined));
+                             User_Defined => User_Defined));
                   end;
                end if;
             end loop;
@@ -1592,10 +1600,10 @@ package body KeyManager_Module is
 
       procedure Traverse (Table : in out Key_Htable.Instance);
       procedure Traverse (Table : in out Key_Htable.Instance) is
-         Iter    : Key_Htable.Cursor;
-         Binding, Previous : Key_Description_List;
-         Remove, Remove_Action  : Boolean;
-         Move_To_Next : Boolean;
+         Iter                  : Key_Htable.Cursor;
+         Binding, Previous     : Key_Description_List;
+         Remove, Remove_Action : Boolean;
+         Move_To_Next          : Boolean;
 
       begin
          Get_First (Table, Iter);
@@ -1610,11 +1618,13 @@ package body KeyManager_Module is
                Remove_Action := False;
 
                case Mode is
-                  when All_Shortcuts =>
+                  when All_Shortcuts      =>
                      Remove_Action := True;
+
                   when Standard_Shortcuts =>
                      Remove_Action := not Binding.User_Defined;
-                  when User_Shortcuts =>
+
+                  when User_Shortcuts     =>
                      Remove_Action := Binding.User_Defined;
                end case;
 
@@ -1622,7 +1632,8 @@ package body KeyManager_Module is
                   Traverse (Binding.Keymap.Table);
 
                   --  Never remove if we still have secondary keymaps
-                  Remove := Remove_Action
+                  Remove :=
+                    Remove_Action
                     and then Get_First (Binding.Keymap.Table) = null;
                else
                   Remove := Remove_Action;
@@ -1683,14 +1694,11 @@ package body KeyManager_Module is
    --------------------
 
    procedure Dump_Shortcuts (Prefix : String) is
-      procedure Dump_Table
-        (Table : in out Key_Htable.Instance; P : String);
-      procedure Dump_Table
-        (Table : in out Key_Htable.Instance; P : String)
-      is
+      procedure Dump_Table (Table : in out Key_Htable.Instance; P : String);
+      procedure Dump_Table (Table : in out Key_Htable.Instance; P : String) is
          Iter    : Key_Htable.Cursor;
          Binding : Key_Description_List;
-         Key          : Key_Binding;
+         Key     : Key_Binding;
       begin
          Increase_Indent (Debug, P);
          Get_First (Table, Iter);
@@ -1702,10 +1710,15 @@ package body KeyManager_Module is
 
             while Binding /= null loop
                if Binding.Action /= null then
-                  Trace (Debug, P & ' ' &
-                           Image (Key.Key, Key.Button, Key.Modifier) & ' ' &
-                           Binding.Action.all &
-                           " user=" & Binding.User_Defined'Img);
+                  Trace
+                    (Debug,
+                     P
+                     & ' '
+                     & Image (Key.Key, Key.Button, Key.Modifier)
+                     & ' '
+                     & Binding.Action.all
+                     & " user="
+                     & Binding.User_Defined'Img);
                end if;
 
                if Binding.Keymap /= null then
@@ -1758,12 +1771,9 @@ package body KeyManager_Module is
                   Load          : constant String :=
                     Get_Attribute_S (Child, "load");
                   Actual_Action : constant String :=
-                    (if Action'Length > 0
-                     and then Action (Action'First) = '/'
-                     then
-                        Action_From_Menu (Kernel, Action)
-                     else
-                        Action);
+                    (if Action'Length > 0 and then Action (Action'First) = '/'
+                     then Action_From_Menu (Kernel, Action)
+                     else Action);
                begin
                   --  If we are loading user defined key shortcuts, check if
                   --  the action actually exists before binding it.
@@ -1775,19 +1785,23 @@ package body KeyManager_Module is
                     or else Lookup_Action (Kernel, Actual_Action) /= null
                   then
                      Bind_Default_Key_Internal
-                       (Kernel           => Kernel,
-                        Table            => Keymanager_Module.Table.all,
-                        Action           => Actual_Action,
-                        Key              => Child.Value.all,
-                        Save_In_Keys_XML => User_Defined,
+                       (Kernel                               => Kernel,
+                        Table                                =>
+                          Keymanager_Module.Table.all,
+                        Action                               => Actual_Action,
+                        Key                                  =>
+                          Child.Value.all,
+                        Save_In_Keys_XML                     => User_Defined,
                         Remove_Existing_Shortcuts_For_Action => User_Defined,
                         Remove_Existing_Actions_For_Shortcut => False);
                   else
                      Trace
                        (Debug,
-                        "'" & Child.Value.all
+                        "'"
+                        & Child.Value.all
                         & "' shortcut can't be bound to '"
-                        & Actual_Action & "': this action does not exist");
+                        & Actual_Action
+                        & "': this action does not exist");
                   end if;
                end;
 
@@ -1803,19 +1817,19 @@ package body KeyManager_Module is
    exception
       when E : others =>
          Trace (Debug, E);
-         Insert (Kernel, -"Could not parse " &
-                   Filename.Display_Full_Name, Mode => Error);
+         Insert
+           (Kernel,
+            -"Could not parse " & Filename.Display_Full_Name,
+            Mode => Error);
    end Load_XML_Keys;
 
    ----------------------
    -- Load_Custom_Keys --
    ----------------------
 
-   procedure Load_Custom_Keys
-     (Kernel  : access Kernel_Handle_Record'Class)
-   is
-      Filename    : Virtual_File :=
-                      Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
+   procedure Load_Custom_Keys (Kernel : access Kernel_Handle_Record'Class) is
+      Filename : Virtual_File :=
+        Create_From_Dir (Get_Home_Dir (Kernel), "keys.xml");
    begin
       Keymanager_Module.Custom_Keys_Loaded := True;
 
@@ -1831,20 +1845,19 @@ package body KeyManager_Module is
    ----------------------------
 
    function Lookup_Key_From_Action
-     (Table             : HTable_Access;
-      Action            : String;
-      Default           : String := "none";
-      Use_Markup        : Boolean := True;
-      Return_Multiple   : Boolean := True;
-      For_Display       : Boolean := True;
-      Is_User_Changed   : access Boolean) return String
+     (Table           : HTable_Access;
+      Action          : String;
+      Default         : String := "none";
+      Use_Markup      : Boolean := True;
+      Return_Multiple : Boolean := True;
+      For_Display     : Boolean := True;
+      Is_User_Changed : access Boolean) return String
    is
       use Ada.Strings.Unbounded;
       Result : Ada.Strings.Unbounded.Unbounded_String;
 
       function Get_Key_Img
-        (Iter   : Key_Htable.Cursor;
-         Prefix : String) return String;
+        (Iter : Key_Htable.Cursor; Prefix : String) return String;
       --  Return a string representation of the key shortcut associated to
       --  Iter.
       --  The string representation depends on the For_Display parameter: when
@@ -1859,21 +1872,20 @@ package body KeyManager_Module is
       -----------------
 
       function Get_Key_Img
-        (Iter   : Key_Htable.Cursor;
-         Prefix : String) return String is
+        (Iter : Key_Htable.Cursor; Prefix : String) return String is
       begin
-         if For_Display
-           and then Get_Key (Iter).Key /= 0
-         then
-            return Prefix &
-              Gtk.Accel_Group.Accelerator_Get_Label
-              (Get_Key (Iter).Key,
-               Get_Key (Iter).Modifier);
+         if For_Display and then Get_Key (Iter).Key /= 0 then
+            return
+              Prefix
+              & Gtk.Accel_Group.Accelerator_Get_Label
+                  (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
          else
-            return Prefix &
-              Image (Get_Key (Iter).Key,
-                     Get_Key (Iter).Button,
-                     Get_Key (Iter).Modifier);
+            return
+              Prefix
+              & Image
+                  (Get_Key (Iter).Key,
+                   Get_Key (Iter).Button,
+                   Get_Key (Iter).Modifier);
          end if;
       end Get_Key_Img;
 
@@ -1892,9 +1904,7 @@ package body KeyManager_Module is
 
             --  If we have voluntarily assigned an invalid binding to indicate
             --  a key should be removed, ignore this here as well.
-            if Get_Key (Iter).Key = 0
-              and then Get_Key (Iter).Button = 0
-            then
+            if Get_Key (Iter).Key = 0 and then Get_Key (Iter).Button = 0 then
                Binding := null;
             end if;
 
@@ -1903,17 +1913,15 @@ package body KeyManager_Module is
                   if Binding.Keymap /= null then
                      Process_Table
                        (Binding.Keymap.Table,
-                        Get_Key_Img (Iter, Prefix)
-                        & ' ');
+                        Get_Key_Img (Iter, Prefix) & ' ');
                   end if;
 
-               elsif Equal (Binding.Action.all, Action,
-                            Case_Sensitive => False)
-                 and then (Get_Key (Iter).Key /= 0
-                           or else Get_Key (Iter).Button /= 0)
+               elsif Equal
+                       (Binding.Action.all, Action, Case_Sensitive => False)
+                 and then
+                   (Get_Key (Iter).Key /= 0 or else Get_Key (Iter).Button /= 0)
                then
-                  if Return_Multiple
-                    or else Result = Null_Unbounded_String
+                  if Return_Multiple or else Result = Null_Unbounded_String
                   then
                      if Result /= Null_Unbounded_String then
                         if Use_Markup then
@@ -1926,8 +1934,8 @@ package body KeyManager_Module is
                      Is_User_Changed.all :=
                        Is_User_Changed.all or Binding.User_Defined;
                      declare
-                        Key_Img : constant String := Get_Key_Img
-                          (Iter, Prefix);
+                        Key_Img : constant String :=
+                          Get_Key_Img (Iter, Prefix);
                      begin
                         if Use_Markup then
                            Append (Result, Escape_Text (Key_Img));
@@ -1944,12 +1952,12 @@ package body KeyManager_Module is
                        Is_User_Changed.all or Binding.User_Defined;
 
                      declare
-                        Key_Img : constant String := Get_Key_Img
-                          (Iter, Prefix);
+                        Key_Img : constant String :=
+                          Get_Key_Img (Iter, Prefix);
                      begin
                         if Use_Markup then
-                           Result := To_Unbounded_String
-                             (Escape_Text (Key_Img));
+                           Result :=
+                             To_Unbounded_String (Escape_Text (Key_Img));
                         else
                            Result := To_Unbounded_String (Key_Img);
                         end if;
@@ -1979,28 +1987,27 @@ package body KeyManager_Module is
    -----------------------------
 
    function Lookup_Keys_From_Action
-     (Table       : HTable_Access;
-      Action      : String;
-      For_Display : Boolean := True)
+     (Table : HTable_Access; Action : String; For_Display : Boolean := True)
       return GNATCOLL.Utils.Unbounded_String_Array
    is
       Is_User_Changed : aliased Boolean;
-      Keys            : constant String := Lookup_Key_From_Action
-        (Table           => Table,
-         Action          => Action,
-         Default         => "",
-         Use_Markup      => False,
-         Return_Multiple => True,
-         For_Display     => For_Display,
-         Is_User_Changed => Is_User_Changed'Access);
+      Keys            : constant String :=
+        Lookup_Key_From_Action
+          (Table           => Table,
+           Action          => Action,
+           Default         => "",
+           Use_Markup      => False,
+           Return_Multiple => True,
+           For_Display     => For_Display,
+           Is_User_Changed => Is_User_Changed'Access);
    begin
-      return GNATCOLL.Utils.Split
-        (Str              => GNATCOLL.Utils.Replace
-           (S           => Keys,
-            Pattern     => " or ",
-            Replacement => ";"),
-         On               => ';',
-         Omit_Empty_Lines => True);
+      return
+        GNATCOLL.Utils.Split
+          (Str              =>
+             GNATCOLL.Utils.Replace
+               (S => Keys, Pattern => " or ", Replacement => ";"),
+           On               => ';',
+           Omit_Empty_Lines => True);
    end Lookup_Keys_From_Action;
 
    ------------------
@@ -2016,13 +2023,14 @@ package body KeyManager_Module is
       pragma Unreferenced (Kernel);
       Is_User_Changed : aliased Boolean;
    begin
-      return Lookup_Key_From_Action
-        (Keymanager_Module.Table,
-         Action          => Action,
-         Default         => "",
-         Use_Markup      => Use_Markup,
-         Return_Multiple => Return_Multiple,
-         Is_User_Changed => Is_User_Changed'Access);
+      return
+        Lookup_Key_From_Action
+          (Keymanager_Module.Table,
+           Action          => Action,
+           Default         => "",
+           Use_Markup      => Use_Markup,
+           Return_Multiple => Return_Multiple,
+           Is_User_Changed => Is_User_Changed'Access);
    end Get_Shortcut;
 
    -------------------------
@@ -2047,22 +2055,20 @@ package body KeyManager_Module is
 
          --  If we have voluntarily assigned an invalid binding to indicate
          --  a key should be removed, ignore this here as well.
-         if Get_Key (Iter).Key = 0
-           and then Get_Key (Iter).Button = 0
-         then
+         if Get_Key (Iter).Key = 0 and then Get_Key (Iter).Button = 0 then
             Binding := null;
          end if;
 
          while Binding /= null loop
             if Binding.Action /= null
-              and then Equal
-                (Binding.Action.all, Action, Case_Sensitive => False)
-              and then (Get_Key (Iter).Key /= 0
-                        or else Get_Key (Iter).Button /= 0)
+              and then
+                Equal (Binding.Action.all, Action, Case_Sensitive => False)
+              and then
+                (Get_Key (Iter).Key /= 0 or else Get_Key (Iter).Button /= 0)
             then
-               Key    := Get_Key (Iter).Key;
+               Key := Get_Key (Iter).Key;
                Button := Get_Key (Iter).Button;
-               Mods   := Get_Key (Iter).Modifier;
+               Mods := Get_Key (Iter).Modifier;
                return;
             end if;
 
@@ -2072,16 +2078,17 @@ package body KeyManager_Module is
          Get_Next (Keymanager_Module.Table.all, Iter);
       end loop;
 
-      Key    := 0;
+      Key := 0;
       Button := 0;
-      Mods   := 0;
+      Mods := 0;
    end Get_Shortcut_Simple;
 
    ---------------
    -- Customize --
    ---------------
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Keymanager_Module_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : Node_Ptr;
@@ -2093,17 +2100,17 @@ package body KeyManager_Module is
          declare
             Action    : constant String := Get_Attribute_S (Node, "action");
             Exclusive : constant Boolean :=
-                          To_Lower
-                            (Get_Attribute_S
-                               (Node, "exclusive", "true")) = "true";
+              To_Lower (Get_Attribute_S (Node, "exclusive", "true")) = "true";
          begin
             if Action = "" then
                if Node.Value /= null and then Node.Value.all /= "" then
                   Bind_Default_Key_Internal
-                    (Kernel => Get_Kernel (Module.all),
-                     Table  => Keymanager_Module.Table.all,
-                     Action => "",
-                     Key    => Node.Value.all,
+                    (Kernel                               =>
+                       Get_Kernel (Module.all),
+                     Table                                =>
+                       Keymanager_Module.Table.all,
+                     Action                               => "",
+                     Key                                  => Node.Value.all,
                      Save_In_Keys_XML                     => False,
                      Remove_Existing_Shortcuts_For_Action => False,
                      Remove_Existing_Actions_For_Shortcut => Exclusive);
@@ -2111,16 +2118,18 @@ package body KeyManager_Module is
             end if;
 
             if Node.Value = null then
-               Insert (Get_Kernel (Module.all),
-                       -"Invalid key binding for action " & Action,
-                       Mode => Error);
+               Insert
+                 (Get_Kernel (Module.all),
+                  -"Invalid key binding for action " & Action,
+                  Mode => Error);
                raise Assert_Failure;
             end if;
 
             if Node.Child /= null then
                Insert
                  (Get_Kernel (Module.all),
-                  -"Invalid child node for <key> tag", Mode => Error);
+                  -"Invalid child node for <key> tag",
+                  Mode => Error);
                raise Assert_Failure;
             end if;
 
@@ -2128,13 +2137,14 @@ package body KeyManager_Module is
             --  for the same action, so we do not remove existing shortcuts
             --  here.
             Bind_Default_Key_Internal
-              (Table             => Keymanager_Module.Table.all,
-               Kernel            => Get_Kernel (Module.all),
-               Action            => Action,
+              (Table                                =>
+                 Keymanager_Module.Table.all,
+               Kernel                               => Get_Kernel (Module.all),
+               Action                               => Action,
                Remove_Existing_Shortcuts_For_Action => False,
                Remove_Existing_Actions_For_Shortcut => Exclusive,
-               Save_In_Keys_XML  => False,
-               Key               => Node.Value.all);
+               Save_In_Keys_XML                     => False,
+               Key                                  => Node.Value.all);
          end;
       end if;
    end Customize;
@@ -2144,7 +2154,7 @@ package body KeyManager_Module is
    -------------------------
 
    procedure Block_Key_Shortcuts
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -2156,7 +2166,7 @@ package body KeyManager_Module is
    ---------------------------
 
    procedure Unblock_Key_Shortcuts
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -2213,8 +2223,7 @@ package body KeyManager_Module is
       elsif Command = "set_last_command" then
          Name_Parameters (Data, (1 => Command_Cst'Access));
          Free (Keymanager_Module.Last_User_Command);
-         Keymanager_Module.Last_User_Command :=
-           new String'(Nth_Arg (Data, 1));
+         Keymanager_Module.Last_User_Command := new String'(Nth_Arg (Data, 1));
 
       elsif Command = "repeat_next" then
          Name_Parameters (Data, (1 => Count_Cst'Access));
@@ -2240,16 +2249,19 @@ package body KeyManager_Module is
                   Last := Last + 1;
                end loop;
 
-               Value (Key (First .. Last - 1),
-                      Partial_Key, Partial_Button, Modif);
+               Value
+                 (Key (First .. Last - 1), Partial_Key, Partial_Button, Modif);
 
                if Last > Key'Last then
                   if Keymap = null then
-                     Binding := Get (Keymanager_Module.Table.all,
-                                     (Partial_Key, Partial_Button, Modif));
+                     Binding :=
+                       Get
+                         (Keymanager_Module.Table.all,
+                          (Partial_Key, Partial_Button, Modif));
                   else
-                     Binding := Get
-                       (Keymap.Table, (Partial_Key, Partial_Button, Modif));
+                     Binding :=
+                       Get
+                         (Keymap.Table, (Partial_Key, Partial_Button, Modif));
                   end if;
 
                   while Binding /= No_Key loop
@@ -2265,11 +2277,17 @@ package body KeyManager_Module is
                   if Keymap = null then
                      Get_Secondary_Keymap
                        (Keymanager_Module.Table.all,
-                        Partial_Key, Partial_Button, Modif, Keymap);
+                        Partial_Key,
+                        Partial_Button,
+                        Modif,
+                        Keymap);
                   else
                      Get_Secondary_Keymap
-                       (Keymap.Table, Partial_Key,
-                        Partial_Button, Modif, Keymap);
+                       (Keymap.Table,
+                        Partial_Key,
+                        Partial_Button,
+                        Modif,
+                        Keymap);
                      exit when Keymap = null;
                   end if;
                end if;
@@ -2291,35 +2309,36 @@ package body KeyManager_Module is
 
       elsif Command = "send_button_event" then
          declare
-            Window  : constant Gdk.Gdk_Window := Get_Window (Arg => 1);
-            Typ     : constant Gdk_Event_Type :=
+            Window : constant Gdk.Gdk_Window := Get_Window (Arg => 1);
+            Typ    : constant Gdk_Event_Type :=
               Gdk_Event_Type'Val
                 (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Button_Press) - 1) + 1);
-            Button  : constant Integer := Nth_Arg (Data, 3, 1);
-            X       : constant Integer := Nth_Arg (Data, 4, 1);
-            Y       : constant Integer := Nth_Arg (Data, 5, 1);
-            State   : constant Integer := Nth_Arg (Data, 6, 0);
-            Event   : Gdk_Event;
-            Device  : Gdk_Device;
+            Button : constant Integer := Nth_Arg (Data, 3, 1);
+            X      : constant Integer := Nth_Arg (Data, 4, 1);
+            Y      : constant Integer := Nth_Arg (Data, 5, 1);
+            State  : constant Integer := Nth_Arg (Data, 6, 0);
+            Event  : Gdk_Event;
+            Device : Gdk_Device;
          begin
             Gdk_New (Event, Typ);
             Event.Button :=
-               (The_Type    => Typ,
-                Window      => Window,
-                Send_Event  => 1,
-                Time        => 0, --  CURRENT_TIME
-                X           => Gdouble (X),
-                Y           => Gdouble (Y),
-                Axes        => null,
-                State       => Gdk_Modifier_Type (State),
-                Button      => Guint (Button),
-                Device      => System.Null_Address,
-                X_Root      => 0.0,
-                Y_Root      => 0.0);
+              (The_Type   => Typ,
+               Window     => Window,
+               Send_Event => 1,
+               Time       => 0, --  CURRENT_TIME
+               X          => Gdouble (X),
+               Y          => Gdouble (Y),
+               Axes       => null,
+               State      => Gdk_Modifier_Type (State),
+               Button     => Guint (Button),
+               Device     => System.Null_Address,
+               X_Root     => 0.0,
+               Y_Root     => 0.0);
 
-            Device := Gtkada.Style.Get_First_Device
-              (Widget => Get_Kernel (Data).Get_Main_Window,
-               Source => Source_Mouse);
+            Device :=
+              Gtkada.Style.Get_First_Device
+                (Widget => Get_Kernel (Data).Get_Main_Window,
+                 Source => Source_Mouse);
             Device.Ref;
             Set_Device (Event, Device);
             Device.Ref;
@@ -2331,36 +2350,36 @@ package body KeyManager_Module is
 
       elsif Command = "send_crossing_event" then
          declare
-            Window  : constant Gdk.Gdk_Window := Get_Window (Arg => 1);
-            Typ     : constant Gdk_Event_Type :=
+            Window : constant Gdk.Gdk_Window := Get_Window (Arg => 1);
+            Typ    : constant Gdk_Event_Type :=
               Gdk_Event_Type'Val
-                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Enter_Notify) - 1)
-                   + 1);
-            X       : constant Integer := Nth_Arg (Data, 3, 1);
-            Y       : constant Integer := Nth_Arg (Data, 4, 1);
-            State   : constant Integer := Nth_Arg (Data, 5, 0);
-            Event   : Gdk_Event;
-            Device  : Gdk_Device;
+                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Enter_Notify) - 1) + 1);
+            X      : constant Integer := Nth_Arg (Data, 3, 1);
+            Y      : constant Integer := Nth_Arg (Data, 4, 1);
+            State  : constant Integer := Nth_Arg (Data, 5, 0);
+            Event  : Gdk_Event;
+            Device : Gdk_Device;
          begin
             Gdk_New (Event, Typ);
             Event.Crossing :=
-               (The_Type    => Typ,
-                Window      => Window,
-                Send_Event  => 1,
-                Time        => 0, --  CURRENT_TIME
-                X           => Gdouble (X),
-                Y           => Gdouble (Y),
-                State       => Gdk_Modifier_Type (State),
-                X_Root      => 0.0,
-                Y_Root      => 0.0,
-                Subwindow   => null,
-                Mode        => Crossing_Normal,
-                Detail      => Notify_Ancestor,
-                Focus       => False);
+              (The_Type   => Typ,
+               Window     => Window,
+               Send_Event => 1,
+               Time       => 0, --  CURRENT_TIME
+               X          => Gdouble (X),
+               Y          => Gdouble (Y),
+               State      => Gdk_Modifier_Type (State),
+               X_Root     => 0.0,
+               Y_Root     => 0.0,
+               Subwindow  => null,
+               Mode       => Crossing_Normal,
+               Detail     => Notify_Ancestor,
+               Focus      => False);
 
-            Device := Gtkada.Style.Get_First_Device
-              (Widget => Get_Kernel (Data).Get_Main_Window,
-               Source => Source_Mouse);
+            Device :=
+              Gtkada.Style.Get_First_Device
+                (Widget => Get_Kernel (Data).Get_Main_Window,
+                 Source => Source_Mouse);
             Device.Ref;
             Set_Device (Event, Device);
             Device.Ref;
@@ -2375,33 +2394,30 @@ package body KeyManager_Module is
             use type Gdk.Gdk_Window;
             use Widget_List;
 
-            Keyval  : constant Gdk_Key_Type :=
-               Gdk_Key_Type (Integer'(Nth_Arg (Data, 1)));
-            Window  : Gdk.Gdk_Window := From_PyGtk (Data, 2);
-            Primary : constant Boolean := Nth_Arg (Data, 3, False);
-            Alt     : constant Boolean := Nth_Arg (Data, 4, False);
-            Shift   : constant Boolean := Nth_Arg (Data, 5, False);
-            Control : constant Boolean := Nth_Arg (Data, 6, False);
-            Keycode : constant Guint16 := Guint16 (Nth_Arg (Data, 7, 0));
-            Event   : Gdk_Event;
-            List, List2    : Widget_List.Glist;
-            Win     : Gtk_Widget;
-            Device  : Gdk_Device;
+            Keyval      : constant Gdk_Key_Type :=
+              Gdk_Key_Type (Integer'(Nth_Arg (Data, 1)));
+            Window      : Gdk.Gdk_Window := From_PyGtk (Data, 2);
+            Primary     : constant Boolean := Nth_Arg (Data, 3, False);
+            Alt         : constant Boolean := Nth_Arg (Data, 4, False);
+            Shift       : constant Boolean := Nth_Arg (Data, 5, False);
+            Control     : constant Boolean := Nth_Arg (Data, 6, False);
+            Keycode     : constant Guint16 := Guint16 (Nth_Arg (Data, 7, 0));
+            Event       : Gdk_Event;
+            List, List2 : Widget_List.Glist;
+            Win         : Gtk_Widget;
+            Device      : Gdk_Device;
          begin
             if Window = null then
                List := List_Toplevels;
                List2 := List;
                while List2 /= Null_List loop
                   Win := Get_Data (List2);
-                  if Win /= null
-                    and then Gtk_Window (Win).Has_Toplevel_Focus
+                  if Win /= null and then Gtk_Window (Win).Has_Toplevel_Focus
                   then
                      Window := Get_Window (Win);
                      exit;
 
-                  elsif Win /= null
-                    and then Get_Window (Win) /= null
-                  then
+                  elsif Win /= null and then Get_Window (Win) /= null then
                      Window := Get_Window (Win);
                   end if;
 
@@ -2413,17 +2429,17 @@ package body KeyManager_Module is
 
             Gdk_New (Event, Gdk.Event.Key_Press);
             Event.Key :=
-               (The_Type         => Gdk.Event.Key_Press,
-                Window           => Window,
-                Keyval           => Keyval,
-                Send_Event       => 1,
-                Time             => 0, --  CURRENT_TIME
-                Is_Modifier      => 0,
-                Group            => 0,
-                State            => 0,
-                Length           => 1,
-                String           => Null_Ptr,
-                Hardware_Keycode => Keycode);
+              (The_Type         => Gdk.Event.Key_Press,
+               Window           => Window,
+               Keyval           => Keyval,
+               Send_Event       => 1,
+               Time             => 0, --  CURRENT_TIME
+               Is_Modifier      => 0,
+               Group            => 0,
+               State            => 0,
+               Length           => 1,
+               String           => Null_Ptr,
+               Hardware_Keycode => Keycode);
             Ref (Event.Key.Window);
 
             if Primary then
@@ -2442,9 +2458,10 @@ package body KeyManager_Module is
                Event.Key.State := Event.Key.State or Mod1_Mask;
             end if;
 
-            Device := Gtkada.Style.Get_First_Device
-              (Widget => Get_Kernel (Data).Get_Main_Window,
-               Source => Source_Keyboard);
+            Device :=
+              Gtkada.Style.Get_First_Device
+                (Widget => Get_Kernel (Data).Get_Main_Window,
+                 Source => Source_Keyboard);
             Device.Ref;
             Set_Device (Event, Device);
             Device.Ref;
@@ -2470,10 +2487,10 @@ package body KeyManager_Module is
    --------------------
 
    function Is_Numeric_Key
-     (Key      : Gdk_Key_Type;
-      Modifier : Gdk_Modifier_Type) return Boolean is
+     (Key : Gdk_Key_Type; Modifier : Gdk_Modifier_Type) return Boolean is
    begin
-      return (Modifier = 0 or else Modifier = Shift_Mask)
+      return
+        (Modifier = 0 or else Modifier = Shift_Mask)
         and then
           (Key in GDK_KP_0 .. GDK_KP_9
            or else Key in GDK_0 .. GDK_9
@@ -2490,11 +2507,10 @@ package body KeyManager_Module is
       Command   : access Interactive_Command'Class) is
    begin
       Free (Keymanager_Module.Argument_Current);
-      Keymanager_Module.Argument_Current   := new String'("");
+      Keymanager_Module.Argument_Current := new String'("");
       Keymanager_Module.Argument_Validator := Validator;
-      Keymanager_Module.Argument_Callback  := Callback;
-      Keymanager_Module.Argument_Data      :=
-        Interactive_Command_Access (Command);
+      Keymanager_Module.Argument_Callback := Callback;
+      Keymanager_Module.Argument_Data := Interactive_Command_Access (Command);
    end Read_Action_Argument;
 
    ----------------------------------
@@ -2502,8 +2518,7 @@ package body KeyManager_Module is
    ----------------------------------
 
    procedure On_Repeat_Next_Argument_Read
-     (Command  : Interactive_Command'Class;
-      Argument : String)
+     (Command : Interactive_Command'Class; Argument : String)
    is
       pragma Unreferenced (Command);
    begin
@@ -2517,7 +2532,8 @@ package body KeyManager_Module is
    -- Execute --
    -------------
 
-   overriding function Execute
+   overriding
+   function Execute
      (Command : access Repeat_Next_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type
@@ -2526,9 +2542,7 @@ package body KeyManager_Module is
    begin
       --  Read a numeric argument
       Read_Action_Argument
-        (Is_Numeric_Key'Access,
-         On_Repeat_Next_Argument_Read'Access,
-         Command);
+        (Is_Numeric_Key'Access, On_Repeat_Next_Argument_Read'Access, Command);
       return Commands.Success;
    end Execute;
 
@@ -2558,17 +2572,14 @@ package body KeyManager_Module is
       Keymanager_Module := new Keymanager_Module_Record;
       Keymanager_Module.Table := new Key_Htable.Instance;
 
-      Register_Module
-        (Keymanager_Module, Kernel, "keymanager");
+      Register_Module (Keymanager_Module, Kernel, "keymanager");
 
       if Active (Event_Debug_Trace) then
          Event_Handler_Kernel.Handler_Set
-           (Debug_Event_Handler'Access,
-            Kernel_Handle (Kernel));
+           (Debug_Event_Handler'Access, Kernel_Handle (Kernel));
       else
          Event_Handler_Kernel.Handler_Set
-           (General_Event_Handler'Access,
-            Kernel_Handle (Kernel));
+           (General_Event_Handler'Access, Kernel_Handle (Kernel));
       end if;
 
       Create_New_Key_If_Necessary
@@ -2582,8 +2593,11 @@ package body KeyManager_Module is
       Register_Command
         (Kernel, "repeat_next", 1, 1, Keymanager_Command_Handler'Access);
       Register_Command
-        (Kernel, "lookup_actions_from_key", 1, 1,
-           Keymanager_Command_Handler'Access);
+        (Kernel,
+         "lookup_actions_from_key",
+         1,
+         1,
+         Keymanager_Command_Handler'Access);
       Register_Command
         (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
 
@@ -2616,12 +2630,13 @@ package body KeyManager_Module is
          Keymanager_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        ("process_all_events", No_Params,
-         Keymanager_Command_Handler'Access);
+        ("process_all_events", No_Params, Keymanager_Command_Handler'Access);
 
       Command := new Repeat_Next_Command;
       Register_Action
-        (Kernel, "Repeat Next", Command,
+        (Kernel,
+         "Repeat Next",
+         Command,
          -("Repeat the next action a number of times. Executing this action"
            & " takes a numeric argument (read from the keyboard). For"
            & " instance, if this is associated with ctrl-u, you can type"
@@ -2632,15 +2647,18 @@ package body KeyManager_Module is
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
       Set_Key_Setter
-        (Kernel, Set_Default_Key'Access,
-         Get_Shortcut'Access, Get_Shortcut_Simple'Access);
+        (Kernel,
+         Set_Default_Key'Access,
+         Get_Shortcut'Access,
+         Get_Shortcut_Simple'Access);
    end Register_Module;
 
    -------------
    -- Execute --
    -------------
 
-   overriding procedure Execute
+   overriding
+   procedure Execute
      (Self   : On_Pref_Changed;
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
@@ -2656,7 +2674,7 @@ package body KeyManager_Module is
 
    procedure Register_Key_Menu
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      renames Standard.KeyManager_Module.GUI.Register_Key_Menu;
+   renames Standard.KeyManager_Module.GUI.Register_Key_Menu;
 
    ---------------------
    -- Set_GUI_Running --
@@ -2672,8 +2690,8 @@ package body KeyManager_Module is
    -----------------------------
 
    function Lookup_Actions_From_Key
-     (Key      : String;
-      Bindings : HTable_Access) return GNATCOLL.Utils.Unbounded_String_Array
+     (Key : String; Bindings : HTable_Access)
+      return GNATCOLL.Utils.Unbounded_String_Array
    is
       use Ada.Strings.Unbounded;
 
@@ -2695,21 +2713,25 @@ package body KeyManager_Module is
          Value (Key (First .. Last - 1), Partial_Key, Partial_Button, Modif);
 
          if Keymap = null then
-            List := Get
-              (Bindings.all, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            List :=
+              Get
+                (Bindings.all,
+                 Key_Binding'(Partial_Key, Partial_Button, Modif));
             Get_Secondary_Keymap
               (Bindings.all, Partial_Key, Partial_Button, Modif, Keymap);
          else
-            List := Get
-              (Keymap.Table, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            List :=
+              Get
+                (Keymap.Table,
+                 Key_Binding'(Partial_Key, Partial_Button, Modif));
             Get_Secondary_Keymap
               (Keymap.Table, Partial_Key, Partial_Button, Modif, Keymap);
          end if;
 
          while List /= null loop
             if List.Action /= null then
-               Actions := Actions
-                 & To_Unbounded_String (List.Action.all) & ASCII.LF;
+               Actions :=
+                 Actions & To_Unbounded_String (List.Action.all) & ASCII.LF;
             end if;
 
             List := List.Next;
@@ -2746,8 +2768,7 @@ package body KeyManager_Module is
       -- Dump_Actions --
       ------------------
 
-      procedure Dump_Actions
-        (Bindings : Key_Htable.Instance; Prefix : String)
+      procedure Dump_Actions (Bindings : Key_Htable.Instance; Prefix : String)
       is
          List : Key_Description_List;
          Pos  : Key_Htable.Cursor;
@@ -2757,20 +2778,24 @@ package body KeyManager_Module is
          List := Get_Element (Pos);
 
          while List /= null loop
-            Key  := Get_Key (Pos);
+            Key := Get_Key (Pos);
             while List /= null loop
                if List.Action /= null then
                   Append
                     (Result,
                      List.Action.all
-                     & " (" & Prefix & ' '
-                     & Image
-                       (Key.Key, Key.Button, Key.Modifier) & ')' & Separator);
+                     & " ("
+                     & Prefix
+                     & ' '
+                     & Image (Key.Key, Key.Button, Key.Modifier)
+                     & ')'
+                     & Separator);
                   if List.Keymap /= null then
                      Dump_Actions
                        (List.Keymap.Table,
-                        Prefix & ' ' & Image
-                          (Key.Key, Key.Button, Key.Modifier));
+                        Prefix
+                        & ' '
+                        & Image (Key.Key, Key.Button, Key.Modifier));
                   end if;
                end if;
                List := List.Next;
@@ -2792,27 +2817,34 @@ package body KeyManager_Module is
          Value (Key (First .. Last - 1), Partial_Key, Partial_Button, Modif);
 
          if Keymap = null then
-            List := Get
-              (Bindings.all, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            List :=
+              Get
+                (Bindings.all,
+                 Key_Binding'(Partial_Key, Partial_Button, Modif));
             Get_Secondary_Keymap
               (Bindings.all, Partial_Key, Partial_Button, Modif, Keymap);
          else
-            List := Get
-              (Keymap.Table, Key_Binding'(Partial_Key, Partial_Button, Modif));
+            List :=
+              Get
+                (Keymap.Table,
+                 Key_Binding'(Partial_Key, Partial_Button, Modif));
             Get_Secondary_Keymap
               (Keymap.Table, Partial_Key, Partial_Button, Modif, Keymap);
          end if;
 
-            while List /= null loop
-               if List.Action /= null then
-                  Append
-                    (Result,
-                     List.Action.all
-                     & " (" & Key (Key'First .. Last - 1) & ")" & Separator);
-               end if;
+         while List /= null loop
+            if List.Action /= null then
+               Append
+                 (Result,
+                  List.Action.all
+                  & " ("
+                  & Key (Key'First .. Last - 1)
+                  & ")"
+                  & Separator);
+            end if;
 
-               List := List.Next;
-            end loop;
+            List := List.Next;
+         end loop;
 
          if Last = Key'Last + 1 then
             if Keymap /= null then
@@ -2840,12 +2872,13 @@ package body KeyManager_Module is
       Dummy : aliased Boolean;
    begin
       if Lookup_Key_From_Action
-        (Table           => Keymanager_Module.Table,
-         Action          => Action,
-         Default         => "",
-         Use_Markup      => False,
-         Return_Multiple => True,
-         Is_User_Changed => Dummy'Access) = ""
+           (Table           => Keymanager_Module.Table,
+            Action          => Action,
+            Default         => "",
+            Use_Markup      => False,
+            Return_Multiple => True,
+            Is_User_Changed => Dummy'Access)
+        = ""
       then
          --  No key is already defined for this action: set it now.
          Bind_Default_Key_Internal

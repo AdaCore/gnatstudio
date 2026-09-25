@@ -15,23 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Regpat; use GNAT.Regpat;
 
 with Debugger.Base_Gdb.Ada;
 
 package body GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
 
    Value_Pattern : constant Pattern_Matcher :=
-     Compile ("^\(\s*max_length\s+=>\s+(\d+),\s+counter\s+=>\s+\(\s*value" &
-                "\s+=>\s+(\d+)\s*\),\s+last\s+=>\s+(\d+),\s+" &
-                "data\s+=>\s+""([\s\S]+)""");
+     Compile
+       ("^\(\s*max_length\s+=>\s+(\d+),\s+counter\s+=>\s+\(\s*value"
+        & "\s+=>\s+(\d+)\s*\),\s+last\s+=>\s+(\d+),\s+"
+        & "data\s+=>\s+""([\s\S]+)""");
 
    -----------
    -- Clear --
    -----------
 
-   overriding procedure Clear
-     (Self : not null access GVD_Ada_Unbounded_String_Type) is
+   overriding
+   procedure Clear (Self : not null access GVD_Ada_Unbounded_String_Type) is
    begin
       Self.Value := Null_Unbounded_String;
       GVD_Class_Type (Self.all).Clear;
@@ -41,7 +42,8 @@ package body GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
    -- Clone --
    -----------
 
-   overriding procedure Clone
+   overriding
+   procedure Clone
      (Self : not null access GVD_Ada_Unbounded_String_Type;
       Item : not null GVD_Generic_Type_Access) is
    begin
@@ -53,12 +55,10 @@ package body GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
    -- Create --
    ------------
 
-   function Create return GVD_Type_Holder
-   is
+   function Create return GVD_Type_Holder is
       Data : constant GVD_Type_Holder_Data_Access :=
         new GVD_Type_Holder_Data'
-          (Count    => 1,
-           Instance => new GVD_Ada_Unbounded_String_Type (1));
+          (Count => 1, Instance => new GVD_Ada_Unbounded_String_Type (1));
    begin
       return GVD_Type_Holder'(Standard.Ada.Finalization.Controlled with Data);
    end Create;
@@ -67,7 +67,8 @@ package body GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
    -- Get_Simple_Value --
    ----------------------
 
-   overriding function Get_Simple_Value
+   overriding
+   function Get_Simple_Value
      (Self : not null access GVD_Ada_Unbounded_String_Type) return String is
    begin
       return To_String (Self.Value);
@@ -77,9 +78,9 @@ package body GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
    -- Get_Value_Command --
    -----------------------
 
-   overriding function Get_Value_Command
-     (Self   : not null access GVD_Ada_Unbounded_String_Type;
-      Entity : String)
+   overriding
+   function Get_Value_Command
+     (Self : not null access GVD_Ada_Unbounded_String_Type; Entity : String)
       return String
    is
       pragma Unreferenced (Self);
@@ -91,25 +92,25 @@ package body GVD.Variables.Types.Classes.Ada.Strings.Unbounded is
    -- Set_Value --
    ---------------
 
-   overriding procedure Set_Value
-     (Self  : not null access GVD_Ada_Unbounded_String_Type;
-      Value : String)
+   overriding
+   procedure Set_Value
+     (Self : not null access GVD_Ada_Unbounded_String_Type; Value : String)
    is
       Matched : Match_Array (0 .. 4);
    begin
       Match (Value_Pattern, Value, Matched);
-      if Matched (3) /= No_Match
-        and then Matched (4) /= No_Match
-      then
+      if Matched (3) /= No_Match and then Matched (4) /= No_Match then
          declare
             S : constant String :=
               Value (Matched (4).First .. Matched (4).Last);
-            L : constant Integer := Integer'Value
-              (Value (Matched (3).First .. Matched (3).Last));
+            L : constant Integer :=
+              Integer'Value (Value (Matched (3).First .. Matched (3).Last));
          begin
-            Self.Value := To_Unbounded_String
-              ('"' & S (S'First .. Integer'Min (S'First + L - 1, S'Last)) &
-              '"');
+            Self.Value :=
+              To_Unbounded_String
+                ('"'
+                 & S (S'First .. Integer'Min (S'First + L - 1, S'Last))
+                 & '"');
          end;
       end if;
    end Set_Value;

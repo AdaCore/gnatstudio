@@ -17,68 +17,72 @@
 
 with Ada.Unchecked_Conversion;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Scripts.Gtkada;
+use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNAT.Strings;
 with System;
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
+with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
 with Glib.Values;
-with Glib_Values_Utils;         use Glib_Values_Utils;
+with Glib_Values_Utils; use Glib_Values_Utils;
 
-with Gdk.Event;                 use Gdk.Event;
+with Gdk.Event; use Gdk.Event;
 
-with Gtk.Box;                   use Gtk.Box;
+with Gtk.Box;                use Gtk.Box;
 with Gtk.Enums;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Widget;             use Gtk.Widget;
 
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Tree_View;          use Gtkada.Tree_View;
+with Gtkada.Handlers;  use Gtkada.Handlers;
+with Gtkada.MDI;       use Gtkada.MDI;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
+with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 
-with Custom_Module;             use Custom_Module;
-with GUI_Utils;                 use GUI_Utils;
-with XML_Utils;                 use XML_Utils;
-with XML_Parsers;               use XML_Parsers;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
+with Custom_Module;      use Custom_Module;
+with GUI_Utils;          use GUI_Utils;
+with XML_Utils;          use XML_Utils;
+with XML_Parsers;        use XML_Parsers;
+with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.VFS;       use GNATCOLL.VFS;
+with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 
 package body XML_Viewer is
    Me : constant Trace_Handle := Create ("GPS.CUSTOM.XML");
 
-   type XML_Viewer_Record is abstract new Abstract_XML_Viewer_Record with
-      record
-         Child          : GPS_MDI_Child;
-         Tree           : Tree_View;
-         Sorted         : Boolean := False;
-         Sort_Column    : Gint;
-         Command_Column : Gint;
-         XML_Column     : Gint;
-         XML            : Node_Ptr;
-      end record;
+   type XML_Viewer_Record is abstract new Abstract_XML_Viewer_Record
+   with record
+      Child          : GPS_MDI_Child;
+      Tree           : Tree_View;
+      Sorted         : Boolean := False;
+      Sort_Column    : Gint;
+      Command_Column : Gint;
+      XML_Column     : Gint;
+      XML            : Node_Ptr;
+   end record;
    type XML_Viewer is access all XML_Viewer_Record'Class;
 
    type Metrix_XML_Viewer_Record is new XML_Viewer_Record with record
       File : GNAT.Strings.String_Access;
    end record;
-   overriding function Node_Parser
+   overriding
+   function Node_Parser
      (View        : access Metrix_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;
       Child_Index : Positive) return Gtk_Tree_Iter;
-   overriding procedure Free (View : access Metrix_XML_Viewer_Record);
-   overriding function On_Click
+   overriding
+   procedure Free (View : access Metrix_XML_Viewer_Record);
+   overriding
+   function On_Click
      (View         : access Metrix_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -91,13 +95,16 @@ package body XML_Viewer is
       On_Select : Subprogram_Type;
       Columns   : Integer;
    end record;
-   overriding function Node_Parser
+   overriding
+   function Node_Parser
      (View        : access Custom_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;
       Child_Index : Positive) return Gtk_Tree_Iter;
-   overriding procedure Free (View : access Custom_XML_Viewer_Record);
-   overriding function On_Click
+   overriding
+   procedure Free (View : access Custom_XML_Viewer_Record);
+   overriding
+   function On_Click
      (View         : access Custom_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -105,8 +112,7 @@ package body XML_Viewer is
    --  See inherited documentation
 
    function Create_Callback_Data
-     (Sub  : Subprogram_Type;
-      Node : Node_Ptr) return Callback_Data'Class;
+     (Sub : Subprogram_Type; Node : Node_Ptr) return Callback_Data'Class;
    --  Create the callback data for subprograms called on this row.
    --  Returned value must be freed by the caller
 
@@ -115,8 +121,8 @@ package body XML_Viewer is
    -----------------------
 
    function On_Button_Press
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
    --  Called on a click on the tree view
 
    procedure XML_Commands_Handler
@@ -146,9 +152,9 @@ package body XML_Viewer is
      (View     : access XML_Viewer_Record'Class;
       Parent   : Gtk_Tree_Iter;
       Col0     : String;
-      Sort_On  : String  := "";
-      Col1     : String  := "";
-      On_Click : String  := "") return Gtk_Tree_Iter;
+      Sort_On  : String := "";
+      Col1     : String := "";
+      On_Click : String := "") return Gtk_Tree_Iter;
    --  Add a new row to the model.
    --  Name and Value are displayed in the visible columns.
    --  Sort_On, if specified, is the sorting string used to sort columns. If
@@ -160,7 +166,8 @@ package body XML_Viewer is
    -- Free --
    ----------
 
-   overriding procedure Free (View : access Custom_XML_Viewer_Record) is
+   overriding
+   procedure Free (View : access Custom_XML_Viewer_Record) is
    begin
       Free (View.Parser);
       Free (View.On_Click);
@@ -172,8 +179,7 @@ package body XML_Viewer is
    --------------------------
 
    function Create_Callback_Data
-     (Sub  : Subprogram_Type;
-      Node : Node_Ptr) return Callback_Data'Class
+     (Sub : Subprogram_Type; Node : Node_Ptr) return Callback_Data'Class
    is
       Script : constant Scripting_Language := Get_Script (Sub.all);
       C      : Callback_Data'Class := Create (Script, 3);
@@ -198,7 +204,8 @@ package body XML_Viewer is
    -- Node_Parser --
    -----------------
 
-   overriding function Node_Parser
+   overriding
+   function Node_Parser
      (View        : access Custom_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;
@@ -210,7 +217,7 @@ package body XML_Viewer is
    begin
       if View.Parser /= null then
          declare
-            C : Callback_Data'Class :=
+            C   : Callback_Data'Class :=
               Create_Callback_Data (View.Parser, Node);
             Tmp : GNAT.Strings.String_List := Execute (View.Parser, C);
          begin
@@ -277,7 +284,8 @@ package body XML_Viewer is
    -- On_Click --
    --------------
 
-   overriding function On_Click
+   overriding
+   function On_Click
      (View         : access Custom_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -317,7 +325,8 @@ package body XML_Viewer is
    -- On_Click --
    --------------
 
-   overriding function On_Click
+   overriding
+   function On_Click
      (View         : access Metrix_XML_Viewer_Record;
       Double_Click : Boolean;
       Iter         : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -325,7 +334,7 @@ package body XML_Viewer is
    is
       pragma Unreferenced (Node);
       Cmd : constant String :=
-              Get_String (View.Tree.Model, Iter, View.Command_Column);
+        Get_String (View.Tree.Model, Iter, View.Command_Column);
    begin
       if Double_Click then
          if Cmd /= "" then
@@ -343,12 +352,12 @@ package body XML_Viewer is
    ---------------------
 
    function On_Button_Press
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean
    is
       pragma Warnings (Off);
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Node_Ptr);
+      function Convert is new
+        Ada.Unchecked_Conversion (System.Address, Node_Ptr);
       pragma Warnings (On);
 
       View : constant XML_Viewer := XML_Viewer (Widget);
@@ -362,11 +371,12 @@ package body XML_Viewer is
          if Iter /= Null_Iter then
             N :=
               Convert (Get_Address (View.Tree.Model, Iter, View.XML_Column));
-            return On_Click
-              (View         => View,
-               Double_Click => Get_Event_Type (Event) = Gdk_2button_Press,
-               Iter         => Iter,
-               Node         => N);
+            return
+              On_Click
+                (View         => View,
+                 Double_Click => Get_Event_Type (Event) = Gdk_2button_Press,
+                 Iter         => Iter,
+                 Node         => N);
          end if;
       end if;
 
@@ -382,12 +392,12 @@ package body XML_Viewer is
    ---------------------
 
    function Set_Row_Content
-     (View      : access XML_Viewer_Record'Class;
-      Parent    : Gtk_Tree_Iter;
-      Col0      : String;
-      Sort_On   : String  := "";
-      Col1      : String  := "";
-      On_Click  : String  := "") return Gtk_Tree_Iter
+     (View     : access XML_Viewer_Record'Class;
+      Parent   : Gtk_Tree_Iter;
+      Col0     : String;
+      Sort_On  : String := "";
+      Col1     : String := "";
+      On_Click : String := "") return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter;
 
@@ -429,7 +439,8 @@ package body XML_Viewer is
    -- Free --
    ----------
 
-   overriding procedure Free (View : access Metrix_XML_Viewer_Record) is
+   overriding
+   procedure Free (View : access Metrix_XML_Viewer_Record) is
    begin
       GNAT.Strings.Free (View.File);
    end Free;
@@ -438,7 +449,8 @@ package body XML_Viewer is
    -- Node_Parser --
    -----------------
 
-   overriding function Node_Parser
+   overriding
+   function Node_Parser
      (View        : access Metrix_XML_Viewer_Record;
       Parent      : Gtk_Tree_Iter;
       Node        : Node_Ptr;
@@ -481,28 +493,36 @@ package body XML_Viewer is
       if Node.Tag.all = "file" then
          GNAT.Strings.Free (View.File);
          View.File := new String'(Get_Attribute_S (Node, "name"));
-         return Set_Row_Content
-           (View, Parent,
-            Col0      => "<b>" & Base_Name (Name) & "</b>",
-            Sort_On   => Base_Name (Name),
-            On_Click  => "Editor.edit """"""" & Name & """""""");
+         return
+           Set_Row_Content
+             (View,
+              Parent,
+              Col0     => "<b>" & Base_Name (Name) & "</b>",
+              Sort_On  => Base_Name (Name),
+              On_Click => "Editor.edit """"""" & Name & """""""");
 
       elsif Node.Tag.all = "unit" then
-         return Set_Row_Content
-           (View, Parent,
-            Col0      => "<b>" & Name & "</b>" & Get_Kind,
-            On_Click  =>
-              "Editor.edit """""""
-            & View.File.all & """"""" "
-            & Get_Attribute_S (Node, "line") & " "
-            & Get_Attribute_S (Node, "col"));
+         return
+           Set_Row_Content
+             (View,
+              Parent,
+              Col0     => "<b>" & Name & "</b>" & Get_Kind,
+              On_Click =>
+                "Editor.edit """""""
+                & View.File.all
+                & """"""" "
+                & Get_Attribute_S (Node, "line")
+                & " "
+                & Get_Attribute_S (Node, "col"));
 
       elsif Node.Tag.all = "metric" then
-         return Set_Row_Content
-           (View, Parent,
-            Col0    => Name,
-            Sort_On => Right_Align,
-            Col1    => Node.Value.all);
+         return
+           Set_Row_Content
+             (View,
+              Parent,
+              Col0    => Name,
+              Sort_On => Right_Align,
+              Col1    => Node.Value.all);
       else
          return Null_Iter;
       end if;
@@ -526,9 +546,7 @@ package body XML_Viewer is
       pragma Unreferenced (Dummy);
 
       procedure Parse_Node
-        (N           : Node_Ptr;
-         Parent      : Gtk_Tree_Iter;
-         Child_Index : Natural);
+        (N : Node_Ptr; Parent : Gtk_Tree_Iter; Child_Index : Natural);
       --  Add a metrix node to the tree
 
       ----------------
@@ -536,19 +554,18 @@ package body XML_Viewer is
       ----------------
 
       procedure Parse_Node
-        (N           : Node_Ptr;
-         Parent      : Gtk_Tree_Iter;
-         Child_Index : Natural)
+        (N : Node_Ptr; Parent : Gtk_Tree_Iter; Child_Index : Natural)
       is
          C     : Node_Ptr;
          Iter  : Gtk_Tree_Iter;
          Index : Natural := 1;
       begin
-         Iter := Node_Parser
-           (View        => View,
-            Parent      => Parent,
-            Node        => N,
-            Child_Index => Child_Index);
+         Iter :=
+           Node_Parser
+             (View        => View,
+              Parent      => Parent,
+              Node        => N,
+              Child_Index => Child_Index);
 
          if Iter /= Null_Iter then
             --  This is valid because N and its tree belongs to View, and are
@@ -559,7 +576,7 @@ package body XML_Viewer is
             while C /= null loop
                Parse_Node (C, Iter, Index);
                Index := Index + 1;
-               C     := C.Next;
+               C := C.Next;
             end loop;
          end if;
       end Parse_Node;
@@ -636,8 +653,7 @@ package body XML_Viewer is
    -- On_Destroy --
    ----------------
 
-   procedure On_Destroy
-     (View : access Gtk_Widget_Record'Class) is
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
    begin
       Free (XML_Viewer (View));
       Free (XML_Viewer (View).XML);
@@ -659,7 +675,7 @@ package body XML_Viewer is
       pragma Unreferenced (Ignore);
       Scroll       : Gtk_Scrolled_Window;
       Column_Types : Glib.GType_Array (1 .. Guint (Columns) + 3) :=
-                       (others => GType_String);
+        (others => GType_String);
    begin
       Column_Types (Guint (Columns) + 3) := GType_Pointer;
 
@@ -668,12 +684,13 @@ package body XML_Viewer is
       Gtk_New (Scroll);
 
       Gtk_New (View.Tree, Column_Types);
-      View.Sort_Column    := Gint (Columns);
+      View.Sort_Column := Gint (Columns);
       View.Command_Column := Gint (Columns) + 1;
-      View.XML_Column     := Gint (Columns) + 2;
+      View.XML_Column := Gint (Columns) + 2;
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (View.Tree, Signal_Button_Press_Event,
+        (View.Tree,
+         Signal_Button_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (On_Button_Press'Access),
          Slot_Object => View,
@@ -686,10 +703,13 @@ package body XML_Viewer is
 
       Pack_Start (View, Scroll);
 
-      Gtk_New (View.Child, View, Kernel, Group => Group_View,
-               Module => Custom_Module_ID);
-      Put (Get_MDI (Kernel), View.Child,
-           Initial_Position => Position_Left);
+      Gtk_New
+        (View.Child,
+         View,
+         Kernel,
+         Group  => Group_View,
+         Module => Custom_Module_ID);
+      Put (Get_MDI (Kernel), View.Child, Initial_Position => Position_Left);
 
       --  Create the columns
 
@@ -724,7 +744,7 @@ package body XML_Viewer is
    is
       Kernel           : constant Kernel_Handle := Get_Kernel (Data);
       XML_Viewer_Class : constant Class_Type :=
-                           New_Class (Kernel, "XMLViewer");
+        New_Class (Kernel, "XMLViewer");
       Inst             : Class_Instance := No_Class_Instance;
       View             : XML_Viewer;
    begin
@@ -739,7 +759,8 @@ package body XML_Viewer is
          View.Sorted := Nth_Arg (Data, 7, False);
          Custom_XML_Viewer_Record (View.all).Columns := Nth_Arg (Data, 3, 3);
          Initialize_XML_Viewer
-           (View, Kernel,
+           (View,
+            Kernel,
             Name    => Nth_Arg (Data, 2),
             Columns => Custom_XML_Viewer_Record (View.all).Columns);
          Set_Data (Inst, Widget => GObject (View));
@@ -748,7 +769,7 @@ package body XML_Viewer is
          declare
             Name  : constant String := Nth_Arg (Data, 1);
             Child : constant MDI_Child :=
-                      Find_MDI_Child_By_Name (Get_MDI (Kernel), Name);
+              Find_MDI_Child_By_Name (Get_MDI (Kernel), Name);
          begin
             if Child /= null then
                View := XML_Viewer (Child.Get_Widget);
@@ -806,7 +827,7 @@ package body XML_Viewer is
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
       XML_Viewer_Class : constant Class_Type :=
-                           New_Class (Kernel, "XMLViewer");
+        New_Class (Kernel, "XMLViewer");
    begin
       Kernel.Scripts.Register_Command
         (Constructor_Method,
@@ -821,30 +842,30 @@ package body XML_Viewer is
          Handler => XML_Commands_Handler'Access);
 
       Kernel.Scripts.Register_Command
-         ("get_existing",
-          Class         => XML_Viewer_Class,
-          Params        => (1 => Param ("name")),
-          Static_Method => True,
-          Handler       => XML_Commands_Handler'Access);
+        ("get_existing",
+         Class         => XML_Viewer_Class,
+         Params        => (1 => Param ("name")),
+         Static_Method => True,
+         Handler       => XML_Commands_Handler'Access);
 
       Kernel.Scripts.Register_Command
-         ("create_metric",
-          Class         => XML_Viewer_Class,
-          Params        => (1 => Param ("name")),
-          Static_Method => True,
-          Handler       => XML_Commands_Handler'Access);
+        ("create_metric",
+         Class         => XML_Viewer_Class,
+         Params        => (1 => Param ("name")),
+         Static_Method => True,
+         Handler       => XML_Commands_Handler'Access);
 
       Kernel.Scripts.Register_Command
-         ("parse",
-          Params  => (1 => Param ("filename")),
-          Class   => XML_Viewer_Class,
-          Handler => XML_Commands_Handler'Access);
+        ("parse",
+         Params  => (1 => Param ("filename")),
+         Class   => XML_Viewer_Class,
+         Handler => XML_Commands_Handler'Access);
 
       Kernel.Scripts.Register_Command
-         ("parse_string",
-          Params  => (1 => Param ("str")),
-          Class   => XML_Viewer_Class,
-          Handler => XML_Commands_Handler'Access);
+        ("parse_string",
+         Params  => (1 => Param ("str")),
+         Class   => XML_Viewer_Class,
+         Handler => XML_Commands_Handler'Access);
    end Register_Commands;
 
 end XML_Viewer;

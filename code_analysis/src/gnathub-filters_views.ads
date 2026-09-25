@@ -38,7 +38,7 @@ package GNAThub.Filters_Views is
    procedure Set_Tool_Selection
      (Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Tool     : not null Tool_Access;
-      Selected :  Boolean);
+      Selected : Boolean);
    --  Select or unselect the specified tool in the Filters view.
 
 end GNAThub.Filters_Views;

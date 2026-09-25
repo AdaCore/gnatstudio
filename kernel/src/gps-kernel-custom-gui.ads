@@ -19,7 +19,7 @@
 --  possible initialization strings. A large part of the work is done in
 --  GPS.Kernel.Modules;
 
-with GNAT.Strings;            use GNAT.Strings;
+with GNAT.Strings; use GNAT.Strings;
 with GNATCOLL.VFS;
 
 with Gtk.Notebook;
@@ -46,28 +46,30 @@ package GPS.Kernel.Custom.GUI is
      access all Root_Plugins_Preferences_Page_Record'Class;
    --  Type used to represent the root preferences page for all plugins.
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Root_Plugins_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
 
    type Plugins_Preferences_Assistant_Page_Record is
-     new Root_Plugins_Preferences_Page_Record with null record;
+     new Root_Plugins_Preferences_Page_Record
+   with null record;
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Plugins_Preferences_Assistant_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
 
-   type Plugin_Preferences_Page_Record is new Preferences_Page_Record with
-      private;
+   type Plugin_Preferences_Page_Record is
+     new Preferences_Page_Record with private;
    type Plugin_Preferences_Page is
      access all Plugin_Preferences_Page_Record'Class;
    --  Type used for plugin preferences pages.
 
-   overriding procedure Register_Group
+   overriding
+   procedure Register_Group
      (Self             : not null access Plugin_Preferences_Page_Record;
       Name             : String;
       Group            : not null Preferences_Group;
@@ -76,13 +78,14 @@ package GPS.Kernel.Custom.GUI is
       Description      : String := "");
    --  See inherited documentation.
 
-   overriding function Get_Widget
+   overriding
+   function Get_Widget
      (Self    : not null access Plugin_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
 
-   overriding procedure Free (Self : in out Plugin_Preferences_Page_Record);
+   overriding
+   procedure Free (Self : in out Plugin_Preferences_Page_Record);
    --  See inherited documentation.
 
    function Get_Documentation
@@ -97,17 +100,19 @@ package GPS.Kernel.Custom.GUI is
      (Self : not null access Plugin_Preferences_Page_Record) return String;
    --  Return a suitable label for the plugin associated with this page
 
-   type Startup_Editor_Page_View_Record is new Preferences_Page_View_Record
-   with private;
+   type Startup_Editor_Page_View_Record is
+     new Preferences_Page_View_Record with private;
    type Startup_Editor is access all Startup_Editor_Page_View_Record'Class;
    --  Type of the 'Plugins' page view in the preferences editor dialog.
 
-   overriding procedure Display_Subpage
+   overriding
+   procedure Display_Subpage
      (Self         : not null access Startup_Editor_Page_View_Record;
       Subpage_Name : String);
    --  See inherited documentation.
 
-   overriding procedure Set_Pref_Highlighted
+   overriding
+   procedure Set_Pref_Highlighted
      (Self      : not null access Startup_Editor_Page_View_Record;
       Pref      : not null access Preference_Record'Class;
       Highlight : Boolean);
@@ -115,31 +120,31 @@ package GPS.Kernel.Custom.GUI is
 
 private
 
-   type Plugin_Preferences_Page_Record is new Preferences_Page_Record with
-      record
-         Plugin_Name       : GNAT.Strings.String_Access;
-         --  Name of the plugin associated to this page.
+   type Plugin_Preferences_Page_Record is new Preferences_Page_Record
+   with record
+      Plugin_Name : GNAT.Strings.String_Access;
+      --  Name of the plugin associated to this page.
 
-         Plugin_Label      : GNAT.Strings.String_Access;
-         --  Suitable label used to identify the plugin in the 'Plugins' page
-         --  of the Preferences Editor (or Preferences Assistant).
+      Plugin_Label : GNAT.Strings.String_Access;
+      --  Suitable label used to identify the plugin in the 'Plugins' page
+      --  of the Preferences Editor (or Preferences Assistant).
 
-         File              : GNATCOLL.VFS.Virtual_File;
-         --  Plugin file associated to this preferences page.
+      File : GNATCOLL.VFS.Virtual_File;
+      --  Plugin file associated to this preferences page.
 
-         Explicit          : Boolean;
-         --  Used to know if the plugin has been loaded at startup or not
-         --  because of an explicit user setting.
+      Explicit : Boolean;
+      --  Used to know if the plugin has been loaded at startup or not
+      --  because of an explicit user setting.
 
-         Doc               : GNAT.Strings.String_Access;
-         --  Plugin documentation.
-      end record;
+      Doc : GNAT.Strings.String_Access;
+      --  Plugin documentation.
+   end record;
 
    type Startup_Editor_Page_View_Record is new Preferences_Page_View_Record
    with record
-      Tree                : Gtk.Tree_View.Gtk_Tree_View;
-      Model               : Gtk.Tree_Store.Gtk_Tree_Store;
-      Plugins_Notebook    : Gtk.Notebook.Gtk_Notebook;
+      Tree             : Gtk.Tree_View.Gtk_Tree_View;
+      Model            : Gtk.Tree_Store.Gtk_Tree_Store;
+      Plugins_Notebook : Gtk.Notebook.Gtk_Notebook;
 
       Show_Restart_Dialog : Boolean := True;
       --  Used to know if a dialog asking if the user wants to restart

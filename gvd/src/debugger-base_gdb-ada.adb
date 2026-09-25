@@ -15,10 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;               use Ada.Strings.Unbounded;
-with Ada.Strings;                         use Ada.Strings;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
-with GNATCOLL.Utils;                      use GNATCOLL.Utils;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings;           use Ada.Strings;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
 with GVD.Variables.Types.Arrays;          use GVD.Variables.Types.Arrays;
 with GVD.Variables.Types.Classes;         use GVD.Variables.Types.Classes;
@@ -45,17 +45,16 @@ package body Debugger.Base_Gdb.Ada is
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part
 
-   String_Pattern : constant Pattern_Matcher := Compile
-     ("^array \((\d+) \.\. (\d+)\) of character.*");
+   String_Pattern : constant Pattern_Matcher :=
+     Compile ("^array \((\d+) \.\. (\d+)\) of character.*");
    --  To detect strings
 
    --------------
    -- Get_Name --
    --------------
 
-   overriding function Get_Name
-     (Lang : access Gdb_Ada_Language) return String
-   is
+   overriding
+   function Get_Name (Lang : access Gdb_Ada_Language) return String is
       pragma Unreferenced (Lang);
    begin
       return "ada";
@@ -65,7 +64,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Is_Simple_Type --
    --------------------
 
-   overriding function Is_Simple_Type
+   overriding
+   function Is_Simple_Type
      (Lang : access Gdb_Ada_Language; Str : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -77,16 +77,17 @@ package body Debugger.Base_Gdb.Ada is
    -- Keywords --
    --------------
 
-   overriding function Keywords
-     (Lang : access Gdb_Ada_Language)
-      return GNAT.Expect.Pattern_Matcher_Access
+   overriding
+   function Keywords
+     (Lang : access Gdb_Ada_Language) return GNAT.Expect.Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin
       return Keywords (Ada_Lang);
    end Keywords;
 
-   overriding function Keywords
+   overriding
+   function Keywords
      (Lang : access Gdb_Ada_Language) return GNAT.Strings.String_List
    is
       pragma Unreferenced (Lang);
@@ -98,7 +99,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Get_Language_Context --
    --------------------------
 
-   overriding function Get_Language_Context
+   overriding
+   function Get_Language_Context
      (Lang : access Gdb_Ada_Language) return Language.Language_Context_Access
    is
       pragma Unreferenced (Lang);
@@ -110,7 +112,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Explorer_Regexps --
    ----------------------
 
-   overriding function Explorer_Regexps
+   overriding
+   function Explorer_Regexps
      (Lang : access Gdb_Ada_Language) return Language.Explorer_Categories
    is
       pragma Unreferenced (Lang);
@@ -122,7 +125,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Is_System_File --
    --------------------
 
-   overriding function Is_System_File
+   overriding
+   function Is_System_File
      (Lang : access Gdb_Ada_Language; File_Name : String) return Boolean
    is
       pragma Unreferenced (Lang);
@@ -134,9 +138,9 @@ package body Debugger.Base_Gdb.Ada is
    -- Dereference_Name --
    ----------------------
 
-   overriding function Dereference_Name
-     (Lang : access Gdb_Ada_Language;
-      Name : String) return String
+   overriding
+   function Dereference_Name
+     (Lang : access Gdb_Ada_Language; Name : String) return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -147,10 +151,10 @@ package body Debugger.Base_Gdb.Ada is
    -- Array_Item_Name --
    ---------------------
 
-   overriding function Array_Item_Name
-     (Lang  : access Gdb_Ada_Language;
-      Name  : String;
-      Index : String) return String
+   overriding
+   function Array_Item_Name
+     (Lang : access Gdb_Ada_Language; Name : String; Index : String)
+      return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -161,10 +165,10 @@ package body Debugger.Base_Gdb.Ada is
    -- Record_Field_Name --
    -----------------------
 
-   overriding function Record_Field_Name
-     (Lang  : access Gdb_Ada_Language;
-      Name  : String;
-      Field : String) return String
+   overriding
+   function Record_Field_Name
+     (Lang : access Gdb_Ada_Language; Name : String; Field : String)
+      return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -175,7 +179,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Parse_Type --
    ----------------
 
-   overriding procedure Parse_Type
+   overriding
+   procedure Parse_Type
      (Lang     : access Gdb_Ada_Language;
       Type_Str : String;
       Entity   : String;
@@ -191,16 +196,21 @@ package body Debugger.Base_Gdb.Ada is
       end if;
 
       case Type_Str (Index) is
-         when '<' =>
+         when '<'    =>
             --  A union type
 
             if Looking_At (Type_Str, Index, "<union ") then
                Index := Index + 7;
                Skip_To_Char (Type_Str, Index, '{');
                Index := Index + 1;
-               Parse_Record_Type (Lang, Type_Str, Entity, Index,
-                                  Is_Union => True, Result => Result,
-                                  End_On => "}>");
+               Parse_Record_Type
+                 (Lang,
+                  Type_Str,
+                  Entity,
+                  Index,
+                  Is_Union => True,
+                  Result   => Result,
+                  End_On   => "}>");
 
             --  A reference (e.g for some "in out" parameters)
             --  (<ref> array (...) of character) @0x300000: "The")
@@ -213,7 +223,7 @@ package body Debugger.Base_Gdb.Ada is
             --  Simple types, like <4-byte integer> and <4-byte float>
 
             elsif Looking_At
-              (Type_Str, Index, "<<data variable, no debug info>>")
+                    (Type_Str, Index, "<<data variable, no debug info>>")
             then
                Skip_To_Char (Type_Str, Index, '>');
                Index := Index + 2;
@@ -225,13 +235,17 @@ package body Debugger.Base_Gdb.Ada is
                Index := Index + 1;
             end if;
 
-         when 'a' =>
+         when 'a'    =>
             --  Arrays, as in "array (1 .. 4, 3 .. 5) of character"
 
             if Looking_At (Type_Str, Index, "array ") then
                Parse_Array_Type
-                 (Lang, Type_Str, Entity, Index,
-                  Start_Of_Dim => Index + 6, Result => Result);
+                 (Lang,
+                  Type_Str,
+                  Entity,
+                  Index,
+                  Start_Of_Dim => Index + 6,
+                  Result       => Result);
 
             --  Access types
 
@@ -245,7 +259,7 @@ package body Debugger.Base_Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
-         when 'd' =>
+         when 'd'    =>
             --  A delta type, as for "Duration" types (delta 1e-09)
 
             if Looking_At (Type_Str, Index, "delta ") then
@@ -256,7 +270,7 @@ package body Debugger.Base_Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
-         when 'f' =>
+         when 'f'    =>
             --  A function that comes from the dereferencing of an access type
             if Looking_At (Type_Str, Index, "function ") then
                Result := Empty_GVD_Type_Holder;
@@ -264,7 +278,7 @@ package body Debugger.Base_Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
-         when 'm' =>
+         when 'm'    =>
             --  Modular types
 
             if Looking_At (Type_Str, Index, "mod ") then
@@ -281,7 +295,7 @@ package body Debugger.Base_Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
-         when 'n' =>
+         when 'n'    =>
             --  A tagged record type, as in
             --  new tagged_type with record c : float; end record;
 
@@ -314,60 +328,72 @@ package body Debugger.Base_Gdb.Ada is
                      Last := Last + 1;
                   end loop;
 
-                  C := Predefined_Type_Reestr.Find
-                    (Type_Str (Index .. Last - 1));
+                  C :=
+                    Predefined_Type_Reestr.Find (Type_Str (Index .. Last - 1));
                   if Predefined_Type_Maps.Has_Element (C) then
                      Parent := Predefined_Type_Maps.Element (C).all;
                   else
                      declare
                         Ancestor_Type : constant String :=
-                          Type_Of (Get_Debugger (Lang),
-                                   Type_Str (Index .. Last - 1));
-                        Tmp : Natural := Ancestor_Type'First;
+                          Type_Of
+                            (Get_Debugger (Lang),
+                             Type_Str (Index .. Last - 1));
+                        Tmp           : Natural := Ancestor_Type'First;
 
                      begin
-                        Parse_Type (Lang, Ancestor_Type,
-                                    Type_Str (Index .. Last - 1),
-                                    Tmp, Parent);
+                        Parse_Type
+                          (Lang,
+                           Ancestor_Type,
+                           Type_Str (Index .. Last - 1),
+                           Tmp,
+                           Parent);
                      end;
 
                      Parent.Get_Type.Set_Type_Name
                        (Type_Str (Index .. Last - 1));
                   end if;
 
-                  GVD_Class_Type_Access
-                    (Result.Get_Type).Add_Ancestor (1, Parent);
+                  GVD_Class_Type_Access (Result.Get_Type).Add_Ancestor
+                    (1, Parent);
 
                   --  Get the child (skip "with record")
 
                   Index := Last + 12;
-                  Parse_Record_Type (Lang, Type_Str, Entity, Index,
-                                     Is_Union => False, Result => Child,
-                                     End_On => "end record");
+                  Parse_Record_Type
+                    (Lang,
+                     Type_Str,
+                     Entity,
+                     Index,
+                     Is_Union => False,
+                     Result   => Child,
+                     End_On   => "end record");
                   GVD_Class_Type_Access (Result.Get_Type).Set_Child (Child);
                end;
             else
                raise Unexpected_Type;
             end if;
 
-         when 'p' =>
+         when 'p'    =>
             --  A procedure that comes from the dereferencing of an access type
             if Looking_At (Type_Str, Index, "procedure")
-              and then (Type_Str'Last = Index + 8
-                        or else Type_Str (Index + 9) = ' ')
+              and then
+                (Type_Str'Last = Index + 8 or else Type_Str (Index + 9) = ' ')
             then
                Result := Empty_GVD_Type_Holder;
             else
                raise Unexpected_Type;
             end if;
 
-         when 'r' =>
+         when 'r'    =>
             --  A record type, as in 'record field1: integer; end record'
 
             if Looking_At (Type_Str, Index, "record") then
                Index := Index + 7;
                Parse_Record_Type
-                 (Lang, Type_Str, Entity, Index,
+                 (Lang,
+                  Type_Str,
+                  Entity,
+                  Index,
                   Is_Union => False,
                   Result   => Result,
                   End_On   => "end record");
@@ -394,7 +420,7 @@ package body Debugger.Base_Gdb.Ada is
          --  ??? We could handle "string" as well as a standard type
          --  when 's' =>
 
-         when 't' =>
+         when 't'    =>
             --  A tagged type
 
             if Looking_At (Type_Str, Index, "tagged record") then
@@ -404,9 +430,13 @@ package body Debugger.Base_Gdb.Ada is
                   Child : GVD.Variables.Types.GVD_Type_Holder;
                begin
                   Parse_Record_Type
-                    (Lang, Type_Str, Entity, Index,
-                     Is_Union => False, Result => Child,
-                     End_On => "end record");
+                    (Lang,
+                     Type_Str,
+                     Entity,
+                     Index,
+                     Is_Union => False,
+                     Result   => Child,
+                     End_On   => "end record");
                   Result := New_Class_Type (Num_Ancestors => 0);
                   GVD_Class_Type_Access (Result.Get_Type).Set_Child (Child);
                end;
@@ -414,7 +444,7 @@ package body Debugger.Base_Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
-         when '(' =>
+         when '('    =>
             --  Enumeration type
 
             Skip_To_Char (Type_Str, Index, ')');
@@ -438,7 +468,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Parse_Value --
    -----------------
 
-   overriding procedure Parse_Value
+   overriding
+   procedure Parse_Value
      (Lang       : access Gdb_Ada_Language;
       Entity     : String;
       Type_Str   : String;
@@ -447,7 +478,12 @@ package body Debugger.Base_Gdb.Ada is
       Repeat_Num : out Positive) is
    begin
       Internal_Parse_Value
-        (Lang, Entity, Type_Str, Index, Result, Repeat_Num,
+        (Lang,
+         Entity,
+         Type_Str,
+         Index,
+         Result,
+         Repeat_Num,
          Parent => Empty_GVD_Type_Holder);
    end Parse_Value;
 
@@ -455,7 +491,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Parse_Array_Type --
    ----------------------
 
-   overriding procedure Parse_Array_Type
+   overriding
+   procedure Parse_Array_Type
      (Lang         : access Gdb_Ada_Language;
       Type_Str     : String;
       Entity       : String;
@@ -477,8 +514,9 @@ package body Debugger.Base_Gdb.Ada is
       --  A special case for strings
 
       if Looking_At (Type_Str, Tmp_Index, "array (<>) of character")
-        or else Looking_At  --  Bounded & Unbounded strings
-          (Type_Str, Tmp_Index, "array (1 .. max_length) of character")
+        or else
+          Looking_At  --  Bounded & Unbounded strings
+            (Type_Str, Tmp_Index, "array (1 .. max_length) of character")
       then
          Result := New_Simple_Type;
          Result.Get_Type.Set_Type_Name ("String");
@@ -489,9 +527,11 @@ package body Debugger.Base_Gdb.Ada is
       if Matched (0) /= No_Match then
          Result := New_String_Type;
          Result.Get_Type.Set_Type_Name
-           ("string (" &
-              Type_Str (Matched (1).First .. Matched (1).Last) &
-              " .. " & Type_Str (Matched (2).First .. Matched (2).Last) & ')');
+           ("string ("
+            & Type_Str (Matched (1).First .. Matched (1).Last)
+            & " .. "
+            & Type_Str (Matched (2).First .. Matched (2).Last)
+            & ')');
          return;
       end if;
 
@@ -527,7 +567,7 @@ package body Debugger.Base_Gdb.Ada is
       --  Then parse the dimensions
 
       Num_Dim := 1;
-      Index   := Index + 7;
+      Index := Index + 7;
 
       while Num_Dim <= GVD_Array_Type_Access (R.Get_Type).Num_Dimensions loop
          declare
@@ -542,20 +582,24 @@ package body Debugger.Base_Gdb.Ada is
             -- Get_Discriminant_Value --
             ----------------------------
 
-            function Get_Discriminant_Value
-              (Name : String) return Long_Integer is
+            function Get_Discriminant_Value (Name : String) return Long_Integer
+            is
             begin
                if Discriminant_Type = "" then
-                  Discriminant_Type := To_Unbounded_String
-                    (Lang.Get_Debugger.Get_Type_Info (Entity & "'First", ""));
+                  Discriminant_Type :=
+                    To_Unbounded_String
+                      (Lang.Get_Debugger.Get_Type_Info
+                         (Entity & "'First", ""));
                end if;
 
-               return Long_Integer'Value
-                 (Lang.Get_Debugger.Value_Of
-                    ((if Discriminant_Type = ""
-                     then Name
-                     else To_String (Discriminant_Type) & "'(" & Name & ")"),
-                     Format => Decimal));
+               return
+                 Long_Integer'Value
+                   (Lang.Get_Debugger.Value_Of
+                      ((if Discriminant_Type = ""
+                        then Name
+                        else
+                          To_String (Discriminant_Type) & "'(" & Name & ")"),
+                       Format => Decimal));
             end Get_Discriminant_Value;
 
          begin
@@ -565,8 +609,7 @@ package body Debugger.Base_Gdb.Ada is
             --  ??? Should we have some flag that indicate the dynamic aspect
             --  of the bounds, instead of relying on special values.
 
-            if Type_Str (Index) in '0' .. '9'
-              or else Type_Str (Index) = '-'
+            if Type_Str (Index) in '0' .. '9' or else Type_Str (Index) = '-'
             then
                Parse_Num (Type_Str, Index, First);
             else
@@ -575,8 +618,8 @@ package body Debugger.Base_Gdb.Ada is
 
                --  Evaluate First to decimal value
                begin
-                  First := Get_Discriminant_Value
-                    (Type_Str (Tmp_Index .. Index - 1));
+                  First :=
+                    Get_Discriminant_Value (Type_Str (Tmp_Index .. Index - 1));
                exception
                   when Constraint_Error =>
                      First := Long_Integer'Last;
@@ -585,8 +628,7 @@ package body Debugger.Base_Gdb.Ada is
 
             Index := Index + 4;  --  skips ' .. '
 
-            if Type_Str (Index) in '0' .. '9'
-              or else Type_Str (Index) = '-'
+            if Type_Str (Index) in '0' .. '9' or else Type_Str (Index) = '-'
             then
                Parse_Num (Type_Str, Index, Last);
             else
@@ -601,8 +643,8 @@ package body Debugger.Base_Gdb.Ada is
 
                --  Evaluate Last to decimal value
                begin
-                  Last := Get_Discriminant_Value
-                    (Type_Str (Tmp_Index .. Index - 1));
+                  Last :=
+                    Get_Discriminant_Value (Type_Str (Tmp_Index .. Index - 1));
                exception
                   when Constraint_Error =>
                      Last := Long_Integer'First;
@@ -610,8 +652,8 @@ package body Debugger.Base_Gdb.Ada is
             end if;
 
             Index := Index + 2;  --  skips ', ' or ') '
-            GVD_Array_Type_Access
-              (R.Get_Type).Set_Dimensions (Num_Dim, (First, Last));
+            GVD_Array_Type_Access (R.Get_Type).Set_Dimensions
+              (Num_Dim, (First, Last));
             Num_Dim := Num_Dim + 1;
          end;
       end loop;
@@ -627,8 +669,9 @@ package body Debugger.Base_Gdb.Ada is
       if Tmp_Index >= Entity'First and then Entity (Tmp_Index) = ')' then
          Tmp_Index := Tmp_Index - 1;
          while Tmp_Index >= Entity'First
-           and then (Entity (Tmp_Index) in '0' .. '9'
-                     or else Entity (Tmp_Index) = ' ')
+           and then
+             (Entity (Tmp_Index) in '0' .. '9'
+              or else Entity (Tmp_Index) = ' ')
          loop
             Tmp_Index := Tmp_Index - 1;
          end loop;
@@ -647,8 +690,8 @@ package body Debugger.Base_Gdb.Ada is
                   Tmp_Index := Tmp_Index + 1;
                end loop;
                Parse_Num (Entity, Tmp_Index, Last);
-               GVD_Array_Type_Access
-                 (R.Get_Type).Set_Dimensions (1, (First, Last));
+               GVD_Array_Type_Access (R.Get_Type).Set_Dimensions
+                 (1, (First, Last));
             end;
          end if;
       end if;
@@ -687,9 +730,10 @@ package body Debugger.Base_Gdb.Ada is
 
          for J in 1 .. GVD_Array_Type_Access (R.Get_Type).Num_Dimensions loop
             declare
-               Img : constant String := Long_Integer'Image
-                 (GVD_Array_Type_Access
-                    (R.Get_Type).Get_Dimensions (J).First);
+               Img : constant String :=
+                 Long_Integer'Image
+                   (GVD_Array_Type_Access (R.Get_Type).Get_Dimensions (J)
+                      .First);
             begin
                Append
                  (Index_Str,
@@ -704,8 +748,9 @@ package body Debugger.Base_Gdb.Ada is
          end loop;
 
          GVD_Array_Type_Access (R.Get_Type).Set_Item_Type
-           (Parse_Type (Get_Debugger (Lang),
-            Array_Item_Name (Lang, Entity, To_String (Index_Str))));
+           (Parse_Type
+              (Get_Debugger (Lang),
+               Array_Item_Name (Lang, Entity, To_String (Index_Str))));
       end if;
    end Parse_Array_Type;
 
@@ -713,7 +758,8 @@ package body Debugger.Base_Gdb.Ada is
    -- Parse_Record_Type --
    -----------------------
 
-   overriding procedure Parse_Record_Type
+   overriding
+   procedure Parse_Record_Type
      (Lang     : access Gdb_Ada_Language;
       Type_Str : String;
       Entity   : String;
@@ -761,8 +807,8 @@ package body Debugger.Base_Gdb.Ada is
             Tmp_Index := Tmp_Index + 9;
             Fields := Fields + 1;
 
-            --  In record with a variant part and pragma Unchecked_Union
-            --  Skip "record (?) is" then count total fields in all parts
+         --  In record with a variant part and pragma Unchecked_Union
+         --  Skip "record (?) is" then count total fields in all parts
 
          elsif Looking_At (Type_Str, Tmp_Index, "(?) is") then
 
@@ -770,19 +816,19 @@ package body Debugger.Base_Gdb.Ada is
             Tmp_Index := Tmp_Index + 9;
             Unchecked_Union := True;
 
-            --  In record with a variant part and pragma Unchecked_Union
-            --  Skip "when ? =>" then count total fields
+         --  In record with a variant part and pragma Unchecked_Union
+         --  Skip "when ? =>" then count total fields
          elsif Looking_At (Type_Str, Tmp_Index, "when ? =>") then
 
             Tmp_Index := Tmp_Index + 9;
 
-            --  In record with a variant part and pragma Unchecked_Union
-            --  Skip "end case;"
+         --  In record with a variant part and pragma Unchecked_Union
+         --  Skip "end case;"
          elsif Looking_At (Type_Str, Tmp_Index, "end case;") then
 
             Tmp_Index := Tmp_Index + 9;
 
-            --  Else a standard field
+         --  Else a standard field
 
          else
             Skip_To_Char (Type_Str, Tmp_Index, ':');
@@ -863,8 +909,8 @@ package body Debugger.Base_Gdb.Ada is
 
             Num_Parts := 0;
 
-            while Num_Parts < GVD_Record_Type_Access
-              (R.Get_Type).Get_Variant_Parts (Fields)
+            while Num_Parts
+              < GVD_Record_Type_Access (R.Get_Type).Get_Variant_Parts (Fields)
               and then not Looking_At (Type_Str, Index, "end ")
             loop
                Skip_To_String (Type_Str, Index, "=>");
@@ -872,16 +918,27 @@ package body Debugger.Base_Gdb.Ada is
                Index := Index + 2;
                Num_Parts := Num_Parts + 1;
 
-               if Num_Parts = GVD_Record_Type_Access
-                 (R.Get_Type).Get_Variant_Parts (Fields)
+               if Num_Parts
+                 = GVD_Record_Type_Access (R.Get_Type).Get_Variant_Parts
+                     (Fields)
                then
-                  Parse_Record_Type (Lang, Type_Str, Entity,
-                                     Index, Is_Union => False,
-                                     Result => Part, End_On => "end case");
+                  Parse_Record_Type
+                    (Lang,
+                     Type_Str,
+                     Entity,
+                     Index,
+                     Is_Union => False,
+                     Result   => Part,
+                     End_On   => "end case");
                else
-                  Parse_Record_Type (Lang, Type_Str, Entity,
-                                     Index, Is_Union => False,
-                                     Result => Part, End_On => "when ");
+                  Parse_Record_Type
+                    (Lang,
+                     Type_Str,
+                     Entity,
+                     Index,
+                     Is_Union => False,
+                     Result   => Part,
+                     End_On   => "when ");
                end if;
 
                GVD_Record_Type_Access (R.Get_Type).Set_Variant_Field
@@ -893,7 +950,7 @@ package body Debugger.Base_Gdb.Ada is
             Index := Index + 9;
             Fields := Fields + 1;
 
-            --  Skip syntax elements of Unchecked_Union
+         --  Skip syntax elements of Unchecked_Union
          elsif Looking_At (Type_Str, Index, "(?) is") then
 
             Skip_To_String (Type_Str, Index, "case ? is");
@@ -903,7 +960,7 @@ package body Debugger.Base_Gdb.Ada is
 
             Index := Index + 9;
 
-            --  Else a standard field
+         --  Else a standard field
 
          else
             --  Get the name of the field
@@ -963,9 +1020,12 @@ package body Debugger.Base_Gdb.Ada is
                     (Lang,
                      Type_Str (Tmp_Index .. Index - 1),
                      Record_Field_Name
-                       (Lang, Entity, GVD_Record_Type_Access
-                            (R.Get_Type).Get_Field_Name (Fields)),
-                     J, Result);
+                       (Lang,
+                        Entity,
+                        GVD_Record_Type_Access (R.Get_Type).Get_Field_Name
+                          (Fields)),
+                     J,
+                     Result);
 
                   GVD_Record_Type_Access (R.Get_Type).Set_Value
                     (Result, Field => Fields);
@@ -978,9 +1038,12 @@ package body Debugger.Base_Gdb.Ada is
                      --  with A.B.C...).
 
                      GVD_Record_Type_Access (R.Get_Type).Set_Value
-                       (Parse_Type (Get_Debugger (Lang),
-                        Entity & "." & GVD_Record_Type_Access
-                          (R.Get_Type).Get_Field_Name (Fields)),
+                       (Parse_Type
+                          (Get_Debugger (Lang),
+                           Entity
+                           & "."
+                           & GVD_Record_Type_Access (R.Get_Type).Get_Field_Name
+                               (Fields)),
                         Field => Fields);
                end;
             end if;
@@ -1004,17 +1067,19 @@ package body Debugger.Base_Gdb.Ada is
    -- Parse_Array_Value --
    -----------------------
 
-   overriding procedure Parse_Array_Value
+   overriding
+   procedure Parse_Array_Value
      (Lang     : access Gdb_Ada_Language;
       Type_Str : String;
       Index    : in out Natural;
       Result   : in out GVD_Type_Holder)
    is
-      Dim     : Natural := 0;            --  current dimension
+      Dim           : Natural := 0;            --  current dimension
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
-      Bounds  : Dimension;
-      Lengths : array (1 ..  GVD_Array_Type_Access
-                       (Result.Get_Type).Num_Dimensions) of Long_Integer;
+      Bounds        : Dimension;
+      Lengths       :
+        array (1 .. GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions)
+        of Long_Integer;
       --  The number of items in each dimension
 
       Previous_Index : Integer;
@@ -1051,8 +1116,8 @@ package body Debugger.Base_Gdb.Ada is
             Int := Int + 1;
          end loop;
 
-         Bounds := GVD_Array_Type_Access
-           (Result.Get_Type).Get_Dimensions (Dim);
+         Bounds :=
+           GVD_Array_Type_Access (Result.Get_Type).Get_Dimensions (Dim);
 
          if Type_Str (Int) = '=' then
             --  Looking at "index => ".
@@ -1061,8 +1126,8 @@ package body Debugger.Base_Gdb.Ada is
 
             if Bounds.Last < Bounds.First then
                Parse_Num (Type_Str, Index, Bounds.First);
-               GVD_Array_Type_Access
-                 (Result.Get_Type).Set_Dimensions (Dim, Bounds);
+               GVD_Array_Type_Access (Result.Get_Type).Set_Dimensions
+                 (Dim, Bounds);
             end if;
 
             Index := Int + 3;  --  skip "index => "
@@ -1082,8 +1147,8 @@ package body Debugger.Base_Gdb.Ada is
 
          --  Parse the next item
 
-         Tmp := GVD_Array_Type_Access
-           (Result.Get_Type).Get_Value (Current_Index);
+         Tmp :=
+           GVD_Array_Type_Access (Result.Get_Type).Get_Value (Current_Index);
 
          if Tmp = Empty_GVD_Type_Holder then
             Tmp := GVD_Array_Type_Access (Result.Get_Type).Get_Item_Type.Clone;
@@ -1105,8 +1170,8 @@ package body Debugger.Base_Gdb.Ada is
 
          if Bounds.Last < Bounds.First + Lengths (Dim) - 1 then
             Bounds.Last := Bounds.First + Lengths (Dim) - 1;
-            GVD_Array_Type_Access
-              (Result.Get_Type).Set_Dimensions (Dim, Bounds);
+            GVD_Array_Type_Access (Result.Get_Type).Set_Dimensions
+              (Dim, Bounds);
          end if;
       end Parse_Item;
 
@@ -1116,49 +1181,49 @@ package body Debugger.Base_Gdb.Ada is
       --  This loop parses sequence of items separated by '(', ')' and ','
       --  tokens. Each item parsed by Parse_Item procedure.
       loop
-         Previous_Dim   := Dim;
+         Previous_Dim := Dim;
          Previous_Index := Index;
 
          case Type_Str (Index) is
-            when ')' =>
+            when ')'       =>
                --  If we have an array with a dynamic range (ie not known
                --  until we parse the value), now is a good time to
                --  get the range.
 
-               Bounds := GVD_Array_Type_Access
-                 (Result.Get_Type).Get_Dimensions (Dim);
+               Bounds :=
+                 GVD_Array_Type_Access (Result.Get_Type).Get_Dimensions (Dim);
 
                if Bounds.Last = Long_Integer'First then
                   Bounds.Last := Bounds.First + Lengths (Dim) - 1;
-                  GVD_Array_Type_Access
-                    (Result.Get_Type).Set_Dimensions (Dim, Bounds);
+                  GVD_Array_Type_Access (Result.Get_Type).Set_Dimensions
+                    (Dim, Bounds);
                end if;
 
-               Dim   := Dim - 1;
+               Dim := Dim - 1;
                Index := Index + 1;
 
                if Dim > 0 then
                   --  If we have parsed an subarray, then adjust length of
                   --  enclosing array.
                   Lengths (Dim) := Lengths (Dim) + 1;
-                  Bounds := GVD_Array_Type_Access
-                    (Result.Get_Type).Get_Dimensions (Dim);
+                  Bounds :=
+                    GVD_Array_Type_Access (Result.Get_Type).Get_Dimensions
+                      (Dim);
 
                   if Bounds.Last < Bounds.First + Lengths (Dim) - 1 then
                      Bounds.Last := Bounds.First + Lengths (Dim) - 1;
-                     GVD_Array_Type_Access
-                       (Result.Get_Type).Set_Dimensions (Dim, Bounds);
+                     GVD_Array_Type_Access (Result.Get_Type).Set_Dimensions
+                       (Dim, Bounds);
                   end if;
                end if;
 
-            when '(' =>
+            when '('       =>
                --  A parenthesis is either the start of a sub-array (for
                --  other dimensions, or one of the items in case it is a
                --  record or an array. The distinction can be made by
                --  looking at the current dimension being parsed.
 
-               if Dim /= GVD_Array_Type_Access
-                 (Result.Get_Type).Num_Dimensions
+               if Dim /= GVD_Array_Type_Access (Result.Get_Type).Num_Dimensions
                then
                   Dim := Dim + 1;
                   Index := Index + 1;
@@ -1174,13 +1239,14 @@ package body Debugger.Base_Gdb.Ada is
                   --     type Matrix is array (Index_Range, Index_Range) of
                   --       Integer;
 
-                  Bounds := GVD_Array_Type_Access
-                    (Result.Get_Type).Get_Dimensions (Dim);
+                  Bounds :=
+                    GVD_Array_Type_Access (Result.Get_Type).Get_Dimensions
+                      (Dim);
 
                   if Bounds.First = Long_Integer'Last then
                      Bounds.First := 0;
-                     GVD_Array_Type_Access
-                       (Result.Get_Type).Set_Dimensions (Dim, Bounds);
+                     GVD_Array_Type_Access (Result.Get_Type).Set_Dimensions
+                       (Dim, Bounds);
                   end if;
 
                end if;
@@ -1188,8 +1254,8 @@ package body Debugger.Base_Gdb.Ada is
                if Type_Str (Index) = ')' then
                   --  Set last bound for an empty array
                   Bounds.Last := Bounds.First - 1;
-                  GVD_Array_Type_Access
-                    (Result.Get_Type).Set_Dimensions (Dim, Bounds);
+                  GVD_Array_Type_Access (Result.Get_Type).Set_Dimensions
+                    (Dim, Bounds);
                else
                   Parse_Item;
                end if;
@@ -1197,7 +1263,7 @@ package body Debugger.Base_Gdb.Ada is
             when ',' | ' ' =>
                Index := Index + 1;
 
-            when others =>
+            when others    =>
                Parse_Item;
          end case;
 
@@ -1206,9 +1272,7 @@ package body Debugger.Base_Gdb.Ada is
          --  If the loop exit condition did not change, do not attempt to parse
          --  the item as an array.
 
-         if Dim = Previous_Dim
-           and then Index = Previous_Index
-         then
+         if Dim = Previous_Dim and then Index = Previous_Index then
             Trace (Me, "Parse_Array_Value: result is not valid");
             Result.Get_Type.Set_Valid (False);
             return;
@@ -1224,27 +1288,29 @@ package body Debugger.Base_Gdb.Ada is
    -- Get_Language_Debugger_Context --
    -----------------------------------
 
-   overriding function Get_Language_Debugger_Context
+   overriding
+   function Get_Language_Debugger_Context
      (Lang : access Gdb_Ada_Language) return Language_Debugger_Context
    is
       pragma Unreferenced (Lang);
    begin
-      return (Record_Field_Length  => 2,
-              Record_Start         => '(',
-              Record_End           => ')',
-              Array_Start          => '(',
-              Array_End            => ')',
-              Record_Field         => "=>");
+      return
+        (Record_Field_Length => 2,
+         Record_Start        => '(',
+         Record_End          => ')',
+         Array_Start         => '(',
+         Array_End           => ')',
+         Record_Field        => "=>");
    end Get_Language_Debugger_Context;
 
    ------------------
    -- Set_Variable --
    ------------------
 
-   overriding function Set_Variable
-     (Lang     : access Gdb_Ada_Language;
-      Var_Name : String;
-      Value    : String) return String
+   overriding
+   function Set_Variable
+     (Lang : access Gdb_Ada_Language; Var_Name : String; Value : String)
+      return String
    is
       pragma Unreferenced (Lang);
    begin
@@ -1255,18 +1321,18 @@ package body Debugger.Base_Gdb.Ada is
    -- Can_Tooltip_On_Entity --
    ---------------------------
 
-   overriding function Can_Tooltip_On_Entity
-     (Lang   : access Gdb_Ada_Language;
-      Entity : String) return Boolean
+   overriding
+   function Can_Tooltip_On_Entity
+     (Lang : access Gdb_Ada_Language; Entity : String) return Boolean
    is
       --  Note: It is not possible to directly get the result of "ptype"
       --  or "whatis" for the entity, since gdb in fact gives the type of the
       --  return value.
       --  Instead, we get the info for a pointer to the entity.
-      Info : constant String :=
-        Type_Of (Get_Debugger (Lang), "&" & Entity);
+      Info : constant String := Type_Of (Get_Debugger (Lang), "&" & Entity);
    begin
-      return Info /= ""
+      return
+        Info /= ""
         and then
           (Info'Length < 16
            or else Info (Info'First .. Info'First + 15) /= "access procedure")

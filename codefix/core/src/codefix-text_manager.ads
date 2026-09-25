@@ -93,10 +93,12 @@ package Codefix.Text_Manager is
    function Get_File (This : File_Cursor) return GNATCOLL.VFS.Virtual_File;
    --  Return the file associated with the cursor
 
-   overriding function "=" (Left, Right : File_Cursor) return Boolean;
+   overriding
+   function "=" (Left, Right : File_Cursor) return Boolean;
    --  Return true when Left is in the same position than rigth
 
-   overriding function "<" (Left, Right : File_Cursor) return Boolean;
+   overriding
+   function "<" (Left, Right : File_Cursor) return Boolean;
    --  Return True when Left is before Right
 
    procedure Free (This : in out File_Cursor);
@@ -167,12 +169,14 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Word_Mark);
    --  Free the memory associated to a Word_Mark
 
-   overriding procedure Free (This : in out Word_Cursor);
+   overriding
+   procedure Free (This : in out Word_Cursor);
    --  Free the memory associated to a Word_Cursor
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Object => Word_Mark_Array,
-      Name   => Word_Mark_Array_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Object => Word_Mark_Array,
+        Name   => Word_Mark_Array_Access);
 
    ----------------------------------------------------------------------------
    --  type Text_Interface
@@ -185,47 +189,48 @@ package Codefix.Text_Manager is
    --  Undo the last action for the Text_Interface
 
    function Get_New_Mark
-     (Current_Text : Text_Interface;
-      Cursor       : File_Cursor'Class) return Mark_Abstr'Class is abstract;
+     (Current_Text : Text_Interface; Cursor : File_Cursor'Class)
+      return Mark_Abstr'Class
+   is abstract;
    --  Create a new mark at the position specified by the cursor
 
    function Get_Current_Cursor
-     (Current_Text : Text_Interface;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class is abstract;
+     (Current_Text : Text_Interface; Mark : Mark_Abstr'Class)
+      return File_Cursor'Class
+   is abstract;
    --  Return the current position of the mark
 
    procedure Free (This : in out Ptr_Text);
    --  Free the memory associated to Ptr_Text and the object referenced
 
    procedure Initialize
-     (This      : in out Text_Interface;
-      File_Name : GNATCOLL.VFS.Virtual_File);
+     (This : in out Text_Interface; File_Name : GNATCOLL.VFS.Virtual_File);
    --  Initialize the structure of the Text_Interface
 
    procedure Free (This : in out Text_Interface);
    --  Free the memory associated to the Text_Interface
 
    function Get
-     (This   : Text_Interface;
-      Cursor : Text_Cursor'Class;
-      Len    : Natural) return String is abstract;
+     (This : Text_Interface; Cursor : Text_Cursor'Class; Len : Natural)
+      return String
+   is abstract;
    --  Get Len characters from the position specified by the cursor. The
    --  String resulting must have parameter 'First equal to Cursor.Col.
 
    function Get
-     (This        : Text_Interface;
-      Start, Stop : Text_Cursor'Class) return String;
+     (This : Text_Interface; Start, Stop : Text_Cursor'Class) return String;
    --  Return the text extracted between the two cursors
 
    function Get
-     (This   : Text_Interface;
-      Cursor : Text_Cursor'Class) return Character is abstract;
+     (This : Text_Interface; Cursor : Text_Cursor'Class) return Character
+   is abstract;
    --  Get the characters from the position specified by the cursor
 
    function Get_Line
      (This      : Text_Interface;
       Cursor    : Text_Cursor'Class;
-      Start_Col : Visible_Column_Type := 0) return String is abstract;
+      Start_Col : Visible_Column_Type := 0) return String
+   is abstract;
    --  Get all character from the column specified by the cursor to the end of
    --  the line, or beginning by Start_Col if not 0. The String resulting must
    --  have parameter 'First equal to Cursor.Col.
@@ -234,7 +239,8 @@ package Codefix.Text_Manager is
      (This      : in out Text_Interface;
       Cursor    : Text_Cursor'Class;
       Len       : Natural;
-      New_Value : String) is abstract;
+      New_Value : String)
+   is abstract;
    --  Replace the Len characters, from the position designed by the cursor, by
    --  New_Value
 
@@ -242,41 +248,42 @@ package Codefix.Text_Manager is
      (This         : in out Text_Interface;
       Start_Cursor : Text_Cursor'Class;
       End_Cursor   : Text_Cursor'Class;
-      New_Value    : String) is abstract;
+      New_Value    : String)
+   is abstract;
    --  Replace the characters between Start_Cursor and End_Cursor by New_Value.
 
    procedure Add_Line
      (This     : in out Text_Interface;
       Cursor   : Text_Cursor'Class;
       New_Line : String;
-      Indent   : Boolean := False) is abstract;
+      Indent   : Boolean := False)
+   is abstract;
    --  Add a line AFTER the line specified by the cursor. To add a line at the
    --  begining of the text, set cursor line = 0. If Indent is true then the
    --  new line will get automatically indented.
 
    procedure Delete_Line
-     (This : in out Text_Interface;
-      Cursor : Text_Cursor'Class) is abstract;
+     (This : in out Text_Interface; Cursor : Text_Cursor'Class)
+   is abstract;
    --  Delete the line where the cursor is
 
    procedure Indent_Line
-     (This   : in out Text_Interface;
-      Cursor : Text_Cursor'Class) is abstract;
+     (This : in out Text_Interface; Cursor : Text_Cursor'Class)
+   is abstract;
    --  Indent the line pointed by the cursor
 
    procedure Remove_Empty_Lines
-     (This : in out Text_Interface'Class;
+     (This         : in out Text_Interface'Class;
       Start_Cursor : Text_Cursor'Class;
       End_Cursor   : Text_Cursor'Class);
    --  Removes all the empty lines that are located between the two cursors
 
    function Line_Length
-     (This   : Text_Interface'Class;
-      Cursor : Text_Cursor'Class) return Natural;
+     (This : Text_Interface'Class; Cursor : Text_Cursor'Class) return Natural;
    --  Returns le length of a line from the position of the cursor
 
-   function Read_File
-     (This : Text_Interface) return Unbounded_String is abstract;
+   function Read_File (This : Text_Interface) return Unbounded_String
+   is abstract;
    --  Get the entire file in a String_Access
 
    function Get_File_Name
@@ -290,29 +297,29 @@ package Codefix.Text_Manager is
 
    type Token_List is array (Integer range <>) of Token_Record;
 
-   Open_Paren_Tok : constant Token_Record :=
+   Open_Paren_Tok  : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String ("("));
    Close_Paren_Tok : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String (")"));
-   Colon_Tok : constant Token_Record :=
+   Colon_Tok       : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String (":"));
-   Semicolon_Tok : constant Token_Record :=
+   Semicolon_Tok   : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String (";"));
-   Tick_Tok : constant Token_Record :=
+   Tick_Tok        : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String ("'"));
-   Equals_Tok : constant Token_Record :=
+   Equals_Tok      : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String ("="));
-   Not_Equals_Tok : constant Token_Record :=
+   Not_Equals_Tok  : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String ("/="));
-   Aliased_Tok : constant Token_Record :=
+   Aliased_Tok     : constant Token_Record :=
      (Kind => Keyword_Text, Name => To_Unbounded_String ("aliased"));
-   Renames_Tok : constant Token_Record :=
+   Renames_Tok     : constant Token_Record :=
      (Kind => Keyword_Text, Name => To_Unbounded_String ("renames"));
-   Is_Tok : constant Token_Record :=
+   Is_Tok          : constant Token_Record :=
      (Kind => Keyword_Text, Name => To_Unbounded_String ("is"));
-   Overriding_Tok : constant Token_Record :=
+   Overriding_Tok  : constant Token_Record :=
      (Kind => Keyword_Text, Name => To_Unbounded_String ("overriding"));
-   True_Tok : constant Token_Record :=
+   True_Tok        : constant Token_Record :=
      (Kind => Identifier_Text, Name => To_Unbounded_String ("true"));
 
    function Search_Token
@@ -357,8 +364,7 @@ package Codefix.Text_Manager is
    function Get_Full_Prefix
      (This     : access Text_Interface'Class;
       Cursor   : Text_Cursor'Class;
-      Category : Language_Category := Cat_Unknown)
-      return String;
+      Category : Language_Category := Cat_Unknown) return String;
    --  Return the entire prefix of the first unit of category after the cursor
 
    procedure Next_Word
@@ -392,16 +398,17 @@ package Codefix.Text_Manager is
 
    function Previous_Char
      (This : Text_Interface'Class; Cursor : Text_Cursor'Class)
-     return Text_Cursor'Class;
+      return Text_Cursor'Class;
    --  Return a cursor positioned on the first non-blank character before the
    --  position specified by the cursor
 
-   type Codefix_Entity_Callback is access function
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean;
-      Line           : String) return Boolean;
+   type Codefix_Entity_Callback is
+     access function
+       (Entity         : Language_Entity;
+        Sloc_Start     : Source_Location;
+        Sloc_End       : Source_Location;
+        Partial_Entity : Boolean;
+        Line           : String) return Boolean;
 
    procedure Parse_Entities
      (Lang     : access Language_Root'Class;
@@ -415,22 +422,22 @@ package Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : in out Text_Interface'Class;
-      Callback : access procedure (Buffer : Unbounded_String;
-                                   Token  : Language.Token_Record;
-                                   Stop   : in out Boolean);
+      Callback :
+        access procedure
+          (Buffer : Unbounded_String;
+           Token  : Language.Token_Record;
+           Stop   : in out Boolean);
       Start    : File_Cursor'Class);
    --  Parse entities in reverse order, as defined by the package Language.
 
    procedure Erase
-     (This            : in out Text_Interface'Class;
-      Start, Stop     : File_Cursor'Class);
+     (This : in out Text_Interface'Class; Start, Stop : File_Cursor'Class);
    --  Erase the text from Start to Stop. If a line, after the deletion, is
    --  empty, then this line will be deleted. If Remove_If_Blank is true, the
    --  remaining line will get removed if it contains only blank characters.
 
    procedure Comment
-     (This        : in out Text_Interface'Class;
-      Start, Stop : File_Cursor'Class);
+     (This : in out Text_Interface'Class; Start, Stop : File_Cursor'Class);
    --  Comment from Start to Stop on the given extract
 
    ----------------------------------------------------------------------------
@@ -446,23 +453,18 @@ package Codefix.Text_Manager is
       Registry : Projects.Project_Registry_Access);
 
    function Get_Registry
-     (Text : Text_Navigator_Abstr)
-      return Projects.Project_Registry_Access;
+     (Text : Text_Navigator_Abstr) return Projects.Project_Registry_Access;
 
    procedure Set_Construct_Database
-     (Text : in out Text_Navigator_Abstr;
-      Db   : Construct_Database_Access);
+     (Text : in out Text_Navigator_Abstr; Db : Construct_Database_Access);
 
    function Get_Construct_Database
      (Text : Text_Navigator_Abstr) return Construct_Database_Access;
 
    procedure Set_Context
-     (Text    : in out Text_Navigator_Abstr;
-      Context : Factory_Context);
+     (Text : in out Text_Navigator_Abstr; Context : Factory_Context);
 
-   function Get_Context
-     (Text : Text_Navigator_Abstr)
-      return Factory_Context;
+   function Get_Context (Text : Text_Navigator_Abstr) return Factory_Context;
 
    function Get_Body_Or_Spec
      (Text : Text_Navigator_Abstr; File_Name : GNATCOLL.VFS.Virtual_File)
@@ -470,27 +472,26 @@ package Codefix.Text_Manager is
    --  When File_Name is a spec file, this function returns the body
    --  corresponding, otherwise it returns the spec.
 
-   function New_Text_Interface (This : Text_Navigator_Abstr)
-     return Ptr_Text is abstract;
+   function New_Text_Interface (This : Text_Navigator_Abstr) return Ptr_Text
+   is abstract;
    --  Create and initialise a new Text_Interface used by the text navigator
 
    procedure Initialize
-     (This : Text_Navigator_Abstr;
-      File : in out Text_Interface'Class);
+     (This : Text_Navigator_Abstr; File : in out Text_Interface'Class);
    --  This fonction is call after the initialization of a new Text_Interface.
    --  This one doesn't do anything, but it might be usefull for later
    --  extentions.
 
    function Get_New_Mark
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Cursor       : File_Cursor'Class) return Mark_Abstr'Class;
+     (Current_Text : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
+      return Mark_Abstr'Class;
    --  Create a new mark at the position specified by the cursor. If the line
    --  defined by the cursor is 0, then the call of Get_Current_Cursor will
    --  restitute this 0.
 
    function Get_Current_Cursor
-     (Current_Text : Text_Navigator_Abstr'Class;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class;
+     (Current_Text : Text_Navigator_Abstr'Class; Mark : Mark_Abstr'Class)
+      return File_Cursor'Class;
    --  Return the current position of the mark
 
    procedure Clean (This : in out Text_Navigator_Abstr);
@@ -514,20 +515,19 @@ package Codefix.Text_Manager is
    --  search can be reduce to a certain set of categories.
 
    function Get
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class;
-      Len    : Natural) return String;
+     (This : Text_Navigator_Abstr; Cursor : File_Cursor'Class; Len : Natural)
+      return String;
    --  Get Len characters from the file and the position specified by the
    --  cursor.
 
    function Get
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class) return Character;
+     (This : Text_Navigator_Abstr; Cursor : File_Cursor'Class)
+      return Character;
    --  Get a caracter at the position specified by the cursor
 
    function Get
-     (This        : Text_Navigator_Abstr;
-      Start, Stop : File_Cursor'Class) return String;
+     (This : Text_Navigator_Abstr; Start, Stop : File_Cursor'Class)
+      return String;
    --  Return the text extracted between the two cursors. We assume here that
    --  the two cursors are on the same file.
 
@@ -540,8 +540,8 @@ package Codefix.Text_Manager is
    --  The String resulting must have parameter 'First equal to Cursor.Col.
 
    function Read_File
-     (This      : Text_Navigator_Abstr;
-      File_Name : GNATCOLL.VFS.Virtual_File) return Unbounded_String;
+     (This : Text_Navigator_Abstr; File_Name : GNATCOLL.VFS.Virtual_File)
+      return Unbounded_String;
    --  Get the entire file File_Name. Result must be freed by the caller.
 
    procedure Replace
@@ -561,21 +561,18 @@ package Codefix.Text_Manager is
    --  begining of the text, set cursor line = 0.
 
    procedure Delete_Line
-     (This : in out Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class);
+     (This : in out Text_Navigator_Abstr; Cursor : File_Cursor'Class);
    --  Delete the line where the cursor is
 
    function Line_Length
-     (This   : Text_Navigator_Abstr;
-      Cursor : File_Cursor'Class) return Natural;
+     (This : Text_Navigator_Abstr; Cursor : File_Cursor'Class) return Natural;
    --  Return le length of a line from the position of the cursor
 
    function Search_Token
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
       Searched : Token_Record;
-      Step     : Step_Way := Normal_Step)
-      return Word_Cursor'Class;
+      Step     : Step_Way := Normal_Step) return Word_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
 
@@ -599,20 +596,19 @@ package Codefix.Text_Manager is
    --  returned.
 
    function Line_Max
-     (This      : Text_Navigator_Abstr'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File) return Natural;
+     (This : Text_Navigator_Abstr'Class; File_Name : GNATCOLL.VFS.Virtual_File)
+      return Natural;
    --  Return the number of the last line in the text loaded
 
    function Tab_Width
-     (This      : Text_Navigator_Abstr'Class;
-      File_Name : GNATCOLL.VFS.Virtual_File) return Natural;
+     (This : Text_Navigator_Abstr'Class; File_Name : GNATCOLL.VFS.Virtual_File)
+      return Natural;
    --  Return the value of tab width in the text editor
 
    function Get_Full_Prefix
      (This     : Text_Navigator_Abstr'Class;
       Cursor   : File_Cursor'Class;
-      Category : Language_Category := Cat_Unknown)
-      return String;
+      Category : Language_Category := Cat_Unknown) return String;
    --  Return the entire prefix of the first unit of category after the cursor
 
    procedure Get_Entity
@@ -641,13 +637,12 @@ package Codefix.Text_Manager is
    --  Put Cursor at the beggining of the previouse word, and set 'Word' to
    --  this value. Current word will be selected when Cursor is set inside it.
 
-   procedure Update_All
-     (This : Text_Navigator_Abstr'Class);
+   procedure Update_All (This : Text_Navigator_Abstr'Class);
    --  This function update all the text contained in This
 
    function Previous_Char
      (This : Text_Navigator_Abstr'Class; Cursor : File_Cursor'Class)
-     return File_Cursor'Class;
+      return File_Cursor'Class;
    --  Return a cursor positioned on the first non-blank character before the
    --  position specified by the cursor.
 
@@ -674,9 +669,11 @@ package Codefix.Text_Manager is
    procedure Parse_Entities_Backwards
      (Lang     : access Language_Root'Class;
       This     : Text_Navigator_Abstr'Class;
-      Callback : access procedure (Buffer : Unbounded_String;
-                                   Token  : Language.Token_Record;
-                                   Stop   : in out Boolean);
+      Callback :
+        access procedure
+          (Buffer : Unbounded_String;
+           Token  : Language.Token_Record;
+           Stop   : in out Boolean);
       Start    : File_Cursor'Class);
    --  Parse entities in reverse order, as defined by the package Language.
 
@@ -717,7 +714,8 @@ package Codefix.Text_Manager is
       Cursor       : out Word_Cursor);
    --  Create a Word_Cursor from information given by the mark
 
-   overriding function Clone (This : Word_Cursor) return Word_Cursor;
+   overriding
+   function Clone (This : Word_Cursor) return Word_Cursor;
    --  Duplicate all informations of a Word_Cursor, specially informations
    --  memorized in dynamic memory.
 
@@ -731,16 +729,15 @@ package Codefix.Text_Manager is
 
    type Fix_Complexity is (Simple, Complex);
 
-   type Text_Command
-     (Complexity : Fix_Complexity) is abstract tagged private;
+   type Text_Command (Complexity : Fix_Complexity) is abstract tagged private;
    --  A Text_Command is a modification in the text that can be defined one
    --  time, and made later, with taking into account others possible changes.
 
    type Ptr_Command is access all Text_Command'Class;
 
    procedure Execute
-     (This         : Text_Command;
-      Current_Text : in out Text_Navigator_Abstr'Class) is null;
+     (This : Text_Command; Current_Text : in out Text_Navigator_Abstr'Class)
+   is null;
    --  New version of Execute. Reset success to True if the command is in the
    --  new kind, false if the old execute has still to be called.
 
@@ -791,8 +788,7 @@ package Codefix.Text_Manager is
    --  Free the data associated to a Ptr_Command
 
    procedure Set_Caption
-     (This    : in out Text_Command'Class;
-      Caption : Unbounded_String);
+     (This : in out Text_Command'Class; Caption : Unbounded_String);
    --  Define the caption that describes the action of a Text_Command
 
    function Get_Caption (This : Text_Command'Class) return String;
@@ -801,8 +797,7 @@ package Codefix.Text_Manager is
    function Get_Parser (This : Text_Command'Class) return Error_Parser_Access;
 
    procedure Set_Parser
-     (This : in out Text_Command'Class;
-      Parser : Error_Parser_Access);
+     (This : in out Text_Command'Class; Parser : Error_Parser_Access);
 
 private
 
@@ -827,8 +822,8 @@ private
 
    type Ptr_List_Text is access Text_List.Vector;
 
-   procedure Free
-     is new Ada.Unchecked_Deallocation (Text_List.Vector, Ptr_List_Text);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Text_List.Vector, Ptr_List_Text);
 
    type Text_Navigator_Abstr is abstract tagged record
       Files        : Ptr_List_Text := new Text_List.Vector;
@@ -838,8 +833,8 @@ private
    end record;
 
    function Get_File
-     (This    : Text_Navigator_Abstr'Class;
-      Name    : GNATCOLL.VFS.Virtual_File) return Ptr_Text;
+     (This : Text_Navigator_Abstr'Class; Name : GNATCOLL.VFS.Virtual_File)
+      return Ptr_Text;
    --  Returns the existent file interface, or create a new one if it doesn't
    --  exists.
 
@@ -852,8 +847,8 @@ private
    --  type Text_Interface
    ----------------------------------------------------------------------------
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Construct_List, Construct_List_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Construct_List, Construct_List_Access);
 
    type Ptr_Boolean is access all Boolean;
    procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
@@ -891,7 +886,7 @@ private
       --  differently. ??? Not quite clear why it is needed to handle it
       --  specially.
 
-      Col  : Visible_Column_Type := 0;
+      Col : Visible_Column_Type := 0;
       --  The reason why we store columns rather than char index is that
       --  converting a column index into a char index may be more expensive.
       --  When you convert from char to column, you usually already have the
@@ -919,9 +914,9 @@ private
       Parser  : Error_Parser_Access;
       --  ??? To be set right after the validated fix!
 
-      Cursor  : Ptr_Mark;
+      Cursor      : Ptr_Mark;
       --  Holds the position of the error in a source file
-      Origin_Line  : Unbounded_String;
+      Origin_Line : Unbounded_String;
       --  Original file line for checking whether it is not changed
    end record;
 
@@ -931,8 +926,7 @@ private
       Cursor       : File_Cursor'Class);
 
    function Valid
-     (This         : Text_Command;
-      Current_Text : Text_Navigator_Abstr'Class)
+     (This : Text_Command; Current_Text : Text_Navigator_Abstr'Class)
       return Boolean;
    --  Returns False when formal error is not valid anymore due to changes
    --  in a source file for example.

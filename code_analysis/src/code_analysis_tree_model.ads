@@ -20,9 +20,9 @@
 --  Gtk_Tree_View for Code_Analysis structure
 --  </description>
 
-with Code_Analysis;     use Code_Analysis;
-with Gtk.Tree_Store;    use Gtk.Tree_Store;
-with Gtk.Tree_Model;    use Gtk.Tree_Model;
+with Code_Analysis;  use Code_Analysis;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
 
 package Code_Analysis_Tree_Model is
 

@@ -17,16 +17,17 @@
 
 with Interfaces.C.Strings;
 
-with Glib.Object;                use Glib, Glib.Object;
-with Glib.Properties;            use Glib.Properties;
-with Glib.Values;                use Glib.Values;
-with Gdk.Event;                  use Gdk.Event;
-with Gdk.Rectangle;              use Gdk.Rectangle;
-with Gdk.Types;                  use Gdk.Types;
-with Gtk.Cell_Renderer_Pixbuf;   use Gtk.Cell_Renderer_Pixbuf;
+with Glib.Object;
+use Glib, Glib.Object;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Values;              use Glib.Values;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Rectangle;            use Gdk.Rectangle;
+with Gdk.Types;                use Gdk.Types;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
-with Gtk.Tooltip;                use Gtk.Tooltip;
-with Gtk.Widget;                 use Gtk.Widget;
+with Gtk.Tooltip;              use Gtk.Tooltip;
+with Gtk.Widget;               use Gtk.Widget;
 
 with GPS.Location_View.Listener; use GPS.Location_View.Listener;
 
@@ -67,22 +68,20 @@ package body GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Emits "action-clicked" signal.
 
-   package View_Idles is
-     new Glib.Main.Generic_Sources (GPS_Locations_Tree_View);
+   package View_Idles is new
+     Glib.Main.Generic_Sources (GPS_Locations_Tree_View);
 
-   package Query_Tooltip_Callbacks is
-     new Gtk.Handlers.Return_Callback
-       (GPS_Locations_Tree_View_Record, Boolean);
+   package Query_Tooltip_Callbacks is new
+     Gtk.Handlers.Return_Callback (GPS_Locations_Tree_View_Record, Boolean);
 
-   package GPS_Locations_Tree_View_Boolean_Callbacks is
-     new Gtk.Handlers.Return_Callback
-       (GPS_Locations_Tree_View_Record, Boolean);
+   package GPS_Locations_Tree_View_Boolean_Callbacks is new
+     Gtk.Handlers.Return_Callback (GPS_Locations_Tree_View_Record, Boolean);
 
-   package GPS_Locations_Tree_View_Callbacks is
-     new Gtk.Handlers.Callback (GPS_Locations_Tree_View_Record);
+   package GPS_Locations_Tree_View_Callbacks is new
+     Gtk.Handlers.Callback (GPS_Locations_Tree_View_Record);
 
    Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
+     Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array (1 .. 3) :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Action_Clicked)),
@@ -104,8 +103,7 @@ package body GPS.Tree_View.Locations is
    procedure Action_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) is
    begin
       GPS_Locations_Tree_View_Callbacks.Emit_By_Name
         (Self, Signal_Action_Clicked, Path, Iter);
@@ -138,8 +136,7 @@ package body GPS.Tree_View.Locations is
    -------------
 
    procedure Gtk_New
-     (Object : out GPS_Locations_Tree_View;
-      Model  : Gtk_Tree_Model) is
+     (Object : out GPS_Locations_Tree_View; Model : Gtk_Tree_Model) is
    begin
       Object := new GPS_Locations_Tree_View_Record;
       GPS.Tree_View.Locations.Initialize (Object, Model);
@@ -180,8 +177,7 @@ package body GPS.Tree_View.Locations is
       Gtk_New (Pixbuf_Renderer);
       Color_Column.Pack_Start (Pixbuf_Renderer, False);
       Color_Column.Add_Attribute
-        (Pixbuf_Renderer, "cell-background-rgba",
-         -Background_Color_Column);
+        (Pixbuf_Renderer, "cell-background-rgba", -Background_Color_Column);
       Dummy := Self.Append_Column (Color_Column);
 
       --  Action column
@@ -257,8 +253,7 @@ package body GPS.Tree_View.Locations is
    procedure File_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) is
    begin
       GPS_Locations_Tree_View_Callbacks.Emit_By_Name
         (Self, Signal_File_Clicked, Path, Iter);
@@ -271,8 +266,7 @@ package body GPS.Tree_View.Locations is
    procedure Location_Clicked
      (Self : not null access GPS_Locations_Tree_View_Record'Class;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-   is
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) is
    begin
       GPS_Locations_Tree_View_Callbacks.Emit_By_Name
         (Self, Signal_Location_Clicked, Path, Iter);
@@ -398,7 +392,8 @@ package body GPS.Tree_View.Locations is
    -- On_Lowest_Model_Row_Inserted --
    ----------------------------------
 
-   overriding procedure On_Lowest_Model_Row_Inserted
+   overriding
+   procedure On_Lowest_Model_Row_Inserted
      (Self : not null access GPS_Locations_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -532,7 +527,8 @@ package body GPS.Tree_View.Locations is
    -- On_Row_Expanded --
    ---------------------
 
-   overriding procedure On_Row_Expanded
+   overriding
+   procedure On_Row_Expanded
      (Self : not null access GPS_Locations_Tree_View_Record;
       Path : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -572,17 +568,15 @@ package body GPS.Tree_View.Locations is
    begin
       Self.Get_Visible_Range (Start_Path, End_Path, Success);
 
-      if Success
-        and then Has_Child (Model, Iter)
-      then
+      if Success and then Has_Child (Model, Iter) then
          --  Go down till not expanded node or node leaf node is found
 
          loop
             Down (Path);
             Iter := Children (Model, Iter);
 
-            exit when not Self.Row_Expanded (Path)
-              or else not Has_Child (Model, Iter);
+            exit when
+              not Self.Row_Expanded (Path) or else not Has_Child (Model, Iter);
          end loop;
 
          if Compare (Path, End_Path) >= 0 then
@@ -617,17 +611,15 @@ package body GPS.Tree_View.Locations is
    ------------------------
 
    function Signals_Parameters return Glib.Object.Signal_Parameter_Types is
-      Result : constant
-        Glib.Object.Signal_Parameter_Types (1 .. 3, 1 .. 3) :=
-        (1 => (1      => Path_Get_Type,
-               2      => Iter_Get_Type,
-               others => Glib.GType_None),
-         2 => (1      => Path_Get_Type,
-               2      => Iter_Get_Type,
-               others => Glib.GType_None),
-         3 => (1      => Path_Get_Type,
-               2      => Iter_Get_Type,
-               others => Glib.GType_None));
+      Result : constant Glib.Object.Signal_Parameter_Types (1 .. 3, 1 .. 3) :=
+        (1 =>
+           (1 => Path_Get_Type, 2 => Iter_Get_Type, others => Glib.GType_None),
+         2 =>
+           (1 => Path_Get_Type, 2 => Iter_Get_Type, others => Glib.GType_None),
+         3 =>
+           (1      => Path_Get_Type,
+            2      => Iter_Get_Type,
+            others => Glib.GType_None));
 
    begin
       return Result;
@@ -638,22 +630,22 @@ package body GPS.Tree_View.Locations is
    ---------------
 
    procedure Set_Order
-     (Self : not null access GPS_Locations_Tree_View_Record'Class;
+     (Self       : not null access GPS_Locations_Tree_View_Record'Class;
       File_Order : GPS.Location_View.Listener.File_Sort_Order;
       Msg_Order  : GPS.Location_View.Listener.Messages_Sort_Order) is
    begin
-      GPS.Location_View.Listener.Classic_Tree_Model
-        (-Self.Filter.Get_Model).Set_Order (File_Order, Msg_Order);
+      GPS.Location_View.Listener.Classic_Tree_Model (-Self.Filter.Get_Model)
+        .Set_Order (File_Order, Msg_Order);
    end Set_Order;
 
    --------------------------
    -- To_Lowest_Model_Iter --
    --------------------------
 
-   overriding function To_Lowest_Model_Iter
+   overriding
+   function To_Lowest_Model_Iter
      (Self : not null access GPS_Locations_Tree_View_Record;
-      Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
-      return Gtk.Tree_Model.Gtk_Tree_Iter
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       It : Gtk_Tree_Iter;
 

@@ -17,31 +17,33 @@
 
 with VSS.Strings.Conversions;
 
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Intl;             use GPS.Intl;
+with GPS.Kernel.Timeout;   use GPS.Kernel.Timeout;
 with GPS.Kernel.Spawns;
-with GPS.Scripts.Commands;             use GPS.Scripts.Commands;
-with GPS.Messages_Windows;             use GPS.Messages_Windows;
-with Interactive_Consoles;             use Interactive_Consoles;
-with GPS.Kernel;                       use GPS.Kernel;
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
+with GPS.Messages_Windows; use GPS.Messages_Windows;
+with Interactive_Consoles; use Interactive_Consoles;
+with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Task_Manager;
 with GPS.Kernel.Remote;
-with UTF8_Utils;                       use UTF8_Utils;
+with UTF8_Utils;           use UTF8_Utils;
 
 package body GPS.Process_Launchers.Implementation is
 
    type Build_Callback_Data is new External_Process_Data with record
-      Output_Parser  : Tools_Output_Parser_Access;
+      Output_Parser : Tools_Output_Parser_Access;
    end record;
    type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
-   overriding procedure Free
-     (Data    : in out Build_Callback_Data;
-      Partial : Boolean := False);
-   overriding procedure On_Output
+   overriding
+   procedure Free
+     (Data : in out Build_Callback_Data; Partial : Boolean := False);
+   overriding
+   procedure On_Output
      (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class;
       Output  : String);
-   overriding procedure On_Exit
+   overriding
+   procedure On_Exit
      (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class);
 
@@ -51,7 +53,8 @@ package body GPS.Process_Launchers.Implementation is
    -- On_Output --
    ---------------
 
-   overriding procedure On_Output
+   overriding
+   procedure On_Output
      (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class;
       Output  : String) is
@@ -65,7 +68,8 @@ package body GPS.Process_Launchers.Implementation is
    -- On_Exit --
    -------------
 
-   overriding procedure On_Exit
+   overriding
+   procedure On_Exit
      (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class) is
    begin
@@ -78,9 +82,9 @@ package body GPS.Process_Launchers.Implementation is
    -- Free --
    ----------
 
-   overriding procedure Free
-     (Data    : in out Build_Callback_Data;
-      Partial : Boolean := False) is
+   overriding
+   procedure Free
+     (Data : in out Build_Callback_Data; Partial : Boolean := False) is
    begin
       Free (Data.Output_Parser);
    end Free;
@@ -89,47 +93,51 @@ package body GPS.Process_Launchers.Implementation is
    -- Launch_Process --
    --------------------
 
-   overriding procedure Launch_Process
-     (Launcher             : access GPS_Process_Launcher_Record;
-      CL                   : Arg_List;
-      Server               : Server_Type := GPS_Server;
-      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Output_Parser        : GPS.Tools_Output.Tools_Output_Parser_Access;
-      Show_Command_To      : Messages_Windows.Abstract_Messages_Window_Access;
-      Success              : out Boolean)
+   overriding
+   procedure Launch_Process
+     (Launcher        : access GPS_Process_Launcher_Record;
+      CL              : Arg_List;
+      Server          : Server_Type := GPS_Server;
+      Directory       : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Output_Parser   : GPS.Tools_Output.Tools_Output_Parser_Access;
+      Show_Command_To : Messages_Windows.Abstract_Messages_Window_Access;
+      Success         : out Boolean)
    is
       Console : Interactive_Consoles.Interactive_Console;
       Result  : Scheduled_Command_Access;
-      Data    : constant Build_Callback_Data_Access := new Build_Callback_Data'
-        (External_Process_Data with Output_Parser => Output_Parser);
+      Data    : constant Build_Callback_Data_Access :=
+        new Build_Callback_Data'
+          (External_Process_Data with Output_Parser => Output_Parser);
    begin
       if Show_Command_To /= null then
-         Console := Console_Messages_Window (Show_Command_To.all)
-           .Get_Interactive_Console;
+         Console :=
+           Console_Messages_Window (Show_Command_To.all)
+             .Get_Interactive_Console;
       end if;
 
       GPS.Kernel.Timeout.Launch_Process
-        (Kernel               => Kernel_Handle (Launcher.Kernel),
-         CL                   => CL,
-         Server               => Server,
-         Success              => Success,
-         Use_Ext_Terminal     => False,
-         Console              => Console,
-         Show_Command         => Show_Command_To /= null,
-         Show_Output          => False,
-         Data                 => Data,
-         Line_By_Line         => False,
-         Directory            => Directory,
-         Synchronous          => True,
-         Show_Exit_Status     => False,
-         Scheduled            => Result);
+        (Kernel           => Kernel_Handle (Launcher.Kernel),
+         CL               => CL,
+         Server           => Server,
+         Success          => Success,
+         Use_Ext_Terminal => False,
+         Console          => Console,
+         Show_Command     => Show_Command_To /= null,
+         Show_Output      => False,
+         Data             => Data,
+         Line_By_Line     => False,
+         Directory        => Directory,
+         Synchronous      => True,
+         Show_Exit_Status => False,
+         Scheduled        => Result);
    end Launch_Process;
 
    ----------------------------------
    -- Launch_Process_In_Background --
    ----------------------------------
 
-   overriding procedure Launch_Process_In_Background
+   overriding
+   procedure Launch_Process_In_Background
      (Launcher             : access GPS_Process_Launcher_Record;
       CL                   : Arg_List;
       Server               : Server_Type := GPS_Server;
@@ -143,16 +151,18 @@ package body GPS.Process_Launchers.Implementation is
       Created_Command      : out Command_Access)
    is
       Console : constant Interactive_Consoles.Interactive_Console :=
-        (if Show_Command_To = null then null
-         else Console_Messages_Window (Show_Command_To.all)
-                .Get_Interactive_Console);
+        (if Show_Command_To = null
+         then null
+         else
+           Console_Messages_Window (Show_Command_To.all)
+             .Get_Interactive_Console);
 
-      Exec : constant String := GPS.Kernel.Remote.Check_Exec
-        (Server, Get_Command (CL));
+      Exec : constant String :=
+        GPS.Kernel.Remote.Check_Exec (Server, Get_Command (CL));
 
-      Kernel  : constant Kernel_Handle := Kernel_Handle (Launcher.Kernel);
-      Result  : Scheduled_Command_Access;
-      Data    : Build_Callback_Data_Access;
+      Kernel : constant Kernel_Handle := Kernel_Handle (Launcher.Kernel);
+      Result : Scheduled_Command_Access;
+      Data   : Build_Callback_Data_Access;
    begin
       if Is_Local (Server) and then not Directory.Is_Directory then
          begin
@@ -161,8 +171,8 @@ package body GPS.Process_Launchers.Implementation is
             when others =>
                Insert
                  (Kernel,
-                  -"Could not create directory: " &
-                    Directory.Display_Full_Name,
+                  -"Could not create directory: "
+                  & Directory.Display_Full_Name,
                   Mode => GPS.Kernel.Error);
          end;
       end if;
@@ -173,8 +183,8 @@ package body GPS.Process_Launchers.Implementation is
 
             Insert
               (Kernel,
-               -"Could not locate executable on path: " &
-                 Unknown_To_UTF8 (Get_Command (CL)),
+               -"Could not locate executable on path: "
+               & Unknown_To_UTF8 (Get_Command (CL)),
                Mode => GPS.Kernel.Error);
 
             return;
@@ -187,7 +197,8 @@ package body GPS.Process_Launchers.Implementation is
          GPS.Kernel.Spawns.Launch_Process
            (Command_Name  =>
               VSS.Strings.Conversions.To_Virtual_String
-                (if Name_In_Task_Manager = "" then Get_Command (CL)
+                (if Name_In_Task_Manager = ""
+                 then Get_Command (CL)
                  else Name_In_Task_Manager),
             Console       => Console,
             Exec          => Exec,
@@ -211,8 +222,9 @@ package body GPS.Process_Launchers.Implementation is
 
          Success := True;
       else
-         Data := new Build_Callback_Data'
-           (External_Process_Data with Output_Parser => Output_Parser);
+         Data :=
+           new Build_Callback_Data'
+             (External_Process_Data with Output_Parser => Output_Parser);
 
          GPS.Kernel.Timeout.Launch_Process
            (Kernel               => Kernel,

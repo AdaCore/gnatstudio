@@ -17,8 +17,8 @@
 
 private package CodePeer.Bridge.Annotations_Readers.Base is
 
-   type Annotations_Reader_Base is
-     abstract limited new Abstract_Annotations_Reader with private;
+   type Annotations_Reader_Base is abstract limited
+     new Abstract_Annotations_Reader with private;
 
    procedure Initialize
      (Self       : in out Annotations_Reader_Base'Class;
@@ -31,22 +31,24 @@ private package CodePeer.Bridge.Annotations_Readers.Base is
    --  Returns file node for currently processed file
 
    function Get_Subprogram
-     (Self : Annotations_Reader_Base)
-      return CodePeer.Subprogram_Data_Access is abstract;
+     (Self : Annotations_Reader_Base) return CodePeer.Subprogram_Data_Access
+   is abstract;
    --  Returns subprogram node for the currently processed subprogram
 
-   overriding procedure Start_Element
+   overriding
+   procedure Start_Element
      (Self  : in out Annotations_Reader_Base;
       Name  : String;
       Attrs : Sax.Attributes.Attributes'Class);
 
-   overriding procedure End_Element
-     (Self  : in out Annotations_Reader_Base;
-      Name  : String);
+   overriding
+   procedure End_Element
+     (Self : in out Annotations_Reader_Base; Name : String);
 
    procedure Start_Subprogram
-     (Self : in out Annotations_Reader_Base;
-      Attrs : Sax.Attributes.Attributes'Class) is abstract;
+     (Self  : in out Annotations_Reader_Base;
+      Attrs : Sax.Attributes.Attributes'Class)
+   is abstract;
    --  Process start of "subprogram" element
 
    procedure Start_Annotation
@@ -56,8 +58,9 @@ private package CodePeer.Bridge.Annotations_Readers.Base is
 
 private
 
-   type Annotations_Reader_Base is
-     abstract limited new Abstract_Annotations_Reader with record
+   type Annotations_Reader_Base is abstract limited
+     new Abstract_Annotations_Reader
+   with record
       Categories : Annotation_Category_Maps.Map;
       File       : access Code_Analysis.File'Class;
    end record;

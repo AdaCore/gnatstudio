@@ -31,7 +31,8 @@ package Src_Editor_Box.Tooltips is
    type Editor_Tooltip_Handler_Access is
      access all Editor_Tooltip_Handler'Class;
 
-   overriding function Create_Contents
+   overriding
+   function Create_Contents
      (Tooltip : not null access Editor_Tooltip_Handler;
       Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y    : Glib.Gint) return Gtk.Widget.Gtk_Widget;
@@ -45,7 +46,8 @@ package Src_Editor_Box.Tooltips is
    --  the Get_Tooltip_Widget_For_Entity or the GPS.Kernel.Compute_Tooltip
    --  functions should be enough.
 
-   overriding function Align_Tooltip_With_Tip_Area
+   overriding
+   function Align_Tooltip_With_Tip_Area
      (Tooltip : not null access Editor_Tooltip_Handler) return Boolean;
    --  Return True so that editor tooltips get aligned with the hovered
    --  entities.
@@ -91,8 +93,8 @@ package Src_Editor_Box.Tooltips is
 
 private
 
-   type Editor_Tooltip_Handler is new Standard.Tooltips.Tooltip_Handler with
-   record
+   type Editor_Tooltip_Handler is new Standard.Tooltips.Tooltip_Handler
+   with record
       Box : Source_Editor_Box;
    end record;
 

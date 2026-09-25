@@ -77,16 +77,17 @@ with GNATCOLL.JSON;
 with Glib.Object;
 with Gtk.Widget;
 with XML_Utils;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
+with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 
 package GPS.Kernel.Modules is
 
-   Explorer_Module_Name        : constant String := "Project_Explorer_Project";
+   Explorer_Module_Name           : constant String :=
+     "Project_Explorer_Project";
    Project_Editor_Module_Name     : constant String := "Project_Editor";
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    Project_Browser_Module_Name    : constant String := "Project_Browser";
    Revision_View_Module_Name      : constant String := "Revision_Views";
-   Entity_Browser_Module_Name : constant String := "Entity_Browser";
+   Entity_Browser_Module_Name     : constant String := "Entity_Browser";
    --  Names for the internal modules.
    --  Changing these might also impact the contents of the saved perspectives
    --  files.#
@@ -127,8 +128,8 @@ package GPS.Kernel.Modules is
    --  if the child could be saved with success (in Action mode)
 
    function Tooltip_Handler
-     (Module  : access Module_ID_Record;
-      Context : Selection_Context) return Gtk.Widget.Gtk_Widget;
+     (Module : access Module_ID_Record; Context : Selection_Context)
+      return Gtk.Widget.Gtk_Widget;
    --  Callback used every time some tooltip event happens in GNAT Studio.
    --  Context contains all the information about the context of the tooltip.
    --
@@ -147,7 +148,8 @@ package GPS.Kernel.Modules is
      (Module     : access Module_ID_Record;
       Dummy_Load : XML_Utils.Node_Ptr := null;
       Dummy_JSON : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.JSON_Null)
-      return Location_Marker is (No_Marker);
+      return Location_Marker
+   is (No_Marker);
    --  Create bookmark for either the bookmark described in Load, or
    --  the current context in the module. Load is used when reloading the
    --  bookmarks when GNAT Studio is started, and is the same XML node
@@ -155,11 +157,13 @@ package GPS.Kernel.Modules is
    --
    --  null should be returned if we can't create a marker at that position
 
-   overriding procedure Customize
+   overriding
+   procedure Customize
      (Module : access Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
       Node   : XML_Utils.Node_Ptr;
-      Level  : Customization_Level) is null;
+      Level  : Customization_Level)
+   is null;
    --  Subprogram called when a new customization has been parsed.
    --  It is initially called just after all modules have been registered,
    --  and gets passed a single XML node.

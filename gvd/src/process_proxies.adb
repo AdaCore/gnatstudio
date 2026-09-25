@@ -16,13 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with GNAT.Expect;           use GNAT.Expect;
-with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Expect; use GNAT.Expect;
+with GNAT.Regpat; use GNAT.Regpat;
 
 with Gtk.Main;
-with Glib.Convert;          use Glib.Convert;
+with Glib.Convert; use Glib.Convert;
 
-with GVD.Types;             use GVD.Types;
+with GVD.Types; use GVD.Types;
 
 package body Process_Proxies is
 
@@ -34,13 +34,14 @@ package body Process_Proxies is
    ----------
 
    procedure Free (Proxy : in out Process_Proxy_Access) is
-      procedure Free_Internal is new Ada.Unchecked_Deallocation
-        (Process_Proxy'Class, Process_Proxy_Access);
-      procedure Free_Internal is new Ada.Unchecked_Deallocation
-        (GNAT.Expect.Process_Descriptor'Class,
-         GNAT.Expect.Process_Descriptor_Access);
-      procedure Free_Internal is new Ada.Unchecked_Deallocation
-        (Boolean, Boolean_Access);
+      procedure Free_Internal is new
+        Ada.Unchecked_Deallocation (Process_Proxy'Class, Process_Proxy_Access);
+      procedure Free_Internal is new
+        Ada.Unchecked_Deallocation
+          (GNAT.Expect.Process_Descriptor'Class,
+           GNAT.Expect.Process_Descriptor_Access);
+      procedure Free_Internal is new
+        Ada.Unchecked_Deallocation (Boolean, Boolean_Access);
 
    begin
       if Proxy /= null then
@@ -85,8 +86,7 @@ package body Process_Proxies is
    ----------------------------
 
    procedure Set_Command_In_Process
-     (Proxy      : access Process_Proxy;
-      In_Process : Boolean := True) is
+     (Proxy : access Process_Proxy; In_Process : Boolean := True) is
    begin
       Proxy.Command_In_Process.all := In_Process;
    end Set_Command_In_Process;
@@ -95,7 +95,8 @@ package body Process_Proxies is
    -- Initialize --
    ----------------
 
-   overriding procedure Initialize (Self : in out Parse_File_Switch) is
+   overriding
+   procedure Initialize (Self : in out Parse_File_Switch) is
    begin
       if Self.Proxy = null then
          return;
@@ -111,7 +112,8 @@ package body Process_Proxies is
    -- Finalize --
    --------------
 
-   overriding procedure Finalize (Self : in out Parse_File_Switch) is
+   overriding
+   procedure Finalize (Self : in out Parse_File_Switch) is
    begin
       if Self.Work then
          Self.Proxy.Set_Parse_File_Name (True);
@@ -133,8 +135,7 @@ package body Process_Proxies is
    ---------------------
 
    procedure Set_Interrupted
-     (Proxy       : access Process_Proxy;
-      Interrupted : Boolean := True) is
+     (Proxy : access Process_Proxy; Interrupted : Boolean := True) is
    begin
       Proxy.Interrupted := Interrupted;
    end Set_Interrupted;
@@ -144,8 +145,7 @@ package body Process_Proxies is
    ------------------
 
    procedure Empty_Buffer
-     (Proxy        : access Process_Proxy;
-      At_Least_One : Boolean := False)
+     (Proxy : access Process_Proxy; At_Least_One : Boolean := False)
    is
       Result : GNAT.Expect.Expect_Match;
    begin
@@ -161,14 +161,15 @@ package body Process_Proxies is
    ----------
 
    procedure Send
-     (Proxy : access Process_Proxy;
-      Cmd : String;
+     (Proxy        : access Process_Proxy;
+      Cmd          : String;
       Empty_Buffer : Boolean := False) is
    begin
-      Send (Proxy.Descriptor.all,
-            Locale_From_UTF8 (Cmd),
-            Add_LF => True,
-            Empty_Buffer => Empty_Buffer);
+      Send
+        (Proxy.Descriptor.all,
+         Locale_From_UTF8 (Cmd),
+         Add_LF       => True,
+         Empty_Buffer => Empty_Buffer);
    end Send;
 
    ----------------
@@ -212,7 +213,8 @@ package body Process_Proxies is
       Wait (Proxy, Result, Compile (Pattern), Timeout);
    end Wait;
 
-   overriding procedure Wait
+   overriding
+   procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
@@ -249,17 +251,26 @@ package body Process_Proxies is
             Set_Interrupted (Proxy, False);
             Expect
               (Proxy.Descriptor.all,
-               Result, Pattern, Matched, Timeout => Timeout);
+               Result,
+               Pattern,
+               Matched,
+               Timeout => Timeout);
             exit;
          end if;
 
          if Timeout = -1 then
             Expect
-              (Proxy.Descriptor.all, Result, Pattern, Matched,
+              (Proxy.Descriptor.all,
+               Result,
+               Pattern,
+               Matched,
                Timeout => Timeout_Ms);
          else
             Expect
-              (Proxy.Descriptor.all, Result, Pattern, Matched,
+              (Proxy.Descriptor.all,
+               Result,
+               Pattern,
+               Matched,
                Timeout => Integer'Min (Timeout_Ms, Timeout));
          end if;
 
@@ -270,7 +281,7 @@ package body Process_Proxies is
                --  since the buffers have an unlimited size.
                exit;
 
-            when Expect_Timeout =>
+            when Expect_Timeout     =>
                --  Process any graphical event, and loop again.
 
                --  If we are already waiting, that means that one of the events
@@ -296,14 +307,15 @@ package body Process_Proxies is
                   Num := Num + Timeout_Ms;
                end if;
 
-            when others =>
+            when others             =>
                --  It matched, we can simply return.
                exit;
          end case;
       end loop;
    end Wait;
 
-   overriding procedure Wait
+   overriding
+   procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
@@ -319,8 +331,7 @@ package body Process_Proxies is
    -------------------------
 
    procedure Set_Parse_File_Name
-     (Proxy : access Process_Proxy;
-      Parse : Boolean) is
+     (Proxy : access Process_Proxy; Parse : Boolean) is
    begin
       Proxy.Parse_File_Name := Parse;
    end Set_Parse_File_Name;
@@ -329,8 +340,8 @@ package body Process_Proxies is
    -- Get_Parse_File_Name --
    -------------------------
 
-   function Get_Parse_File_Name
-     (Proxy : access Process_Proxy) return Boolean is
+   function Get_Parse_File_Name (Proxy : access Process_Proxy) return Boolean
+   is
    begin
       return Proxy.Parse_File_Name;
    end Get_Parse_File_Name;
@@ -339,8 +350,8 @@ package body Process_Proxies is
    -- Get_Command_Mode --
    ----------------------
 
-   function Get_Command_Mode
-     (Proxy : access Process_Proxy) return Command_Type is
+   function Get_Command_Mode (Proxy : access Process_Proxy) return Command_Type
+   is
    begin
       return Proxy.Internal_Mode;
    end Get_Command_Mode;
@@ -350,8 +361,7 @@ package body Process_Proxies is
    ----------------------
 
    procedure Set_Command_Mode
-     (Proxy : access Process_Proxy;
-      Mode  : Command_Type) is
+     (Proxy : access Process_Proxy; Mode : Command_Type) is
    begin
       Proxy.Internal_Mode := Mode;
    end Set_Command_Mode;

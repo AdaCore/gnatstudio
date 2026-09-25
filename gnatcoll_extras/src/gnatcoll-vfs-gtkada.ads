@@ -69,9 +69,9 @@ package GNATCOLL.VFS.GtkAda is
       Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column     : Glib.Gint) return Virtual_File;
    function Get_File
-     (Store      : access Gtk.List_Store.Gtk_List_Store_Record'Class;
-      Iter       : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column     : Glib.Gint) return Virtual_File;
+     (Store  : access Gtk.List_Store.Gtk_List_Store_Record'Class;
+      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : Glib.Gint) return Virtual_File;
    --  Get a file from a tree model. The column should have been initialized
    --  as GType_Pointer
 

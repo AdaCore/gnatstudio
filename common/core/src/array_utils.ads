@@ -37,9 +37,11 @@ package Array_Utils is
 
    type Option_Type (Has_Element : Boolean) is record
       case Has_Element is
-      when True =>
-         Element : Element_Type;
-      when False => null;
+         when True =>
+            Element : Element_Type;
+
+         when False =>
+            null;
       end case;
    end record;
 
@@ -47,8 +49,10 @@ package Array_Utils is
 
    None : Option_Type := (Has_Element => False);
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Object => Array_Type, Name => Array_Type_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation
+       (Object => Array_Type,
+        Name   => Array_Type_Access);
 
    ---------
    -- Map --
@@ -64,18 +68,19 @@ package Array_Utils is
       type Out_Type is private;
       type Out_Array_Type is array (Index_Type range <>) of Out_Type;
    function Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Out_Type) return Out_Array_Type;
+     (In_Array  : Array_Type;
+      Transform : access function (In_Element : Element_Type) return Out_Type)
+      return Out_Array_Type;
 
    generic
       with function Transform (In_Element : Element_Type) return Element_Type;
    function Id_Map_Gen (In_Array : Array_Type) return Array_Type;
 
    function Id_Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Element_Type) return Array_Type;
+     (In_Array  : Array_Type;
+      Transform :
+        access function (In_Element : Element_Type) return Element_Type)
+      return Array_Type;
 
    ------------
    -- Filter --
@@ -87,60 +92,55 @@ package Array_Utils is
 
    function Filter
      (In_Array : Array_Type;
-      Pred : access function
-        (E : Element_Type) return Boolean) return Array_Type;
+      Pred     : access function (E : Element_Type) return Boolean)
+      return Array_Type;
 
    generic
       with function "=" (L, R : Element_Type) return Boolean;
-   function Unique_Gen
-     (In_Array : Array_Type) return Array_Type;
+   function Unique_Gen (In_Array : Array_Type) return Array_Type;
 
-   function Unique
-     (In_Array : Array_Type) return Array_Type;
+   function Unique (In_Array : Array_Type) return Array_Type;
 
-   function Contains
-     (In_Array : Array_Type; El : Element_Type) return Boolean;
+   function Contains (In_Array : Array_Type; El : Element_Type) return Boolean;
 
    function Contains
      (In_Array : Array_Type;
-      Pred : access function (El : Element_Type) return Boolean)
+      Pred     : access function (El : Element_Type) return Boolean)
       return Boolean;
 
    generic
       with function Predicate (In_Element : Element_Type) return Boolean;
-   function Find_Gen (In_Array : Array_Type;
-                      Rev : Boolean := False) return Option_Type;
+   function Find_Gen
+     (In_Array : Array_Type; Rev : Boolean := False) return Option_Type;
 
    function Find
-     (In_Array : Array_Type;
-      Predicate :
-      access function (El : Element_Type) return Boolean;
-      Rev : Boolean := False) return Option_Type;
+     (In_Array  : Array_Type;
+      Predicate : access function (El : Element_Type) return Boolean;
+      Rev       : Boolean := False) return Option_Type;
 
    function Find
-     (In_Array : Array_Type;
-      Predicate :
-      access function (El : Element_Type) return Boolean;
-      Rev : Boolean := False) return Natural;
+     (In_Array  : Array_Type;
+      Predicate : access function (El : Element_Type) return Boolean;
+      Rev       : Boolean := False) return Natural;
 
-   function Find (In_Array : Array_Type;
-                  Predicate :
-                  access function (El : Element_Type) return Boolean;
-                  Rev : Boolean := False;
-                  Ret : out Element_Type) return Boolean;
+   function Find
+     (In_Array  : Array_Type;
+      Predicate : access function (El : Element_Type) return Boolean;
+      Rev       : Boolean := False;
+      Ret       : out Element_Type) return Boolean;
 
    generic
       with function Predicate (In_Element : Element_Type) return Boolean;
-   function Find_Gen_Or (In_Array : Array_Type;
-                         Val_If_Not_Found : Element_Type;
-                         Rev : Boolean := False) return Element_Type;
+   function Find_Gen_Or
+     (In_Array         : Array_Type;
+      Val_If_Not_Found : Element_Type;
+      Rev              : Boolean := False) return Element_Type;
 
    function Find
-     (In_Array : Array_Type;
-      Predicate :
-      access function (El : Element_Type) return Boolean;
+     (In_Array         : Array_Type;
+      Predicate        : access function (El : Element_Type) return Boolean;
       Val_If_Not_Found : Element_Type;
-      Rev : Boolean := False) return Element_Type;
+      Rev              : Boolean := False) return Element_Type;
 
    --------------
    -- Flat_Map --
@@ -151,28 +151,28 @@ package Array_Utils is
       type Index_Type is range <>;
       type Fun_Ret_Array_Type is array (Index_Type range <>) of F_Type;
    function Flat_Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Fun_Ret_Array_Type)
+     (In_Array  : Array_Type;
+      Transform :
+        access function (In_Element : Element_Type) return Fun_Ret_Array_Type)
       return Fun_Ret_Array_Type;
 
    function Id_Flat_Map
-     (In_Array : Array_Type;
-      Transform : access function
-        (In_Element : Element_Type) return Array_Type)
+     (In_Array  : Array_Type;
+      Transform :
+        access function (In_Element : Element_Type) return Array_Type)
       return Array_Type;
 
    generic
       type F_Type is private;
       type Index_Type is range <>;
       type Fun_Ret_Array_Type is array (Index_Type range <>) of F_Type;
-      with function Transform
-        (In_Element : Element_Type) return Fun_Ret_Array_Type;
+      with
+        function Transform
+          (In_Element : Element_Type) return Fun_Ret_Array_Type;
    function Flat_Map_Gen (In_Array : Array_Type) return Fun_Ret_Array_Type;
 
    generic
-      with function Transform
-        (In_Element : Element_Type) return Array_Type;
+      with function Transform (In_Element : Element_Type) return Array_Type;
    function Id_Flat_Map_Gen (In_Array : Array_Type) return Array_Type;
 
    ----------

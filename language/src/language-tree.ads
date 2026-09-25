@@ -47,8 +47,7 @@ package Language.Tree is
    --  Free all the annotations associated to this construct tree.
 
    function To_Construct_Tree
-     (List      : access Construct_List;
-      Free_List : Boolean := False)
+     (List : access Construct_List; Free_List : Boolean := False)
       return Construct_Tree;
    --  Return the construct tree corresponding to the construct list given in
    --  parameter. If Free_List is true, then the list given in parameter will
@@ -57,8 +56,7 @@ package Language.Tree is
    function To_Construct_Tree
      (File   : GNATCOLL.VFS.Virtual_File;
       Buffer : String;
-      Lang   : access Language_Root'Class)
-      return Construct_Tree;
+      Lang   : access Language_Root'Class) return Construct_Tree;
    --  Same as above
 
    function Get_Annotation_Container
@@ -73,8 +71,8 @@ package Language.Tree is
 
    Null_Construct_Tree_Iterator : aliased constant Construct_Tree_Iterator;
 
-   overriding function "="
-     (Left, Right : Construct_Tree_Iterator) return Boolean;
+   overriding
+   function "=" (Left, Right : Construct_Tree_Iterator) return Boolean;
    pragma Inline ("=");
    function "<" (Left, Right : Construct_Tree_Iterator) return Boolean;
    pragma Inline ("<");
@@ -97,8 +95,7 @@ package Language.Tree is
    --  Return the last element of a construct tree.
 
    function Get_Parent_Scope
-     (Tree : Construct_Tree;
-      Iter : Construct_Tree_Iterator)
+     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
       return Construct_Tree_Iterator;
    --  Return the parent scope of the given iterator, Null_Construct_Tree if
    --  none.
@@ -119,8 +116,8 @@ package Language.Tree is
    --  construct and its fields should be copied.
 
    type Category_Array is array (Natural range <>) of Language_Category;
-   Null_Category_Array : aliased constant
-      Category_Array (1 .. 0) := (others => Cat_Unknown);
+   Null_Category_Array : aliased constant Category_Array (1 .. 0) :=
+     (others => Cat_Unknown);
 
    Categories_For_Block_Highlighting : constant Category_Array :=
      (Cat_Package,            -- Enclosing Entities
@@ -152,8 +149,8 @@ package Language.Tree is
 
    type Category_Array_Access is access all Category_Array;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Category_Array, Category_Array_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Category_Array, Category_Array_Access);
 
    function Is_In
      (Cat : Language_Category; Categories : Category_Array) return Boolean;
@@ -172,7 +169,8 @@ package Language.Tree is
    type Text_Location (Absolute_Offset : Boolean) is record
       case Absolute_Offset is
          when True =>
-            Offset      : String_Index_Type;
+            Offset : String_Index_Type;
+
          when False =>
             Line        : Natural;
             Line_Offset : String_Index_Type;
@@ -191,8 +189,7 @@ package Language.Tree is
      (Left : Text_Location; Right : Source_Location) return Boolean;
    pragma Inline ("<=");
 
-   function ">"
-     (Left : Text_Location; Right : Source_Location) return Boolean;
+   function ">" (Left : Text_Location; Right : Source_Location) return Boolean;
    pragma Inline (">");
 
    function ">="
@@ -203,9 +200,7 @@ package Language.Tree is
    --  Return a text location for the offset given in parameter.
 
    function To_Location
-     (Line        : Natural;
-      Line_Offset : String_Index_Type)
-      return Text_Location;
+     (Line : Natural; Line_Offset : String_Index_Type) return Text_Location;
    --  Return a text location for the line/column given in parameter.
 
    function To_Location (Loc : Source_Location) return Text_Location;
@@ -214,9 +209,9 @@ package Language.Tree is
    function Get_Iterator_At
      (Tree              : Construct_Tree;
       Location          : Text_Location;
-      From_Type         : Position_Type     := Start_Construct;
+      From_Type         : Position_Type := Start_Construct;
       Position          : Relative_Position := Specified;
-      Categories_Seeked : Category_Array    := Null_Category_Array)
+      Categories_Seeked : Category_Array := Null_Category_Array)
       return Construct_Tree_Iterator;
    --  Return the closest iterator before the given position. It's possible to
    --  look for the closest match just before or after the given position, and
@@ -258,20 +253,20 @@ package Language.Tree is
    --  Return true if the constrcut pointed by the iterator has any child
 
    function Get_Last_Child
-     (Tree : Construct_Tree;
-      Iter : Construct_Tree_Iterator) return Construct_Tree_Iterator;
+     (Tree : Construct_Tree; Iter : Construct_Tree_Iterator)
+      return Construct_Tree_Iterator;
    --  Return the last child of the construct. If none, return the construct
    --  itself.
 
    function Is_Same_Entity
-     (Tree         : Construct_Tree;
-      Iter1, Iter2 : Construct_Tree_Iterator) return Boolean;
+     (Tree : Construct_Tree; Iter1, Iter2 : Construct_Tree_Iterator)
+      return Boolean;
    --  Return true if the two entities are either the same or two parts of the
    --  same entity (e.g. body / spec, private / public part...).
 
    function Encloses
-     (Tree        : Construct_Tree;
-      Scope, Iter : Construct_Tree_Iterator) return Boolean;
+     (Tree : Construct_Tree; Scope, Iter : Construct_Tree_Iterator)
+      return Boolean;
    --  Return true if the construct pointed by Iter is enclosed by the
    --  construct enclosed by Scope.
    --  This returns always false if Scope is not actually pointing on a scope
@@ -280,13 +275,11 @@ package Language.Tree is
    --  true.
 
    function Encloses
-     (Scope             : Construct_Tree_Iterator;
-      Line, Line_Offset : Positive)
+     (Scope : Construct_Tree_Iterator; Line, Line_Offset : Positive)
       return Boolean;
    function Encloses
-     (Scope  : Construct_Tree_Iterator;
-      Offset : String_Index_Type)
-       return Boolean;
+     (Scope : Construct_Tree_Iterator; Offset : String_Index_Type)
+      return Boolean;
    --  Same as above, but doesn't need a "real" entity, only a location
 
    function Get_Full_Name
@@ -341,9 +334,7 @@ package Language.Tree is
    --  Return an item given its identifier
 
    function Prepend
-     (Id         : Composite_Identifier;
-      Word_Begin : Natural;
-      Word_End   : Natural)
+     (Id : Composite_Identifier; Word_Begin : Natural; Word_End : Natural)
       return Composite_Identifier;
    --  Return a composite identifier based on the same string, but with the
    --  index of a new element before. This function is used to build an
@@ -362,40 +353,37 @@ package Language.Tree is
    --  charaters)
 
    function Get_Slice
-     (Identifier : Composite_Identifier;
-      From, To   : Natural)
+     (Identifier : Composite_Identifier; From, To : Natural)
       return Composite_Identifier;
    --  Return an identifier bases on the slice of items specified in
    --  parameterers.
 
    function Is_Prefix_Of
      (Potential_Prefix, Full_Id : Composite_Identifier;
-      Case_Sensitive            : Boolean)
-      return Boolean;
+      Case_Sensitive            : Boolean) return Boolean;
    --  Return true if Prefix is a prefix of Full_Path. This checks categories
    --  & name.
 
    function Equal
      (Left, Right : Composite_Identifier; Case_Sensitive : Boolean)
-     return Boolean;
+      return Boolean;
    --  Return true if the two identifiers are equals, according to the case
    --  sensitivity.
 
-   type Construct_Tree_Iterator_Array is array (Natural range <>) of
-     Construct_Tree_Iterator;
+   type Construct_Tree_Iterator_Array is
+     array (Natural range <>) of Construct_Tree_Iterator;
 
    Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array;
 
    function Full_Construct_Path
-     (Tree         : Construct_Tree;
-      Construct_It : Construct_Tree_Iterator)
+     (Tree : Construct_Tree; Construct_It : Construct_Tree_Iterator)
       return Construct_Tree_Iterator_Array;
    --  Return an array containing all the parents of the construct cell given
    --  in parameter.
 
    function Full_Construct_Path
-     (Tree   : Construct_Tree;
-      Offset : String_Index_Type) return Construct_Tree_Iterator_Array;
+     (Tree : Construct_Tree; Offset : String_Index_Type)
+      return Construct_Tree_Iterator_Array;
    --  Return an array containing all the parents around the offset given in
 
    -----------------
@@ -423,8 +411,8 @@ package Language.Tree is
 
    Null_Referenced_Identifiers_List : constant Referenced_Identifiers_List;
 
-   overriding function "="
-     (Left, Right : Referenced_Identifiers_List) return Boolean;
+   overriding
+   function "=" (Left, Right : Referenced_Identifiers_List) return Boolean;
    --  Return true if all the elements of the two lists are the same, and if
    --  the two lists contains the same number of elements, false otherwise.
 
@@ -456,23 +444,21 @@ package Language.Tree is
    --  Return the first distinct identifier of the list.
 
    procedure Analyze_Constructs_Identifiers
-     (Lang : access Language_Root'Class;
-      Tree : Construct_Tree);
+     (Lang : access Language_Root'Class; Tree : Construct_Tree);
    --  Initialize the indentifier information of the contents of the tree.
    --  Get_Identifier needs to have this function called before.
 
    procedure Analyze_Referenced_Identifiers
-     (Buffer  : String;
-      Lang    : access Language_Root'Class;
-      Tree    : Construct_Tree);
+     (Buffer : String;
+      Lang   : access Language_Root'Class;
+      Tree   : Construct_Tree);
    --  Initialize the referenced indentifier information of the contents of the
    --  tree. Get_Referenced_Identifiers needs to have this function called
    --  before.
 
    function Match
      (Seeked_Name, Tested_Name : Normalized_Symbol;
-      Seeked_Is_Partial : Boolean)
-      return Boolean;
+      Seeked_Is_Partial        : Boolean) return Boolean;
    --  If Seeked_Is_Partial is false, return true if Seeked_Name equals
    --  Tested_Name. Otherwise, return true if Seeked_Name is a prefix of
    --  Tested_Name
@@ -488,21 +474,23 @@ package Language.Tree is
 
    function Get_Name_Index
      (Lang      : access Abstract_Tree_Language;
-      Construct : Simple_Construct_Information)
-      return GNATCOLL.Symbols.Symbol is abstract;
+      Construct : Simple_Construct_Information) return GNATCOLL.Symbols.Symbol
+   is abstract;
    --  Return the name that should be used to index the given construct. Takes
    --  care of e.g. case handling. Default implementation return the actual
    --  construct name.
 
    type Diff_Kind is (Removed, Added, Preserved);
 
-   type Diff_Callback is access procedure
-     (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
+   type Diff_Callback is
+     access procedure
+       (Old_Obj, New_Obj : Construct_Tree_Iterator; Kind : Diff_Kind);
 
    procedure Diff
      (Lang               : access Abstract_Tree_Language;
       Old_Tree, New_Tree : Construct_Tree;
-      Callback           : Diff_Callback) is abstract;
+      Callback           : Diff_Callback)
+   is abstract;
    --  Calls the callback on each construct, showing if it's an added, modified
    --  or unmodified construct. The default implementation calls remove on all
    --  the contents of the old tree, and add to all the contents of the new
@@ -513,8 +501,8 @@ private
 
    type Referenced_Identifiers_List_Record;
 
-   type Access_Referenced_List is access all
-     Referenced_Identifiers_List_Record;
+   type Access_Referenced_List is
+     access all Referenced_Identifiers_List_Record;
 
    type Referenced_Identifiers_List is record
       Contents : Access_Referenced_List;
@@ -533,8 +521,8 @@ private
       Sub_Nodes_Length       : Natural := 0;
       Previous_Sibling_Index : Natural := 0;
       Parent_Index           : Natural := 0;
-      Annotations            : aliased
-        Construct_Annotations_Pckg.Annotation_Container;
+      Annotations            :
+        aliased Construct_Annotations_Pckg.Annotation_Container;
       Id                     : Normalized_Symbol;
       Referenced_Ids         : Referenced_Identifiers_List;
    end record;
@@ -542,7 +530,7 @@ private
    type Node_Array is array (Natural range <>) of aliased Construct_Tree_Node;
 
    type Construct_Tree_Record (Length : Natural) is record
-      Contents     : Node_Array (1 .. Length);
+      Contents : Node_Array (1 .. Length);
 
       Annotations : aliased Tree_Annotations_Pckg.Annotation_Container;
    end record;
@@ -550,7 +538,10 @@ private
    type Construct_Tree is access all Construct_Tree_Record;
 
    Null_Construct_Tree_Node : aliased Construct_Tree_Node :=
-     (Null_Simple_Construct_Info, 0, 0, 0,
+     (Null_Simple_Construct_Info,
+      0,
+      0,
+      0,
       Construct_Annotations_Pckg.Null_Annotation_Container,
       No_Normalized_Symbol,
       (Contents => null));
@@ -572,8 +563,9 @@ private
       Contents    => (others => Null_Construct_Tree_Node),
       Annotations => Tree_Annotations_Pckg.Null_Annotation_Container);
 
-   Null_Construct_Tree_Iterator_Array : constant Construct_Tree_Iterator_Array
-     (1 .. 0) := (others => Null_Construct_Tree_Iterator);
+   Null_Construct_Tree_Iterator_Array :
+     constant Construct_Tree_Iterator_Array (1 .. 0) :=
+       (others => Null_Construct_Tree_Iterator);
 
    Null_Construct_Index : constant Construct_Index := 0;
 
@@ -587,11 +579,12 @@ private
    type Positions_Array is array (Natural range <>) of Integer;
 
    type Composite_Identifier
-     (String_Length : Natural; Number_Of_Elements : Natural)
-      is record
-         Identifier     : String (1 .. String_Length);
-         Position_Start : Positions_Array (1 .. Number_Of_Elements);
-         Position_End   : Positions_Array (1 .. Number_Of_Elements);
+     (String_Length      : Natural;
+      Number_Of_Elements : Natural)
+   is record
+      Identifier     : String (1 .. String_Length);
+      Position_Start : Positions_Array (1 .. Number_Of_Elements);
+      Position_End   : Positions_Array (1 .. Number_Of_Elements);
    end record;
 
    Null_Composite_Identifier : constant Composite_Identifier :=

@@ -17,31 +17,32 @@
 
 --  Declare parser to fill Locations view and highlight locations in editors.
 
-with Commands; use Commands;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
+with Commands;              use Commands;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GPS.Tools_Output;      use GPS.Tools_Output;
 
 package Build_Command_Manager.Location_Parsers is
 
    type Location_Parser is new Tools_Output_Parser with private;
 
-   overriding procedure Parse_Standard_Output
+   overriding
+   procedure Parse_Standard_Output
      (Self    : not null access Location_Parser;
       Item    : String;
       Command : access Root_Command'Class);
 
-   overriding procedure Destroy (Self : not null access Location_Parser);
+   overriding
+   procedure Destroy (Self : not null access Location_Parser);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;
 
    procedure Set
-     (Self    : access Output_Parser_Fabric;
-      Builder : Builder_Context);
+     (Self : access Output_Parser_Fabric; Builder : Builder_Context);
 
-   overriding function Create
-     (Self  : access Output_Parser_Fabric;
-      Child : Tools_Output_Parser_Access)
+   overriding
+   function Create
+     (Self : access Output_Parser_Fabric; Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access;
    --  Create new parser to fill Locations view under given Category, if
    --  Show_In_Locations = True, otherwise show messages only in the editors.
@@ -49,8 +50,8 @@ package Build_Command_Manager.Location_Parsers is
 
 private
 
-   type Output_Parser_Fabric is
-     new GPS.Tools_Output.Output_Parser_Fabric with record
+   type Output_Parser_Fabric is new GPS.Tools_Output.Output_Parser_Fabric
+   with record
       Builder : Builder_Context;
    end record;
 
