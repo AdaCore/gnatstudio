@@ -3,7 +3,7 @@ with Ada.Text_IO;
 procedure Main is
 
    Is_Bool : Boolean := False;
-   Змінна  : constant := 3.14;
+   Змінна  : constant := 2.5;
 
 begin
    Ada.Text_IO.Put_Line (Is_Bool'Img);
