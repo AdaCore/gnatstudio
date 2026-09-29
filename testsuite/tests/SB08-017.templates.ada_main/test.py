@@ -9,8 +9,9 @@ from workflows import run_as_workflow
 
 
 @run_as_workflow
-def create_ada_main(unit_name):
-    """Helper to create an Ada main unit"""
+def create_ada_main(unit_name, main_file):
+    """Helper to create an Ada main unit, waiting for main_file to be
+    added to the project's main units."""
     # Click in the 'src' directory in the Project view
     GPS.MDI.get("Project").raise_window()
     explorer = get_widget_by_name("Project Explorer Tree")
@@ -31,22 +32,29 @@ def create_ada_main(unit_name):
 
     # Confirm that we want to add this new unit as a main
     dialog = get_window_by_title("Confirmation")
-    prj_view_changed = hook("project_view_changed")
     get_stock_button(dialog, STOCK_YES).clicked()
-    yield prj_view_changed
+
+    # Poll the project rather than waiting for "project_view_changed": the
+    # hook never runs when the main could not be added (e.g. the GPR
+    # language server rejected the request), which hangs the test.
+    yield wait_until_true(
+        lambda: main_file in GPS.Project.root().get_attribute_as_list("main"),
+        timeout=10000,
+        error_msg="'%s' was never added to the project's mains" % main_file,
+    )
 
 
 @run_test_driver
 def test():
     # Create a unit 'my.unit', adding blankspaces before and after:
     # they should be stripped at the end.
-    yield create_ada_main(" my.unit ")
+    yield create_ada_main(" my.unit ", "my-unit.adb")
 
     mains = GPS.Project.root().get_attribute_as_list("main")
     gps_assert(mains, ["my-unit.adb"], "New Ada main was not correctly added")
 
     # Now add a second main unit, this time with no spaces
-    yield create_ada_main("another_unit")
+    yield create_ada_main("another_unit", "another_unit.adb")
 
     mains = GPS.Project.root().get_attribute_as_list("main")
     gps_assert(
