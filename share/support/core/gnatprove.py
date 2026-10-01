@@ -66,8 +66,15 @@ class ContextError(RuntimeError):
 
 def get_context_data(context):
     """
-    Extract and populate a ContextData record with various information about
-    the context of the check.
+    Return context data for the selected check.
+
+    This function uses project-aware Libadalang analysis for subprogram
+    specification lookup so that body-to-spec resolution works correctly in
+    nested and aggregate projects.
+
+    NOTE: This is a time-consuming operation and should not be invoked from
+    actions that need to run fast and/or are repeatedly queried, e.g. menu
+    filters.
 
     :param context: GPS context for the check.
 
@@ -148,10 +155,36 @@ def print_newline() -> None:
     GPS.Console(MESSAGES).write("\n")
 
 
+def current_subprogram_from_buffer(context):
+    """Return the lexically enclosing subprogram in the open editor, or None.
+
+    Use the editor's analysis unit so that menu queries and proof limits follow
+    unsaved contents without constructing project-aware analysis.
+
+    NOTE: This function is not generally suitable for body-to-spec resolution.
+    If that's needed use the project-aware `current_subprogram` instead.
+    """
+    curloc = context.location()
+    buffer = GPS.EditorBuffer.get(curloc.file(), open=False)
+    if not buffer:
+        return None
+
+    unit = buffer.get_analysis_unit()
+    if not unit.root:
+        return None
+
+    node = unit.root.lookup(lal.Sloc(curloc.line(), curloc.column()))
+    return get_enclosing_subprogram(node)
+
+
 def current_subprogram(context):
     """
     Return the LAL node corresponding to the subprogram enclosing the current
-    context, or None
+    context, or None, using project-aware analysis for body-to-spec resolution.
+
+    NOTE: This is a time-consuming operation and should not be invoked from
+    actions that need to run fast and/or are repeatedly queried, e.g. menu
+    filters. For such cases use `current_subprogram_from_buffer` instead.
     """
 
     curloc = context.location()
@@ -191,7 +224,14 @@ def current_subprogram(context):
 def spec_location(context) -> GPS.EditorLocation | None:
     """
     Return GPS.EditorLocation for the spec of the subprogram enclosing the
-    context node, or None when the context is not enclosed in a subprogram
+    context node, or None when the context is not enclosed in a subprogram.
+
+    Project-aware analysis is used so that the resolution works also in nested
+    and aggregate projects.
+
+    NOTE: This is a time-consuming operation and should not be invoked from
+    actions that need to run fast and/or are repeatedly queried, e.g. menu
+    filters.
     """
 
     subprogram_node = current_subprogram(context)
