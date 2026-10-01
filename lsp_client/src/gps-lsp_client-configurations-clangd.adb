@@ -22,6 +22,8 @@ with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Help_Module;
+
 with GNAT.Calendar.Time_IO; use GNAT.Calendar.Time_IO;
 with GNAT.Strings;          use GNAT.Strings;
 with GNAT.Regpat;           use GNAT.Regpat;
@@ -986,9 +988,11 @@ package body GPS.LSP_Client.Configurations.Clangd is
            & "formatting. "
            & ASCII.LF
            & "Note that you can customize these files to add more formatting "
-           & "options that are not exposed by GNAT Studio "
-           & "(see "
-           & "https://clang.llvm.org/docs/ClangFormatStyleOptions.html).");
+           & "options that are not exposed by GNAT Studio ",
+         Link             =>
+           Help_Module.Create_Help_Button
+             (Kernel,
+              "https://clang.llvm.org/docs/ClangFormatStyleOptions.html"));
 
       BasedOnStyle_Preference :=
         BasedOnStyle_Formatting_Preferences.Create

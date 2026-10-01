@@ -2096,6 +2096,7 @@ package body GPS.LSP_Module is
       if Me_Cpp_Support.Active then
          GPS.LSP_Client.Configurations.Clangd.Register (Kernel);
       end if;
+      GPS.LSP_Client.Configurations.ALS.Register (Kernel);
    end Register_Module;
 
 end GPS.LSP_Module;

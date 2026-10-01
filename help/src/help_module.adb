@@ -17,7 +17,6 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNAT.Expect.TTY;
 with GNAT.Expect;
@@ -251,6 +250,16 @@ package body Help_Module is
    function Initialize_XML_Doc
      (Kernel : access Kernel_Handle_Record'Class) return XML_Utils.Node_Ptr;
    --  Parse and return the XML documentation file
+
+   type Help_Button_Record is new Gtk.Link_Button.Gtk_Link_Button_Record
+   with record
+      Kernel : Kernel_Handle;
+   end record;
+   type Help_Button is access all Help_Button_Record;
+
+   function On_Activate_Link_Cb
+     (Self : access Gtk.Link_Button.Gtk_Link_Button_Record'Class)
+      return Boolean;
 
    ----------------
    -- Create_URL --
@@ -1350,6 +1359,51 @@ package body Help_Module is
          Add_Doc_Directory (Kernel, Custom_Path (J));
       end loop;
    end Add_Doc_Path_From_Env;
+
+   -------------------------
+   -- On_Activate_Link_Cb --
+   -------------------------
+
+   function On_Activate_Link_Cb
+     (Self : access Gtk.Link_Button.Gtk_Link_Button_Record'Class)
+      return Boolean
+   is
+      Help : constant Help_Button := Help_Button (Self);
+   begin
+      Html_Action_Hook.Run (Help.Kernel, Help.Get_Label);
+      return True;
+   end On_Activate_Link_Cb;
+
+   ------------------------
+   -- Create_Help_Button --
+   ------------------------
+
+   function Create_Help_Button
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Link : String)
+      return Default_Preferences.External_Link is
+   begin
+      return
+        new Help_Link'
+          (Kernel => Kernel_Handle (Kernel),
+           Link   => To_Unbounded_String (Link));
+   end Create_Help_Button;
+
+   -----------------
+   -- Create_Link --
+   -----------------
+
+   overriding function Create_Link
+     (Link : not null access Help_Link)
+      return Gtk.Link_Button.Gtk_Link_Button
+   is
+      Help : constant Help_Button := new Help_Button_Record;
+   begin
+      Gtk.Link_Button.Initialize (Help, To_String (Link.Link));
+      Help.Set_Alignment (0.0, 0.5);
+      Help.Kernel := Link.Kernel;
+      Help.On_Activate_Link (On_Activate_Link_Cb'Access);
+      return Gtk.Link_Button.Gtk_Link_Button (Help);
+   end Create_Link;
 
    ---------------------
    -- Register_Module --

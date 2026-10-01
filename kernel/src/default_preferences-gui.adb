@@ -102,6 +102,11 @@ package body Default_Preferences.GUI is
             end;
          end if;
 
+         if Group.Link /= null then
+            Group_Widget.Append_Child
+              (Create_Link (Group.Link), Expand => False);
+         end if;
+
          for Pref_Iter in Group.Preferences.Iterate loop
             Pref :=
               Manager.Get_Pref_From_Name

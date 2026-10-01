@@ -17,7 +17,10 @@
 
 --  This package provides generic Help facilities.
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Default_Preferences;   use Default_Preferences;
 with GPS.Kernel;
+with Gtk.Link_Button;
 
 package Help_Module is
 
@@ -25,4 +28,19 @@ package Help_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
+   type Help_Link is private;
+
+   function Create_Help_Button
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class; Link : String)
+      return Default_Preferences.External_Link;
+
+private
+   type Help_Link is new External_Link_Interface with record
+      Kernel : GPS.Kernel.Kernel_Handle;
+      Link   : Unbounded_String;
+   end record;
+
+   overriding function Create_Link
+     (Link : not null access Help_Link)
+      return Gtk.Link_Button.Gtk_Link_Button;
 end Help_Module;

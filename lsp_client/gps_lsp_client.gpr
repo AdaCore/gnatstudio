@@ -1,6 +1,7 @@
 with "vss_regexp";
 with "lsp_client_glib_3_17";
 
+with "../help/help";
 with "../kernel/kernel";
 with "../lal/lal";
 with "../shared";
