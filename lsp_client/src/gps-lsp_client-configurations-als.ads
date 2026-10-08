@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel; use GPS.Kernel;
+
 package GPS.LSP_Client.Configurations.ALS is
 
    type ALS_Configuration is new Server_Configuration with private;
@@ -29,6 +31,7 @@ package GPS.LSP_Client.Configurations.ALS is
    function Is_Configuration_Supported
      (Self : ALS_Configuration; Setting : Setting_Kind) return Boolean;
 
+   procedure Register (Kernel : Kernel_Handle);
 private
 
    type Settings_Values is array (Setting_Kind) of Configuration_Value;

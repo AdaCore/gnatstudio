@@ -40,6 +40,7 @@ with Gtk.Color_Button;
 with Gtk.Combo_Box_Text;
 with Gtk.GEntry;
 with Gtk.Handlers;
+with Gtk.Link_Button;
 with Gtk.Widget;
 
 with Pango.Font; use Pango.Font;
@@ -75,6 +76,10 @@ package Default_Preferences is
    --  Type used to represent a page containing preferences.
    --  This is only a model : the way the preferences are stored and displayed
    --  must be defined when extending this type, by overriding its primitives.
+
+   type External_Link_Interface is interface;
+   type External_Link is access all External_Link_Interface'Class;
+   --  Interface to generate a Link_Button in a preference page
 
    subtype Preferences_Page_Name is String;
    --  Subtype representing a name for preferences pages and used to
@@ -229,6 +234,15 @@ package Default_Preferences is
      (Self : not null access Preferences_Manager_Record'Class) return Boolean;
    --  Return True if Self is frozen
 
+   -----------------------------
+   -- External_Link_Interface --
+   -----------------------------
+
+   function Create_Link
+     (Link : not null access External_Link_Interface)
+      return Gtk.Link_Button.Gtk_Link_Button
+   is abstract;
+
    ----------------------------------
    -- Preferences_Editor_Interface --
    ----------------------------------
@@ -314,7 +328,8 @@ package Default_Preferences is
       Group            : not null Preferences_Group;
       Priority         : Integer := -1;
       Replace_If_Exist : Boolean := False;
-      Description      : String := "");
+      Description      : String := "";
+      Link             : External_Link := null);
    --  Register a new group in the given preferences page.
    --  Priority is used to order the groups in their respective page, in
    --  decreasing order.
@@ -890,6 +905,9 @@ private
 
       Description : Unbounded_String;
       --  Group's description.
+
+      Link : External_Link := null;
+      --  Optional link for the online documentation of the Group
 
       Priority : Integer;
       --  Group's priority. This is used to sort the groups according to the

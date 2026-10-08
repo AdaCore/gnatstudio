@@ -431,7 +431,8 @@ package body GPS.Kernel.Custom.GUI is
       Group            : not null Preferences_Group;
       Priority         : Integer := -1;
       Replace_If_Exist : Boolean := False;
-      Description      : String := "") is
+      Description      : String := "";
+      Link             : External_Link := null) is
    begin
       if Name /= "" then
          Preferences_Page_Record (Self.all).Register_Group
@@ -439,14 +440,16 @@ package body GPS.Kernel.Custom.GUI is
             Group            => Group,
             Priority         => Priority,
             Replace_If_Exist => Replace_If_Exist,
-            Description      => Description);
+            Description      => Description,
+            Link             => Link);
       else
          Preferences_Page_Record (Self.all).Register_Group
            (Name             => "Preferences",
             Group            => Group,
             Priority         => Priority,
             Replace_If_Exist => Replace_If_Exist,
-            Description      => Description);
+            Description      => Description,
+            Link             => Link);
       end if;
    end Register_Group;
 

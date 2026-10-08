@@ -75,7 +75,8 @@ package GPS.Kernel.Custom.GUI is
       Group            : not null Preferences_Group;
       Priority         : Integer := -1;
       Replace_If_Exist : Boolean := False;
-      Description      : String := "");
+      Description      : String := "";
+      Link             : External_Link := null);
    --  See inherited documentation.
 
    overriding

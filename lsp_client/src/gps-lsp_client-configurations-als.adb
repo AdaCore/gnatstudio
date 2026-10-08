@@ -16,14 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNAT.Strings;
-with VSS.Strings;
+with Default_Preferences;     use Default_Preferences;
+with Help_Module;
 
+with GNAT.Strings;
 with GNATCOLL.Projects;
 
 with GPS.Kernel.Charsets;
 with GPS.Kernel.Project;
-with GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
+
+with VSS.Strings;
 with VSS.Strings.Conversions;
 
 package body GPS.LSP_Client.Configurations.ALS is
@@ -264,4 +267,32 @@ package body GPS.LSP_Client.Configurations.ALS is
       return Supported_Settings (Setting);
    end Is_Configuration_Supported;
 
+   --------------
+   -- Register --
+   --------------
+
+   procedure Register (Kernel : Kernel_Handle) is
+      Manager                 : constant Preferences_Manager :=
+        Kernel.Get_Preferences;
+      Page                    : constant Preferences_Page :=
+        Manager.Get_Registered_Page
+          (Name => "Editor/Ada", Create_If_Needed => True);
+      GNATFormat_Formatting_Group : constant Preferences_Group :=
+        new Preferences_Group_Record;
+   begin
+      Page.Register_Group
+        (Name             => "Formatting with GNATformat",
+         Group            => GNATFormat_Formatting_Group,
+         Priority         => 1,
+         Replace_If_Exist => False,
+         Description      =>
+           "When LSP is chosen as the formatting engine, the formatting will "
+           & "be done by GNATFormat which can be configured using the "
+           & "Format package in the project file.",
+         Link             =>
+           Help_Module.Create_Help_Button
+             (Kernel,
+              "https://docs.adacore.com/live/wave/gnatformat/"
+              & "html/user-guide/cook-book/introduction.html"));
+   end Register;
 end GPS.LSP_Client.Configurations.ALS;

@@ -326,6 +326,7 @@ package body Default_Preferences is
             Group.Preferences :=
               Groups_Lists.Element (Group_Iter).Preferences.Copy;
             Group.Description := Groups_Lists.Element (Group_Iter).Description;
+            Group.Link := Groups_Lists.Element (Group_Iter).Link;
             Groups.Delete (Group_Iter);
          else
             return;
@@ -460,6 +461,7 @@ package body Default_Preferences is
             Group            => Group,
             Priority         => Group.Priority,
             Description      => To_String (Group.Description),
+            Link             => Group.Link,
             Replace_If_Exist => False);
       end loop;
    end Copy_Subpages_And_Groups;
@@ -1242,7 +1244,8 @@ package body Default_Preferences is
       Group            : not null Preferences_Group;
       Priority         : Integer := -1;
       Replace_If_Exist : Boolean := False;
-      Description      : String := "") is
+      Description      : String := "";
+      Link             : External_Link := null) is
    begin
       --  Set the group's attributes
       Group.Name := To_Unbounded_String (Name);
@@ -1250,6 +1253,8 @@ package body Default_Preferences is
       Group.Priority := Priority;
 
       Group.Description := To_Unbounded_String (Description);
+
+      Group.Link := Link;
 
       --  Insert the group in the page model
       Insert_Group
