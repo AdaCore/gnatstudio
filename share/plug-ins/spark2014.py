@@ -18,7 +18,7 @@ import libadalang as lal
 
 from gnatprove import (
     GNATPROVE_MAIN_CATEGORY,
-    current_subprogram,
+    current_subprogram_from_buffer,
     logger,
 )
 
@@ -1122,7 +1122,7 @@ def build_limit_subp_string(self):
     If there is no subprogram in the current context, return None."""
 
     # Look at immediate enclosing subprogram declaration
-    enclosing = current_subprogram(self)
+    enclosing = current_subprogram_from_buffer(self)
     if not enclosing:
         return None
 
@@ -1139,8 +1139,9 @@ def inside_subp_context(self):
 
     # This is used as a menu filter, so protect against exceptions
     try:
-        return current_subprogram(self) is not None
-    except Exception:
+        return current_subprogram_from_buffer(self) is not None
+    except Exception as error:
+        logger.log(f"inside_subp_context: {error}")
         return False
 
 
