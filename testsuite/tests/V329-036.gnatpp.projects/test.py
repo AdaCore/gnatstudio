@@ -18,10 +18,10 @@ def run_gnatformat(unit_to_check, subprojects=False, excluded_unit=None):
 
     yield idle_modal_dialog(lambda: GPS.execute_action(action_name))
     dialog = get_window_by_title(dialog_name)
-    get_button_from_label("Execute", dialog).clicked()
     buttons = get_widgets_by_type(Gtk.CheckButton, dialog)
     verbose_button = [b for b in buttons if b.get_label() == "Verbose output"][0]
     verbose_button.set_active(True)
+    get_button_from_label("Execute", dialog).clicked()
     yield wait_tasks()
 
     text = GPS.Console().get_text()

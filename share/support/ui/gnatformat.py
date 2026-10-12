@@ -6,10 +6,14 @@ provided with the GNAT compiler.
 This package integrates it into GS:
   - Action to run GNATformat on a project + a project and its subprojects
   - switches edition through the project editor
+  - Help menu entry for the GNATFormat user's guide
 """
+
+import os.path
 
 import GPS
 import gs_utils
+import os_utils
 
 
 @gs_utils.interactive(
@@ -133,3 +137,23 @@ XML = """<?xml version="1.0" ?>
 """
 
 GPS.parse_xml(XML)
+
+# Create the documentation action when GNATFormat is available.
+XML_DOCUMENTATION = """<?xml version="1.0"?>
+  <GNATFORMAT>
+    <doc_path>{root}/share/user_manual/gnatformat/html/user-guide</doc_path>
+
+    <documentation_file>
+      <name>introduction.html</name>
+      <descr>GNATFormat User's Guide</descr>
+      <category>GNATformat</category>
+      <menu before="About">/Help/Tools/GNATformat User's Guide</menu>
+    </documentation_file>
+  </GNATFORMAT>
+"""
+
+gnatformat = os_utils.locate_exec_on_path("gnatformat")
+
+if gnatformat:
+    root = os.path.dirname(os.path.dirname(gnatformat)).replace("\\", "/")
+    GPS.parse_xml(XML_DOCUMENTATION.format(root=root))
