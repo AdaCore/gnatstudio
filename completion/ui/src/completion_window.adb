@@ -1415,17 +1415,20 @@ package body Completion_Window is
                 Range_Start => Range_Start,
                 Range_End   => Range_End)
          then
-            --  A specific range has been defined to be deleted
-            Get_Iter_At_Line_Offset
+            --  Convert source locations to buffer offsets so that special
+            --  lines are taken into account.
+            Get_Iter_At_Offset
               (Buffer      => Window.Buffer,
                Iter        => Text_Iter,
-               Line_Number => Gint (Range_Start.Line) - 1,
-               Char_Offset => Gint (Range_Start.Column) - 1);
-            Get_Iter_At_Line_Offset
+               Char_Offset => Gint
+                 (Window.Editor.Element.New_Location
+                    (Integer (Range_Start.Line), Range_Start.Column).Offset));
+            Get_Iter_At_Offset
               (Buffer      => Window.Buffer,
                Iter        => Text_End,
-               Line_Number => Gint (Range_End.Line) - 1,
-               Char_Offset => Gint (Range_End.Column) - 1);
+               Char_Offset => Gint
+                 (Window.Editor.Element.New_Location
+                    (Integer (Range_End.Line), Range_End.Column).Offset));
 
             declare
                Tmp_Iter     : Gtk_Text_Iter;

@@ -1,14 +1,14 @@
 """
-This test checks that ALS completion snippets are handled properly
-by GNAT Studio.
+This test checks that ALS completion snippets sent as pretty printed text edits
+are handled properly by GNAT Studio when the buffer contains special lines.
 """
 
 import GPS
 from gs_utils.internal.utils import *
 
 
-EXPECTED_SNIPPET = "  Obj.Do_Nothing (A : Integer, B : Integer)"
-EXPECTED_RESULT = "  Obj.Do_Nothing (1, 2)"
+EXPECTED_SNIPPET = "Obj.Do_Nothing (A : Integer, B : Integer)"
+EXPECTED_RESULT = "Obj.Do_Nothing (1, 2)"
 
 
 @run_test_driver
@@ -16,13 +16,14 @@ def run_test():
     GPS.Preference("Smart-Completion-Mode").set("3")
     buf = GPS.EditorBuffer.get(GPS.File("main.adb"))
     view = buf.current_view()
+    original = buf.get_chars()
 
     buf.add_special_line(7, "This is a special line")
 
     view.goto(buf.at(8, 1).end_of_line())
     yield wait_tasks(other_than=known_tasks)
 
-    # Insert a completion snippet received from clangd
+    # Insert a completion snippet received from ALS
     for ch in "Not":
         send_key_event(ord(ch))
         yield timeout(200)
@@ -38,11 +39,11 @@ def run_test():
     click_in_tree(pop_tree, path="0", events=double_click_events)
     yield wait_idle()
 
-    # Verify that it has been correctly parsed by the aliases plugin
-    line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
+    # Verify that the text edit preserved the surrounding source and that the
+    # snippet has been correctly parsed by the aliases plugin.
     gps_assert(
-        line.strip(),
-        EXPECTED_SNIPPET.strip(),
+        buf.get_chars(),
+        original.replace("Obj.Do_", EXPECTED_SNIPPET),
         "The completion snippet has not been correctly inserted",
     )
 
@@ -55,10 +56,9 @@ def run_test():
         yield timeout(50)
 
     # Verify that the snippet parameters have been inserted properly
-    line = buf.get_chars(buf.at(8, 1), buf.at(8, 1).end_of_line())
     gps_assert(
-        line.strip(),
-        EXPECTED_RESULT.strip(),
+        buf.get_chars(),
+        original.replace("Obj.Do_", EXPECTED_RESULT),
         "The snippet parameter values have not been inserted properly",
     )
 
