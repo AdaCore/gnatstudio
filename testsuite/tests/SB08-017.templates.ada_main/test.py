@@ -12,6 +12,8 @@ from workflows import run_as_workflow
 def create_ada_main(unit_name, main_file):
     """Helper to create an Ada main unit, waiting for main_file to be
     added to the project's main units."""
+    yield wait_tasks(other_than=known_tasks)
+
     # Click in the 'src' directory in the Project view
     GPS.MDI.get("Project").raise_window()
     explorer = get_widget_by_name("Project Explorer Tree")
@@ -33,6 +35,10 @@ def create_ada_main(unit_name, main_file):
     # Confirm that we want to add this new unit as a main
     dialog = get_window_by_title("Confirmation")
     get_stock_button(dialog, STOCK_YES).clicked()
+
+    # Adding the main queries the GPR language server and reloads the
+    # project. Let these tasks finish first.
+    yield wait_tasks(other_than=known_tasks)
 
     # Poll the project rather than waiting for "project_view_changed": the
     # hook never runs when the main could not be added (e.g. the GPR
