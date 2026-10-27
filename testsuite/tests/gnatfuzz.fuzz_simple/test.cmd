@@ -9,8 +9,10 @@ export AFL_SKIP_CPUFREQ=1
 # gnatfuzz analyze to find the fuzzable subprograms
 gnatfuzz analyze -Pp.gpr > /dev/null
 
-# gnatfuzz generate to generate a fuzz harness
-gnatfuzz generate -Pp.gpr --analysis obj/gnatfuzz/analyze.json --subprogram-id 1 -o harness > /dev/null
+# gnatfuzz generate to generate a fuzz harness. Use absolute paths, as
+# the plugin does: gnatfuzz records them as given, and GNAT Studio runs
+# the later gnatfuzz commands from the harness project directory.
+gnatfuzz generate -P"$PWD/p.gpr" --analysis obj/gnatfuzz/analyze.json --subprogram-id 1 -o "$PWD/harness" > /dev/null
 
 # Run the test. The generated harness directory is "fuzz"; older
 # gnatfuzz used "fuzz_testing". Accept either, as the plugin does.
