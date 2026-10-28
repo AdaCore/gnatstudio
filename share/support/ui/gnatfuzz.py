@@ -77,11 +77,15 @@ def harness_config():
     """Return (user project, output directory) of the harness loaded.
 
     Both are None when the root project is not a generated harness
-    project. Relative paths in fuzz_config.json are resolved against the
-    harness project directory, where that file lives: resolving them
-    against GNAT Studio's CWD is unstable, and ends up polluting the
-    recent-projects list with paths like
-    session/coverage_output/user_project.gpr.
+    project. The output directory is the parent of the harness project
+    directory, where "gnatfuzz generate" created it. Its recorded value
+    is not used: fuzz_config.json keeps paths as given on the generate
+    command line, relative to the directory it ran in.
+
+    A relative user project is resolved against the harness project
+    directory, where fuzz_config.json lives: resolving it against GNAT
+    Studio's CWD is unstable, and ends up polluting the recent-projects
+    list with paths like session/coverage_output/user_project.gpr.
     """
     project_dir = os.path.dirname(GPS.Project.root().file().name())
     try:
@@ -89,21 +93,10 @@ def harness_config():
             decoded = json.load(f)
         return (
             resolve_under(project_dir, decoded["user_project"]),
-            resolve_under(project_dir, decoded["output_directory"]),
+            os.path.dirname(project_dir),
         )
     except (OSError, ValueError, KeyError):
         return (None, None)
-
-
-def harness_output_dir():
-    """Return the directory "gnatfuzz generate" wrote the harness into.
-
-    This is the positional argument of the gnatfuzz subcommands that act
-    on a generated harness, and is expanded into their command lines by
-    a %python() macro. The empty string outside a harness project, which
-    contributes no argument at all.
-    """
-    return harness_config()[1] or ""
 
 
 def list_to_xml(items):
@@ -296,7 +289,6 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("gnatfuzz"),
                 X("arg").children("analyze"),
                 X("arg").children("-P%PP"),
-                X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
             ),
         ),
@@ -319,7 +311,6 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("gnatfuzz"),
                 X("arg").children("analyze"),
                 X("arg").children("-P%PP"),
-                X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
                 X("arg").children("-S"),
                 X("arg").children("%F"),
@@ -344,8 +335,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("generate-corpus"),
-                X("arg").children("%subdirsarg"),
-                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -367,8 +356,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("minimize-corpus"),
-                X("arg").children("%subdirsarg"),
-                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -390,8 +377,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("build"),
-                X("arg").children("%subdirsarg"),
-                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -413,8 +398,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("fuzz"),
-                X("arg").children("%subdirsarg"),
-                X("arg").children("%python(gnatfuzz.harness_output_dir())"),
             ),
         ),
         X(
@@ -433,7 +416,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("build"),
-                X("arg").children("%subdirsarg"),
             ),
         ),
         X(
@@ -455,7 +437,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("generate-corpus"),
-                X("arg").children("%subdirsarg"),
             ),
         ),
         X(
@@ -474,7 +455,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("fuzz"),
-                X("arg").children("%subdirsarg"),
             ),
         ),
         X(
@@ -497,7 +477,6 @@ class GNATfuzzPlugin(Module):
                 X("arg").children("gnatfuzz"),
                 X("arg").children("generate"),
                 X("arg").children("-P%PP"),
-                X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
             ),
         ),
@@ -520,7 +499,6 @@ class GNATfuzzPlugin(Module):
             X("command-line").children(
                 X("arg").children("gnatfuzz"),
                 X("arg").children("generate"),
-                X("arg").children("%subdirsarg"),
                 X("arg").children("%X"),
             ),
         ),
@@ -549,7 +527,9 @@ class GNATfuzzPlugin(Module):
 
         # These fields are set when the project is a harness project
         self.user_project = None  # The original user project
-        self.output_dir = None  # The gnatfuzz output dir
+        # The gnatfuzz output dir: the positional argument of the
+        # subcommands that act on the harness
+        self.output_dir = None
 
         # Create the build targets
         GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
@@ -750,11 +730,17 @@ class GNATfuzzPlugin(Module):
         else:
             self.error("analyze.json entry without 'id' nor 'instantiations'")
 
+    def analyze_output_dir(self):
+        """Return the directory "gnatfuzz analyze" writes analyze.json into.
+
+        It is passed to gnatfuzz explicitly: its own default ignores the
+        subdirectory of the build mode, which object_dirs() includes.
+        """
+        return os.path.join(GPS.Project.root().object_dirs()[0], "gnatfuzz")
+
     def path_to_analyze_json(self):
         """Return the path to analyze.json"""
-        return os.path.join(
-            GPS.Project.root().object_dirs()[0], "gnatfuzz", "analyze.json"
-        )
+        return os.path.join(self.analyze_output_dir(), "analyze.json")
 
     def process_analyze_messages(self):
         """Process the analyze.json file"""
@@ -784,7 +770,7 @@ class GNATfuzzPlugin(Module):
 
         # Launch the analyze target in the background
         p = promises.TargetWrapper("gnatfuzz analyze project")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=["-o", self.analyze_output_dir()])
         if r != 0:
             self.error("gnatfuzz analyze returned nonzero")
             return
@@ -795,7 +781,7 @@ class GNATfuzzPlugin(Module):
 
         # Launch the analyze target in the background
         p = promises.TargetWrapper("gnatfuzz analyze file")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=["-o", self.analyze_output_dir()])
         if r != 0:
             self.error("gnatfuzz analyze returned nonzero")
             return
@@ -843,7 +829,7 @@ class GNATfuzzPlugin(Module):
     def gnatfuzz_build_workflow(self, task):
         """The 'gnatfuzz build' workflow"""
         p = promises.TargetWrapper("gnatfuzz build")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=[self.output_dir])
         return r
 
     ##################
@@ -853,7 +839,7 @@ class GNATfuzzPlugin(Module):
     def gnatfuzz_generate_corpus_workflow(self, task):
         """The 'gnatfuzz generate-corpus' workflow"""
         p = promises.TargetWrapper("gnatfuzz generate-corpus")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=[self.output_dir])
         return r
 
     ##################
@@ -863,7 +849,7 @@ class GNATfuzzPlugin(Module):
     def gnatfuzz_minimize_corpus_workflow(self, task):
         """The 'gnatfuzz minimize-corpus' workflow"""
         p = promises.TargetWrapper("gnatfuzz minimize-corpus")
-        r = yield p.wait_on_execute()
+        r = yield p.wait_on_execute(extra_args=[self.output_dir])
         return r
 
     ########
@@ -936,7 +922,7 @@ class GNATfuzzPlugin(Module):
         args.append(f"--corpus-path={minimized_corpus_dir}")
 
         GPS.BuildTarget("gnatfuzz fuzz").execute(
-            extra_args=args,
+            extra_args=[self.output_dir] + args,
             synchronous=False,
         )
 

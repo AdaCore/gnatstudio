@@ -45,15 +45,19 @@ EXECUTABLE_SUFFIX = ".exe" if sys.platform == "win32" else ""
 FUZZ_CONFIG_FILE = "fuzz_config.json"
 BUILD_HARNESS_DIRECTORY = "build"
 
+# Linked by "gnatfuzz build" into the harness directory, whatever the
+# engines. It decodes the TGen-encoded test cases of session/results.
+TEST_CASE_DECODER = "decode_test_case"
+
 # The AFL modes, most likely first: DEFAULT_AFL_MODE is AFL_PERSIST. A
 # campaign builds exactly one of them.
 AFL_MODES = ("AFL_PERSIST", "AFL_DEFER_AND_PERSIST", "AFL_DEFER", "AFL_PLAIN")
 
-# The engines whose verbose harness is built against the TGen encoding,
-# in search-priority order. Everything the views decode comes from
-# session/results, which is TGen-encoded; the CMPLOG decoder is built
-# against encoding_standard and would render those files as nonsense, so
-# it is deliberately never a candidate here.
+# Older gnatfuzz builds no TEST_CASE_DECODER: the decoder is then the
+# verbose harness of an engine built against the TGen encoding, searched
+# in this order. The CMPLOG verbose harness is built against
+# encoding_standard and would render the test cases as nonsense, so it
+# is deliberately never a candidate here.
 AFL_ENGINE = "afl"
 LIBFUZZER_ENGINE = "libfuzzer"
 TGEN_ENGINES = (AFL_ENGINE, LIBFUZZER_ENGINE)
@@ -114,8 +118,7 @@ def build_directory(harness_root_dir):
 def harness_candidates(harness_root_dir, is_verbose):
     """Return (object directory, executable name) pairs, most likely first.
 
-    Mirrors gnatfuzz.core.harness_paths.verbose_runner_candidates. A
-    campaign builds a single AFL mode and a single set of engines, both
+    A campaign builds a single AFL mode and a single set of engines, both
     recorded in fuzz_config.json, so the recorded ones are tried first
     and the rest afterwards in case that file is stale or absent.
     """
@@ -153,6 +156,11 @@ def fuzz_executable(is_verbose):
     hand to the debugger.
     """
     root = harness_root()
+    if is_verbose:
+        decoder = os.path.join(root, TEST_CASE_DECODER + EXECUTABLE_SUFFIX)
+        if os.path.exists(decoder):
+            return decoder
+
     build_dir = build_directory(root)
     for obj_dir, name in harness_candidates(root, is_verbose):
         candidate = os.path.join(build_dir, obj_dir, name + EXECUTABLE_SUFFIX)

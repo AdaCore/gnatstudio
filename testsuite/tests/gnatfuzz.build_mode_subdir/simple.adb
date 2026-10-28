@@ -1,4 +1,4 @@
-package body a is
+package body Simple is
    procedure fuzzable (X : Integer) is
       Y : Integer;
    begin
@@ -9,4 +9,4 @@ package body a is
    end;
 
 
-end a;
+end Simple;

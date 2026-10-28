@@ -1,3 +1,3 @@
-package a is
+package Simple is
    procedure fuzzable (X : Integer);
-end a;
+end Simple;
