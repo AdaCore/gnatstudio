@@ -185,7 +185,10 @@ package body Filter_Panels is
       Options     : Filter_Options_Mask := 0;
       Name        : String := "")
    is
-      Sep : Gtk_Separator_Menu_Item;
+      use Ada.Strings.Unbounded;
+
+      Sep    : Gtk_Separator_Menu_Item;
+      Markup : Unbounded_String := To_Unbounded_String (Tooltip);
    begin
       Self.History_Prefix := new String'(String (Hist_Prefix));
       Self.Kernel := Kernel;
@@ -220,20 +223,26 @@ package body Filter_Panels is
       --  receive the focus.
       Self.Pattern.Set_Can_Focus (True);
 
-      Self.Pattern.Set_Tooltip_Markup
-        (Tooltip
-         & (if (Options and Has_Negate) /= 0
-            then ASCII.LF & "Start with <b>not:</b> to invert the filter"
-            else "")
-         & (if (Options and Has_Debounce) /= 0
-            then
-              (ASCII.LF
-               & "Press ENTER to apply the filter when 'react to enter' "
-               & "option is enabled")
-            else
-              (if (Options and Debounce) /= 0
-               then ASCII.LF & "Press ENTER to apply the filter"
-               else "")));
+      --  Avoid a compiler optimization issue with concatenated conditional
+      --  expressions by building the tooltip with separated 
+      --  statements
+      --  (see eng/toolchain/gnat#2057)
+      if (Options and Has_Negate) /= 0 then
+         Append
+           (Markup, ASCII.LF & "Start with <b>not:</b> to invert the filter");
+      end if;
+
+      if (Options and Has_Debounce) /= 0 then
+         Append
+           (Markup,
+            ASCII.LF
+            & "Press ENTER to apply the filter when 'react to enter' "
+            & "option is enabled");
+      elsif (Options and Debounce) /= 0 then
+         Append (Markup, ASCII.LF & "Press ENTER to apply the filter");
+      end if;
+
+      Self.Pattern.Set_Tooltip_Markup (To_String (Markup));
 
       if Options /= 0 then
          Self.Pattern.Set_Icon_From_Icon_Name
