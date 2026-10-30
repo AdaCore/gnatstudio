@@ -767,7 +767,7 @@ package body External_Editor_Module is
          "edit with external editor",
          new Edit_With_External_Command,
          Description =>
-           -("Edit the file with an external editor, as configued in the"
+           -("Edit the file with an external editor, as configured in the"
              & " preferences"),
          Filter      => Lookup_Filter (Kernel, "File"));
 
