@@ -36,7 +36,6 @@ with VSS.Strings.Conversions;
 with Casing_Exceptions;                  use Casing_Exceptions;
 with Commands;                           use Commands;
 with Find_Utils;                         use Find_Utils;
-with GPS.Editors.Line_Information;       use GPS.Editors.Line_Information;
 with GPS.Intl;                           use GPS.Intl;
 with GPS.Kernel.Charsets;                use GPS.Kernel.Charsets;
 with GPS.Kernel.Clipboard;               use GPS.Kernel.Clipboard;
@@ -266,14 +265,6 @@ package body Src_Editor_Module.Shell is
      (Script : access Scripting_Language_Record'Class;
       Cursor : GPS.Editors.Editor_Cursor'Class) return Class_Instance;
 
-   function Get_Location
-     (Data    : Callback_Data'Class;
-      Arg     : Positive;
-      Default : Editor_Location'Class := Nil_Editor_Location)
-      return Editor_Location'Class;
-   --  Return the iter stored in the Arg-th parameter.
-   --  If no location could be obtain from the arguments, returns Default
-
    function Get_Mark
      (Data : Callback_Data'Class; Arg : Positive) return Editor_Mark'Class;
    --  Return the mark stored in the Arg-th parameter.
@@ -282,13 +273,6 @@ package body Src_Editor_Module.Shell is
    function Get_Marker
      (Data : Callback_Data'Class; Arg : Positive) return Location_Marker;
    --  Return the location marker itself, stored in the Arg-th parameter
-
-   function Get_Buffer
-     (Data : Callback_Data'Class; Arg : Positive)
-      return GPS_Editor_Buffer'Class;
-   --  Set the Buffer variable appropriately, or null if the buffer could
-   --  not be found or is no longer valid.
-   --  If the buffer is no longer valid, raises Editor_Exception
 
    function Get_Overlay
      (Data       : Callback_Data'Class;
