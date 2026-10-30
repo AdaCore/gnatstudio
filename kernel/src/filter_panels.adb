@@ -224,7 +224,8 @@ package body Filter_Panels is
       Self.Pattern.Set_Can_Focus (True);
 
       --  Avoid a compiler optimization issue with concatenated conditional
-      --  expressions by building the tooltip with statements
+      --  expressions by building the tooltip with separated 
+      --  statements
       --  (see eng/toolchain/gnat#2057)
       if (Options and Has_Negate) /= 0 then
          Append
