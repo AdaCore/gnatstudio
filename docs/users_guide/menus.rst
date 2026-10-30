@@ -859,7 +859,7 @@ The Code Menu
 
 * :menuselection:`Code --> Edit with External Editor`
 
-   Edit the file with an external editor, as configued in the preferences
+   Edit the file with an external editor, as configured in the preferences
 
 .. index:: menu; code --> generate body
 

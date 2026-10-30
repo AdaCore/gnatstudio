@@ -674,12 +674,6 @@ Alternatively, explicitly reload the project from Emacs itself by using the
 :menuselection:`File --> Load Project` menu in :program:`emacs` (if
 :command:`ada-mode` is correctly installed).
 
-.. index:: preferences; editor --> always use external editor
-
-The :menuselection:`Editor --> Always use external editor` preference lets
-you choose to use an external editor every time you double-click on a file,
-instead of opening GNAT Studio's own editor.
-
 .. index:: clipboard
 .. index:: cut
 .. index:: copy
