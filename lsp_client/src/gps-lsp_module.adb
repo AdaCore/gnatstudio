@@ -39,10 +39,8 @@
 --       -  didChange ->  sent in reaction to After_Insert_Text
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
-with Basic_Types;
 with GNAT.Strings;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
@@ -50,36 +48,27 @@ with Config;               use Config;
 with Commands;             use Commands;
 with Commands.Interactive; use Commands.Interactive;
 
-with Glib.Convert;
-
 with GNATCOLL.Projects;
 with GNATCOLL.Traces;
 with GNATCOLL.Utils;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 
-with GPS.Kernel.Messages.Hyperlink;
 with GPS.LSP_Client.Editors.Semantic_Tokens;
 with VSS.Application;
 with VSS.Regular_Expressions;
 with VSS.Strings.Conversions;
-with VSS.Strings.Hash;
 
-with Default_Preferences;            use Default_Preferences;
+with Default_Preferences;     use Default_Preferences;
 with GPS.Core_Kernels;
-with GPS.Default_Styles;
 with GPS.Editors;
-with GPS.Editors.Line_Information;   use GPS.Editors.Line_Information;
-with GPS.Kernel.Actions;             use GPS.Kernel.Actions;
-with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
-with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
-with GPS.Kernel.Modules;             use GPS.Kernel.Modules;
-with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
+with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
+with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
+with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Project;
 
+with GPS.LSP_Client.Diagnostics;
 with GPS.LSP_Client.Call_Tree;
 with GPS.LSP_Client.Configurations.ALS;
 with GPS.LSP_Client.Configurations.Clangd;
@@ -104,7 +93,6 @@ with GPS.LSP_Client.Requests.Execute_Command.Reload_Project;
 with GPS.LSP_Client.Search;
 with GPS.LSP_Client.Shell;
 with GPS.LSP_Client.Tasks;
-with GPS.LSP_Client.Utilities;
 with GPS.LSP_Clients;
 with GPS.Messages_Windows;              use GPS.Messages_Windows;
 with GPS.Scripts.Commands;              use GPS.Scripts.Commands;
@@ -238,21 +226,6 @@ package body GPS.LSP_Module is
         Hash            => LSP.Structures.Hashes.Hash,
         Equivalent_Keys => LSP.Structures."=");
 
-   package Source_Sets is new
-     Ada.Containers.Hashed_Sets
-       (Element_Type        => VSS.Strings.Virtual_String,
-        Hash                => VSS.Strings.Hash,
-        Equivalent_Elements => VSS.Strings."=",
-        "="                 => VSS.Strings."=");
-
-   package Language_Diagnostic_Sources is new
-     Ada.Containers.Hashed_Maps
-       (Key_Type        => VSS.Strings.Virtual_String,
-        Element_Type    => Source_Sets.Set,
-        Hash            => VSS.Strings.Hash,
-        Equivalent_Keys => VSS.Strings."=",
-        "="             => Source_Sets."=");
-
    ------------
    -- Module --
    ------------
@@ -272,9 +245,7 @@ package body GPS.LSP_Module is
       Token_To_Command : Token_Command_Maps.Map;
       --  Associate the progress token to the Scheduled_Command monitoring it
 
-      Diagnostic_Sources : Language_Diagnostic_Sources.Map;
-      --  Map monitoring the sources of diagnostics associated which each
-      --  language.
+      Diagnostics : aliased GPS.LSP_Client.Diagnostics.Diagnostic_Manager;
    end record;
 
    type LSP_Module_Id is access all Module_Id_Record'Class;
@@ -282,36 +253,6 @@ package body GPS.LSP_Module is
    overriding
    procedure Destroy (Self : in out Module_Id_Record);
    --  Stops all language server processes and cleanup data structures.
-
-   Diagnostics_Messages_Category_Prefix :
-     constant VSS.Strings.Virtual_String := "Diagnostics";
-
-   procedure Remove_Diagnostics
-     (Self     : in out Module_Id_Record'Class;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Language : VSS.Strings.Virtual_String);
-   --  Remove the diagnostics related to file for the sources of Language
-
-   procedure Register_Diagnostic_Source
-     (Self     : in out Module_Id_Record'Class;
-      Language : VSS.Strings.Virtual_String;
-      Source   : VSS.Strings.Virtual_String);
-   --  Register a new source of diagnostics for language. It will do nothing
-   --  if Source is already registered.
-
-   function Is_Language_Diagnostic_Category
-     (Self     : Module_Id_Record'Class;
-      Language : VSS.Strings.Virtual_String;
-      Category : VSS.Strings.Virtual_String) return Boolean;
-   --  Return True if category match a source of Language
-
-   function Get_Diagnostics_Message_Flags return Message_Flags
-   is (case LSP_Diagnostics_Display_Policy'(LSP_Diagnostics_Display.Get_Pref)
-       is
-         when Editor_And_Locations => Side_And_Locations,
-         when Editor_Only          => Sides_Only);
-   --  Return the message flags for diagnostics, depending on the corresponding
-   --  preference.
 
    overriding
    procedure On_Server_Started
@@ -554,6 +495,7 @@ package body GPS.LSP_Module is
    overriding
    procedure Destroy (Self : in out Module_Id_Record) is
    begin
+      Self.Diagnostics.Destroy;
       Self.Initiate_Servers_Shutdown (Self.Language_Servers, True);
    end Destroy;
 
@@ -571,7 +513,7 @@ package body GPS.LSP_Module is
       Server : constant Language_Server_Access :=
         Get_Server_For_File (Kernel, File);
    begin
-      Module.Remove_Diagnostics (File, VSS.Strings.Empty_Virtual_String);
+      Module.Diagnostics.Clear (File);
       if Server /= null then
          Server.Get_Client.Send_Text_Document_Did_Close (File);
       end if;
@@ -642,7 +584,7 @@ package body GPS.LSP_Module is
       if Server /= null then
          Server.Get_Client.Send_Text_Document_Did_Open (To);
       end if;
-      Module.Remove_Diagnostics (From, VSS.Strings.Empty_Virtual_String);
+      Module.Diagnostics.Clear (From);
    end Execute;
 
    -------------
@@ -699,6 +641,9 @@ package body GPS.LSP_Module is
    is
       pragma Unreferenced (Self, Kernel, File);
    begin
+      --  Forget diagnostic caches before Locations loads the next project.
+      Module.Diagnostics.Destroy;
+
       --  Shutdown all running language servers.
 
       Module.Initiate_Servers_Shutdown (Module.Language_Servers);
@@ -1196,84 +1141,6 @@ package body GPS.LSP_Module is
       return Me_Cpp_Support.Is_Active;
    end LSP_Cpp_Support_Is_Active;
 
-   --------------------------------
-   -- Register_Diagnostic_Source --
-   --------------------------------
-
-   procedure Register_Diagnostic_Source
-     (Self     : in out Module_Id_Record'Class;
-      Language : VSS.Strings.Virtual_String;
-      Source   : VSS.Strings.Virtual_String) is
-   begin
-      if Self.Diagnostic_Sources.Contains (Language) then
-         Self.Diagnostic_Sources (Language).Include (Source);
-      else
-         declare
-            Source_Set : Source_Sets.Set := Source_Sets.Empty_Set;
-         begin
-            Source_Set.Include (Source);
-            Self.Diagnostic_Sources.Insert (Language, Source_Set);
-         end;
-      end if;
-   end Register_Diagnostic_Source;
-
-   -------------------------------------
-   -- Is_Language_Diagnostic_Category --
-   -------------------------------------
-
-   function Is_Language_Diagnostic_Category
-     (Self     : Module_Id_Record'Class;
-      Language : VSS.Strings.Virtual_String;
-      Category : VSS.Strings.Virtual_String) return Boolean
-   is
-      use type VSS.Strings.Virtual_String;
-   begin
-      if Language.Is_Empty then
-         --  No Language given, clean all the diagnostics
-         if Category.Starts_With (Diagnostics_Messages_Category_Prefix) then
-            return True;
-         end if;
-      elsif Self.Diagnostic_Sources.Contains (Language) then
-         --  Check for the sources related to Language
-         for Source of Self.Diagnostic_Sources (Language) loop
-            declare
-               Prefix : constant VSS.Strings.Virtual_String :=
-                 Diagnostics_Messages_Category_Prefix & ": " & Source;
-               --  This format should match the one from Get_Category
-            begin
-               if Category.Starts_With (Prefix) then
-                  return True;
-               end if;
-            end;
-         end loop;
-      end if;
-
-      return False;
-   end Is_Language_Diagnostic_Category;
-
-   ------------------------
-   -- Remove_Diagnostics --
-   ------------------------
-
-   procedure Remove_Diagnostics
-     (Self     : in out Module_Id_Record'Class;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Language : VSS.Strings.Virtual_String)
-   is
-      Container : constant not null GPS.Kernel.Messages_Container_Access :=
-        Self.Get_Kernel.Get_Messages_Container;
-   begin
-      --  Get_Sources_For_Language: need to store the sources
-      for Category of Container.Get_Categories loop
-         if Self.Is_Language_Diagnostic_Category (Language, Category) then
-            Container.Remove_File
-              (Category => Category,
-               File     => File,
-               Flags    => Get_Diagnostics_Message_Flags);
-         end if;
-      end loop;
-   end Remove_Diagnostics;
-
    ---------------------------
    -- On_Response_Processed --
    ---------------------------
@@ -1443,6 +1310,8 @@ package body GPS.LSP_Module is
          end;
       end loop;
       Module.Token_To_Command.Clear;
+      Module.Diagnostics.Cancel
+        (VSS.Strings.Conversions.To_Virtual_String (Language));
    end Execute;
 
    -------------------------
@@ -1456,334 +1325,13 @@ package body GPS.LSP_Module is
       Value  : LSP.Structures.PublishDiagnosticsParams)
    is
       Lang : constant Language_Access := Self.Lookup_Language (Server);
-
-      function To_Importance
-        (Item : LSP.Structures.DiagnosticSeverity_Optional)
-         return GPS.Kernel.Messages.Message_Importance_Type;
-      --  Convert LSP's DiagnosticSeverity type to GNAT Studio's
-      --  Message_Importance_Type.
-
-      function Get_Editor_Side_Icon
-        (Importance : Message_Importance_Type) return String
-      is (case Importance is
-            when High          => "gps-emblem-build-error",
-            when Medium        => "gps-emblem-build-warning",
-            when Low           => "gps-emblem-build-style",
-            when Informational => "gps-info-symbolic",
-            when others        => "");
-      --  Return the editor side icon displayed for diagnostics, according
-      --  to their importance.
-
-      function Get_Category
-        (Diag : LSP.Structures.Diagnostic) return VSS.Strings.Virtual_String;
-      --  Return the message category of Diag
-
-      function Contains
-        (Messages : Message_Array; Diag : LSP.Structures.Diagnostic)
-         return Boolean;
-      --  Return True if Diag is already in messages
-
-      function Contains
-        (Messages : Message_Array;
-         Info     : LSP.Structures.DiagnosticRelatedInformation)
-         return Boolean;
-      --  Return True if Info is already in messages
-
-      function Compare_Diagnostics
-        (Diagnostics : LSP.Structures.Diagnostic_Vector;
-         File        : GNATCOLL.VFS.Virtual_File) return Boolean;
-      --  Return True if the Diagnostics are still the same
-
-      Language  : constant VSS.Strings.Virtual_String :=
-        (if Lang = null
-         then VSS.Strings.Empty_Virtual_String
-         else VSS.Strings.Conversions.To_Virtual_String (Lang.Get_Name));
-      Container : constant not null GPS.Kernel.Messages_Container_Access :=
-        Self.Get_Kernel.Get_Messages_Container;
-      File      : constant GNATCOLL.VFS.Virtual_File :=
-        GPS.LSP_Client.Utilities.To_Virtual_File (Value.uri);
-      Holder    : constant GPS.Editors.Controlled_Editor_Buffer_Holder :=
-        Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
-
-      -------------------
-      -- To_Importance --
-      -------------------
-
-      function To_Importance
-        (Item : LSP.Structures.DiagnosticSeverity_Optional)
-         return GPS.Kernel.Messages.Message_Importance_Type is
-      begin
-         if not Item.Is_Set then
-            return GPS.Kernel.Messages.High;
-
-         else
-            case Item.Value is
-               when LSP.Enumerations.Error       =>
-                  return GPS.Kernel.Messages.High;
-
-               when LSP.Enumerations.Warning     =>
-                  return GPS.Kernel.Messages.Medium;
-
-               when LSP.Enumerations.Information =>
-                  return GPS.Kernel.Messages.Low;
-
-               when LSP.Enumerations.Hint        =>
-                  return GPS.Kernel.Messages.Informational;
-            end case;
-         end if;
-      end To_Importance;
-
-      --------------
-      -- Contains --
-      --------------
-
-      function Contains
-        (Messages : Message_Array; Diag : LSP.Structures.Diagnostic)
-         return Boolean
-      is
-         use type Basic_Types.Visible_Column_Type;
-         use type VSS.Strings.Virtual_String;
-         Location : constant GPS.Editors.Editor_Location'Class :=
-           GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Diag.a_range.start);
-      begin
-         for Msg of Messages loop
-            --  The primary message must match a diagnostics
-            if VSS.Strings.Conversions.To_Virtual_String (Msg.Get_Text)
-              = Diag.message
-              and then Msg.Get_Line = Location.Line
-              and then Msg.Get_Column = Location.Column
-            then
-               declare
-                  Children : constant Message_Array := Msg.Get_Children;
-               begin
-                  --  The secondary messages must match the relatedInformation
-                  if Integer (Diag.relatedInformation.Length)
-                    /= Msg.Get_Children'Length
-                  then
-                     --  Not the same number
-                     return False;
-                  else
-                     for Related_Diag of Diag.relatedInformation loop
-                        if not Contains (Children, Related_Diag) then
-                           return False;
-                        end if;
-                     end loop;
-
-                     return True;
-                  end if;
-               end;
-            end if;
-         end loop;
-
-         return False;
-      end Contains;
-
-      --------------
-      -- Contains --
-      --------------
-
-      function Contains
-        (Messages : Message_Array;
-         Info     : LSP.Structures.DiagnosticRelatedInformation) return Boolean
-      is
-         use GPS.Editors;
-         use type Basic_Types.Visible_Column_Type;
-         use type VSS.Strings.Virtual_String;
-
-         Holder    : constant Controlled_Editor_Buffer_Holder :=
-           Self.Get_Kernel.Get_Buffer_Factory.Get_Holder (File => File);
-         Start_Loc : constant GPS.Editors.Editor_Location'Class :=
-           GPS.LSP_Client.Utilities.LSP_Position_To_Location
-             (Holder.Editor, Info.location.a_range.start);
-      begin
-         for Msg of Messages loop
-            if VSS.Strings.Conversions.To_Virtual_String (Msg.Get_Text)
-              = Info.message
-              and then Msg.Get_Line = Start_Loc.Line
-              and then Msg.Get_Column = Start_Loc.Column
-            then
-               return True;
-            end if;
-         end loop;
-
-         return False;
-      end Contains;
-
-      ------------------
-      -- Get_Category --
-      ------------------
-
-      function Get_Category
-        (Diag : LSP.Structures.Diagnostic) return VSS.Strings.Virtual_String
-      is
-         use type VSS.Strings.Virtual_String;
-      begin
-         return
-           Diagnostics_Messages_Category_Prefix
-           & ": "
-           & (if not Diag.source.Is_Empty then Diag.source else Language);
-      end Get_Category;
-
-      -------------------------
-      -- Compare_Diagnostics --
-      -------------------------
-
-      function Compare_Diagnostics
-        (Diagnostics : LSP.Structures.Diagnostic_Vector;
-         File        : GNATCOLL.VFS.Virtual_File) return Boolean
-      is
-         use type VSS.Strings.Virtual_String;
-         --  Count the number of diagnostics in the messages view
-         Nb_Old_Diag : Integer := 0;
-      begin
-         for Category of Container.Get_Categories loop
-            if Category.Starts_With (Diagnostics_Messages_Category_Prefix) then
-               declare
-                  Messages : constant Message_Array :=
-                    Container.Get_Messages
-                      (Category => Category, File => File);
-               begin
-                  Nb_Old_Diag := Nb_Old_Diag + Messages'Length;
-                  for Diag of Diagnostics loop
-                     if not Contains (Messages, Diag) then
-                        return False;
-                     end if;
-                  end loop;
-               end;
-            end if;
-         end loop;
-
-         --  Refresh in case we don't have the same number of messages or
-         --  this is the first time we are receiving diagnostics
-         if (Nb_Old_Diag = 0 and then not Diagnostics.Is_Empty)
-           or else Nb_Old_Diag /= Integer (Diagnostics.Length)
-         then
-            return False;
-         else
-            return True;
-         end if;
-      end Compare_Diagnostics;
-
    begin
-      if Lang = null then
-         return;
+      if Lang /= null then
+         Self.Diagnostics.Publish
+           (Self.Get_Kernel,
+            VSS.Strings.Conversions.To_Virtual_String (Lang.Get_Name),
+            Value);
       end if;
-
-      if Compare_Diagnostics (Value.diagnostics, File) then
-         return;
-      end if;
-
-      Module.Remove_Diagnostics (File, Language);
-
-      for Diagnostic of Value.diagnostics loop
-         if not Diagnostic.source.Is_Empty then
-            --  Register the source so we can clean it later
-            Module.Register_Diagnostic_Source (Language, Diagnostic.source);
-         else
-            --  Use Language as the backup source
-            Module.Register_Diagnostic_Source (Language, Language);
-         end if;
-
-         declare
-            Location   : constant GPS.Editors.Editor_Location'Class :=
-              GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                (Holder.Editor, Diagnostic.a_range.start);
-            Importance : constant Message_Importance_Type :=
-              To_Importance (Diagnostic.severity);
-            Flags      : constant Message_Flags :=
-              (if not Diagnostic.relatedInformation.Is_Empty
-               then Side_And_Locations
-               else Get_Diagnostics_Message_Flags);
-            Category   : constant VSS.Strings.Virtual_String :=
-              Get_Category (Diagnostic);
-            M          : constant Simple_Message_Access :=
-              GPS.Kernel.Messages.Simple.Create_Simple_Message
-                (Container                => Container,
-                 Category                 => Category,
-                 File                     => File,
-                 Line                     => Location.Line,
-                 Column                   => Location.Column,
-                 Text                     => Diagnostic.message,
-                 Importance               => Importance,
-                 Flags                    => Flags,
-                 Allow_Auto_Jump_To_First => False);
-
-            Action :
-              constant GPS.Editors.Line_Information.Line_Information_Access :=
-                new Line_Information_Record'
-                  ((Text                     => Null_Unbounded_String,
-                    Display_Popup_When_Alone => False,
-                    Tooltip_Text             =>
-                      To_Unbounded_String
-                        (Glib.Convert.Escape_Text
-                           (VSS.Strings.Conversions.To_UTF_8_String
-                              (Diagnostic.message))),
-                    Image                    =>
-                      To_Unbounded_String (Get_Editor_Side_Icon (Importance)),
-                    Message                  => Create (Message_Access (M)),
-                    Category                 => <>,
-                    Associated_Command       => null));
-
-         begin
-            M.Set_Action (Action);
-            M.Set_Highlighting
-              (Style  =>
-                 GPS.Default_Styles.Messages_Styles
-                   (To_Importance (Diagnostic.severity)),
-               Length =>
-                 (if Diagnostic.a_range.an_end.line
-                    = Diagnostic.a_range.start.line
-                  then
-                    Highlight_Length'Min
-                      (1,
-                       Highlight_Length
-                         (Diagnostic.a_range.an_end.character
-                          - Diagnostic.a_range.start.character))
-                  else Highlight_Whole_Line));
-
-            --  For each related information, create a secondary message
-            for Info of Diagnostic.relatedInformation loop
-               declare
-                  use GPS.Editors;
-
-                  File      : constant GNATCOLL.VFS.Virtual_File :=
-                    GPS.LSP_Client.Utilities.To_Virtual_File
-                      (Info.location.uri);
-                  Holder    : constant Controlled_Editor_Buffer_Holder :=
-                    Self.Get_Kernel.Get_Buffer_Factory.Get_Holder
-                      (File => File);
-                  Start_Loc : constant GPS.Editors.Editor_Location'Class :=
-                    GPS.LSP_Client.Utilities.LSP_Position_To_Location
-                      (Holder.Editor, Info.location.a_range.start);
-
-                  SLOC_Prefix : constant String :=
-                    File.Display_Base_Name
-                    & ":"
-                    & GNATCOLL.Utils.Image (Start_Loc.Line, 1)
-                    & ":"
-                    & GNATCOLL.Utils.Image (Integer (Start_Loc.Column), 1)
-                    & ": ";
-                  --  Prefix of the message used to indicate the SLOC of the
-                  --  relatedInformation, displayed as an hyperlink.
-
-                  Info_Msg : constant String :=
-                    VSS.Strings.Conversions.To_UTF_8_String (Info.message);
-                  Text     : constant String := SLOC_Prefix & Info_Msg;
-               begin
-                  GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
-                    (Parent => GPS.Kernel.Messages.Message_Access (M),
-                     File   => File,
-                     Line   => Start_Loc.Line,
-                     Column => Start_Loc.Column,
-                     Text   => Text,
-                     First  => Text'First,
-                     Last   => Text'First + SLOC_Prefix'Length - 2,
-                     Flags  => Flags);
-               end;
-            end loop;
-         end;
-      end loop;
    end On_Publish_Diagnostics;
 
    ------------------
