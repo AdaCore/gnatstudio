@@ -14,9 +14,6 @@
           </Notebook>
           <Notebook height=" 5.02387E+01%" Tabs="POS_LEFT" >
             <Child Raised="True" Group=" 106" State="NORMAL" >
-              <Learn_View />
-            </Child>
-            <Child Group=" 106" State="NORMAL" >
               <Outline_View />
             </Child>
           </Notebook>
@@ -183,9 +180,6 @@
   </perspectives>
   <desktops >
     <desktop perspective="Default" >
-      <Learn_View>
-        <learn position=" 4.98721E+01%"  />
-      </Learn_View>
       <Pane width=" 1.00000E+02%" Orientation="ORIENTATION_HORIZONTAL" >
         <Notebook width=" 1.00439E+02%" Tabs="POS_TOP" >
           <Child Raised="True" Group=" 1" State="NORMAL" >
