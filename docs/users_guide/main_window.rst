@@ -838,6 +838,9 @@ The Learn view
 The :guilabel:`Learn` view's purpose is to help users to familiarize with
 GNAT Studio.
 
+Open it through :menuselection:`View --> Learn`. It is closed by default in
+the predefined :guilabel:`Default` perspective.
+
 In particular the :guilabel:`Learn` view displays a list of the most commonly
 used and useful GNAT Studio actions, with their optional key shortcut.
 
