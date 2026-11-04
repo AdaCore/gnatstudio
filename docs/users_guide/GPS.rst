@@ -1385,6 +1385,10 @@ Classes
 
    .. automethod:: GPS.LanguageServer.is_enabled_for_language_name
 
+   .. automethod:: GPS.LanguageServer.location_to_position
+
+   .. automethod:: GPS.LanguageServer.position_to_location
+
    .. automethod:: GPS.LanguageServer.request
 
    .. automethod:: GPS.LanguageServer.request_low_level

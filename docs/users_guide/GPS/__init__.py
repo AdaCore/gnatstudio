@@ -11463,7 +11463,7 @@ class LanguageServer(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get_by_file(self, file):
+    def get_by_file(file):
         """
         Return the language server for the given language
 
@@ -11472,7 +11472,7 @@ class LanguageServer(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get_by_language_info(self, language):
+    def get_by_language_info(language):
         """
         Return the language server for the given language info
 
@@ -11481,7 +11481,7 @@ class LanguageServer(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get_by_language_name(self, language):
+    def get_by_language_name(language):
         """
         Return the language server for the given language
 
@@ -11490,7 +11490,7 @@ class LanguageServer(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def is_enabled_for_language_name(self, language):
+    def is_enabled_for_language_name(language):
         """
         Return True is the language server is enabled for the given language
 
@@ -11544,6 +11544,31 @@ class LanguageServer(object):
         Return the list of requests queued by the client.
 
         :return: A list of String.
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def position_to_location(buf, line, character):
+        """
+        Return the buffer location corresponding to the 0-based LSP.Position
+        (line, character) with line and character following the LSP protocol
+        definition.
+
+        :param buf: An instance of :class:`GPS.EditorBuffer`
+        :param line: An integer
+        :param character: An integer
+        :return: An instance of :class:`GPS.EditorLocation`
+        """
+        pass  # implemented in Ada
+
+    @staticmethod
+    def location_to_position(loc):
+        """
+        Return {"line": X, "character": Y} a LSP.Position corresponding
+        to the GPS.EditorLocation
+
+        :param loc: An instance of :class:`GPS.EditorLocation`
+        :return: A integer dictionnary with the index "line" and "character"
         """
         pass  # implemented in Ada
 

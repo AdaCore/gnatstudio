@@ -22,13 +22,18 @@ with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.VSS_Utils; use GNATCOLL.Scripts.VSS_Utils;
 with GNATCOLL.VFS;
 
+with GPS.LSP_Client.Utilities;
 with Language;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Scripts;
 with GPS.LSP_Client.Language_Servers;
 with GPS.LSP_Client.Requests;
 with GPS.LSP_Client.Requests.Shell;
 with GPS.LSP_Module;
 
+with LSP.Structures; use LSP.Structures;
+
+with Src_Editor_Module.Shell;
 with VSS.Strings.Conversions;
 
 package body GPS.LSP_Client.Shell is
@@ -45,6 +50,8 @@ package body GPS.LSP_Client.Shell is
    Request_Low_Level_Method    : constant String := "request_low_level";
    Get_Log_File_Method         : constant String := "get_log_file";
    Get_Requests_Method         : constant String := "get_requests";
+   Position_To_Location_Method : constant String := "position_to_location";
+   Location_To_Position_Method : constant String := "location_to_position";
 
    Is_Enabled_Name_Method : constant String := "is_enabled_for_language_name";
 
@@ -263,6 +270,34 @@ package body GPS.LSP_Client.Shell is
                end if;
             end loop;
          end;
+      elsif Command = Position_To_Location_Method then
+         declare
+            Buf       : constant GPS_Editor_Buffer'Class :=
+              Src_Editor_Module.Shell.Get_Buffer (Data, 1);
+            Line      : constant Integer := Nth_Arg (Data, 2);
+            Character : constant Integer := Nth_Arg (Data, 3);
+            Loc       : constant GPS.Editors.Editor_Location'Class :=
+              GPS.LSP_Client.Utilities.LSP_Position_To_Location
+                (Buf,
+                 (line => Natural (Line), character => Natural (Character)));
+         begin
+            Set_Return_Value
+              (Data,
+               Src_Editor_Module.Shell.Create_Editor_Location
+                 (Get_Script (Data), Loc));
+         end;
+      elsif Command = Location_To_Position_Method then
+         declare
+            Loc      : constant GPS.Editors.Editor_Location'Class :=
+              Src_Editor_Module.Shell.Get_Location (Data, 1);
+            Position : constant LSP.Structures.Position :=
+              GPS.LSP_Client.Utilities.Location_To_LSP_Position (Loc);
+         begin
+            Set_Return_Value (Data, Integer (Position.line));
+            Set_Return_Value_Key (Data, "line");
+            Set_Return_Value (Data, Integer (Position.character));
+            Set_Return_Value_Key (Data, "character");
+         end;
       end if;
    end Command_Handler;
 
@@ -364,6 +399,23 @@ package body GPS.LSP_Client.Shell is
       Kernel.Scripts.Register_Command
         (Command       => Is_Enabled_Name_Method,
          Params        => (1 .. 1 => Param ("language")),
+         Handler       => Command_Handler'Access,
+         Class         => LanguageServer_Class,
+         Static_Method => True);
+
+      Kernel.Scripts.Register_Command
+        (Command       => Position_To_Location_Method,
+         Params        =>
+           (1 => Param ("buffer"),
+            2 => Param ("line"),
+            3 => Param ("character")),
+         Handler       => Command_Handler'Access,
+         Class         => LanguageServer_Class,
+         Static_Method => True);
+
+      Kernel.Scripts.Register_Command
+        (Command       => Location_To_Position_Method,
+         Params        => (1 => Param ("loc")),
          Handler       => Command_Handler'Access,
          Class         => LanguageServer_Class,
          Static_Method => True);

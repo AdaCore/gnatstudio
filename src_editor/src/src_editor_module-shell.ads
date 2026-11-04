@@ -16,7 +16,8 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel;
-with GPS.Editors; use GPS.Editors;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 
 package Src_Editor_Module.Shell is
 
@@ -33,6 +34,21 @@ package Src_Editor_Module.Shell is
      (Script   : access Scripting_Language_Record'Class;
       Location : Editor_Location'Class) return Class_Instance;
    --  Return an instance of EditorLocation
+
+   function Get_Buffer
+     (Data : Callback_Data'Class; Arg : Positive)
+      return GPS_Editor_Buffer'Class;
+   --  Set the Buffer variable appropriately, or null if the buffer could
+   --  not be found or is no longer valid.
+   --  If the buffer is no longer valid, raises Editor_Exception
+
+   function Get_Location
+     (Data    : Callback_Data'Class;
+      Arg     : Positive;
+      Default : Editor_Location'Class := Nil_Editor_Location)
+      return Editor_Location'Class;
+   --  Return the iter stored in the Arg-th parameter.
+   --  If no location could be obtain from the arguments, returns Default
 
    -------------------
    -- Find_All_Refs --
