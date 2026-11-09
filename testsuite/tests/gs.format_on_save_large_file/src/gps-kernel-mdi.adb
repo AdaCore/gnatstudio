@@ -577,13 +577,13 @@ package body GPS.Kernel.MDI is
          when Bottom =>
             Position := Pos_Bottom;
 
-         when Right  =>
+         when Right =>
             Position := Pos_Right;
 
-         when Top    =>
+         when Top =>
             Position := Pos_Top;
 
-         when Left   =>
+         when Left =>
             Position := Pos_Left;
       end case;
 
@@ -593,10 +593,10 @@ package body GPS.Kernel.MDI is
          when Automatic =>
             Policy := Show_Tabs_Policy_Enum'(Automatic);
 
-         when Never     =>
+         when Never =>
             Policy := Show_Tabs_Policy_Enum'(Never);
 
-         when Always    =>
+         when Always =>
             Policy := Show_Tabs_Policy_Enum'(Always);
       end case;
 
@@ -1267,12 +1267,12 @@ package body GPS.Kernel.MDI is
 
    begin
       case Command.Mode is
-         when Close_All                =>
+         when Close_All =>
             if Save_MDI_Children (Kernel) then
                Close_All_Children (Kernel);
             end if;
 
-         when Close_One                =>
+         when Close_One =>
             MDI := Get_MDI (Kernel);
             Child := Get_Focus_Child (MDI);
 
