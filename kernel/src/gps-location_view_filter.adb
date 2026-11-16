@@ -228,6 +228,14 @@ package body GPS.Location_View_Filter is
       end if;
 
       P2 := Parent (Child_Model, P);
+
+      if Self.Pattern = null and then not Location_Only_High_Messages.Get_Pref
+      then
+         --  Without any active filter, every message is visible and a
+         --  file is visible as soon as it contains a message.
+         return P2 /= Null_Iter or else N_Children (Child_Model, Iter) > 0;
+      end if;
+
       if P2 = Null_Iter then
          --  File rows are displayed only when they have visible messages,
          --  or when the file name itself matches

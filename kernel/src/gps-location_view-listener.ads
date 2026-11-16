@@ -19,6 +19,8 @@
 --  be used in location views.
 
 private with Ada.Containers.Vectors;
+private with Ada.Containers.Hashed_Maps;
+private with System;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with Gtk.Tree_Store;
@@ -165,10 +167,26 @@ private
      (Self : access Classic_Tree_Model_Record'Class; Kernel : Kernel_Handle);
    procedure Gtk_New (Object : out Classic_Tree_Model; Kernel : Kernel_Handle);
 
+   function Hash (Address : System.Address) return Ada.Containers.Hash_Type;
+
+   package Message_Row_Maps is new
+     Ada.Containers.Hashed_Maps
+       (System.Address,
+        Gtk_Tree_Iter,
+        Hash,
+        System."=",
+        Gtk.Tree_Model."=");
+   --  Find message rows without scanning siblings on each property change.
+   --  GtkTreeStore iterators survive insertions and sorting. Invalidate them
+   --  before removing a message row or an enclosing file/category row.
+
    type Locations_Listener is new GPS.Kernel.Messages.Abstract_Listener
    with record
       Kernel : Kernel_Handle;
       Model  : Classic_Tree_Model;
+
+      Message_Rows : Message_Row_Maps.Map;
+      --  Direct lookup for message changes, without scanning its siblings.
 
       Non_Leaf_Color : Gdk.RGBA.Gdk_RGBA;
       --  Foreground color for category and file nodes.

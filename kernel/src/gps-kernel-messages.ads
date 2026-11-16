@@ -245,6 +245,11 @@ package GPS.Kernel.Messages is
    procedure Remove (Self : not null access Abstract_Message'Class);
    --  Removes message and deallocate it.
 
+   function Remove_Next_Message
+     (Self : not null access Abstract_Message'Class) return Boolean;
+   --  Remove the last secondary message, or Self if no children remain.
+   --  Return True when Self has been removed.
+
    function Has_Note
      (Self : not null access constant Abstract_Message'Class;
       Tag  : Ada.Tags.Tag) return Boolean;
@@ -371,6 +376,9 @@ package GPS.Kernel.Messages is
    --  Called to release resources occupied by the note. It is called in two
    --  cases: when message is destroyed and when application request remove of
    --  the note. It is removed from the set of notes of message before call.
+
+   type Transient_Message_Note is new Abstract_Note with null record;
+   --  Exclude messages carrying this note from session saving.
 
    ------------------------
    -- Messages Container --
@@ -620,6 +628,7 @@ package GPS.Kernel.Messages is
       Debug : Boolean);
    --  Saves all messages into the specified file
    --  Save only categories which match Flags.
+   --  Transient messages are included only when Debug is True.
 
    procedure Free_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class);

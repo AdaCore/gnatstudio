@@ -18,6 +18,7 @@
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with System.Address_To_Access_Conversions;
+with System.Storage_Elements;
 
 with VSS.Strings.Conversions;
 
@@ -56,14 +57,18 @@ package body GPS.Location_View.Listener is
    package Classic_Tree_Model_Sources is new
      Glib.Main.Generic_Sources (Classic_Tree_Model);
 
-   procedure Update_Background_Color
-     (Self          : not null access Locations_Listener'Class;
-      Message       : not null access Abstract_Message'Class;
-      Iter_Category : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
-      Iter_File     : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
-      Iter_Message  : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter);
-   --  Modify the background color of the file and category related to message.
-   --  Uses iterators if set or find them by Message in another case.
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Address : System.Address) return Ada.Containers.Hash_Type
+   is (Ada.Containers.Hash_Type'Mod
+         (System.Storage_Elements.To_Integer (Address)));
+
+   procedure Clear_From_Cache
+     (Self : not null access Locations_Listener'Class; Iter : Gtk_Tree_Iter);
+   --  Clear cached row mappings for Iter and its children before deleting
+   --  their rows.
 
    procedure Refresh_Background_Color (Self : Classic_Tree_Model);
    --  Refresh the background color after the deletions are finished
@@ -248,6 +253,7 @@ package body GPS.Location_View.Listener is
       Self.Model.Disable_Sorting;
 
       Self.Find_Category (Category, Iter);
+      Clear_From_Cache (Self, Iter);
       Self.Model.Remove (Iter);
    end Category_Removed;
 
@@ -608,6 +614,7 @@ package body GPS.Location_View.Listener is
       end loop;
 
       Path_Free (File_Path);
+      Clear_From_Cache (Self, File_Iter);
       Self.Model.Remove (File_Iter);
       Self.Model.Need_Refresh := True;
    end File_Removed;
@@ -647,70 +654,28 @@ package body GPS.Location_View.Listener is
       return Heaviest;
    end Find_Heaviest_In_Children_Of;
 
-   -----------------------------
-   -- Update_Background_Color --
-   -----------------------------
-
-   procedure Update_Background_Color
-     (Self          : not null access Locations_Listener'Class;
-      Message       : not null access Abstract_Message'Class;
-      Iter_Category : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
-      Iter_File     : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter;
-      Iter_Message  : Gtk.Tree_Model.Gtk_Tree_Iter := Null_Iter)
-   is
-
-      Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Iter_Category;
-      File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter := Iter_File;
-      Message_Iter  : Gtk.Tree_Model.Gtk_Tree_Iter := Iter_Message;
-      Heaviest_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-
-   begin
-      if Message_Iter = Null_Iter
-        or else File_Iter = Null_Iter
-        or else Category_Iter = Null_Iter
-      then
-         Find_Message
-           (Self          => Self,
-            Message       => Message,
-            Category_Iter => Category_Iter,
-            File_Iter     => File_Iter,
-            Iter          => Message_Iter);
-      end if;
-
-      Heaviest_Iter := Find_Heaviest_In_Children_Of (Self.Model, File_Iter);
-      if Heaviest_Iter /= Null_Iter then
-         Copy_Background (Self.Model, Heaviest_Iter, File_Iter);
-      end if;
-
-      Heaviest_Iter :=
-        Find_Heaviest_In_Children_Of (Self.Model, Category_Iter);
-      if Heaviest_Iter /= Null_Iter then
-         Copy_Background (Self.Model, Heaviest_Iter, Category_Iter);
-      end if;
-   end Update_Background_Color;
-
    ------------------------------
    -- Refresh_Background_Color --
    ------------------------------
 
    procedure Refresh_Background_Color (Self : Classic_Tree_Model) is
-      Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter := Self.Get_Iter_First;
-      File_Iter     : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Heaviest_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
-
+      Category_Iter : Gtk_Tree_Iter := Self.Get_Iter_First;
+      File_Iter     : Gtk_Tree_Iter;
+      Heaviest_Iter : Gtk_Tree_Iter;
    begin
       while Category_Iter /= Null_Iter loop
          File_Iter := Self.Children (Category_Iter);
-
          while File_Iter /= Null_Iter loop
             Heaviest_Iter := Find_Heaviest_In_Children_Of (Self, File_Iter);
             if Heaviest_Iter /= Null_Iter then
+               Self.Set
+                 (File_Iter,
+                  -Weight_Column,
+                  Self.Get_Int (Heaviest_Iter, -Weight_Column));
                Copy_Background (Self, Heaviest_Iter, File_Iter);
             end if;
             Self.Next (File_Iter);
          end loop;
-
-         --  Set the category background color after updating all its files
          Heaviest_Iter := Find_Heaviest_In_Children_Of (Self, Category_Iter);
          if Heaviest_Iter /= Null_Iter then
             Copy_Background (Self, Heaviest_Iter, Category_Iter);
@@ -851,32 +816,57 @@ package body GPS.Location_View.Listener is
       File_Iter     : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Iter          : out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      use type System.Address;
-
-      Parent_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Position        : constant Message_Row_Maps.Cursor :=
+        Self.Message_Rows.Find
+          (Message_Conversions.To_Address
+             (Message_Conversions.Object_Pointer (Message)));
+      Primary_Message : Message_Access := Message_Access (Message);
+      Primary_Iter    : Gtk_Tree_Iter;
 
    begin
-      if Message.Level = Primary then
-         Self.Find_File
-           (Message.Get_Category, Message.Get_File, Category_Iter, File_Iter);
-         Parent_Iter := File_Iter;
-
-      else
-         Self.Find_Message
-           (Message.Get_Parent, Category_Iter, File_Iter, Parent_Iter);
+      if not Message_Row_Maps.Has_Element (Position) then
+         Category_Iter := Null_Iter;
+         File_Iter := Null_Iter;
+         Iter := Null_Iter;
+         return;
       end if;
 
-      Iter := Self.Model.Children (Parent_Iter);
-
-      while Iter /= Null_Iter loop
-         exit when
-           Self.Model.Get_Address (Iter, -Message_Column)
-           = Message_Conversions.To_Address
-               (Message_Conversions.Object_Pointer (Message));
-
-         Self.Model.Next (Iter);
+      Iter := Message_Row_Maps.Element (Position);
+      Primary_Iter := Iter;
+      while Primary_Message.Level /= Primary loop
+         Primary_Message := Primary_Message.Get_Parent;
+         Primary_Iter := Self.Model.Parent (Primary_Iter);
       end loop;
+      File_Iter := Self.Model.Parent (Primary_Iter);
+      Category_Iter := Self.Model.Parent (File_Iter);
    end Find_Message;
+
+   ----------------------
+   -- Clear_From_Cache --
+   ----------------------
+
+   procedure Clear_From_Cache
+     (Self : not null access Locations_Listener'Class; Iter : Gtk_Tree_Iter)
+   is
+      Child    : Gtk_Tree_Iter := Self.Model.Children (Iter);
+      Address  : constant System.Address :=
+        Self.Model.Get_Address (Iter, -Message_Column);
+      Position : constant Message_Row_Maps.Cursor :=
+        Self.Message_Rows.Find (Address);
+   begin
+      --  Invalidate descendants before removing their enclosing row.
+
+      while Child /= Null_Iter loop
+         Clear_From_Cache (Self, Child);
+         Self.Model.Next (Child);
+      end loop;
+
+      if Message_Row_Maps.Has_Element (Position)
+        and then Message_Row_Maps.Element (Position) = Iter
+      then
+         Self.Message_Rows.Delete (Address);
+      end if;
+   end Clear_From_Cache;
 
    ---------
    -- Get --
@@ -1174,6 +1164,11 @@ package body GPS.Location_View.Listener is
 
       Unset (Values (1 .. Message_Last));
 
+      Self.Message_Rows.Include
+        (Message_Conversions.To_Address
+           (Message_Conversions.Object_Pointer (Message)),
+         Iter);
+
       --  Update message counts for category and file row when message is
       --  primary.
 
@@ -1202,7 +1197,7 @@ package body GPS.Location_View.Listener is
             File_Values (1 .. File_Last));
       end if;
 
-      Update_Background_Color (Self, Message, Category_Iter, File_Iter, Iter);
+      Self.Model.Need_Refresh := True;
    end Message_Added;
 
    ------------------------------
@@ -1220,6 +1215,7 @@ package body GPS.Location_View.Listener is
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
       Bg            : Glib.Values.GValue;
    begin
+      Self.Model.Disable_Sorting;
       if Property = Action_Property then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
 
@@ -1252,8 +1248,7 @@ package body GPS.Location_View.Listener is
            (Gtk_Tree_Store (Self.Model), Iter, -Background_Color_Column, Bg);
          Glib.Values.Unset (Bg);
 
-         Update_Background_Color
-           (Self, Message, Category_Iter, File_Iter, Iter);
+         Self.Model.Need_Refresh := True;
 
       elsif Property = Markup_Property then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
@@ -1294,6 +1289,7 @@ package body GPS.Location_View.Listener is
       Self.Model.Removed_Rows.Append (Reference);
       Path_Free (Path);
 
+      Clear_From_Cache (Self, Iter);
       if Message.Level = Primary then
          --  Update message counters
 
@@ -1310,6 +1306,7 @@ package body GPS.Location_View.Listener is
             -Number_Of_Children_Column,
             Self.Model.Get_Int (File_Iter, -Number_Of_Children_Column) - 1);
       end if;
+      Self.Model.Need_Refresh := True;
    end Message_Removed;
 
    -------------

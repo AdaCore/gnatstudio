@@ -31,6 +31,7 @@ with VSS.JSON;
 with VSS.JSON.Streams;
 with VSS.Strings;
 with VSS.Strings.Conversions;
+with VSS.Strings.Character_Iterators;
 with VSS.Unicode;
 
 package body GPS.LSP_Client.Utilities is
@@ -94,24 +95,37 @@ package body GPS.LSP_Client.Utilities is
       return GPS.Editors.Editor_Location'Class
    is
       use type VSS.Unicode.UTF16_Code_Unit_Offset;
+      use type VSS.Characters.Virtual_Character;
 
-      U16 : VSS.Unicode.UTF16_Code_Unit_Count := 0;
-      C   : VSS.Characters.Virtual_Character'Base;
-
+      U16   : VSS.Unicode.UTF16_Code_Unit_Count := 0;
+      Count : Natural := 0;
    begin
       return
          Result : GPS.Editors.Editor_Location'Class :=
            Editor.New_Location_At_Line
              (Basic_Types.Editable_Line_Type (Position.line + 1))
       do
-         loop
-            exit when
-              U16 >= VSS.Unicode.UTF16_Code_Unit_Count (Position.character);
-
-            C := Result.Get_Char;
-            Result.Forward_Character;
-            U16 := @ + UTF16_Encoded_Length (C);
-         end loop;
+         --  Read the line once and count Unicode characters locally. Moving
+         --  an editor location for every UTF-16 unit repeatedly expands tabs
+         --  and rebuilds GtkTextIters. A single move preserves that handling.
+         declare
+            Text   : constant VSS.Strings.Virtual_String :=
+              Editor.Get_Text (Result, Result.End_Of_Line);
+            Cursor : VSS.Strings.Character_Iterators.Character_Iterator :=
+              Text.Before_First_Character;
+         begin
+            while U16 < VSS.Unicode.UTF16_Code_Unit_Count (Position.character)
+              and then Cursor.Forward
+            loop
+               exit when
+                 Cursor.Element = VSS.Characters.Virtual_Character'Val (10);
+               U16 := U16 + UTF16_Encoded_Length (Cursor.Element);
+               Count := Count + 1;
+            end loop;
+         end;
+         if Count > 0 then
+            Result.Forward_Character (Count);
+         end if;
       end return;
    end LSP_Position_To_Location;
 

@@ -2273,6 +2273,22 @@ package body GPS.Kernel.Messages is
    end Remove;
 
    -------------------------
+   -- Remove_Next_Message --
+   -------------------------
+
+   function Remove_Next_Message
+     (Self : not null access Abstract_Message'Class) return Boolean is
+   begin
+      if not Self.Children.Is_Empty then
+         Message_Access (Self.Children.Last_Element).Remove;
+         return False;
+      end if;
+
+      Self.Remove;
+      return True;
+   end Remove_Next_Message;
+
+   -------------------------
    -- Remove_All_Messages --
    -------------------------
 
@@ -2451,7 +2467,13 @@ package body GPS.Kernel.Messages is
 
       Parent         : Node_Access := Message.Parent;
       Index          : constant Positive :=
-        Parent.Children.Find_Index (Node_Access (Message));
+        (if Parent.Children.Last_Element = Node_Access (Message)
+         then Parent.Children.Last_Index
+         else Parent.Children.Find_Index (Node_Access (Message)));
+      --  Find the message's position among its parent's children. Check the
+      --  last child first because messages are often removed in reverse order.
+      --  This avoids searching the whole list for each removal in that case.
+
       Destroy        : constant Boolean :=
         Self.Cleanup_Mode
         or else Notifiers.Ask_About_Message_Destroy (Self, Message);
@@ -2592,6 +2614,15 @@ package body GPS.Kernel.Messages is
          XML_Node : Node_Ptr;
 
       begin
+         --  Skip transient messages in non-debug mode
+         if not Debug
+           and then Current_Node.Kind = Node_Message
+           and then Message_Access (Current_Node).Has_Note
+             (Transient_Message_Note'Tag)
+         then
+            return;
+         end if;
+
          --  Create XML node for the current node with corresponding tag and
          --  add corresponding attributes to it.
 
