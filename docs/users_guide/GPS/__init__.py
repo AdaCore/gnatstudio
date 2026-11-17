@@ -1786,7 +1786,7 @@ class Console(GUI):
 
     def __init__(
         self,
-        name,
+        name="",
         force=False,
         on_input=None,
         on_destroy=None,
