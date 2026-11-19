@@ -3,7 +3,7 @@ This plug-in provides support for displaying SPARK global contracts generated
 by the GNATprove --flow-show-gg switch.
 """
 
-import distutils.dep_util
+import setuptools.modified
 import json
 import os
 
@@ -280,7 +280,7 @@ def show_generated_global_contracts():
         )
     gg_json = os.path.join(objdir, "gnatprove", unitname + ".gg")
 
-    if distutils.dep_util.newer(file.name(), gg_json):
+    if setuptools.modified.newer(file.name(), gg_json):
         prj = ' -P """%s"""' % project.file().name("Build_Server")
         scenario = project.scenario_variables_cmd_line("-X")
         cmd = COMMAND.format(project=prj, unit=file.base_name())
