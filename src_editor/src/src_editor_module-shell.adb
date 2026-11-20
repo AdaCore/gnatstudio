@@ -86,6 +86,8 @@ package body Src_Editor_Module.Shell is
    File_Cst              : aliased constant String := "file";
    Line_Cst              : aliased constant String := "line";
    Col_Cst               : aliased constant String := "column";
+   Offset_Cst            : aliased constant String := "offset";
+   Line_Offset_Cst       : aliased constant String := "line_offset";
    Buffer_Cst            : aliased constant String := "buffer";
    Length_Cst            : aliased constant String := "length";
    Pattern_Cst           : aliased constant String := "pattern";
@@ -2153,6 +2155,37 @@ package body Src_Editor_Module.Shell is
                     Visible_Column_Type
                       (Integer'Max (1, Nth_Arg (Data, 3))))));
 
+      elsif Command = "at_line_offset" then
+         Name_Parameters
+           (Data, (1 => Line_Cst'Access, 2 => Line_Offset_Cst'Access));
+         declare
+            --  Create a location at (line, 1) and retrieve its offset
+            Line_Loc : constant Editor_Location'Class :=
+              Get_Buffer (Data, 1).New_Location
+                (Line => Integer'Max (1, Nth_Arg (Data, 2)), Column => 1);
+         begin
+            --  The expected location is the previous offset + line_offset
+            --  given as parameter.
+            Data.Set_Return_Value
+              (Create_Editor_Location
+                 (Data.Get_Script,
+                  Get_Buffer (Data, 1).New_Location
+                    (Offset =>
+                       VSS.Strings.Character_Count
+                         (Line_Loc.Offset
+                          + Integer'Max (0, Nth_Arg (Data, 3))))));
+         end;
+
+      elsif Command = "at_offset" then
+         Name_Parameters (Data, (1 => Offset_Cst'Access));
+         Data.Set_Return_Value
+           (Create_Editor_Location
+              (Data.Get_Script,
+               Get_Buffer (Data, 1).New_Location
+                 (Offset =>
+                    VSS.Strings.Character_Count
+                      (Integer'Max (0, Nth_Arg (Data, 2))))));
+
       elsif Command = "set_lang" then
          Get_Buffer (Data, 1).Set_Language
            (Get_Language_By_Name
@@ -2407,6 +2440,9 @@ package body Src_Editor_Module.Shell is
 
       elsif Command = "offset" then
          Set_Return_Value (Data, Get_Location (Data, 1).Offset);
+
+      elsif Command = "line_offset" then
+         Set_Return_Value (Data, Get_Location (Data, 1).Line_Offset);
 
       elsif Command = "buffer" then
          Set_Return_Value
@@ -3010,6 +3046,8 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "offset", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
+        (Kernel, "line_offset", 0, 0, Location_Cmds'Access, EditorLoc);
+      Register_Command
         (Kernel, "buffer", 0, 0, Location_Cmds'Access, EditorLoc);
       Register_Command
         (Kernel, "beginning_of_line", 0, 0, Location_Cmds'Access, EditorLoc);
@@ -3233,6 +3271,10 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "flatten_area", 2, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command (Kernel, "at", 2, 3, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "at_line_offset", 1, 2, Buffer_Cmds'Access, EditorBuffer);
+      Register_Command
+        (Kernel, "at_offset", 1, 1, Buffer_Cmds'Access, EditorBuffer);
       Kernel.Scripts.Register_Command
         ("click_on_line_number",
          Params  =>

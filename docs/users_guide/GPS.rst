@@ -769,6 +769,10 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.at
 
+   .. automethod:: GPS.EditorBuffer.at_line_offset
+
+   .. automethod:: GPS.EditorBuffer.at_offset
+
    .. automethod:: GPS.EditorBuffer.beginning_of_buffer
 
    .. automethod:: GPS.EditorBuffer.blocks_fold
@@ -960,6 +964,8 @@ Classes
    .. automethod:: GPS.EditorLocation.inside_word
 
    .. automethod:: GPS.EditorLocation.line
+
+   .. automethod:: GPS.EditorLocation.line_offset
 
    .. automethod:: GPS.EditorLocation.offset
 

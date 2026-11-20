@@ -3637,6 +3637,21 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def at_line_offset(self, line, line_offset):
+        """
+        Returns a new location at the given line and line's offset in the
+        buffer.
+
+        :rtype: :class:`EditorLocation`
+        """
+
+    def at_offset(self, offset):
+        """
+        Returns a new location at the given character offset in the buffer.
+
+        :rtype: :class:`EditorLocation`
+        """
+
     def beginning_of_buffer(self):
         """
         Returns a location pointing to the first character in the buffer.
@@ -4769,6 +4784,16 @@ class EditorLocation(object):
     def line(self):
         """
         Returns the line number of the location.
+
+        :return: An integer
+        """
+        pass  # implemented in Ada
+
+    def line_offset(self):
+        """
+        Returns the offset of the line at the location in the buffer, i.e.,
+        the number of characters from the beginning of the buffer to the
+        line location.
 
         :return: An integer
         """

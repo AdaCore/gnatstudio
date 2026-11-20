@@ -17,10 +17,11 @@
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Basic_Types;      use Basic_Types;
-with GPS.Editors;      use GPS.Editors;
+with Basic_Types;         use Basic_Types;
+with Default_Preferences; use Default_Preferences;
+with GPS.Editors;         use GPS.Editors;
 with GPS.Kernel.Charsets;
-with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
+with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;
 with GPS.Kernel.Xref;
 with LAL.Highlighters;
@@ -54,6 +55,14 @@ package body LAL.Module is
    procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+
+   type On_Preference_Changed is new Preferences_Hooks_Function
+   with null record;
+   overriding
+   procedure Execute
+     (Self   : On_Preference_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference);
 
    type Highlightable_Editor_Buffer_Type is
      new LAL.Highlighters.Highlightable_Interface
@@ -224,11 +233,41 @@ package body LAL.Module is
      (Self   : On_Project_View_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Self, Kernel);
+      pragma Unreferenced (Self);
       Default_Charset : constant String :=
         GPS.Kernel.Charsets.Get_File_Charset (GNATCOLL.VFS.No_File);
    begin
-      Module.Core.Reset_Context (Default_Charset);
+      Module.Core.Reset_Context
+        (Default_Charset,
+         Kernel.Get_Language_Handler.Get_Language_By_Name ("Ada")
+           .Get_Indentation_Level);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding
+   procedure Execute
+     (Self   : On_Preference_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Pref   : Default_Preferences.Preference)
+   is
+      pragma Unreferenced (Self);
+      Default_Charset : constant String :=
+        GPS.Kernel.Charsets.Get_File_Charset (GNATCOLL.VFS.No_File);
+   begin
+      --  Pref = null is triggered at startup to synchronize all the
+      --  module depending on each others preferences and we must react to it
+      --  because the default Tab_Size is 8 otherwise.
+      if Pref = null
+        or else Pref.Get_Name = "Ada-Indent-Level"
+      then
+         Module.Core.Reset_Context
+           (Default_Charset,
+            Kernel.Get_Language_Handler.Get_Language_By_Name ("Ada")
+              .Get_Indentation_Level);
+      end if;
    end Execute;
 
    ---------------------
@@ -247,7 +286,13 @@ package body LAL.Module is
         (Kernel   => Kernel,
          Charset  => Default_Charset,
          Formater => GPS.Kernel.Xref.Get_HTML_Profile_Formater'Access,
+         Tab_Size =>
+           Kernel.Get_Language_Handler.Get_Language_By_Name ("Ada")
+             .Get_Indentation_Level,
          Result   => Module.Core);
+
+      Preferences_Changed_Hook.Add (new On_Preference_Changed);
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
    end Register_Module;
 
    -------------------------

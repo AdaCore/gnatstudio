@@ -34,8 +34,11 @@ package LAL.Core_Module is
 
    not overriding
    procedure Reset_Context
-     (Self : in out LAL_Module_Id_Record; Charset : String);
+     (Self     : in out LAL_Module_Id_Record;
+      Charset  : String;
+      Tab_Size : Positive);
    --  Recreate LAL context, use Charset by default
+   --  Reset_Context must be called everytime Tab_Size for Ada is changed
 
    function Get_Current_Analysis_Context
      (Self : in out LAL_Module_Id_Record)
@@ -46,6 +49,7 @@ package LAL.Core_Module is
      (Kernel   : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Charset  : String;
       Formater : LAL.Semantic_Trees.Profile_Formater_Factory;
+      Tab_Size : Positive;
       Result   : out LAL_Module_Id);
    --  Register module. Charset is default charset for reading files.
 

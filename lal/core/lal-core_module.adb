@@ -93,6 +93,7 @@ package body LAL.Core_Module is
      (Kernel   : access GPS.Core_Kernels.Core_Kernel_Record'Class;
       Charset  : String;
       Formater : LAL.Semantic_Trees.Profile_Formater_Factory;
+      Tab_Size : Positive;
       Result   : out LAL_Module_Id)
    is
       Editor_Buffer_Class : constant Class_Type :=
@@ -102,7 +103,7 @@ package body LAL.Core_Module is
       Module.Kernel := GPS.Core_Kernels.Core_Kernel (Kernel);
       Module.Unit_Provider.Initialize (GPS.Core_Kernels.Core_Kernel (Kernel));
 
-      Module.Reset_Context (Charset);
+      Module.Reset_Context (Charset, Tab_Size => Tab_Size);
 
       Kernel.Scripts.Register_Command
         (Command => "get_analysis_unit",
@@ -123,7 +124,9 @@ package body LAL.Core_Module is
 
    not overriding
    procedure Reset_Context
-     (Self : in out LAL_Module_Id_Record; Charset : String) is
+     (Self     : in out LAL_Module_Id_Record;
+      Charset  : String;
+      Tab_Size : Positive) is
    begin
       Self.Context :=
         Libadalang.Analysis.Create_Context
@@ -131,7 +134,8 @@ package body LAL.Core_Module is
              Libadalang.Analysis.Create_Unit_Provider_Reference
                (Self.Unit_Provider),
            With_Trivia   => True,
-           Charset       => Charset);
+           Charset       => Charset,
+           Tab_Stop      => Tab_Size);
    end Reset_Context;
 
    ----------------------------------
