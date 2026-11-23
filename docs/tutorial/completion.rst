@@ -7,7 +7,7 @@ of Stack.Overflow. We are going to add some code there, using the code assist
 capabilities.
 
 Type :kbd:`Enter` to create a new line, then type `Scr`. A completion popup is
-displayed, showing all the entities of the project begining with `Scr`. Double
+displayed, showing all the entities of the project beginning with `Scr`. Double
 click on `Screen_Output`: the code is automatically completed in the editor.
 Then add a dot in your code. The completion popup is triggered automatically
 and will offer you the option of completing your code with the entities
