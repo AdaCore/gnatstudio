@@ -924,12 +924,19 @@ package body GPS.LSP_Client.Editors.Semantic_Tokens is
             Char : Visible_Column_Type;
             Len  : Visible_Column_Type;
          begin
-            if Line = Module.Prev_Line then
-               --  relative char position
-               Char := Module.Prev_Char + Visible_Column_Type (Delta_Start);
-            else
-               Char := Visible_Column_Type (Delta_Start + 1);
-            end if;
+            declare
+               --  Delta_Start is an offset and not a visible_column
+               Prev_Loc : constant Editor_Location'Class :=
+                 (if Line = Module.Prev_Line
+                  then Buffer.New_Location (Module.Prev_Line, Module.Prev_Char)
+                  else
+                    Buffer.New_Location_At_Line (Editable_Line_Type (Line)));
+            begin
+               Char :=
+                 Buffer.New_Location
+                   (Character_Offset (Prev_Loc.Offset + Delta_Start))
+                   .Column;
+            end;
 
             declare
                Name : constant String :=
