@@ -15,20 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Unchecked_Deallocation;
+with Ada.Containers.Vectors;
 
-with GNAT.Expect;        use GNAT.Expect;
-with GNAT.Expect.TTY;    use GNAT.Expect.TTY;
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNATCOLL.Templates; use GNATCOLL.Templates;
-with GNATCOLL.Utils;     use GNATCOLL.Utils;
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with Glib.Main;
+
+with GNATCOLL.Arg_Lists;
+with GNATCOLL.OS.Process;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNATCOLL.Traces;    use GNATCOLL.Traces;
+with GNATCOLL.Templates; use GNATCOLL.Templates;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 
-with Glib;      use Glib;
-with Glib.Main; use Glib.Main;
+with Spawn.Environments;
 
 with Basic_Types;         use Basic_Types;
 with Commands.Interactive;
@@ -48,7 +46,7 @@ package body External_Editor_Module is
    Me : constant Trace_Handle :=
      Create ("GPS.SOURCE_EDITOR.EXTERNAL_EDITOR_MODULE");
 
-   Timeout : constant Guint := 500;
+   Timeout : constant Glib.Guint := 500;
    --  Timeout in millisecond to check the external editor processes.
    --  This is intentionnaly very big currently, since all we want is to
    --  properly handle the death of an external process, to remove zombie
@@ -149,52 +147,36 @@ package body External_Editor_Module is
    Emacs_Command : aliased constant String := "emacs +%l %f";
 
    Vim_Command : aliased constant String :=
-     "xterm -geometry 80x50 -exec vim +%l %f";
+     "xterm -geometry 80x50 -e vim +%l %f";
    Vim_Extra   : aliased constant String := "vim";
 
    Vi_Command : aliased constant String :=
-     "xterm -geometry 80x50 -exec vi +%l %f";
+     "xterm -geometry 80x50 -e vi +%l %f";
    Vi_Extra   : aliased constant String := "vi";
 
    Custom_Command : aliased constant String := "<custom>";
 
    Clients : constant External_Clients :=
-     (Auto        => (null, null, null, null),
+     (Auto        => (others => null),
       Gnuclient   =>
         (Command_Name         => Gnuclient_Command'Access,
          Lisp_Command_Name    => Gnuclient_Lisp'Access,
          Server_Start_Command => Gnuclient_Server'Access,
-         Extra_Test           => null),
-
+         others               => null),
       Emacsclient =>
         (Command_Name         => Emacsclient_Command'Access,
-         Lisp_Command_Name    => null,
          Server_Start_Command => Emacsclient_Server'Access,
-         Extra_Test           => null),
-
-      Emacs       =>
-        (Command_Name         => Emacs_Command'Access,
-         Lisp_Command_Name    => null,
-         Server_Start_Command => null,
-         Extra_Test           => null),
-
+         others               => null),
+      Emacs       => (Command_Name => Emacs_Command'Access, others => null),
       Vim         =>
-        (Command_Name         => Vim_Command'Access,
-         Lisp_Command_Name    => null,
-         Server_Start_Command => null,
-         Extra_Test           => Vim_Extra'Access),
-
+        (Command_Name => Vim_Command'Access,
+         Extra_Test   => Vim_Extra'Access,
+         others       => null),
       Vi          =>
-        (Command_Name         => Vi_Command'Access,
-         Lisp_Command_Name    => null,
-         Server_Start_Command => null,
-         Extra_Test           => Vi_Extra'Access),
-
-      Custom      =>
-        (Command_Name         => Custom_Command'Access,
-         Lisp_Command_Name    => null,
-         Server_Start_Command => null,
-         Extra_Test           => null));
+        (Command_Name => Vi_Command'Access,
+         Extra_Test   => Vi_Extra'Access,
+         others       => null),
+      Custom      => (Command_Name => Custom_Command'Access, others => null));
 
    Glide_Command        : aliased constant String :=
      "glide -emacs --eval -emacs %e";
@@ -204,9 +186,15 @@ package body External_Editor_Module is
      (Glide => (Command_Name => Glide_Command'Access),
       Emacs => (Command_Name => Emacs_Server_Command'Access));
 
-   type Process_Descriptor_Array is
-     array (Positive range <>) of Process_Descriptor_Access;
-   type Process_Descriptor_Array_Access is access Process_Descriptor_Array;
+   subtype Process_Handle is GNATCOLL.OS.Process.Process_Handle;
+   package Process_Handle_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Process_Handle,
+        "="          => GNATCOLL.OS.Process."=");
+   subtype Process_Handle_List is Process_Handle_Vectors.Vector;
+
+   subtype Arg_List is GNATCOLL.Arg_Lists.Arg_List;
 
    ------------------------
    -- Module description --
@@ -216,12 +204,17 @@ package body External_Editor_Module is
       Client : Supported_Clients := Auto;
       --  The index of the client we are currently using
 
-      Processes : Process_Descriptor_Array_Access;
+      Command_Args : aliased Arg_List := GNATCOLL.Arg_Lists.Empty_Command_Line;
+      --  Command for current process
+
+      Environment : GNATCOLL.OS.Process.Environment_Dict;
+      --  User environment captured at module registration, before spawning.
+
+      Processes : Process_Handle_List := Process_Handle_Vectors.Empty_Vector;
       --  The list of external processes that have been started.
 
       Timeout_Id : Glib.Main.G_Source_Id := 0;
-      --  The timeout loop that takes care of all the spawned external
-      --  editors.
+      --  Timeout handles asynchronous polling
    end record;
    type External_Editor_Module_Record_Id is
      access all External_Editor_Module_Record'Class;
@@ -233,122 +226,219 @@ package body External_Editor_Module is
    -- Subprograms --
    -----------------
 
-   procedure Unchecked_Free is new
-     Unchecked_Deallocation
-       (Process_Descriptor_Array,
-        Process_Descriptor_Array_Access);
+   function Editor_Environment
+     (Kernel : access Kernel_Handle_Record'Class)
+      return GNATCOLL.OS.Process.Environment_Dict;
+   --  Convert the saved user environment without inheriting IDE overrides.
+
+   function To_Argument_List
+     (Args : Arg_List) return GNATCOLL.OS.Process.Argument_List;
+   --  Use GNATCOLL.Args_List.Arg_List when building commands,
+   --  convert to Argument_List for GNATCOLL.OS.Process spawns
+
+   function Tool_Is_In_Path
+     (Command : String;
+      Args    : out Arg_List;
+      Result  : out GNATCOLL.VFS.Virtual_File) return Boolean;
+   --  True if the tool invoked in Command is available in PATH
+   --  Writes parsed command to Args and tool path to Result
 
    procedure Spawn_Server
      (Kernel : access Kernel_Handle_Record'Class; Success : out Boolean);
    --  Start Emacs and the server, so that a client can connect to it.
    --  False is returned if the server could not be started.
 
-   procedure Client_Command
+   function Client_Command
      (Kernel        : access Kernel_Handle_Record'Class;
       File          : Virtual_File := No_File;
       Line          : Natural := 1;
       Column        : Visible_Column_Type := 1;
-      Extended_Lisp : String := "");
+      Extended_Lisp : String := "") return Boolean;
    --  Calls the client with the appropriate parameters
 
-   procedure Select_Client;
-   --  Select the appropriate external editor to use. They are tested in the
-   --  order given in Clients, and are selected if both Command_Name and
-   --  Lisp_Command_Name are found on the path.
+   procedure Select_Client (Kernel : access Kernel_Handle_Record'Class);
+   --  Select the appropriate external editor to use.
+   --  Editors are checked in the order given by Clients,
+   --  and selected when found on the PATH.
+   --  If Lisp_Command_Name is specified, this must also be on PATH
+   --  in order to select the editor.
 
-   procedure Substitute
-     (Args : Argument_List_Access; F, C, L, E, P : String := "");
-   --  Does all the substitutions in Args for %f, %c, %l, %e and %%.
+   procedure Substitute (Args : in out Arg_List; F, C, L, E, P : String := "");
+   --  Does all the substitutions in Args for %f, %c, %l, %e and %p.
+
+   function External_Timeout return Boolean;
+   --  Timeout callback to monitor and reap processes
 
    procedure Spawn_New_Process
-     (Command : Filesystem_String;
-      Args    : GNAT.OS_Lib.Argument_List;
-      Result  : out Boolean);
+     (Process_Args : in out Arg_List; Result : out Boolean);
    --  Spawn a new process, and store it in External_Clients, so that we can
    --  properly handle its termination.
 
-   function External_Timeout return Boolean;
-   --  Timeout used to monitor the external editors. It is also used to make
-   --  sure that no zombie process is left on Unix machines.
+   function Blocking_Spawn (Args : Arg_List) return Integer;
+   --  Spawn a new process, and waits for its termination.
+   --  It hides both its standard output and standard error.
+   --  As the call is blocking, the process handle is never stored
 
-   function Blocking_Spawn
-     (Command : Filesystem_String; Args : Argument_List) return Integer;
-   --  Spawn a new process, and waits for its termination. It hides both its
-   --  standard output and standard error.
+   ------------------------
+   -- Editor_Environment --
+   ------------------------
+
+   function Editor_Environment
+     (Kernel : access Kernel_Handle_Record'Class)
+      return GNATCOLL.OS.Process.Environment_Dict
+   is
+      Original : constant Spawn.Environments.Process_Environment :=
+        Kernel.Get_Original_Environment;
+      Result   : GNATCOLL.OS.Process.Environment_Dict;
+   begin
+      for Name of Original.Keys loop
+         Result.Insert (Name, Original.Value (Name));
+      end loop;
+      return Result;
+   end Editor_Environment;
+
+   ----------------------
+   -- To_Argument_List --
+   ----------------------
+
+   function To_Argument_List
+     (Args : Arg_List) return GNATCOLL.OS.Process.Argument_List
+   is
+      use GNATCOLL.Arg_Lists;
+
+      Result : GNATCOLL.OS.Process.Argument_List;
+   begin
+      if Args.Args_Length < 0 then
+         return Result;
+      end if;
+      for I in 0 .. Args.Args_Length loop
+         Result.Append (Nth_Arg (Args, I));
+      end loop;
+
+      return Result;
+   end To_Argument_List;
+
+   ---------------------
+   -- Tool_Is_In_Path --
+   ---------------------
+
+   function Tool_Is_In_Path
+     (Command : String;
+      Args    : out Arg_List;
+      Result  : out GNATCOLL.VFS.Virtual_File) return Boolean
+   is
+      use GNATCOLL.Arg_Lists;
+   begin
+      Args := Parse_String (Command, Separate_Args);
+      if Args.Args_Length < 0 then
+         return False;
+      end if;
+      Result := Locate_Tool_Executable (+Get_Command (Args));
+      return Result /= GNATCOLL.VFS.No_File;
+   end Tool_Is_In_Path;
 
    -------------------
    -- Select_Client --
    -------------------
 
-   procedure Select_Client is
-      Path           : Virtual_File;
-      Args           : Argument_List_Access;
-      Match          : Boolean;
+   procedure Select_Client (Kernel : access Kernel_Handle_Record'Class) is
       Default_Client : constant Supported_Clients :=
         Supported_Clients'Val (Default_External_Editor.Get_Pref);
+      Match          : Boolean := False;
+      Args           : GNATCOLL.Arg_Lists.Arg_List;
+      Tool           : GNATCOLL.VFS.Virtual_File;
+
+      Editor_Args renames External_Editor_Module_Id.Command_Args;
+
+      function Full_Cmd (Client : Supported_Clients) return String
+      is ((if Client in Custom
+           then Get_Pref (Custom_Editor)
+           else Clients (Client).Command_Name.all));
+      --  Select one of predefined editor command, or user-configured command
+
+      function Is_Client_Available (C : Supported_Clients) return Boolean;
+      --  Parse the client command and check if the executable is on the PATH.
+      --  Also check this for additional commands or tools,
+      --  e.g. lisp commands or terminal utilities
+
+      -------------------------
+      -- Is_Client_Available --
+      -------------------------
+
+      function Is_Client_Available (C : Supported_Clients) return Boolean is
+         Client    : constant External_Client := Clients (C);
+         Cmd_Str   : constant String := Full_Cmd (C);
+         Lisp_Args : Arg_List;
+         Lisp_Tool : Virtual_File;
+      begin
+         --  Invalid editor configuration
+         if Cmd_Str = "" then
+            Insert
+              (Kernel,
+               "Invalid external editor configuration for " & C'Img,
+               Mode => Error);
+            return False;
+         end if;
+         if not Tool_Is_In_Path (Cmd_Str, Args, Tool) then
+            return False;
+         end if;
+         if Client.Lisp_Command_Name /= null
+           and then
+             not Tool_Is_In_Path
+                   (Client.Lisp_Command_Name.all, Lisp_Args, Lisp_Tool)
+         then
+            return False;
+         end if;
+         if Client.Extra_Test /= null
+           and then Locate_Tool_Executable (+Client.Extra_Test.all) in No_File
+         then
+            return False;
+         end if;
+         return True;
+      end Is_Client_Available;
    begin
       --  If the user has specified a default client, use that one.
+      --  If selected client cannot be found, fail early
       if Default_Client /= Auto then
-         External_Editor_Module_Id.Client := Default_Client;
+         if Is_Client_Available (Default_Client) then
+            Trace (Me, "User configured client: " & Full_Cmd (Default_Client));
+            External_Editor_Module_Id.Client := Default_Client;
+            Args.Set_Nth_Arg (0, Tool.Display_Full_Name);
+            Editor_Args := Args;
+         else
+            Trace (Me, Args.Get_Command & " not available.");
+            Insert
+              (Kernel,
+               """"
+               & Full_Cmd (Default_Client)
+               & """ not available. Check for tools in PATH.",
+               Mode => Error);
+            Editor_Args := GNATCOLL.Arg_Lists.Empty_Command_Line;
+         end if;
          return;
       end if;
 
+      --  Otherwise, loop through clients until one is available in PATH
       External_Editor_Module_Id.Client := Auto;
+      Args := GNATCOLL.Arg_Lists.Empty_Command_Line;
 
-      for C in Clients'Range loop
-         Match := False;
-
-         if Clients (C).Command_Name /= null then
-            declare
-               Command : constant String := Clients (C).Command_Name.all;
-            begin
-               if Command = Custom_Command then
-                  Args := Argument_String_To_List (Get_Pref (Custom_Editor));
-
-               else
-                  Args := Argument_String_To_List (Command);
-               end if;
-            end;
-
-            if Args'Length /= 0 then
-               Path := Locate_Tool_Executable (+Args (Args'First).all);
-
-               if Path /= No_File then
-                  Match := True;
-               end if;
-            end if;
-
-            Free (Args.all);
-            Unchecked_Free (Args);
-         end if;
-
-         if Match and then Clients (C).Lisp_Command_Name /= null then
-            Args :=
-              Argument_String_To_List (Clients (C).Lisp_Command_Name.all);
-
-            Path := Locate_Tool_Executable (+Args (Args'First).all);
-            if Path = No_File then
-               Match := False;
-            end if;
-
-            Free (Args.all);
-            Unchecked_Free (Args);
-         end if;
-
-         if Match and then Clients (C).Extra_Test /= null then
-            Path := Locate_Tool_Executable (+Clients (C).Extra_Test.all);
-            if Path = No_File then
-               Match := False;
-            end if;
-         end if;
-
+      for C in Clients'Range when Clients (C).Command_Name /= null loop
+         Match := Is_Client_Available (C);
+         --  Expand tool name to full path
          if Match then
             External_Editor_Module_Id.Client := C;
+            Args.Set_Nth_Arg (0, Tool.Display_Full_Name);
+            Editor_Args := Args;
             exit;
+         else
+            --  Reset temporary args
+            Args := GNATCOLL.Arg_Lists.Empty_Command_Line;
          end if;
       end loop;
 
-      if External_Editor_Module_Id.Client /= Auto then
+      if External_Editor_Module_Id.Client /= Auto
+        and then Editor_Args not in GNATCOLL.Arg_Lists.Empty_Command_Line
+      then
          Trace
            (Me,
             "Current client is "
@@ -356,18 +446,13 @@ package body External_Editor_Module is
       else
          Trace (Me, "No available client");
       end if;
-
-      --  ??? Should we check that DISPLAY is defined if the command doesn't
-      --  need a terminal ? It is necessary when we spawn Emacs, but not if
-      --  we simply use emacsclient or gnuclient.
    end Select_Client;
 
    ----------------
    -- Substitute --
    ----------------
 
-   procedure Substitute
-     (Args : Argument_List_Access; F, C, L, E, P : String := "")
+   procedure Substitute (Args : in out Arg_List; F, C, L, E, P : String := "")
    is
       Substrings : Substitution_Array :=
         (1 => (Name => new String'("f"), Value => new String'(F)),
@@ -377,18 +462,19 @@ package body External_Editor_Module is
          5 => (Name => new String'("p"), Value => new String'(P)),
          6 => (Name => new String'("%"), Value => new String'("%")));
    begin
-      for A in Args'Range loop
+      --  Args_Length is the highest index, so 0 means no args, only command
+      for A in 1 .. Args.Args_Length loop
          declare
-            S : constant String :=
+            Arg_Str  : constant String := Args.Nth_Arg (A);
+            Expanded : constant String :=
               Substitute
-                (Str        => Args (A).all,
+                (Str        => Arg_Str,
                  Delimiter  => '%',
                  Substrings => Substrings,
                  Recursive  => True);
          begin
-            if S /= Args (A).all then
-               Free (Args (A));
-               Args (A) := new String'(S);
+            if Expanded /= Arg_Str then
+               Args.Set_Nth_Arg (A, Expanded);
             end if;
          end;
       end loop;
@@ -401,52 +487,49 @@ package body External_Editor_Module is
    ----------------------
 
    function External_Timeout return Boolean is
-      Result : Expect_Match;
-      Old    : Process_Descriptor_Array_Access;
-      J      : Integer := External_Editor_Module_Id.Processes'First;
+      use Process_Handle_Vectors;
+      use GNATCOLL.OS.Process;
+      Editor_Pids renames External_Editor_Module_Id.Processes;
+
+      State  : Process_State;
+      Handle : Process_Handle;
+      Code   : Integer;
    begin
-      while External_Editor_Module_Id.Processes /= null
-        and then J <= External_Editor_Module_Id.Processes'Last
-      loop
-         begin
-            Expect
-              (Descriptor => External_Editor_Module_Id.Processes (J).all,
-               Result     => Result,
-               Regexp     => ".+",
-               Timeout    => 1);
+      for C in reverse Editor_Pids.First_Index .. Editor_Pids.Last_Index loop
+         Handle := Editor_Pids (C);
+         State := Handle.State;
 
-            J := J + 1;
-
-         exception
-            when Process_Died =>
-               Trace (Me, "External editor died");
-               Close (External_Editor_Module_Id.Processes (J).all);
-
-               if External_Editor_Module_Id.Processes'Length = 1 then
-                  Unchecked_Free (External_Editor_Module_Id.Processes);
+         --  Remove process handles once complete
+         --  Some editors return immediately after spawning
+         --  as they delegate to a child thread
+         --  while others only return once the editor is closed
+         case State is
+            when WAITABLE   =>
+               --  Wait is non-blocking here
+               Code := Handle.Wait;
+               Editor_Pids.Delete (C);
+               if Code = 127 then
+                  Trace (Me, "Editor process spawned but command failed.");
                else
-                  Old := External_Editor_Module_Id.Processes;
-                  External_Editor_Module_Id.Processes :=
-                    new Process_Descriptor_Array (1 .. Old'Length - 1);
-                  External_Editor_Module_Id.Processes (1 .. J - 1) :=
-                    Old (1 .. J - 1);
-                  External_Editor_Module_Id.Processes
-                    (J .. External_Editor_Module_Id.Processes'Last) :=
-                    Old (J + 1 .. Old'Last);
-                  Unchecked_Free (Old);
+                  Trace (Me, "Editor process returned: " & Code'Img);
                end if;
 
-            when others =>
+            when TERMINATED =>
+               Editor_Pids.Delete (C);
+               Trace (Me, "Editor process terminated");
+
+            when RUNNING    =>
                null;
-         end;
+         end case;
+
       end loop;
 
-      if External_Editor_Module_Id.Processes /= null then
-         return True;
-      else
-         Trace (Me, "Last external editor was killed");
+      if External_Editor_Module_Id.Processes.Is_Empty then
+         Trace (Me, "Last external editor returned");
          External_Editor_Module_Id.Timeout_Id := 0;
          return False;
+      else
+         return True;
       end if;
    end External_Timeout;
 
@@ -455,43 +538,25 @@ package body External_Editor_Module is
    -----------------------
 
    procedure Spawn_New_Process
-     (Command : Filesystem_String;
-      Args    : GNAT.OS_Lib.Argument_List;
-      Result  : out Boolean)
+     (Process_Args : in out Arg_List; Result : out Boolean)
    is
-      Old     : Process_Descriptor_Array_Access;
-      Process : TTY_Process_Descriptor;
+      Handle : Process_Handle;
    begin
       if Active (Me) then
          Trace
-           (Me, "Spawn: " & (+Command) & " " & Argument_List_To_String (Args));
+           (Me,
+            "Spawn: "
+            & Process_Args.To_Display_String (Include_Command => True));
       end if;
 
-      Non_Blocking_Spawn
-        (Descriptor  => Process,
-         Command     => +Command,
-         Args        => Args,
-         Buffer_Size => 0,
-         Err_To_Out  => True);
+      Handle :=
+        GNATCOLL.OS.Process.Start
+          (Args        => To_Argument_List (Process_Args),
+           Env         => External_Editor_Module_Id.Environment,
+           Inherit_Env => False);
+      External_Editor_Module_Id.Processes.Append (Handle);
 
-      if External_Editor_Module_Id.Processes = null then
-         External_Editor_Module_Id.Processes :=
-           new Process_Descriptor_Array (1 .. 1);
-      else
-         Old := External_Editor_Module_Id.Processes;
-         External_Editor_Module_Id.Processes :=
-           new Process_Descriptor_Array (1 .. Old'Length + 1);
-         External_Editor_Module_Id.Processes (1 .. Old'Length) := Old.all;
-         Unchecked_Free (Old);
-      end if;
-
-      External_Editor_Module_Id.Processes
-        (External_Editor_Module_Id.Processes'Last) :=
-        new TTY_Process_Descriptor'(Process);
-
-      if External_Editor_Module_Id.Timeout_Id = 0 then
-         --  ??? Should we just run through the task manager and use the
-         --  timeout there instead ?
+      if External_Editor_Module_Id.Timeout_Id in Glib.Main.No_Source_Id then
          External_Editor_Module_Id.Timeout_Id :=
            Glib.Main.Timeout_Add
              (Interval => Timeout, Func => External_Timeout'Access);
@@ -501,7 +566,7 @@ package body External_Editor_Module is
       return;
 
    exception
-      when Invalid_Process =>
+      when others =>
          Result := False;
          return;
    end Spawn_New_Process;
@@ -513,41 +578,39 @@ package body External_Editor_Module is
    procedure Spawn_Server
      (Kernel : access Kernel_Handle_Record'Class; Success : out Boolean)
    is
-      Args : Argument_List_Access;
-      Path : Virtual_File;
-
+      Path        : Virtual_File;
+      Client_Cmd  : constant Constant_String_Access :=
+        Clients (External_Editor_Module_Id.Client).Server_Start_Command;
+      Server_Args : aliased GNATCOLL.Arg_Lists.Arg_List;
    begin
       Success := False;
-      if Clients (External_Editor_Module_Id.Client).Server_Start_Command = null
-      then
+      if Client_Cmd = null then
          Trace (Me, "No server start command specified");
          return;
       end if;
 
       for S in Servers'Range loop
-         Args := Argument_String_To_List (Servers (S).Command_Name.all);
-         Path := Locate_Tool_Executable (+Args (Args'First).all);
+         if Tool_Is_In_Path
+              (Command => Servers (S).Command_Name.all,
+               Args    => Server_Args,
+               Result  => Path)
+         then
+            if Server_Args.Args_Length > 0 then
+               Substitute
+                 (Args => Server_Args,
+                  P    => Get_Project (Kernel).Name,
+                  E    => Client_Cmd.all);
+            end if;
 
-         if Path /= No_File then
-            Substitute
-              (Args,
-               P => Get_Project (Kernel).Name,
-               E =>
-                 Clients (External_Editor_Module_Id.Client)
-                   .Server_Start_Command.all);
-
-            Spawn_New_Process (Path.Full_Name, Args.all, Success);
-            Free (Args.all);
-            Unchecked_Free (Args);
+            Trace (Me, "Spawning server: " & Server_Args.Get_Command);
+            Server_Args.Set_Nth_Arg (0, Path.Display_Full_Name);
+            Spawn_New_Process (Server_Args, Success);
             exit;
          end if;
-
-         Free (Args.all);
-         Unchecked_Free (Args);
       end loop;
 
       if not Success then
-         Trace (Me, "Couldn't spawn emacs or the server");
+         Trace (Me, "Failed to spawn server.");
       end if;
 
       return;
@@ -557,141 +620,75 @@ package body External_Editor_Module is
    -- Blocking_Spawn --
    --------------------
 
-   function Blocking_Spawn
-     (Command : Filesystem_String; Args : Argument_List) return Integer
-   is
-      Status : Integer;
-      Result : Expect_Match;
-      Pd     : TTY_Process_Descriptor;
+   function Blocking_Spawn (Args : Arg_List) return Integer is
    begin
-      Non_Blocking_Spawn
-        (Pd, +Command, Args, Buffer_Size => 0, Err_To_Out => True);
-
-      loop
-         Expect (Pd, Result, "@@@");
-      end loop;
-
+      return
+        GNATCOLL.OS.Process.Run
+          (Args        => To_Argument_List (Args),
+           Env         => External_Editor_Module_Id.Environment,
+           Inherit_Env => False);
    exception
-      when Process_Died =>
-         Close (Pd, Status);
-         return Status;
+      when others =>
+         return 1;
    end Blocking_Spawn;
 
    --------------------
    -- Client_Command --
    --------------------
 
-   procedure Client_Command
+   function Client_Command
      (Kernel        : access Kernel_Handle_Record'Class;
       File          : Virtual_File := No_File;
       Line          : Natural := 1;
       Column        : Visible_Column_Type := 1;
-      Extended_Lisp : String := "")
+      Extended_Lisp : String := "") return Boolean
    is
-      Max_Tries : constant := 40;
+      Editor_Args renames External_Editor_Module_Id.Command_Args;
+
+      Max_Tries : constant := 5;
       Line_Str  : constant String := Natural'Image (Line);
       Col_Str   : constant String := Visible_Column_Type'Image (Column);
       Result    : Integer := 0;
       Success   : Boolean;
-      Path      : Virtual_File;
-      Args      : Argument_List_Access;
-
    begin
-      if Extended_Lisp /= ""
-        and then
-          Clients (External_Editor_Module_Id.Client).Lisp_Command_Name /= null
-      then
-         Args :=
-           Argument_String_To_List
-             (Clients (External_Editor_Module_Id.Client)
-                .Lisp_Command_Name.all);
-
-      elsif Extended_Lisp = ""
-        and then
-          Clients (External_Editor_Module_Id.Client).Command_Name /= null
-      then
-         declare
-            Command : constant String :=
-              Clients (External_Editor_Module_Id.Client).Command_Name.all;
-         begin
-            if Command = Custom_Command then
-               Args := Argument_String_To_List (Get_Pref (Custom_Editor));
-            else
-               Args := Argument_String_To_List (Command);
-            end if;
-         end;
-
-      else
-         Trace (Me, "No client available");
-         return;
-      end if;
 
       Substitute
-        (Args,
+        (Editor_Args,
          P => Get_Project (Kernel).Name,
          F => +File.Full_Name,
          C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
          L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),
          E => Extended_Lisp);
 
-      if Args'Length /= 0 then
-         Path := Locate_Tool_Executable (+Args (Args'First).all);
-      else
-         Insert
-           (Kernel,
-            """"
-            & Get_Pref (Custom_Editor)
-            & """ is not a valid external editor",
-            Mode => Error);
-         return;
-      end if;
-
-      if Path = No_File then
-         Insert
-           (Kernel,
-            Args (Args'First).all & " not found on PATH",
-            Mode => Error);
-         Free (Args.all);
-         Unchecked_Free (Args);
-         return;
-      end if;
-
       if Clients (External_Editor_Module_Id.Client).Server_Start_Command
         /= null
       then
-         Result :=
-           Blocking_Spawn (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
-      else
-         Spawn_New_Process
-           (Path.Full_Name, Args (Args'First + 1 .. Args'Last), Success);
-      end if;
+         Result := Blocking_Spawn (Editor_Args);
+         --  If the command failed, it's likely that Emacs wasn't started,
+         --  at least not with the server.
+         if Result /= 0 then
+            Spawn_Server (Kernel, Success);
 
-      --  If we couldn't send the command, it probably means that Emacs wasn't
-      --  started, at least not with the server.
-      if Result /= 0
-        and then
-          Clients (External_Editor_Module_Id.Client).Server_Start_Command
-          /= null
-      then
-         Spawn_Server (Kernel, Success);
+            if Success then
+               --  Give Emacs some time to start the server, and try again
+               delay 1.0;
 
-         if Success then
-            --  Give Emacs some time to start the server, and try a number of
-            --  times.
-            delay 1.0;
-
-            for Try in 1 .. Max_Tries loop
-               Result :=
-                 Blocking_Spawn
-                   (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
-               exit when Result = 0;
-               delay 0.5;
-            end loop;
+               for Try in 1 .. Max_Tries loop
+                  Result := Blocking_Spawn (Editor_Args);
+                  exit when Result = 0;
+                  delay 0.5;
+               end loop;
+            end if;
          end if;
+         Success := Result = 0;
+      --  Success if the client spawns instantly,
+      --  or the server spawns eventually
+
+      else
+         Spawn_New_Process (Editor_Args, Success);
       end if;
 
-      Free (Args.all);
-      Unchecked_Free (Args);
+      return Success;
    end Client_Command;
 
    -------------
@@ -704,9 +701,13 @@ package body External_Editor_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+
+      Editor_Args renames External_Editor_Module_Id.Command_Args;
+
       Line   : Integer := 1;
       Column : Visible_Column_Type := 1;
    begin
+      Editor_Args := GNATCOLL.Arg_Lists.Empty_Command_Line;
       Trace
         (Me,
          "Edit file with external editor "
@@ -717,14 +718,24 @@ package body External_Editor_Module is
          Column := Entity_Column_Information (Context.Context);
       end if;
 
-      Select_Client;
-      Client_Command
-        (Kernel => Get_Kernel (Context.Context),
-         File   => File_Information (Context.Context),
-         Line   => Line,
-         Column => Column);
-      return Commands.Success;
+      --  Find executable and parse args
+      Select_Client (Get_Kernel (Context.Context));
 
+      if Editor_Args in GNATCOLL.Arg_Lists.Empty_Command_Line then
+         Trace (Me, "Could not resolve external client.");
+         return Commands.Failure;
+      end if;
+
+      if Client_Command
+           (Kernel => Get_Kernel (Context.Context),
+            File   => File_Information (Context.Context),
+            Line   => Line,
+            Column => Column)
+      then
+         return Commands.Success;
+      else
+         return Commands.Failure;
+      end if;
    exception
       when E : others =>
          Trace (Me, E);
@@ -741,6 +752,8 @@ package body External_Editor_Module is
       Manager : constant Preferences_Manager := Kernel.Get_Preferences;
    begin
       External_Editor_Module_Id := new External_Editor_Module_Record;
+      --  Load user's original environment
+      External_Editor_Module_Id.Environment := Editor_Environment (Kernel);
 
       --  Create the preferences
 

@@ -1,0 +1,4 @@
+title: External editor restores the saved user environment
+skip:
+    # The fake executables use Unix shebang scripts.
+    - ['SKIP', 'env.build.os.name == "windows"']

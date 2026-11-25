@@ -1,0 +1,4 @@
+title: External editor is reaped without another editor action
+skip:
+    # /proc provides a non-reaping observation of the child's lifecycle.
+    - ['SKIP', 'env.build.os.name != "linux"']
