@@ -5693,11 +5693,11 @@ whenever a file needs to be opened in an editor, GNAT Studio executes the
 :func:`open_file_action_hook`. Several modules are connected to that hook.
 
 One of the first modules to be executed is the external editor module. If
-the user has chosen to use an external editor, this module spawn the editor
+the user has chosen to use an external editor, this module spawns the editor
 and returns 1. This immediately stops the execution of the
 :func:`open_file_action_hook`.
 
-However, if user is not using an external editor, this module returns 0,
+However, if the user is not using an external editor, this module returns 0,
 which keep executing the hook, and in particular executes the source editor
 module, which always takes an actions and open an editor internally in
 GNAT Studio.

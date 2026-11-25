@@ -584,13 +584,20 @@ Using an External Editor
 .. index:: preferences; editor --> external editor
 
 GNAT Studio is integrated with a number of external editors, in particular
-:program:`emacs` and :program:`vi`. The choice of the default external
-editor is done in the :menuselection:`Editor --> External editor`
-preference.
+:program:`emacs` and :program:`vi`.
+The choice of the default external editor is done in the
+:menuselection:`Editor --> External editor` preference,
+and the option to open a selected file with an external editor is in
+:menuselection:`Code --> Edit with External Editor`.
 
-The following values are recognized:
+The following options can be selected:
 
-.. index:: gnuclient
+* :program:`auto`
+
+  Select the first available external editor from the list and launch with this.
+
+
+  .. index:: gnuclient
 
 * :program:`gnuclient`
 
@@ -606,8 +613,8 @@ The following values are recognized:
 
        (setq gnuserv-frame (car (frame-list)))
 
-  See `http://www.hpl.hp.com/personal/ange/gnuserv/home.html
-  <http://www.hpl.hp.com/personal/ange/gnuserv/home.html>`_ for more
+  See the `gnuserv(1) man page
+  <https://linux.die.net/man/1/gnuserv>`_ for more
   information.
 
 
@@ -615,15 +622,15 @@ The following values are recognized:
 
 * :program:`emacsclient`
 
-  This is a program that is always available if you have installed Emacs. As
-  opposed to starting a new Emacs every time, it reuses an existing Emacs
-  sessions, so it is extremely fast to open a file.
+  This program is always available if you have installed Emacs. As
+  opposed to starting a new Emacs instance every time, it reuses an existing Emacs
+  session, so it is extremely fast to open a file.
 
 .. index:: emacs
 
 * :program:`emacs`
 
-  This clients start a new Emacs session every time a file needs to be
+  This client starts a new Emacs session every time a file needs to be
   opened. You should use :program:`emacsclient` instead, since it is much
   faster and makes it easier to copy and paste between multiple files.  The
   only reason to use this external editor is if your system does not support
@@ -658,11 +665,8 @@ The following values are recognized:
 
   Specify any external editor by choosing this entry.  Specify the complete
   command line used to call the editor in the :menuselection:`Editor -->
-  Custom editor command` preference.
-
-* :program:`none`
-
-  No external editor is used and the contextual menus do not appear.
+  Custom editor command` preference. Note that if you wish to use a terminal editor,
+  your command must include a terminal utility like `xterm` (see the vi and vim commands).
 
 In the cases that require an Emacs server, the project file currently used
 in GNAT Studio is set appropriately the first time Emacs is spawned. This means
