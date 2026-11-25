@@ -508,7 +508,7 @@ The Find Menu
 
    Search amongst the source files of the project or the run time files of the compiler.
    The following syntax is supported to open a file at a specific location:
-    <b>filename:line:column</b>
+    **filename:line:column**
    where the line and column are optional.
    Possible completions are found by testing the filename pattern with the base names of the source files, unless filename contains a '/' or '\', in which case the full name of the source file is used.
 
