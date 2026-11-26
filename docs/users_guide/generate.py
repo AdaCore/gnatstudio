@@ -1,4 +1,5 @@
 import inspect
+import re
 import GPS
 from gs_utils.internal.utils import dump_menu, run_test_driver, timeout
 
@@ -294,7 +295,10 @@ def print_menu_header(f, menupath, indent):
 def print_entry(f, menupath, indent):
     print("generating menu doc {}".format(menupath))
     print_menu_header(f, menupath, indent)
-    for line in GPS.Menu.get(menupath).action.__doc__.splitlines():
+    description = GPS.Menu.get(menupath).action.__doc__
+    # Convert Pango bold markup to reStructuredText.
+    description = re.sub(r"</?b>", "**", description)
+    for line in description.splitlines():
         if line:
             f.write(indent + "   " + "{}\n".format(line))
         else:
